@@ -93,22 +93,22 @@ of <i>P</i><sub>2</sub> in parallel with another simulation of a universe filled
 Deep Cells, with these doubly simulated Deep Cells simulating <i>P</i><sub>3</sub> in
 parallel with yet another universe of Deep Cells, and so on.
 <p>Deep Cell is available from <a href="http://psychoticdeath.com/life.htm">http://psychoticdeath.com/life.htm</a>.
-<p><a name=demonoid>:</a><b>Demonoid</b> The first self-constructing diagonal spaceship. A 0<a href="lex_h.htm#hd">hd</a>
+<p><a name=demonoid>:</a><b>Demonoid</b> The first <a href="lex_s.htm#selfconstructing">self-constructing</a> diagonal spaceship. A 0<a href="lex_h.htm#hd">hd</a>
 Demonoid was completed by Chris Cain in December 2015, shortly after
-a much larger 10<a href="lex_h.htm#hd">hd</a> version was constructed the previous month in
+a much larger 10hd version was constructed the previous month in
 collaboration with Dave Greene. The 0hd spaceship fits in a bounding
 box about 55,000 cells square, and displaces itself by 65 cells
 diagonally every 438,852 generations.
 <p>The first 0hd Demonoid was fired by a <a href="lex_g.htm#gun">gun</a>. No spaceship gun
-pattern had previously been completed completed before the first
-appearance of the actual spaceship.
+pattern had previously been completed before the first appearance of
+the actual spaceship.
 <p>In June 2017 Dave Greene completed a much simpler <a href="lex_s.htm#singlechannel">single-channel</a>
 Demonoid using a temporary <a href="lex_l.htm#losslesselbow">lossless elbow</a>, which displaces itself
 79 cells diagonally every 1,183,842 ticks. This was an improvement
 in terms of design complexity, but not in terms of speed, population,
 or bounding box. However, all of these could be further optimized.
-As of October 2017, a smaller Hashlife-friendly single-channel
-Demonoid is under construction.
+A smaller Hashlife-friendly single-channel Demonoid design was
+completed in 2018.
 <p><a name=demultiplexer>:</a><b>demultiplexer</b> A simple <a href="lex_h.htm#herschel">Herschel</a> <a href="lex_c.htm#circuit">circuit</a> consisting of three
 <a href="lex_e.htm#eater1">eater1s</a>, found by Brice Due in August 2006. An input Herschel
 places a boat in a location accessible to an input glider. If the
@@ -141,7 +141,7 @@ OO...............................
 </a></pre></td></tr></table></center>
 If the Herschel and boat are removed from the above pattern, the
 glider passes cleanly through the circuit. It can be used as the "0"
-output of a one-bit memory circuit, where the 90-degree output would
+output of a one-bit <a href="lex_m.htm#memorycell">memory cell</a>, where the 90-degree output would
 be the "1" output. This was the method used to store presence or
 absence of neighbor <a href="lex_m.htm#metacell">metacells</a> in the <a href="lex_p.htm#p1megacell">p1 megacell</a>.
 <p><a name=demuxer>:</a><b>demuxer</b> = <a href="#demultiplexer">demultiplexer</a>
@@ -180,6 +180,20 @@ Herschel evolves from its standard great-grandparent. As of this
 writing, the <a href="lex_f.htm#fx158">Fx158</a> is the only known case where a conduit's output
 Herschel has an alternate great-grandparent, which is incompatible
 with dependent conduits' initial transparent block.
+<p><a name=destructiveread>:</a><b>destructive read</b> The most common type of test reaction in
+<a href="lex_m.htm#memorycell">memory cell</a> circuitry. Information is stored in a memory cell by
+placing objects in known positions, or by changing the state of a
+stable or periodic <a href="lex_t.htm#togglecircuit">toggle circuit</a>. A destructive-read test
+consists of sending one or more <a href="lex_s.htm#signal">signals</a> to the memory cell. A
+distinct output signal is produced for each possible state of the
+memory cell, which is reset to a known "zero" or "rest" state. See
+for example <a href="lex_b.htm#boatbit">boat-bit</a>, <a href="lex_k.htm#keeper">keeper</a>, and <a href="#demultiplexer">demultiplexer</a>.
+<p>To permanently store information in a destructive-read memory cell,
+the output signal(s) must be used, in part, to send appropriate
+signals back to the memory cell to restore its state to its previous
+value. With output looped back to input, this larger composite
+circuit then effectively becomes a <a href="lex_n.htm#nondestructiveread">non-destructive read</a> memory
+cell.
 <p><a name=destructorarm>:</a><b>destructor arm</b> A dedicated <a href="lex_c.htm#constructionarm">construction arm</a> in the <a href="lex_g.htm#gemini">Gemini</a>
 spaceship, used only for removing previously active <a href="lex_c.htm#circuit">circuitry</a> once
 it is no longer needed. More generally, any circuitry in a
@@ -277,6 +291,11 @@ OO..OO
 </a></pre></td></tr></table></center>
 <p><a name=domino>:</a><b>domino</b> The 2-cell <a href="lex_p.htm#polyomino">polyomino</a>. A number of objects, such as the
 <a href="lex_h.htm#hwss">HWSS</a> and <a href="lex_p.htm#pentadecathlon">pentadecathlon</a>, produce domino <a href="lex_s.htm#spark">sparks</a>.
+<p><a name=dormant>:</a><b>dormant</b> An object that is either stable or oscillates without
+producing any output, until it is <a href="lex_t.htm#trigger">triggered</a> by an appropriate
+signal, which then produces some desired action. For example,
+<a href="lex_f.htm#freezedried">freeze-dried</a> objects are dormant until the arrival of a particular
+glider.
 <p><a name=doseedo>:</a><b>do-see-do</b> The following reaction, found by David Bell in 1996, in
 which two <a href="lex_g.htm#glider">gliders</a> appear to circle around each other as they are
 reflected 90 degrees by a <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a>. Four copies of the
@@ -350,7 +369,7 @@ Bell in October 1996.
 <p>The same reaction sometimes works in other situations, as shown in
 the following diagram where a pair of blocks eats an <a href="lex_r.htm#rpentomino">R-pentomino</a>
 and a <a href="lex_l.htm#lwss">LWSS</a>. (The LWSS version was known at least as early 1994,
-when Paul Callahan saw it form spontaneously as a result of firing a
+when Paul Callahan saw it form spontaneously as a result of firing an
 LWSS stream at some random junk.)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.OOOO.....OO....$O...O......OO.OO$....O......O..OO$O..O............$................$.............OO.$.............OO.$"
 >.OOOO.....OO....
@@ -435,6 +454,7 @@ O......OO.O......OO.OOO..O.OOO
 .............O..OO......O..OOO
 </a></pre></td></tr></table></center>
 <p><a name=draintrap>:</a><b>drain trap</b> = <a href="lex_p.htm#paperclip">paperclip</a>. This term is no longer in use.
+<p><a name=dread>:</a><b>D read</b> = <a href="#destructiveread">destructive read</a>
 <p><a name=dried>:</a><b>dried</b> = <a href="lex_f.htm#freezedried">freeze-dried</a>.
 <p><a name=drifter>:</a><b>drifter</b> A perturbation moving within a stable pattern. Dean
 Hickerson has written a <a href="lex_s.htm#searchprogram">search program</a> to search for drifters, with
@@ -453,7 +473,9 @@ in <a href="#diuresis">diuresis</a>.
 eater reactions. Among other uses, it can reflect gliders 90
 degrees. The following pattern shows an <a href="lex_e.htm#eater5">eater5</a> eating gliders and
 producing duoplets which are then used to reflect a separate glider
-stream.
+stream. If only one glider is present, the eater5 successfully
+absorbs it, so this mechanism may be considered to be a simple AND
+gate.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..O....................$O.O....................$.OO....................$.......................$.......................$.......O...............$.....O.O...............$......OO...............$.....................O.$....................O..$....................OOO$.......................$.......................$................O......$...............O.......$...............OOO.....$.......................$....................OO.$................O...OO.$...............O.O.....$..............O.O......$..............O........$.............OO........$"
 >..O....................
 O.O....................

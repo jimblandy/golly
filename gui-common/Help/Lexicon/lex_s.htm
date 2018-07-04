@@ -77,9 +77,42 @@ O.O.O.....O.......O.....O.O.O
 .........O...................
 .....O..O....................
 </a></pre></td></tr></table></center>
-<p><a name=salvo>:</a><b>salvo</b> A collection of spaceships, usually gliders, all traveling in
+<p><a name=salvo>:</a><b>salvo</b> A collection of spaceships, usually gliders, all travelling in
 the same direction. Any valid glider construction <a href="lex_r.htm#recipe">recipe</a> can be
-partitioned into no more than four salvos. Compare <a href="lex_f.htm#flotilla">flotilla</a>.
+partitioned into no more than four salvos. Compare <a href="lex_f.htm#flotilla">flotilla</a>. In
+contrast with a <a href="lex_c.htm#convoy">convoy</a>, the spaceships in a salvo are usually
+consumed by the reactions that they cause. Simple examples include
+<a href="lex_b.htm#blockpusher">block pusher</a> and <a href="lex_b.htm#blockpull">block pull</a>.
+<p>Salvos may be <a href="#slow">slow</a> or <a href="#synchronized">synchronized</a>. The following partially
+<a href="#synchronized">synchronized</a> three-glider salvo produces an <a href="lex_l.htm#lwss">LWSS</a> from a block.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OO........$OO........$..........$..........$OOO.......$O.........$.O........$..........$.......OOO$.......O..$........O.$..........$..........$..........$..........$..........$..........$.......OOO$.......O..$........O.$"
+>OO........
+OO........
+..........
+..........
+OOO.......
+O.........
+.O........
+..........
+.......OOO
+.......O..
+........O.
+..........
+..........
+..........
+..........
+..........
+..........
+.......OOO
+.......O..
+........O.
+</a></pre></td></tr></table></center>
+The above is a synchronized salvo and not a slow salvo, because the
+second glider must follow the first with the exact separation shown.
+The third glider can be considered to be a slow glider, because it
+will still delete the temporary loaf no matter how many <a href="lex_t.htm#tick">ticks</a> it is
+delayed. The <a href="#slowgliderconstruction">slow glider construction</a> entry includes an example of
+a true slow salvo.
 <p><a name=sawtooth>:</a><b>sawtooth</b> Any finite pattern whose <a href="lex_p.htm#population">population</a> grows without bound
 but does not tend to infinity. (In other words, the population
 reaches new heights infinitely often, but also infinitely often
@@ -90,8 +123,8 @@ The current smallest known sawtooth was found by a conwaylife.com
 forum user with the online handle 'thunk'. It has a bounding box of
 74x60, and is the smallest known sawtooth in terms of its minimum
 repeating population of 177 cells. The following variant has a higher
-repeating population of 195 and an optimized bounding box of 62x56:
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.....................................................OO.O.....$.....................................................O.OO.....$..............................................................$...........OO.................................................$...........OO.................................................$..............................................................$..............................................................$..............OO............................OO.......OO.....OO$....OO........OO.....................................OO.....OO$.....O.....................................O.O................$....O......OO............................O..............OO....$....OO.....OO........................OO.O.OO............OO....$......................................O.OO....................$.......................................O......................$..............................................................$.................................OO...........................$........OO.......................OO...........................$........O.O...................................................$........O....................OO.....OO........................$.............................OO.....OO........................$..............................................................$..............................................................$..............................................................$.....................OOO......................................$.....................O..O.....................................$.....................O.OO.....................................$..............................................................$..............................................................$..............................................................$....................OO............O.........O.................$....................O..O..........O.O.....OOO.................$..OOOO...............OOO..........OO.....O....................$OO....OO.................................OO...................$OO.....O......................................................$..OO.O.O..............OO......................................$.......O..............OO......................................$...O...O..........................O....O......................$...O....O.......................OO.....O......................$.....OOO...O.....................OO...O.O.....................$.....OO....O.........................OO.OO....................$...........OO.......................O.....O...................$.............O.........................O......................$.............OOO....................OO...OO...................$..............................................................$..............................................................$................O.....................O.......................$...............O.OOOOO................O.......................$..............OO.....O...............O........................$..............OO...O..O.......................................$......................O.......................................$................OO.O..O................OO.....................$...................O..O................OO.....................$....................OO........................................$....................OO.....O....O.............................$.........................OO.OOOO.OO...........................$...........................O....O.............................$"
+repeating population of 194 and an optimized bounding box of 62x56:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.....................................................OO.O.....$.....................................................O.OO.....$..............................................................$...........OO.................................................$...........OO.................................................$..............................................................$..............................................................$..............OO............................OO.......OO.....OO$....OO........OO.....................................OO.....OO$.....O.....................................O.O................$....O......OO............................O..............OO....$....OO.....OO........................OO.O.OO............OO....$......................................O.OO....................$.......................................O......................$..............................................................$.................................OO...........................$.................................OO...........................$..............................................................$.............................OO.....OO........................$.............................OO.....OO........................$..............................................................$..............................................................$..............................................................$.....................OOO......................................$.....................O..O.....................................$.....................O.OO.....................................$..............................................................$..............................................................$..............................................................$....................OO............O.........O.................$....................O..O..........O.O.....OOO.................$..OOOO...............OOO..........OO.....O....................$OO....OO.................................OO...................$OO.....O......................................................$..OO.O.O..............OO......................................$.......O..............OO......................................$...O...O..........................O....O......................$...O....O.......................OO.....O......................$.....OOO...O.....................OO...O.O.....................$.....OO....O.........................OO.OO....................$...........OO.......................O.....O...................$.............O.........................O......................$.............OOO....................OO...OO...................$..............................................................$..............................................................$................O.....................O.......................$...............O.OOOOO................O.......................$..............OO.....O...............O........................$..............OO...O..O.......................................$......................O.......................................$................OO.O..O................OO.....................$...................O..O................OO.....................$....................OO........................................$....................OO.....O....O.............................$.........................OO.OOOO.OO...........................$...........................O....O.............................$"
 >.....................................................OO.O.....
 .....................................................O.OO.....
 ..............................................................
@@ -108,9 +141,9 @@ repeating population of 195 and an optimized bounding box of 62x56:
 .......................................O......................
 ..............................................................
 .................................OO...........................
-........OO.......................OO...........................
-........O.O...................................................
-........O....................OO.....OO........................
+.................................OO...........................
+..............................................................
+.............................OO.....OO........................
 .............................OO.....OO........................
 ..............................................................
 ..............................................................
@@ -149,16 +182,18 @@ OO.....O......................................................
 .........................OO.OOOO.OO...........................
 ...........................O....O.............................
 </a></pre></td></tr></table></center>
-Moving sawtooth patterns combining a fast <a href="lex_p.htm#puffer">puffer</a> with a slower
-<a href="#spaceship">spaceship</a> have also been constructed. See also <a href="lex_t.htm#tractorbeam">tractor beam</a>.
+Patterns combining a fast <a href="lex_p.htm#puffer">puffer</a> with a slower <a href="#spaceship">spaceship</a> have
+also been constructed (see <a href="lex_m.htm#movingsawtooth">moving sawtooth</a>). See also
+<a href="lex_t.htm#tractorbeam">tractor beam</a>.
 <p><a name=sbm>:</a><b>SBM</b> = <a href="#slidingblockmemory">sliding block memory</a>
 <p><a name=schickengine>:</a><b>Schick engine</b> (<i>c</i>/2 orthogonally, p12) This <a href="#spaceship">spaceship</a>, found by Paul
 Schick in 1972, produces a large <a href="#spark">spark</a> (the 15 live cells at the
 rear in the <a href="lex_p.htm#phase">phase</a> shown below) which can be <a href="lex_p.htm#perturb">perturbed</a> by other
-<i>c</i>/2 spaceships to form a variety of <a href="lex_p.htm#puffer">puffers</a>. The diagram below
-shows the smallest form of the Schick engine, using two <a href="lex_l.htm#lwss">LWSS</a>. It
-is also possible to use two <a href="lex_m.htm#mwss">MWSS</a> or two <a href="lex_h.htm#hwss">HWSS</a>, or even a LWSS and
-a HWSS.
+<i>c</i>/2 spaceships to form a variety of <a href="lex_p.htm#puffer">puffers</a>. See <a href="lex_b.htm#blinkership">blinker ship</a>
+for an example perturbation of the spark. The diagram below shows
+the smallest form of the Schick engine, using two <a href="lex_l.htm#lwss">LWSS</a>. It is also
+possible to use two <a href="lex_m.htm#mwss">MWSSes</a> or two <a href="lex_h.htm#hwss">HWSSes</a>, or even an LWSS and an
+HWSS.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OOOO..............$O...O.........O...$O...........OO....$.O..O..OO.....OOO.$......OOO......OOO$.O..O..OO.....OOO.$O...........OO....$O...O.........O...$OOOO..............$"
 >OOOO..............
 O...O.........O...
@@ -234,13 +269,13 @@ O..O.O..O.OO...O..................
 .......................O..........
 ......................O...........
 </a></pre></td></tr></table></center>
-<p><a name=searchprogram>:</a><b>search program</b> A computer program or script which automates the
-search for Life objects having certain desired properties. These are
-used because the difficulty of finding previously unknown Life
-objects now commonly exceeds the patience, speed, and accuracy of
-humans. Various types of search programs are used for finding
-objects such as <a href="#spaceship">spaceships</a>, <a href="lex_o.htm#oscillator">oscillators</a>, <a href="lex_d.htm#drifter">drifters</a>, <a href="lex_c.htm#catalyst">catalysts</a>,
-<a href="#soup">soups</a>, <a href="lex_g.htm#gardenofeden">Gardens of Eden</a>, and <a href="#slowsalvo">slow salvos</a>.
+<p><a name=searchprogram>:</a><b>search program</b> A computer program or script that automates the search
+for Life objects having certain desired properties. These are used
+because the difficulty of finding previously unknown Life objects now
+commonly exceeds the patience, speed, and accuracy of humans.
+Various types of search programs are used for finding objects such as
+<a href="#spaceship">spaceships</a>, <a href="lex_o.htm#oscillator">oscillators</a>, <a href="lex_d.htm#drifter">drifters</a>, <a href="lex_c.htm#catalyst">catalysts</a>, <a href="#soup">soups</a>,
+<a href="lex_g.htm#gardenofeden">Gardens of Eden</a>, and <a href="#slowsalvo">slow salvos</a>.
 <p>Some search programs generate <a href="lex_p.htm#partialresult">partial results</a> as they are
 running, so even if they don't complete successfully, something of
 use might still be salvaged from the run.
@@ -251,13 +286,14 @@ such, but instead perform large constructions. These are used to
 correctly complete very complicated objects such as the
 <a href="lex_c.htm#caterpillar">Caterpillar</a>, <a href="lex_g.htm#gemini">Gemini</a>, <a href="lex_c.htm#caterloopillar">Caterloopillar</a>, and
 <a href="lex_u.htm#universalconstructor">universal constructor</a>-based spaceships such as the <a href="lex_d.htm#demonoid">Demonoids</a> and
-<a href="lex_o.htm#orthogonoid">Orthogonoid</a>.
+<a href="lex_o.htm#orthogonoid">Orthogonoids</a>.
 <p><a name=secondgliderdomain>:</a><b>second glider domain</b> The second glider domain of an <a href="lex_e.htm#edgeshooter">edge shooter</a> is
-the set of displacements (in space and time, relative to the glider
-stream emitted by the edge shooter) that a glider stream may have
-without interfering with the edge shooter. This is useful to know,
-because edge shooters are often used to generate glider streams very
-close to other glider streams.
+the set of spacetime offsets, relative to the <a href="lex_g.htm#glider">glider</a> <a href="#stream">stream</a>
+emitted by the edge shooter, where a second independent glider stream
+may be present without interfering with the edge shooter. This is
+useful to know, because edge shooters are often used to generate
+glider streams very close to other glider streams, to make for
+example a <a href="#spaceship">spaceship</a> <a href="lex_g.htm#gun">gun</a> or <a href="lex_c.htm#converter">converter</a>.
 <p><a name=secondnaturalglider>:</a><b>second natural glider</b> The glider produced at T=72 during the
 <a href="lex_e.htm#evolution">evolution</a> of a <a href="lex_h.htm#herschel">Herschel</a>. This is the common edge-shooting glider
 output used in the <a href="lex_n.htm#nw31">NW31</a> converter and several other converter
@@ -349,43 +385,80 @@ the Caterloopillars are exceptions, but their direction of travel is
 fixed, and a specific Caterloopillar can't be made to change its
 speed without completely rebuilding it. Compare <a href="#selfconstructing">self-constructing</a>,
 <a href="lex_e.htm#elementary">elementary</a>.
-<p><a name=semisnark>:</a><b>semi-Snark</b> A small 90-degree <a href="lex_g.htm#gliderreflector">glider reflector</a> requiring two input
-gliders on the same lane for each output glider. It was discovered
-by Sergei Petrov on 1 July 2013, using a custom-written search
-utility. It functions as a very compact <a href="lex_p.htm#perioddoubler">period doubler</a> in some
-<a href="#signal">signal</a> <a href="lex_c.htm#circuit">circuitry</a>, for example the <a href="lex_l.htm#linearpropagator">linear propagator</a>. The
-semi-Snark can period-double a regular glider <a href="#stream">stream</a> of period 51
-or more, or a staggered stream with two gliders every 67 ticks or
-more, since the block reset glider can be sent just 16 ticks before
-its partner.
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:......O..........OO$.......OO........O.$......OO.......O.O.$...............OO..$..........O........$OO.........OO......$OO........OO.......$...................$...................$.................OO$..........OO.....OO$..........OO.......$...................$.....O.............$....O.O............$....OO......OO.....$............O......$.............OOO...$...............O...$"
->......O..........OO
-.......OO........O.
-......OO.......O.O.
-...............OO..
-..........O........
-OO.........OO......
-OO........OO.......
-...................
-...................
-.................OO
-..........OO.....OO
-..........OO.......
-...................
-.....O.............
-....O.O............
-....OO......OO.....
-............O......
-.............OOO...
-...............O...
+<p><a name=semicenark>:</a><b>semi-cenark</b> Either of two <a href="#semisnark">semi-Snark</a> variants discovered by Tanner
+Jacobi in November 2017. The name is due to the initial <a href="lex_c.htm#converter">converter</a>,
+which produces a <a href="lex_c.htm#century">century</a> output for every two input <a href="lex_g.htm#glider">gliders</a>. The
+minimum safe repeat time is 43 ticks for the smaller initial
+<a href="lex_c.htm#catalyst">catalyst</a> shown in <a href="lex_c.htm#ccsemicenark">CC semi-cenark</a> and <a href="lex_c.htm#cpsemicenark">CP semi-cenark</a>, or 42
+ticks with the slightly larger catalyst variant shown below. There
+is also <a href="lex_o.htm#overclocking">overclocking</a> possible at period 36, 38, or 39. The reset
+glider can be followed immediately by a new trigger glider, as shown
+below, so the minimum repeat time for an <a href="lex_i.htm#intermittentstream">intermittent stream</a> of
+gliders is only 50 ticks.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:O.O.................................$.OO.................................$.O..................................$....................................$....................................$....................................$....................................$....................................$....................................$.........O.O........................$..........OO........................$..........O.........................$.............O......................$..............OO....................$.............OO.....................$.............................O......$...........................OOO......$..........................O.........$..........................OO........$....................................$....................................$......................O.............$..............OO.......OO..O........$..............O..O....OO..O.O.......$............OO..OO........OO........$...........O..OO....................$...........OO...OO..................$................O.O.................$.................O..................$..................................OO$................................O..O$.....................OO.........OOO.$......................O......O......$...................OOO.......OOOO...$...................O............O...$...............................O....$...............................OO...$"
+>O.O.................................
+.OO.................................
+.O..................................
+....................................
+....................................
+....................................
+....................................
+....................................
+....................................
+.........O.O........................
+..........OO........................
+..........O.........................
+.............O......................
+..............OO....................
+.............OO.....................
+.............................O......
+...........................OOO......
+..........................O.........
+..........................OO........
+....................................
+....................................
+......................O.............
+..............OO.......OO..O........
+..............O..O....OO..O.O.......
+............OO..OO........OO........
+...........O..OO....................
+...........OO...OO..................
+................O.O.................
+.................O..................
+..................................OO
+................................O..O
+.....................OO.........OOO.
+......................O......O......
+...................OOO.......OOOO...
+...................O............O...
+...............................O....
+...............................OO...
 </a></pre></td></tr></table></center>
+<p><a name=semisnark>:</a><b>semi-Snark</b> Any small <a href="#stable">stable</a> <a href="#signal">signal</a> <a href="lex_c.htm#conduit">conduit</a> that produces one
+output glider for every two input gliders, with a 90 degree
+reflection. These can act as period-doublers for any glider stream
+whose period is at least equal to their repeat time, and so adding
+one of these to a single glider <a href="lex_g.htm#gun">gun</a> often results in a pattern much
+smaller than the older <a href="lex_t.htm#technology">technology</a> of crossing the output of two
+guns.
+<p>The available semi-Snarks differ in their complexity, size, repeat
+time, and the colour of their output gliders. The <a href="lex_c.htm#ccsemisnark">CC semi-Snark</a>
+was the first one found, and the term "semi-Snark" is often used
+specifically for this object. The "CC" prefix stands for
+<a href="lex_c.htm#colourchanging">colour-changing</a>, by contrast with the more recently discovered
+<a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_c.htm#cpsemisnark">CP semi-Snark</a>.
+<p>There are also CC and CP variants of a semi-Snark based on a
+two-<a href="lex_g.htm#glider">glider</a> to <a href="lex_c.htm#century">century</a> <a href="lex_c.htm#converter">converter</a> discovered by Tanner Jacobi in
+November 2017. These <a href="#semicenark">semi-cenarks</a> are the fastest semi-Snarks
+known as of July 2018, with a <a href="lex_r.htm#repeattime">repeat time</a> as low as 50 ticks, or a
+periodic input rate as low as 36 ticks.
 <p><a name=sesquihat>:</a><b>sesquihat</b> (p1) Halfway between a <a href="lex_h.htm#hat">hat</a> and a <a href="lex_t.htm#twinhat">twinhat</a>.
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:....O$OO.O.O.$.O.O.O.$.O.O.OO$..O...$"
->....O
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:....O..$OO.O.O.$.O.O.O.$.O.O.OO$..O....$"
+>....O..
 OO.O.O.
 .O.O.O.
 .O.O.OO
-..O...
+..O....
 </a></pre></td></tr></table></center>
 <p><a name=sgr>:</a><b>SGR</b> Abbreviation for <a href="#stable">stable</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a>. This term is no
 longer in use.
@@ -472,6 +545,10 @@ O.OOO..OOO.O
 .O..O..O..O.
 ....O..O....
 </a></pre></td></tr></table></center>
+<p><a name=shotgun>:</a><b>shotgun</b> A <a href="lex_g.htm#gun">gun</a> that fires a <a href="#salvo">salvo</a> of multiple <a href="#spaceship">spaceships</a>, almost
+always <a href="lex_g.htm#glider">gliders</a>, on parallel <a href="lex_l.htm#lane">lanes</a>. Two to four shotguns are
+often combined to turn a <a href="lex_g.htm#glidersynthesis">glider synthesis</a> into a gun or <a href="lex_f.htm#factory">factory</a>
+for that synthesis.
 <p><a name=shoulder>:</a><b>shoulder</b> The fixed upper end of a <a href="lex_c.htm#constructionarm">construction arm</a>, generally
 consisting of one or more glider <a href="lex_g.htm#gun">guns</a> or <a href="lex_e.htm#edgeshooter">edge shooters</a> aimed at
 an <a href="lex_e.htm#elbow">elbow</a> object.
@@ -479,8 +556,9 @@ an <a href="lex_e.htm#elbow">elbow</a> object.
 back and forth between stabilizing objects. The most well-known
 examples are the <a href="lex_q.htm#queenbeeshuttle">queen bee shuttle</a> (which has often been called
 simply "the shuttle") and the <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a>. See also
-<a href="lex_p.htm#p54shuttle">p54 shuttle</a> and <a href="lex_e.htm#eureka">Eureka</a>. Another example is the p72 <a href="lex_r.htm#rpentomino">R-pentomino</a>
-shuttle that forms part of the pattern given under <a href="lex_f.htm#factory">factory</a>.
+<a href="lex_p.htm#p54shuttle">p54 shuttle</a>, <a href="lex_p.htm#p130shuttle">p130 shuttle</a> and <a href="lex_e.htm#eureka">Eureka</a>. Another example is the
+p72 <a href="lex_r.htm#rpentomino">R-pentomino</a> shuttle that forms part of the pattern given under
+<a href="lex_f.htm#factory">factory</a>.
 <p><a name=siamese>:</a><b>siamese</b> A term used in naming certain <a href="#stilllife">still lifes</a> (and the <a href="#stator">stator</a>
 part of certain <a href="lex_o.htm#oscillator">oscillators</a>). It indicates that the object
 consists of two smaller objects sharing two or more cells. See
@@ -492,11 +570,11 @@ consists of two smaller objects sharing two or more cells. See
 O.OOO
 ....O
 </a></pre></td></tr></table></center>
-<p><a name=sidecar>:</a><b>sidecar</b> A small <a href="lex_t.htm#tagalong">tagalong</a> for a <a href="lex_h.htm#hwss">HWSS</a> that was found by Hartmut
+<p><a name=sidecar>:</a><b>sidecar</b> A small <a href="lex_t.htm#tagalong">tagalong</a> for an <a href="lex_h.htm#hwss">HWSS</a> that was found by Hartmut
 Holzwart in 1992. The resulting <a href="#spaceship">spaceship</a> (shown below) has a
 <a href="lex_p.htm#phase">phase</a> with only 24 cells, making it in this respect the smallest
 known spaceship other than the <a href="#standardspaceship">standard spaceships</a> and some trivial
-two-spaceship <a href="lex_f.htm#flotilla">flotillas</a> derived from them. Note also that a HWSS
+two-spaceship <a href="lex_f.htm#flotilla">flotillas</a> derived from them. Note also that an HWSS
 can support two sidecars at once.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.O......$O.....O.$O.....O.$OOOOO.O.$........$....OO..$..O....O$.O......$.O.....O$.OOOOOO.$"
 >.O......
@@ -514,7 +592,8 @@ OOOOO.O.
 <p><a name=sidesnagger>:</a><b>sidesnagger</b> A <a href="#spartan">Spartan</a> eater found by Chris Cain in May 2015 with
 functionality similar to the <a href="lex_e.htm#eater5">eater5</a>, as shown below. It has one
 <a href="lex_l.htm#lane">lane</a> less diagonal <a href="lex_c.htm#clearance">clearance</a> on the high-clearance side than
-other eater5 variants, due to the presence of the boat. See also
+other eater5 variants, due to the presence of the boat. A good use
+of the sidesnagger can be seen in <a href="lex_p.htm#p130shuttle">p130 shuttle</a>. See also
 <a href="lex_h.htm#highwayrobber">highway robber</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..O.............$O.O.............$.OO.............$................$................$................$.........O......$........O.......$........OOO.....$................$................$.........O......$........O.O.....$.......O..O...OO$........OO....OO$....O...........$...O.O..........$...OO...........$.........OO.....$.........OO.....$"
 >..O.............
@@ -778,8 +857,8 @@ OO.....OO........................
 construction arm and <a href="#slowsalvo">slow salvo</a> techniques to construct, usually,
 <a href="#spartan">Spartan</a> or near-Spartan circuitry. Compare <a href="lex_t.htm#twoarm">two-arm</a>.
 <p><a name=singlechannel>:</a><b>single-channel</b> A type of <a href="lex_u.htm#universalconstructor">universal constructor</a> discovered and
-developed by Simon Ekstr&ouml;m and others starting in December 2015.
-The initial <a href="lex_e.htm#elbowoperation">elbow operation</a> toolkit was near-minimal, with just one
+developed by Simon Ekstr&ouml;m and others starting in December 2015. The
+initial <a href="lex_e.htm#elbowoperation">elbow operation</a> toolkit was near-minimal, with just one
 <a href="lex_p.htm#push">push</a>, one <a href="lex_p.htm#pull">pull</a>, and one output glider of each colour (see
 <a href="lex_c.htm#colourofaglider">colour of a glider</a>). Later searches produced a much larger and
 more efficient library.
@@ -793,11 +872,11 @@ a single <a href="lex_e.htm#elbow">elbow</a> <a href="lex_b.htm#block">block</a>
 efficiently around complex obstructions by bending itself through
 multiple <a href="lex_l.htm#losslesselbow">lossless elbows</a>. Known recipes can also remove an elbow
 when it is no longer needed, by controlled demolition of the Snark.
-<p>As of October 2017, almost all single-channel recipes are made up
-of <a href="#singleton">singletons</a> and <a href="#synchronized">synchronized</a> pairs of gliders, but no
-synchronized triplets or larger groups. This is not an inherent
-limitation of single-channel construction, but rather a limitation in
-the <a href="#searchprogram">search program</a> used to find currently known single-channel
+<p>As of June 2018, almost all single-channel recipes are made up of
+<a href="#singleton">singletons</a> and <a href="#synchronized">synchronized</a> pairs of gliders, but no synchronized
+triplets or larger groups. This is not an inherent limitation of
+single-channel construction, but rather a limitation in the
+<a href="#searchprogram">search program</a> used to find currently known single-channel
 <a href="lex_t.htm#toolkit">toolkits</a>.
 <p>A useful byproduct of this limitation is that single-channel
 recipes can be trivially adjusted to allow them to safely cross
@@ -823,6 +902,90 @@ OOOOOO
 ..OO..
 </a></pre></td></tr></table></center>
 <p><a name=sinkingship>:</a><b>sinking ship</b> = <a href="lex_c.htm#canoe">canoe</a>
+<p><a name=sirrobin>:</a><b>Sir Robin</b> ((2,1)<i>c</i>/6, p6) The first elementary <a href="lex_k.htm#knightship">knightship</a> in
+Conway's Game of Life, found by Adam P. Goucher on March 6, 2018,
+based on a partial by Tomas Rokicki.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:....OO.........................$....O..O.......................$....O...O......................$......OOO......................$..OO......OOOO.................$..O.OO....OOOO.................$.O....O......OOO...............$..OOOO....OO...O...............$O.........OO...................$.O...O.........................$......OOO..OO..O...............$..OO.......O....O..............$.............O.OO..............$..........OO......O............$...........OO.OOO.O............$..........OO...O..O............$..........O.O..OO..............$..........O..O.O.O.............$..........OOO......O...........$...........O.O.O...O...........$..............OO.O.O...........$...........O......OOO..........$...............................$...........O.........O.........$...........O...O......O........$............O.....OOOOO........$............OOO................$................OO.............$.............OOO..O............$...........O.OOO.O.............$..........O...O..O.............$...........O....OO.OOO.........$.............OOOO.O....OO......$.............O.OOOO....OO......$...................O...........$....................O..OO......$....................OO.........$.....................OOOOO.....$.........................OO....$...................OOO......O..$....................O.O...O.O..$...................O...O...O...$...................O...OO......$..................O......O.OOO.$...................OO...O...OO.$....................OOOO..O..O.$......................OO...O...$.....................O.........$.....................OO.O......$....................O..........$...................OOOOO.......$...................O....O......$..................OOO.OOO......$..................O.OOOOO......$..................O............$....................O..........$................O....OOOO......$....................OOOO.OO....$.................OOO....O......$........................O.O....$............................O..$........................O..OO..$.........................OOO...$......................OO.......$.....................OOO.....O.$........................OO..O.O$.....................O..OOO.O.O$......................OO.O..O..$........................O.O..OO$..........................OO...$......................OOO....O.$......................OOO....O.$.......................OO...OOO$........................OO.OO..$.........................OO....$.........................O.....$...............................$........................OO.....$..........................O....$"
+>....OO.........................
+....O..O.......................
+....O...O......................
+......OOO......................
+..OO......OOOO.................
+..O.OO....OOOO.................
+.O....O......OOO...............
+..OOOO....OO...O...............
+O.........OO...................
+.O...O.........................
+......OOO..OO..O...............
+..OO.......O....O..............
+.............O.OO..............
+..........OO......O............
+...........OO.OOO.O............
+..........OO...O..O............
+..........O.O..OO..............
+..........O..O.O.O.............
+..........OOO......O...........
+...........O.O.O...O...........
+..............OO.O.O...........
+...........O......OOO..........
+...............................
+...........O.........O.........
+...........O...O......O........
+............O.....OOOOO........
+............OOO................
+................OO.............
+.............OOO..O............
+...........O.OOO.O.............
+..........O...O..O.............
+...........O....OO.OOO.........
+.............OOOO.O....OO......
+.............O.OOOO....OO......
+...................O...........
+....................O..OO......
+....................OO.........
+.....................OOOOO.....
+.........................OO....
+...................OOO......O..
+....................O.O...O.O..
+...................O...O...O...
+...................O...OO......
+..................O......O.OOO.
+...................OO...O...OO.
+....................OOOO..O..O.
+......................OO...O...
+.....................O.........
+.....................OO.O......
+....................O..........
+...................OOOOO.......
+...................O....O......
+..................OOO.OOO......
+..................O.OOOOO......
+..................O............
+....................O..........
+................O....OOOO......
+....................OOOO.OO....
+.................OOO....O......
+........................O.O....
+............................O..
+........................O..OO..
+.........................OOO...
+......................OO.......
+.....................OOO.....O.
+........................OO..O.O
+.....................O..OOO.O.O
+......................OO.O..O..
+........................O.O..OO
+..........................OO...
+......................OOO....O.
+......................OOO....O.
+.......................OO...OOO
+........................OO.OO..
+.........................OO....
+.........................O.....
+...............................
+........................OO.....
+..........................O....
+</a></pre></td></tr></table></center>
 <p><a name=sixls>:</a><b>six Ls</b> (p3) This is a compact form of <a href="lex_l.htm#loadingdock">loading dock</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...O...$.OOO..O$O...OOO$OOO....$....OOO$OOO...O$O..OOO.$...O...$"
 >...O...
@@ -933,17 +1096,32 @@ O.O..............
 position of a <a href="lex_b.htm#block">block</a>. The block can be moved by means of <a href="lex_g.htm#glider">glider</a>
 collisions. See <a href="lex_b.htm#blockpusher">block pusher</a> for an example.
 <p>In Conway's original formulation (as part of his proof of the
-existence of a <a href="lex_u.htm#universalcomputer">universal computer</a> in Life) 2 gliders were used to
-pull the block inwards by three diagonal spaces, and 30 gliders were
-used to push it out by the same amount. Dean Hickerson later greatly
-improved on this, finding a way to pull a block inwards by one
-diagonal space using 2 gliders, and push it out using 3 gliders. In
-order for the memory to be of any use there also has to be a way to
-read the value held. It suffices to be able to check whether the
-value is zero (as Conway did), or to be able to detect the transition
-from one to zero (as Hickerson did).
+existence of a <a href="lex_u.htm#universalcomputer">universal computer</a> in Life) two gliders were used to
+pull the block inwards by three diagonal spaces, as shown below, and
+thirty gliders were used to push it out by the same amount.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OO..........$OO..........$............$............$............$.........OOO$OOO......O..$O.........O.$.O..........$"
+>OO..........
+OO..........
+............
+............
+............
+.........OOO
+OOO......O..
+O.........O.
+.O..........
+</a></pre></td></tr></table></center>
+<p>Dean Hickerson later greatly improved on this, finding a way to
+pull a block inwards by one diagonal space using 2 gliders, and push
+it out the same distance using 3 gliders. In order for the memory to
+be of any use there also has to be a way to read the value held. It
+suffices to be able to check whether the value is zero (as Conway
+did), or to be able to detect the transition from one to zero (as
+Hickerson did).
 <p>Dean Hickerson's sliding block memory is used in Paul Chapman's
-<a href="lex_u.htm#urm">URM</a>.
+<a href="lex_u.htm#urm">URM</a>, and the key salvos from it are used in several other complex
+constructions, such as David Bell's <a href="lex_c.htm#collatz5n1simulator">Collatz 5N+1 simulator</a> and Adam
+P. Goucher's <a href="lex_p.htm#picalculator">pi calculator</a> and <a href="#spartan">Spartan</a>
+<a href="lex_u.htm#universalcomputer">universal computer</a>-constructor.
 <p><a name=slmake>:</a><b>slmake</b> A <a href="#searchprogram">search program</a> published by Adam P. Goucher in May 2017.
 It accepts as input a <a href="lex_c.htm#constellation">constellation</a> of sufficiently widely
 separated <a href="#stilllife">still lifes</a>, and produces a <a href="lex_g.htm#glider">glider</a> <a href="#stream">stream</a> that will
@@ -955,9 +1133,10 @@ patterns much easier to design and build. It is capable of finding
 other useful non-Spartan circuits such as <a href="#snark">Snarks</a>, <a href="#syringe">syringes</a>, and
 <a href="lex_h.htm#htomwss">H-to-MWSS</a> <a href="lex_c.htm#converter">converters</a>, provided that they are separated from other
 nearby objects by a sufficient amount of empty space.
-<p><a name=slowelbow>:</a><b>slow elbow</b> A movable <a href="lex_e.htm#elbow">elbow</a> in a <a href="lex_c.htm#constructionarm">construction arm</a> <a href="lex_t.htm#toolkit">toolkit</a> that
-is controlled by a <a href="#slowsalvo">slow salvo</a>, which most likely comes from a
-previous <a href="lex_c.htm#constructionelbow">construction elbow</a>. Unlike a standard <a href="lex_e.htm#elbow">elbow</a> which is
+<p><a name=slow>:</a><b>slow</b> See <a href="#slowgliderconstruction">slow glider construction</a>.
+<p><a name=slowelbow>:</a><b>slow elbow</b> A movable <a href="lex_c.htm#constructionelbow">construction elbow</a> that is controlled by a
+<a href="#slowsalvo">slow salvo</a>, which most likely comes from a previous elbow in a
+multi-elbow <a href="lex_c.htm#constructionarm">construction arm</a>. Unlike a standard elbow which is
 generally fixed on a single <a href="lex_c.htm#constructionlane">construction lane</a> or at least within a
 narrow range, a slow elbow can move freely in two dimensions as long
 as there is room for it. Each slow elbow added to a construction arm
@@ -980,13 +1159,58 @@ is usually too restrictive, and it is desirable to allow
 constructions in which some gliders in the salvo are required to have
 a particular timing modulo 2 (a "p2 slow salvo"). This gives much
 greater flexibility, as <a href="lex_b.htm#blinker">blinkers</a> can now be freely used in the
-intermediate construction steps.
+intermediate construction steps. The <a href="#snarkmaker">Snarkmaker</a> is a very large p2
+slow salvo. A much smaller example is the following <a href="lex_e.htm#edgy">edgy</a>
+construction of an <a href="lex_e.htm#eater1">eater1</a> starting from a block.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OO..OOO...............................................$OO..O.................................................$.....O................................................$......................................................$......................................................$......................................................$......................................................$......................................................$......................................................$......................................................$................OOO...................................$................O.....................................$.................O....................................$......................................................$......................................................$......................................................$......................................................$.......................OOO............................$.......................O..............................$........................O.............................$......................................................$......................................................$......................................................$......................................................$......................................................$......................................................$......................................................$..............................O.......................$........................O....OO.......................$.......................OO....O.O......................$.......................O.O............................$......................................................$......................................................$..........................O...........................$.........................OO...........................$.........................O.O..........................$......................................................$.............................OOO....................OO$.............................O.....................OO.$..............................O......................O$"
+>OO..OOO...............................................
+OO..O.................................................
+.....O................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+................OOO...................................
+................O.....................................
+.................O....................................
+......................................................
+......................................................
+......................................................
+......................................................
+.......................OOO............................
+.......................O..............................
+........................O.............................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+..............................O.......................
+........................O....OO.......................
+.......................OO....O.O......................
+.......................O.O............................
+......................................................
+......................................................
+..........................O...........................
+.........................OO...........................
+.........................O.O..........................
+......................................................
+.............................OOO....................OO
+.............................O.....................OO.
+..............................O......................O
+</a></pre></td></tr></table></center>
 <p>Adam P. Goucher's <a href="#slmake">slmake</a> <a href="#searchprogram">search program</a>, made available in May
 2017, makes it much easier to find a slow glider construction for a
 wide variety of <a href="#stable">stable</a> <a href="lex_c.htm#circuit">circuitry</a>.
 <p><a name=slowsalvo>:</a><b>slow salvo</b> See <a href="#slowgliderconstruction">slow glider construction</a>.
 <p><a name=smallfish>:</a><b>small fish</b> = <a href="lex_l.htm#lwss">LWSS</a>
-<p><a name=smalllake>:</a><b>small lake</b> (p1) See also <a href="lex_l.htm#lake">lake</a>.
+<p><a name=smalllake>:</a><b>small lake</b> (p1) A 20-cell <a href="#stilllife">still life</a>, but technically not actually
+a <a href="lex_l.htm#lake">lake</a> because it is not constructed entirely out of <a href="lex_d.htm#domino">dominoes</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:....O....$...O.O...$...O.O...$.OO...OO.$O.......O$.OO...OO.$...O.O...$...O.O...$....O....$"
 >....O....
 ...O.O...
@@ -1010,10 +1234,11 @@ O.....O
 OOO.OOO
 </a></pre></td></tr></table></center>
 <p><a name=smmbreeder>:</a><b>SMM breeder</b> See <a href="lex_b.htm#breeder">breeder</a>.
-<p><a name=smoke>:</a><b>smoke</b> Debris which is fairly long-lived but eventually dies
+<p><a name=smoke>:</a><b>smoke</b> Debris that is fairly long-lived but eventually dies
 completely. Basically, a large <a href="#spark">spark</a>. This term is used
-especially when talking about the output from a <a href="#spaceship">spaceship</a> such as
-the <a href="#smokingship">smoking ship</a>.
+especially when talking about the output from a <a href="#smokingship">smoking ship</a>. Some
+<a href="lex_h.htm#herschelconduit">Herschel conduits</a> such as <a href="lex_f.htm#fx119">Fx119</a> also create large amounts of
+smoke.
 <p><a name=smokingship>:</a><b>smoking ship</b> A <a href="#spaceship">spaceship</a> which produces <a href="#smoke">smoke</a>. If the smoke
 extends past the edge of the rest of the spaceship, then it can be
 used to perturb other objects as the spaceship passes by. Running
@@ -1151,7 +1376,7 @@ O.OO.OO
 utility he wrote called <a href="lex_b.htm#bellman">Bellman</a>. Compare <a href="lex_b.htm#boojumreflector">boojum reflector</a>. Four
 common Snark variants are shown below: Playle's original at the top,
 and variants by Heinrich Koenig, Simon Ekstr&ouml;m, and Shannon Omick to
-the left, bottom, and right, respectively. As of October 2017, only
+the left, bottom, and right, respectively. As of June 2018, only
 Playle's variant has a known <a href="#slowgliderconstruction">slow glider construction</a> <a href="lex_r.htm#recipe">recipe</a> for
 all orientations.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.............................OO....................$............................O.O....................$......................OO....O......................$....................O..O..OO.OOOO..................$....................OO.O.O.O.O..O..................$.......................O.O.O.O.....................$.......................O.O.OO......................$........................O..........................$...................................................$.....................................OO............$............................OO.......O.............$............................OO.....O.O.............$.........O.........................OO..............$.........OOO.......................................$............O........O.............................$...........OO.......O..............................$....................OOO............................$...................................................$...OO..............................................$...O.....................OO........................$OO.O......................O........................$O..OOO....OO...........OOO.........................$.OO...O...OO...........O......................O....$...OOOO.....................OO..............OOOOO..$...O...............OO........O.............O.....O.$....OOO............O.O.......O.O............OOO..O.$.......O.............O........OO...............O.OO$..OOOOO..............OO.....................OOOO..O$.O..O......................O...........OO...O...OO.$.OO......................OOO...........OO....OOO...$........................O......................O...$........................OO.....................O.OO$..............................................OO.OO$...................................................$...................................................$......................................OO...........$......................................O............$.......................................OOO.........$..............OO.........................O.........$.............O.O.....OO............................$.............O.......OO............................$............OO.....................................$...................................................$..........................O........................$................OO....OO.O.O.......................$...............O..O..O.O.O.O.......................$................OO...O.O.O.OO......................$..................OOOO.OO..O.......................$..................O...O....O.......................$...................O..O.OOO........................$....................O.O.O..........................$.....................O.............................$"
@@ -1239,8 +1464,45 @@ O...O.O....O.O...O
 ...O.O......O.O...
 ...OO........OO...
 </a></pre></td></tr></table></center>
-<p><a name=soup>:</a><b>soup</b> A random initial pattern, often assumed to cover the whole Life
-universe.
+<p><a name=soup>:</a><b>soup</b> A random initial pattern, either contained within a small area,
+or alternatively filling the whole Life universe.
+<p>Finite soups probably have behaviors very different than infinite
+soups, but this is obviously unknown. Infinite soups may remain
+chaotic indefinitely since any reaction, no matter how rare, is bound
+to happen somewhere.
+<p>Soups can have an average density, with results varying based on
+that. See <a href="#sparselife">sparse Life</a> for a discussion of what can happen at a low
+density.
+<p>Finite soups for sizes such as 16x16 (asymmetric) have been
+examined by the billions by scripts such as <a href="lex_a.htm#apgsearch">apgsearch</a> to find
+interesting results. Many new <a href="lex_o.htm#oscillator">oscillators</a> and <a href="#synthesis">synthesis</a>
+<a href="lex_r.htm#recipe">recipes</a> have been discovered, as well as previously known rare
+patterns such as <a href="#stabilizedswitchengine">stabilized switch engines</a>. In addition, soups are
+used to generate statistical <a href="lex_c.htm#census">census</a> data, and to decide whether
+specific objects can be considered <a href="lex_n.htm#natural">natural</a>.
+<p>Soups can be fully random, or they can be forced to be <a href="#symmetric">symmetric</a>.
+The results for these two types of soups can differ since symmetric
+soups tend to create large symmetrical objects at a much higher rate.
+Shown below is an unusual mirror-symmetric soup that produces a
+<a href="lex_p.htm#pufferfish">pufferfish</a> and nothing else.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OOOO..OO.OOO.O...O.OOO.OO..OOOO$.O.O.OO.O.............O.OO.O.O.$..OOO..O.O.O.......O.O.O..OOO..$O.OO.OOO.O..O.....O..O.OOO.OO.O$.OOOO.O...OO.OOOOO.OO...O.OOOO.$.....OO...OO.O.O.O.OO...OO.....$..OOO...OO...O...O...OO...OOO..$O..O..O.OO...OO.OO...OO.O..O..O$OO.O..O...O.........O...O..O.OO$O.O.O...OOOO..OOO..OOOO...O.O.O$O.OOO.OO..OO...O...OO..OO.OOO.O$..O.....OO...O...O...OO.....O..$OOOOO.O.OOO..O...O..OOO.O.OOOOO$.O....O....O..OOO..O....O....O.$.OO.O...OOOOOOOOOOOOOOO...O.OO.$OOOO.OOO......O.O......OOO.OOOO$"
+>OOOO..OO.OOO.O...O.OOO.OO..OOOO
+.O.O.OO.O.............O.OO.O.O.
+..OOO..O.O.O.......O.O.O..OOO..
+O.OO.OOO.O..O.....O..O.OOO.OO.O
+.OOOO.O...OO.OOOOO.OO...O.OOOO.
+.....OO...OO.O.O.O.OO...OO.....
+..OOO...OO...O...O...OO...OOO..
+O..O..O.OO...OO.OO...OO.O..O..O
+OO.O..O...O.........O...O..O.OO
+O.O.O...OOOO..OOO..OOOO...O.O.O
+O.OOO.OO..OO...O...OO..OO.OOO.O
+..O.....OO...O...O...OO.....O..
+OOOOO.O.OOO..O...O..OOO.O.OOOOO
+.O....O....O..OOO..O....O....O.
+.OO.O...OOOOOOOOOOOOOOO...O.OO.
+OOOO.OOO......O.O......OOO.OOOO
+</a></pre></td></tr></table></center>
 <p><a name=spacedust>:</a><b>space dust</b> A part of a <a href="#spaceship">spaceship</a> or <a href="lex_o.htm#oscillator">oscillator</a> which looks like a
 random mix of ON and OFF cells. It is usually very difficult to find
 a <a href="lex_g.htm#glidersynthesis">glider synthesis</a> for an object that consists wholly or partly of
@@ -1352,8 +1614,8 @@ evolved multiple times from random asymmetric <a href="#soup">soup</a> starting
 conditions. See also the entries on individual spaceship speeds:
 <a href="lex_c.htm#c2spaceship">c/2 spaceship</a>, <a href="lex_c.htm#c3spaceship">c/3 spaceship</a>, <a href="lex_c.htm#c4spaceship">c/4 spaceship</a>, <a href="lex_c.htm#c5spaceship">c/5 spaceship</a>,
 <a href="lex_c.htm#c6spaceship">c/6 spaceship</a>, <a href="lex_c.htm#c7spaceship">c/7 spaceship</a>, <a href="lex_c.htm#c10spaceship">c/10 spaceship</a>, <a href="lex_c.htm#c12spaceship">c/12 spaceship</a>,
-<a href="lex_1.htm#a-2c5spaceship">2c/5 spaceship</a>, <a href="lex_1.htm#a-2c7spaceship">2c/7 spaceship</a>, <a href="lex_1.htm#a-3c7spaceship">3c/7 spaceship</a>, and
-<a href="lex_1.htm#a-17c45spaceship">17c/45 spaceship</a>.
+<a href="lex_1.htm#a-2c5spaceship">2c/5 spaceship</a>, <a href="lex_1.htm#a-2c7spaceship">2c/7 spaceship</a>, <a href="lex_1.htm#a-3c7spaceship">3c/7 spaceship</a>,
+<a href="lex_1.htm#a-21c6spaceship">(2,1)c/6 spaceship</a>, and <a href="lex_1.htm#a-17c45spaceship">17c/45 spaceship</a>.
 <p>It is known that there exist spaceships travelling in all rational
 directions and at arbitrarily slow speeds (see
 <a href="lex_u.htm#universalconstructor">universal constructor</a>). Before 1989, however, the only known
@@ -1363,38 +1625,39 @@ examples travelled at <i>c</i>/4 diagonally (gliders) or <i>c</i>/2 orthogonally
 for new <a href="lex_e.htm#elementary">elementary</a> spaceships, and had considerable success. Other
 people have continued these searches using tools such as <a href="lex_l.htm#lifesrc">lifesrc</a>
 and <a href="lex_g.htm#gfind">gfind</a>, and as a result we now have a great variety of
-elementary spaceships travelling at fifteen different velocities.
+elementary spaceships travelling at sixteen different velocities.
 The following table details the discovery of elementary spaceships
-with new velocities as of October 2017.
+with new velocities as of July 2018.
 <pre>
-	--------------------------------------------------------------
-	Speed Direction  First Discovery   Discoverer             Date
-	--------------------------------------------------------------
-	c/4   diagonal   <a href="lex_g.htm#glider">glider</a>            Richard Guy            1970
-	c/2   orthogonal <a href="lex_l.htm#lwss">LWSS</a>              John Conway            1970
-	c/3   orthogonal <a href="lex_1.htm#a-25p3h1v01">25P3H1V0.1</a>        Dean Hickerson     Aug 1989
-	c/4   orthogonal <a href="lex_1.htm#a-119p4h1v0">119P4H1V0</a>         Dean Hickerson     Dec 1989
-	c/12  diagonal   <a href="lex_c.htm#cordership">Cordership</a>        Dean Hickerson     Apr 1991
-	2c/5  orthogonal <a href="lex_1.htm#a-44p5h2v0">44P5H2V0</a>          Dean Hickerson     Jul 1991
-	c/5   orthogonal <a href="lex_s.htm#snail">snail</a>             Tim Coe            Jan 1996
-	2c/7  orthogonal <a href="lex_w.htm#weekender">weekender</a>         David Eppstein     Jan 2000
-	c/6   orthogonal <a href="lex_d.htm#dragon">dragon</a>            Paul Tooke         Apr 2000
-	c/5   diagonal   <a href="lex_1.htm#a-295p5h1v1">295P5H1V1</a>         Jason Summers      Nov 2000
-	c/6   diagonal   <a href="lex_s.htm#seal">seal</a>              Nicolay Beluchenko Sep 2005
-	c/7   diagonal   <a href="lex_l.htm#lobster">lobster</a>           Matthias Merzenich Aug 2011
-	c/7   orthogonal <a href="lex_l.htm#loafer">loafer</a>            Josh Ball          Feb 2013
-	c/10  orthogonal <a href="lex_c.htm#copperhead">copperhead</a>        zdr                Mar 2016
-	3c/7  orthogonal <a href="lex_s.htm#spaghettimonster">spaghetti monster</a> Tim Coe            Jun 2016
-	--------------------------------------------------------------
+  -----------------------------------------------------------------
+  Speed    Direction  First Discovery   Discoverer             Date
+  -----------------------------------------------------------------
+  c/4      diagonal   <a href="lex_g.htm#glider">glider</a>            Richard Guy            1970
+  c/2      orthogonal <a href="lex_l.htm#lwss">LWSS</a>              John Conway            1970
+  c/3      orthogonal <a href="lex_1.htm#a-25p3h1v01">25P3H1V0.1</a>        Dean Hickerson     Aug 1989
+  c/4      orthogonal <a href="lex_1.htm#a-119p4h1v0">119P4H1V0</a>         Dean Hickerson     Dec 1989
+  c/12     diagonal   <a href="lex_c.htm#cordership">Cordership</a>        Dean Hickerson     Apr 1991
+  2c/5     orthogonal <a href="lex_1.htm#a-44p5h2v0">44P5H2V0</a>          Dean Hickerson     Jul 1991
+  c/5      orthogonal <a href="lex_s.htm#snail">snail</a>             Tim Coe            Jan 1996
+  2c/7     orthogonal <a href="lex_w.htm#weekender">weekender</a>         David Eppstein     Jan 2000
+  c/6      orthogonal <a href="lex_d.htm#dragon">dragon</a>            Paul Tooke         Apr 2000
+  c/5      diagonal   <a href="lex_1.htm#a-295p5h1v1">295P5H1V1</a>         Jason Summers      Nov 2000
+  c/6      diagonal   <a href="lex_s.htm#seal">seal</a>              Nicolay Beluchenko Sep 2005
+  c/7      diagonal   <a href="lex_l.htm#lobster">lobster</a>           Matthias Merzenich Aug 2011
+  c/7      orthogonal <a href="lex_l.htm#loafer">loafer</a>            Josh Ball          Feb 2013
+  c/10     orthogonal <a href="lex_c.htm#copperhead">copperhead</a>        zdr                Mar 2016
+  3c/7     orthogonal <a href="lex_s.htm#spaghettimonster">spaghetti monster</a> Tim Coe            Jun 2016
+  (2,1)c/7 oblique    <a href="lex_s.htm#sirrobin">Sir Robin</a>         Adam P. Goucher    Mar 2018
+  -----------------------------------------------------------------
 </pre>
 <p>Several infinite families of adjustable-velocity <a href="lex_m.htm#macrospaceship">macro-spaceships</a>
 have also been constructed, of which the first was Gabriel Nivasch's
 <a href="lex_c.htm#caterpillar">Caterpillar</a> from December 2004. The macro-spaceship with the
 widest range of possible speeds is Michael Simkin's <a href="lex_c.htm#caterloopillar">Caterloopillar</a>
-from April 2016; in theory it supports any rational speed strictly
-less than <i>c</i>&lt;4. A somewhat similar design supporting any rational
-speed strictly less than <i>c</i>/2 has been shown to be feasible, but as of
-October 2017 no explicit examples have been constructed.
+from April 2016; in theory it supports any rational orthogonal speed
+strictly less than <i>c</i>&lt;4. A somewhat similar design supporting any
+rational speed strictly less than <i>c</i>/2 has been shown to be feasible,
+but as of July 2018 no explicit examples have been constructed.
 <p>A period <i>p</i> spaceship that displaces itself (<i>m</i>,<i>n</i>) during its period,
 where <i>m</i>&gt;=<i>n</i>, is said to be of type (<i>m</i>,<i>n</i>)/<i>p</i>. It was proved by Conway
 in 1970 that <i>p</i>&gt;=2<i>m</i>+2<i>n</i>. (This follows immediately from the
@@ -1413,8 +1676,8 @@ collection of cells periodically thrown off by an <a href="lex_o.htm#oscillator"
 <a href="#spaceship">spaceship</a>, but other dying patterns, particularly those consisting
 or only one or two cells (such as produced by certain glider
 collisions, for example), are also described as sparks. For examples
-of small sparks see <a href="lex_u.htm#unix">unix</a> and <a href="lex_h.htm#hwss">HWSS</a>. For an example of a much
-larger spark see <a href="#schickengine">Schick engine</a>.
+of small sparks see <a href="lex_u.htm#unix">unix</a> and <a href="lex_h.htm#hwss">HWSS</a>. Examples of much larger
+sparks are seen in <a href="#schickengine">Schick engine</a> and <a href="lex_t.htm#twinbeesshuttlespark">twin bees shuttle spark</a>.
 <p><a name=sparkcoil>:</a><b>spark coil</b> (p2) Found in 1971.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OO....OO$O.O..O.O$..O..O..$O.O..O.O$OO....OO$"
 >OO....OO
@@ -1445,11 +1708,11 @@ O.O........OO.......O.O..........O.O
 .....................OOO............
 .....................O..............
 </a></pre></td></tr></table></center>
-These can be used to build <a href="lex_i.htm#intermittingglidergun">intermitting glider guns</a>. The left-hand
-eater produces a spark nine ticks after a glider impact, with the
-result that the period of the constituent guns can't be a multiple of
-4. The right-hand eater produces the same spark ten ticks after
-impact, which allows p4<i>N</i> guns to be used.
+The above mechanisms can be used to build <a href="lex_i.htm#intermittingglidergun">intermitting glider guns</a>.
+The left-hand eater produces a spark nine ticks after a glider
+impact, with the result that the period of the constituent guns can't
+be a multiple of 4. The right-hand eater produces the same spark ten
+ticks after impact, which allows p4<i>N</i> guns to be used.
 <p>The separation of the spark also allows this reaction to perform
 other <a href="lex_p.htm#perturbation">perturbations</a> "around the corner" of some objects. For
 example, it was used by Jason Summers in 2004 to cap the ends of a
@@ -1482,7 +1745,7 @@ ratio of about 2:1. Much later it will be dominated by simple
 long-term fate of a sparse Life universe is less certain. It may
 possibly become dominated by self-reproducing patterns (see
 <a href="lex_u.htm#universalconstructor">universal constructor</a>), but it is not at all clear that there is
-any mechanism for these to deal with the all junk produced by switch
+any mechanism for these to deal with all the junk produced by switch
 engines.
 <p><a name=spartan>:</a><b>Spartan</b> A pattern composed of subunits that can be easily constructed
 in any orientation, usually with a <a href="#slowsalvo">slow salvo</a>. Generally this means
@@ -1533,8 +1796,8 @@ other stable components. See <a href="#stablepseudoheisenburp">stable pseudo-Hei
 <p>The <a href="#stargate">star gate</a> seems like it can transfer a signal faster than the
 <a href="#speedoflight">speed of light</a>. The illusion is explained in
 <a href="lex_f.htm#fastforwardforcefield">Fast Forward Force Field</a>.
-<p><a name=speedoflight>:</a><b>speed of light</b> A speed of one cell per generation, the greatest speed
-at which any effect can propagate. Usually denoted <i>c</i>.
+<p><a name=speedoflight>:</a><b>speed of light</b> The greatest speed at which any effect can propagate;
+in <a href="lex_l.htm#life">Life</a>, a speed of one cell per <a href="lex_g.htm#generation">generation</a>. Usually denoted <i>c</i>.
 <p><a name=spentomino>:</a><b>S-pentomino</b> Conway's name for the following <a href="lex_p.htm#pentomino">pentomino</a>, which
 rapidly dies.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..OO$OOO.$"
@@ -1579,6 +1842,42 @@ usually small <a href="lex_c.htm#constellation">constellations</a> that produce 
 gliders when struck by a single glider. In other words, they are
 multi-glider <a href="#seed">seeds</a>. These are important for constructing
 self-destruct circuitry in <a href="#selfconstructing">self-constructing</a> spaceships.
+<p>The following combination, a <a href="#syringe">syringe</a> attached to an SE7T14
+<a href="lex_c.htm#converter">converter</a> combined with an <a href="lex_n.htm#nw31">NW31</a> converter, is one of the smallest
+known glider splitters as of July 2018. Another small splitter with
+a 90-degree <a href="lex_c.htm#colourchanging">colour-changing</a> output is shown under <a href="lex_r.htm#reflector">reflector</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..........OO...........O......OO....................$..........OO..........O.O....O..O...................$......................O.O...O.OOO...O...............$.....................OO.OO.O.O......OOO.............$.........................O.O...OO......O............$.....................OO.O..OOOO.O.....OO............$.....................OO.O.O...O.....................$.........................O.O...O....................$..........................O.O...O...................$...........................O...OO...................$....................................................$....................................................$....................................................$..................OO................................$..................OO................................$...OO...............................................$..O..O..............................................$.O.OO...............................................$.O................................................OO$OO................................................OO$...............OO...................................$...............O....................................$................OOO.................................$..................O..........OO.....................$............................O.O.....................$............................O.......................$...........................OO.......................$OOO.................................................$..O.................................................$.O..................................................$"
+>..........OO...........O......OO....................
+..........OO..........O.O....O..O...................
+......................O.O...O.OOO...O...............
+.....................OO.OO.O.O......OOO.............
+.........................O.O...OO......O............
+.....................OO.O..OOOO.O.....OO............
+.....................OO.O.O...O.....................
+.........................O.O...O....................
+..........................O.O...O...................
+...........................O...OO...................
+....................................................
+....................................................
+....................................................
+..................OO................................
+..................OO................................
+...OO...............................................
+..O..O..............................................
+.O.OO...............................................
+.O................................................OO
+OO................................................OO
+...............OO...................................
+...............O....................................
+................OOO.................................
+..................O..........OO.....................
+............................O.O.....................
+............................O.......................
+...........................OO.......................
+OOO.................................................
+..O.................................................
+.O..................................................
+</a></pre></td></tr></table></center>
 <p><a name=spps>:</a><b>SPPS</b> (<i>c</i>/5 orthogonally, p30) The symmetric <a href="lex_p.htm#pps">PPS</a>. The original PPS
 found by David Bell in May 1998. Compare <a href="lex_a.htm#apps">APPS</a>.
 <p><a name=sqrtgun>:</a><b>sqrtgun</b> Any glider-emitting pattern which emits its nth glider at a
@@ -1606,13 +1905,80 @@ it prevents the engine from ever being destroyed.
 Charles Corderman soon after he discovered the switch engine itself.
 There is a p288 block-laying type (the more common of the two) and
 the p384 glider-producing type. These two puffers are the most
-<a href="lex_n.htm#natural">natural</a> infinite growth patterns in Life, being the only ones ever
-seen to occur from random starting patterns.
+<a href="lex_n.htm#natural">natural</a> infinite growth patterns in Life. As of June 2018 they are
+the basis for every infinite growth pattern ever seen to occur from a
+random asymmetric <a href="#soup">soup</a>, even after trillions of <a href="lex_c.htm#census">census</a> results by
+<a href="lex_a.htm#apgsearch">apgsearch</a> and similar projects.
 <p>Patterns giving rise to block-laying switch engines can be seen
 under <a href="lex_i.htm#infinitegrowth">infinite growth</a>, and one giving rise to a glider-producing
 switch engine is shown under <a href="lex_t.htm#timebomb">time bomb</a>.
+<p>Here is the block-laying type showing its distinctive zig-zag trail
+of blocks.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..O.........................................................$.O.O........................................................$............................................................$.O..O.......................................................$...OO.......................................................$....O.......................................................$..................OO........................................$..................OO........................................$............................................................$............................................................$.OO.........................................................$...O........................................................$..OO........................................................$.OOO...............O........................................$.OO................OO.....OO................................$OOO.O..............OO.....OO................................$.O...O..........OO..........................................$...O..O..........O..........................................$...OOO............O.........................................$....OO........OO............................................$..............OO............................................$............................................................$..................................OO........................$..................................OO........................$............................................................$............................................................$......OO....................................................$......OO................OO..................................$........................OO..................................$............................................................$..........................................OO................$....................OO....................OO................$....................OO......................................$............................................................$..............OO............................................$..............OO............................................$.......................................OO...................$.......................................OO...................$............................................................$............................................................$...................................OO.......................$...................................OO.......................$............................................................$............................................................$............................................................$............................................................$..........................................................OO$..........................................................OO$............................................................$............................................................$..............................OO............................$..............................OO................OO..........$................................................OO..........$............................................................$............................................................$............................................OO..............$............................................OO..............$............................................................$......................................OO....................$......................................OO....................$"
+>..O.........................................................
+.O.O........................................................
+............................................................
+.O..O.......................................................
+...OO.......................................................
+....O.......................................................
+..................OO........................................
+..................OO........................................
+............................................................
+............................................................
+.OO.........................................................
+...O........................................................
+..OO........................................................
+.OOO...............O........................................
+.OO................OO.....OO................................
+OOO.O..............OO.....OO................................
+.O...O..........OO..........................................
+...O..O..........O..........................................
+...OOO............O.........................................
+....OO........OO............................................
+..............OO............................................
+............................................................
+..................................OO........................
+..................................OO........................
+............................................................
+............................................................
+......OO....................................................
+......OO................OO..................................
+........................OO..................................
+............................................................
+..........................................OO................
+....................OO....................OO................
+....................OO......................................
+............................................................
+..............OO............................................
+..............OO............................................
+.......................................OO...................
+.......................................OO...................
+............................................................
+............................................................
+...................................OO.......................
+...................................OO.......................
+............................................................
+............................................................
+............................................................
+............................................................
+..........................................................OO
+..........................................................OO
+............................................................
+............................................................
+..............................OO............................
+..............................OO................OO..........
+................................................OO..........
+............................................................
+............................................................
+............................................OO..............
+............................................OO..............
+............................................................
+......................................OO....................
+......................................OO....................
+</a></pre></td></tr></table></center>
 <p><a name=stable>:</a><b>stable</b> A pattern is said to be stable if it is a <a href="lex_p.htm#parent">parent</a> of itself.
-See <a href="#stilllife">still life</a>.
+Stable objects are oscillators with period 1 (p1), and are generally
+called <a href="#stilllife">still lifes</a>.
 <p><a name=stablepseudoheisenburp>:</a><b>stable pseudo-Heisenburp</b> A multi-stage <a href="lex_c.htm#converter">converter</a> constructed by
 Dave Greene in January 2007, using a complex recipe found by Noam
 Elkies to insert a signal into a <a href="lex_1.htm#a-2c3wire">2c/3 wire</a>. The wire's high
@@ -1725,7 +2091,29 @@ eater is eating are considered to constitute the stator of the eater.
 This is not always well-defined, because an eater can have more than
 one eating action.
 <p><a name=statorless>:</a><b>statorless</b> A statorless <a href="lex_o.htm#oscillator">oscillator</a> is one in which no cell is
-permanently on - that is, the <a href="#stator">stator</a> is empty.
+permanently on - that is, the <a href="#stator">stator</a> is empty, or in other words
+the oscillator has the maximum possible volatility. See the
+<a href="lex_v.htm#volatility">volatility</a> entry for examples of this type of oscillator at
+different periods. Statorless oscillators can be constructed for any
+sufficiently large period, using <a href="lex_u.htm#universalconstructor">universal constructor</a> technology.
+<p><a name=statorlessp5>:</a><b>statorless p5</b> (p5) Found by Josh Ball, June 2016. The first and only
+known <a href="#statorless">statorless</a> <a href="lex_p.htm#period">period</a> 5 <a href="lex_o.htm#oscillator">oscillator</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:O.............O$.OO.........OO.$O....OO.OO....O$OO.O.......O.OO$.O.O..O.O..O.O.$..O.O.....O.O..$..OOO.....OOO..$..OOO.....OOO..$..O.O.....O.O..$.O.O..O.O..O.O.$OO.O.......O.OO$O....OO.OO....O$.OO.........OO.$O.............O$"
+>O.............O
+.OO.........OO.
+O....OO.OO....O
+OO.O.......O.OO
+.O.O..O.O..O.O.
+..O.O.....O.O..
+..OOO.....OOO..
+..OOO.....OOO..
+..O.O.....O.O..
+.O.O..O.O..O.O.
+OO.O.......O.OO
+O....OO.OO....O
+.OO.........OO.
+O.............O
+</a></pre></td></tr></table></center>
 <p><a name=step>:</a><b>step</b> Another term for a <a href="lex_g.htm#generation">generation</a> or <a href="lex_t.htm#tick">tick</a>. This term is
 particularly used in describing <a href="lex_c.htm#conduit">conduits</a>. For example, a 64-step
 conduit is one through which the active object takes 64 generations
@@ -1752,7 +2140,7 @@ an infinite number of 8-bit still lifes.
 stable pattern as a <a href="#strictstilllife">strict still life</a> only if its <a href="lex_i.htm#island">islands</a> cannot
 be divided into two or more nonempty sets both of which are stable in
 their own right. If such a subdivision can be made, the pattern can
-referred to as a <a href="lex_c.htm#constellation">constellation</a>. If its cells form a single
+be referred to as a <a href="lex_c.htm#constellation">constellation</a>. If its cells form a single
 <a href="lex_c.htm#cluster">cluster</a> it is also, more specifically, either a <a href="lex_p.htm#pseudostilllife">pseudo still life</a>
 or a <a href="lex_q.htm#quasistilllife">quasi still life</a>.
 <p>In rare cases above a certain size threshold, a pattern may be
@@ -1764,6 +2152,39 @@ two. See the 32-bit <a href="lex_t.htm#triplepseudo">triple pseudo</a> (32 bits)
 lifes can be incrementally constructed using glider collisions. For
 a subset of small still lifes that have been found to be especially
 useful in <a href="#selfconstructing">self-constructing</a> circuitry, see also <a href="#spartan">Spartan</a>.
+<p>The smallest still life is the <a href="lex_b.htm#block">block</a>. Arbitrarily large still
+lifes are easy to construct, for example by extending a <a href="lex_c.htm#canoe">canoe</a> or
+<a href="lex_b.htm#barge">barge</a>. The maximum density of a large still life is 1/2, which can
+be achieved by an arbitrarily large patch of <a href="lex_z.htm#zebrastripes">zebra stripes</a> or
+<a href="lex_c.htm#chickenwire">chicken wire</a>, among many other options. See <a href="lex_d.htm#density">density</a> for more
+precise limits.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...O..O..O..O..O..O...$.OOOOOOOOOOOOOOOOOOOO.$O....................O$OOOOOOOOOOOOOOOOOOOOOO$......................$OOOOOOOOOOOOOOOOOOOOOO$O....................O$.OOOOOOOOOOOOOOOOOOOO.$......................$.OOOOOOOOOOOOOOOOOOOO.$O....................O$OOOOOOOOOOOOOOOOOOOOOO$......................$OOOOOOOOOOOOOOOOOOOOOO$O....................O$.OOOOOOOOOOOOOOOOOOOO.$......................$.OOOOOOOOOOOOOOOOOOOO.$O....................O$OOOOOOOOOOOOOOOOOOOOOO$......................$OOOOOOOOOOOOOOOOOOOOOO$O....................O$.OOOOOOOOOOOOOOOOOOOO.$...O..O..O..O..O..O...$"
+>...O..O..O..O..O..O...
+.OOOOOOOOOOOOOOOOOOOO.
+O....................O
+OOOOOOOOOOOOOOOOOOOOOO
+......................
+OOOOOOOOOOOOOOOOOOOOOO
+O....................O
+.OOOOOOOOOOOOOOOOOOOO.
+......................
+.OOOOOOOOOOOOOOOOOOOO.
+O....................O
+OOOOOOOOOOOOOOOOOOOOOO
+......................
+OOOOOOOOOOOOOOOOOOOOOO
+O....................O
+.OOOOOOOOOOOOOOOOOOOO.
+......................
+.OOOOOOOOOOOOOOOOOOOO.
+O....................O
+OOOOOOOOOOOOOOOOOOOOOO
+......................
+OOOOOOOOOOOOOOOOOOOOOO
+O....................O
+.OOOOOOOOOOOOOOOOOOOO.
+...O..O..O..O..O..O...
+</a></pre></td></tr></table></center>
 <p><a name=stilllifetagalong>:</a><b>still life tagalong</b> A <a href="lex_t.htm#tagalong">tagalong</a> which takes the form of a
 <a href="#stilllife">still life</a> in at least one <a href="lex_p.htm#phase">phase</a>. An example is shown below.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..OO...............$.OO.OO.............$..OOOO.............$...OO..............$...................$...OOOOO...........$..OOOOOOO..........$.OO.OOOOO..........$..OO...............$...................$........O.O.....OO.$......O....O...O..O$......OO.....O.O..O$.O..O..OOOO.O...OO.$O.......OO.........$O...O..............$OOOO...............$"
@@ -1894,48 +2315,52 @@ neither of the <a href="lex_t.htm#table">tables</a> are stable by themselves. Se
 <a href="lex_t.htm#triplepseudo">triple pseudo</a>, <a href="lex_q.htm#quadpseudo">quad pseudo</a>.
 <p>Still lifes have been enumerated by Conway (4-7 bits), Robert
 Wainwright (8-10 bits), Dave Buckingham (11-13 bits), Peter Raynham
-(14 bits), Mark Niemiec (15-24 bits), and Simon Ekstr&ouml;m and
-Nathaniel Johnston (25-32 bits). The resulting figures are shown
-below; see also <a href="https://oeis.org/A019473">https://oeis.org/A019473</a>. The most recent search
-by Nathaniel Johnston has also confirmed that the <a href="lex_t.htm#triplepseudo">triple pseudo</a>
-pattern found by Gabriel Nivasch is the only such still life with 32
-bits or less. It is therefore included in the pseudo still life
-count and not in the table below.
+(14 bits), Mark Niemiec (15-24 bits), and Simon Ekstr&ouml;m and Nathaniel
+Johnston (25-32 bits). The resulting figures are shown below; see
+also <a href="https://oeis.org/A019473">https://oeis.org/A019473</a>. The most recent search by Nathaniel
+Johnston has also confirmed that the <a href="lex_t.htm#triplepseudo">triple pseudo</a> pattern found by
+Gabriel Nivasch is the only such still life with 32 bits or less. It
+is therefore included in the pseudo still life count and not in the
+table below.
 <pre>
-        --------------
-        Bits    Number
-        --------------
-         4           2
-         5           1
-         6           5
-         7           4
-         8           9
-         9          10
-        10          25
-        11          46
-        12         121
-        13         240
-        14         619
-        15        1353
-        16        3286
-        17        7773
-        18       19044
-        19       45759
-        20      112243
-        21      273188
-        22      672172
-        23     1646147
-        24     4051711
-        25     9971377
-        26    24619307
-        27    60823008
-        28   150613157
-        29   373188952
-        30   926068847
-        31  2299616637
-        32  5716948683
-        --------------
+  --------------
+  Bits    Number
+  --------------
+   4           2
+   5           1
+   6           5
+   7           4
+   8           9
+   9          10
+  10          25
+  11          46
+  12         121
+  13         240
+  14         619
+  15        1353
+  16        3286
+  17        7773
+  18       19044
+  19       45759
+  20      112243
+  21      273188
+  22      672172
+  23     1646147
+  24     4051711
+  25     9971377
+  26    24619307
+  27    60823008
+  28   150613157
+  29   373188952
+  30   926068847
+  31  2299616637
+  32  5716948683
+  --------------
 </pre>
+<p>As the number of bits increases, the strict still life count goes
+up exponentially by approximately O(2.46<sup><i>n</i></sup>). By comparison, the rate
+for pseudo still life}s is about O(2.56<sup><i>n</i></sup>) while for
+<a href="lex_q.htm#quasistilllife">quasi still lifes</a> it's around O(3.04<sup><i>n</i></sup>).
 <p><a name=strictvolatility>:</a><b>strict volatility</b> A term suggested by Noam Elkies in August 1998 for
 the proportion of cells involved in a period <i>n</i> <a href="lex_o.htm#oscillator">oscillator</a> which
 themselves oscillate with period <i>n</i>. For prime <i>n</i> this is the same as
@@ -1997,7 +2422,10 @@ linear-growth pattern. It may also be used to describe the rate of
 increase in the number of subpatterns present in a pattern, such as
 when describing a <a href="lex_r.htm#replicator">replicator</a>'s rate of reproduction. Due to limits
 enforced by the <a href="#speedoflight">speed of light</a>, no pattern's population can grow at
-an asymptotic rate faster than <a href="lex_q.htm#quadraticgrowth">quadratic growth</a>.
+an asymptotic rate faster than <a href="lex_q.htm#quadraticgrowth">quadratic growth</a>. See
+<a href="#switchenginepingpong">switch-engine ping-pong</a> for the lowest-population superlinear
+growth pattern as of July 2018, along with a list of the
+record-holders.
 <p><a name=superstring>:</a><b>superstring</b> An infinite orthogonal row of cells stabilized on one
 side so that it moves at the <a href="#speedoflight">speed of light</a>, often leaving debris
 behind. The first examples were found in 1971 by Edward Fitzgerald
@@ -2060,6 +2488,33 @@ OO.O.OO..O
 .O..OOO...
 OO....O...
 </a></pre></td></tr></table></center>
+<p><a name=sw1t43>:</a><b>SW1T43</b> A <a href="lex_h.htm#herscheltoglider">Herschel-to-glider</a> converter that produces a
+<a href="lex_t.htm#tandemglider">tandem glider</a> useful in the <a href="lex_t.htm#tee">tee</a> reaction. It is classified as a
+"G3" converter because its two gliders are three <a href="lex_l.htm#lane">lanes</a> apart.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.......OO........$.......O.........$.....O.O.........$....O.O..........$OO...O...........$OO...............$...........OO....$...........O.O...$.............O...$.............O.OO$..........OO.O.OO$O........O..O....$O.O.......OO.....$OOO..............$..O.......OOOO...$...........O..O..$.........O...OO..$.........OO......$"
+>.......OO........
+.......O.........
+.....O.O.........
+....O.O..........
+OO...O...........
+OO...............
+...........OO....
+...........O.O...
+.............O...
+.............O.OO
+..........OO.O.OO
+O........O..O....
+O.O.......OO.....
+OOO..............
+..O.......OOOO...
+...........O..O..
+.........O...OO..
+.........OO......
+</a></pre></td></tr></table></center>
+Besides the southwest-travelling glider on lane 1, the converter also
+emits the Herschel's standard <a href="lex_f.htm#firstnaturalglider">first natural glider</a>, <a href="#sw2">SW-2</a>. The
+converter's full standard name is therefore "HSW1T43_SW-2T21". See
+<a href="lex_n.htm#nw31">NW31</a> for an explanation of H-to-G naming conventions.
 <p><a name=sw2>:</a><b>SW-2</b> The simplest type of <a href="lex_h.htm#htog">H-to-G</a> <a href="lex_c.htm#converter">converter</a>, where the converter's
 effect is simply to suppress a Herschel cleanly after allowing its
 <a href="lex_f.htm#firstnaturalglider">first natural glider</a> to escape. The name should be read as "SW
@@ -2134,51 +2589,58 @@ O..OO........O.......OO.
 </a></pre></td></tr></table></center>
 <p><a name=swimmer>:</a><b>swimmer</b> = <a href="#switchengine">switch engine</a>.
 <p><a name=swimmerlane>:</a><b>swimmer lane</b> = <a href="#switchenginechannel">switch engine channel</a>.
-<p><a name=switch>:</a><b>switch</b> A signal-carrying <a href="lex_c.htm#circuit">circuit</a> that can be modified so that it
-cleanly absorbs any future signals instead of allowing them to pass.
-Optionally there may be a separate mechanism to restore the circuit
-to its original function.
-<p>In the following example, a glider from the northeast (shown) will
-perform a simple <a href="lex_b.htm#blockpull">block pull</a> that switches off an <a href="lex_f.htm#f166">F166</a> conduit, so
-that any future Herschel inputs will be cleanly absorbed. A glider
-from the southwest (also shown) can restore the block to its original
-position.
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.OO........................................................$..O........................................................$.O.........................................................$.OO...............................................OO.......$...................................................O.......$..................................................O........$..................................................OO.......$..................................O........................$..................................O.O......................$O...OO............................OO.......................$OO..OO.....................................................$.OO......................OO................................$OO.......................OO..........................OO....$.....................................................OO....$...........................................................$...........................................................$...........................................................$...........................................................$.............OO............................................$............O.O........OO..................................$..............O.......O.O..................................$......................O....................................$.....................OO.........................OO.........$................................................OO.........$...........................................................$...........................................................$..................................OO.....................OO$...................................O......................O$................................OOO....................OOO.$................................O......................O...$............................................OO.............$............................................O..............$.............................................OOO...........$...............................................O...........$"
->.OO........................................................
-..O........................................................
-.O.........................................................
-.OO...............................................OO.......
-...................................................O.......
-..................................................O........
-..................................................OO.......
-..................................O........................
-..................................O.O......................
-O...OO............................OO.......................
-OO..OO.....................................................
-.OO......................OO................................
-OO.......................OO..........................OO....
-.....................................................OO....
-...........................................................
-...........................................................
-...........................................................
-...........................................................
-.............OO............................................
-............O.O........OO..................................
-..............O.......O.O..................................
-......................O....................................
-.....................OO.........................OO.........
-................................................OO.........
-...........................................................
-...........................................................
-..................................OO.....................OO
-...................................O......................O
-................................OOO....................OOO.
-................................O......................O...
-............................................OO.............
-............................................O..............
-.............................................OOO...........
-...............................................O...........
+<p><a name=switch>:</a><b>switch</b> A <a href="#signal">signal</a>-carrying <a href="lex_c.htm#circuit">circuit</a> that can send output signals to
+two or more different locations, depending on the state of the
+mechanism. These may be <a href="lex_t.htm#togglecircuit">toggle circuits</a>, where the state of the
+switch changes after each use, or <a href="lex_p.htm#permanentswitch">permanent switches</a> that retain
+the same state through many uses until a change is made with a
+separate signal.
+<p>More generally, any circuit may be referred to as a switch, if it
+can alter its output based on stored information. For example, the
+following simple mechanism based on an eater2 was discovered by
+Emerson J. Perkins in 2007. It either reflects or absorbs an
+incoming signal, depending on the presence or absence of a nearby
+block. The block is removed if a reflection occurs.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...O.....................O....................$....O...................O.O...................$..OOO...................O.O...................$......................OOO.OO................O.$..................O..O....................OOO.$................OOO...OOO.OO...OO........O....$...............O........O.OO...OO........OO...$...............OO.............................$OO............................................$.O............................................$.O.OO.........................................$..O..O....................................OO..$...OO.....................................O.O.$..................OO........................O.$..................OO........................OO$..................................OOO.........$..................................O...........$...................................O..........$..............................................$..........................O...OO..............$.........................O.O...O..............$.....................OO.O.O...O...............$.....................OO.O....O................$.........................OOOOO.O..............$.................OO.O.OO.O....OO...........OOO$.................O.OO.O..O.OO..............O..$..........OO............OO.O.OOO............O.$..........OO...................O..............$"
+>...O.....................O....................
+....O...................O.O...................
+..OOO...................O.O...................
+......................OOO.OO................O.
+..................O..O....................OOO.
+................OOO...OOO.OO...OO........O....
+...............O........O.OO...OO........OO...
+...............OO.............................
+OO............................................
+.O............................................
+.O.OO.........................................
+..O..O....................................OO..
+...OO.....................................O.O.
+..................OO........................O.
+..................OO........................OO
+..................................OOO.........
+..................................O...........
+...................................O..........
+..............................................
+..........................O...OO..............
+.........................O.O...O..............
+.....................OO.O.O...O...............
+.....................OO.O....O................
+.........................OOOOO.O..............
+.................OO.O.OO.O....OO...........OOO
+.................O.OO.O..O.OO..............O..
+..........OO............OO.O.OOO............O.
+..........OO...................O..............
 </a></pre></td></tr></table></center>
+<p>The switching signal here is a glider produced by a high-clearance
+<a href="#syringe">syringe</a> variant found by Matthias Merzenich. The syringe is not
+technically part of the switch mechanism; any standard <a href="lex_h.htm#herschel">Herschel</a>
+source can deliver the signal to the block <a href="lex_f.htm#factory">factory</a> (the two
+<a href="lex_e.htm#eater1">eater1s</a> on the right side of the pattern). Alternate <a href="lex_c.htm#converter">converter</a>
+mechanisms could also be used to place the block.
+<p>An earlier example of the same type of one-time switch mechanism,
+also mediated by a block, can be found in the NW34T204 <a href="lex_h.htm#htog">H-to-G</a>. See
+also <a href="lex_b.htm#bistableswitch">bistable switch</a> for a very robust and versatile toggle switch
+with two input <a href="lex_l.htm#lane">lanes</a> and four possible outputs.
 <p><a name=switchablegun>:</a><b>switchable gun</b> A <a href="lex_g.htm#gun">gun</a> that includes a mechanism to turn the output
 stream off and on with simple signals, often gliders. A small
 example is Dieter Leithner's switchable LWSS gun from July 8, 1995.
@@ -2328,7 +2790,11 @@ down a channel, at the other end of which they are deleted.
 <p><a name=switchenginepingpong>:</a><b>switch-engine ping-pong</b> A very large (210515x183739)
 <a href="lex_q.htm#quadraticgrowth">quadratic growth</a> pattern found by Michael Simkin in October 2014.
 Currently this is the smallest starting population (23 cells) known
-to result in a quadratic population growth rate.
+to result in a quadratic population growth rate. Previous
+record-holders include <a href="lex_j.htm#jaws">Jaws</a>, <a href="lex_m.htm#mosquito1">mosquito1</a>, <a href="lex_m.htm#mosquito2">mosquito2</a>, <a href="lex_m.htm#mosquito3">mosquito3</a>,
+<a href="lex_m.htm#mosquito4">mosquito4</a>, <a href="lex_m.htm#mosquito5">mosquito5</a>, <a href="lex_t.htm#teeth">teeth</a>, <a href="lex_c.htm#catacryst">catacryst</a>, <a href="lex_m.htm#metacatacryst">metacatacryst</a>,
+<a href="lex_g.htm#gottsdots">Gotts dots</a>, <a href="lex_w.htm#wedge">wedge</a>, <a href="lex_1.htm#a-26cellquadraticgrowth">26-cell quadratic growth</a>,
+<a href="lex_1.htm#a-25cellquadraticgrowth">25-cell quadratic growth</a>, and <a href="lex_1.htm#a-24cellquadraticgrowth">24-cell quadratic growth</a>.
 <p><a name=symmetric>:</a><b>symmetric</b> Any object which can be rotated and/or flipped over an axis
 and still maintain the same shape. Many common small objects such as
 the <a href="lex_b.htm#block">block</a>, <a href="lex_b.htm#beehive">beehive</a>, <a href="lex_p.htm#pond">pond</a>, <a href="lex_l.htm#loaf">loaf</a>, <a href="lex_c.htm#clock">clock</a>, and <a href="lex_b.htm#blinker">blinker</a> are
@@ -2339,6 +2805,12 @@ copies of any finite object together in a symmetrical way. Unless
 the individual objects interact significantly, this is considered
 trivial and is not considered further here (e.g., two <a href="lex_l.htm#lwss">LWSSs</a>
 travelling together a hundred cells apart).
+<p>There are two kinds of symmetry. Odd symmetry occurs when an
+object's line of reflection passes through the center of a line of
+cells. Objects with odd symmetry have an odd number of columns or
+rows, and can have a <a href="lex_g.htm#gutter">gutter</a>. Even symmetry occurs when the line of
+reflection follows the boundary between two lines of cells. Objects
+with even symmetry have an even number of columns or rows.
 <p>Because the Life universe and its rules are symmetric, all
 symmetric objects must remain symmetric throughout their <a href="lex_e.htm#evolution">evolution</a>.
 Most non-symmetric objects keep their non-symmetry as they evolve,
@@ -2368,16 +2840,19 @@ non-symmetrical spaceships. Examples include <a href="lex_d.htm#dart">dart</a>, 
 <p><a name=synchronized>:</a><b>synchronized</b> Indicates that precise relative timing is required for
 two or more input <a href="#signal">signals</a> entering a <a href="lex_c.htm#circuit">circuit</a>, or two or more sets
 of <a href="lex_g.htm#glider">gliders</a> participating in a <a href="lex_g.htm#glidersynthesis">glider synthesis</a>. Compare
-<a href="lex_a.htm#asynchronous">asynchronous</a>.
+<a href="lex_a.htm#asynchronous">asynchronous</a>. See also <a href="#salvo">salvo</a> and <a href="#slowgliderconstruction">slow glider construction</a>.
 <p><a name=synchronous>:</a><b>synchronous</b> = <a href="#synchronized">synchronized</a>
 <p><a name=synthesis>:</a><b>synthesis</b> = <a href="lex_g.htm#glidersynthesis">glider synthesis</a>
-<p><a name=syringe>:</a><b>syringe</b> A small stable glider-to-Herschel converter found by Tanner
-Jacobi in March 2015. A second glider can safely follow the first
-any time after 78 ticks, but <a href="lex_o.htm#overclocking">overclocking</a> also allows the syringe
-to work at a <a href="lex_r.htm#repeattime">repeat time</a> of 74 or 75 ticks. If followed by a
-<a href="lex_d.htm#dependentconduit">dependent conduit</a> a simple <a href="lex_e.htm#eater2">eater2</a> can be used instead of the
-large <a href="lex_w.htm#weld">welded</a> <a href="lex_c.htm#catalyst">catalyst</a> shown here. A <a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks the
-output location.
+<p><a name=syringe>:</a><b>syringe</b> A small stable <a href="lex_c.htm#converter">converter</a> found by Tanner Jacobi in March
+2015, accepting a glider as input and producing an output <a href="lex_h.htm#herschel">Herschel</a>
+As of June 2018 it is the smallest known converter of this type, so
+it is very often used to handle input gliders in complex <a href="#signal">signal</a>
+<a href="lex_c.htm#circuit">circuitry</a>, as described in <a href="lex_h.htm#herschelcircuit">Herschel circuit</a>. A second glider can
+safely follow the first any time after 78 ticks, but <a href="lex_o.htm#overclocking">overclocking</a>
+also allows the syringe to work at a <a href="lex_r.htm#repeattime">repeat time</a> of 74 or 75 ticks.
+If followed by a <a href="lex_d.htm#dependentconduit">dependent conduit</a> a simple <a href="lex_e.htm#eater2">eater2</a> can be used
+instead of the large <a href="lex_w.htm#weld">welded</a> <a href="lex_c.htm#catalyst">catalyst</a> shown here. A
+<a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks the output location.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:....O.............................$.....O............................$...OOO............................$..................O...............$................OOO...............$...............O..................$...............OO.................$OO................................$.O................................$.O.OO.............................$..O..O.......................O....$...OO........................O....$..................OO.........OOO..$..................OO...........O..$..................................$..................................$..................................$...........................O...OO.$..........................O.O...O.$.........................O.O...O..$.....................OO.O.O...O...$.....................OO.O..OOOO.O.$.........................O.O...O.O$.....................OO.OO..O..O.O$......................O.O..OO...O.$..........OO..........O.O.........$..........OO...........O..........$"
 >....O.............................
 .....O............................
@@ -2407,6 +2882,8 @@ OO................................
 ..........OO..........O.O.........
 ..........OO...........O..........
 </a></pre></td></tr></table></center>
+<p>A different version of the large catalyst, with better <a href="lex_c.htm#clearance">clearance</a>
+for some situations, can be seen in the <a href="#switch">switch</a> entry.
 <hr>
 <center>
 <b>

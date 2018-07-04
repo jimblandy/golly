@@ -68,10 +68,10 @@ heptomino at the bottom of the <a href="lex_m.htm#mathematician">mathematician</
 and whose two halves are mirror images of one another, both halves
 being required for the oscillator to work. The classic examples are
 the <a href="lex_p.htm#pulsar">pulsar</a> and the <a href="lex_t.htm#tumbler">tumbler</a>. If still lifes are considered as p1
-oscillators then there are numerous simple examples such as
-<a href="lex_t.htm#tableontable">table on table</a>, <a href="lex_d.htm#deadsparkcoil">dead spark coil</a> and <a href="lex_c.htm#cismirroredrbee">cis-mirrored R-bee</a>. Some
-spaceships, such as the <a href="lex_b.htm#brain">brain</a>, the <a href="lex_s.htm#snail">snail</a> and the <a href="lex_s.htm#spider">spider</a> use the
-same principle.
+oscillators then there are numerous simple examples that include this
+kind of central <a href="lex_g.htm#gutter">gutter</a>, such as <a href="lex_t.htm#tableontable">table on table</a>, <a href="lex_d.htm#deadsparkcoil">dead spark coil</a>
+and <a href="lex_c.htm#cismirroredrbee">cis-mirrored R-bee</a>. Some spaceships, such as the <a href="lex_b.htm#brain">brain</a>, the
+<a href="lex_s.htm#snail">snail</a> and the <a href="lex_s.htm#spider">spider</a>, use the same principle.
 <p><a name=infinitegliderhotel>:</a><b>infinite glider hotel</b> A pattern by David Bell, named after Hilbert's
 "infinite hotel" scenario in which a hotel with an infinite number of
 rooms has room for more guests even if it is already full, simply by
@@ -117,9 +117,9 @@ stabilized switch engine of the block-laying type.
 ..O.....
 O.O.....
 </a></pre></td></tr></table></center>
-Nick Gotts and Paul Callahan have also shown that there is no
-infinite growth pattern with fewer than 10 cells, so that the
-question has now been answered.
+Nick Gotts and Paul Callahan showed in October 1997 that there is no
+infinite growth pattern with fewer than 10 cells, so that question
+has now been answered.
 <p>In October 2014, Michael Simkin discovered a three-glider collision
 that produces a glider-producing <a href="lex_s.htm#stabilizedswitchengine">stabilized switch engine</a> and thus
 produces infinite growth from the smallest possible number of gliders
@@ -157,7 +157,9 @@ superlinear but non-quadratic growth is <a href="lex_g.htm#gottsdots">Gotts dots
 <p><a name=inject>:</a><b>inject</b> A reaction in which a hole in a regular spaceship stream is
 filled partially or fully by adding a new spaceship of the same type
 without affecting the existing spaceships in the stream. Depending
-on the period of the stream, different mechanisms can be used.
+on the period of the stream, different mechanisms can be used. For
+adding a spaceship to an existing multi-lane <a href="lex_c.htm#convoy">convoy</a>, see
+<a href="#inserter">inserter</a>.
 <p>For large period glider streams, simple reactions such as
 <a href="lex_l.htm#lwsslwssbounce">LWSS-LWSS bounce</a> and <a href="lex_l.htm#lwssgliderbounce">LWSS-glider bounce</a> suffice. If <a href="lex_h.htm#herschel">Herschel</a>
 technology is used, a large number of <a href="lex_e.htm#edgeshooter">edge shooters</a> and
@@ -212,6 +214,10 @@ OO.........OO.O.O......O.O..........
 ............OOOO....................
 .............O......................
 </a></pre></td></tr></table></center>
+<p><a name=inserter>:</a><b>inserter</b> A mechanism that can add another spaceship into a stream or
+convoy of other spaceships without affecting the existing spaceships.
+For examples see <a href="lex_f.htm#fx119inserter">Fx119 inserter</a>, <a href="lex_t.htm#tee">tee</a>, <a href="lex_g.htm#gig">GIG</a>, <a href="lex_c.htm#clockinsertion">clock insertion</a>
+and <a href="#inject">inject</a>.
 <p><a name=integral>:</a><b>integral</b> = <a href="#integralsign">integral sign</a>
 <p><a name=integralsign>:</a><b>integral sign</b> (p1)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...OO$..O.O$..O..$O.O..$OO...$"
@@ -236,6 +242,18 @@ O............O
 <a href="lex_e.htm#elbowoperation">elbow operation</a>, or <a href="lex_g.htm#glidersynthesis">glider synthesis</a>. An intermediate target is
 a useful step toward a desired outcome, but will not appear in the
 final construction.
+<p><a name=intermittentstream>:</a><b>intermittent stream</b> A <a href="lex_s.htm#stream">stream</a> of spaceships which is based on a
+periodic stream, but which can contain holes where some of the
+spaceships are not present. There is a base period for the
+intermittent stream such that if a spaceship arrives at a specific
+location, then it always does so at a generation which is a multiple
+of the base period. For example, the output from a period 30 glider
+gun where every third glider is deleted is an intermittent stream. A
+<a href="lex_p.htm#pseudorandomglidergenerator">pseudo-random glider generator</a> can produce a complicated
+intermittent stream with no obvious pattern.
+<p>Intermittent streams can be used to transmit <a href="lex_s.htm#signal">signals</a>, where holes
+in the stream can also convey information. For example, the stream
+can be processed by an <a href="#inverter">inverter</a> having the same period.
 <p><a name=intermittingglidergun>:</a><b>intermitting glider gun</b> Despite the name, an intermitting glider gun
 (IMG) is more often an <a href="lex_o.htm#oscillator">oscillator</a> than a <a href="lex_g.htm#gun">gun</a>. There are two
 basic types. A type 1 IMG consists of two guns firing at one another
@@ -245,8 +263,23 @@ firing at a 180-degree glider <a href="lex_r.htm#reflector">reflector</a> in suc
 returning gliders temporarily disable the gun.
 <p>Both types of IMG can be used to make glider guns of periods that
 are multiples of the base period. This is done by firing another gun
-across the two-way intermittent glider stream of the IMG in such a
-way that gliders only occasionally escape.
+across the two-way <a href="#intermittentstream">intermittent stream</a> of gliders in the IMG in
+such a way that gliders only occasionally escape.
+<p><a name=inverter>:</a><b>inverter</b> A device which can be used to invert the presence or absence
+of spaceships in an <a href="#intermittentstream">intermittent stream</a> of spaceships. The device
+must be a gun whose period matches the base period of the stream,
+since if there are no input spaceships then the device must produce
+spaceships as the result of the inversion. Typically the spaceships
+are gliders, and the inverter is made from a glider gun. Inverters
+provide a way to produce a NOT logic operation on a stream.
+<p>There are several ways to produce an inverter. The simplest method
+is to simply hit the output of a gun with the input stream to delete
+its spaceships, producing an output stream that is always turned 90
+degrees from the input stream. An example is the northernmost p30
+gun in the <a href="lex_g.htm#gliderduplicator">glider duplicator</a> example pattern. For one way to
+produce an inverted output stream which is not turned, see
+<a href="#inlineinverter">inline inverter</a>.
+<p><a name=invertingreflector>:</a><b>inverting reflector</b> See <a href="#inverter">inverter</a>.
 <p><a name=island>:</a><b>island</b> The individual <a href="lex_p.htm#polyplet">polyplets</a> of which a <a href="lex_s.htm#stable">stable</a> pattern
 consists are sometimes called islands. So, for example, a <a href="lex_b.htm#boat">boat</a> has
 only one island, while an <a href="lex_a.htm#aircraftcarrier">aircraft carrier</a> has two, a <a href="lex_h.htm#honeyfarm">honey farm</a>
@@ -276,6 +309,10 @@ Andrzej Okrasinski in August 2004.
 OO..................
 .O..................
 </a></pre></td></tr></table></center>
+It has a final population of 3091 and covers an area of 413 by 364
+cells, not counting the 47 gliders it produces. Its <a href="lex_a.htm#ash">ash</a> consists
+of typical stable objects and blinkers, along with the relatively
+rare <a href="lex_p.htm#paperclip">paperclip</a>.
 <hr>
 <center>
 <b>

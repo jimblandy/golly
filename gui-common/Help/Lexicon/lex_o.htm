@@ -108,10 +108,9 @@ Herschel conduits in 1996 (see
 list of unresolved cases, all with periods of 58 or below. The list
 has been progressively reduced since then. Most recently, period 43
 and 53 oscillators were made possible in 2013 by Mike Playle's
-<a href="lex_s.htm#snark">Snark</a>. At the time of writing (October 2017) no oscillators are
-known for periods 19, 23, 38, or 41. If we insist that the
-oscillator must be <a href="lex_n.htm#nontrivial">non-trivial</a>, then 34 should be added to this
-list.
+<a href="lex_s.htm#snark">Snark</a>. As of June 2018, no oscillators are known for periods 19,
+23, 38, or 41. If we insist that the oscillator must be
+<a href="lex_n.htm#nontrivial">non-trivial</a>, then 34 should be added to this list.
 <p>Note that if we were to allow infinite oscillators, then all
 periods are certainly possible, as any period of 14 or more can be
 obtained using a <a href="lex_g.htm#glider">glider</a> (or <a href="lex_l.htm#lwss">LWSS</a>) stream, or an infinitely long
@@ -119,11 +118,36 @@ obtained using a <a href="lex_g.htm#glider">glider</a> (or <a href="lex_l.htm#lw
 <p><a name=onepergeneration>:</a><b>one per generation</b> See <a href="lex_g.htm#growbyoneobject">grow-by-one object</a>.
 <p><a name=onesidedspaceshipsynthesis>:</a><b>one-sided spaceship synthesis</b> A <a href="lex_g.htm#glidersynthesis">glider synthesis</a> of a <a href="lex_s.htm#spaceship">spaceship</a>
 in which all gliders come from the same side of the spaceship's path.
-Such syntheses are used extensively in the 17<i>c</i>/45 <a href="lex_c.htm#caterpillar">Caterpillar</a>.
-<p><a name=onetime>:</a><b>one-time</b> A concept used for <a href="lex_t.htm#turner">turners</a> and <a href="lex_s.htm#splitter">splitters</a>, specifying
-that the reaction in question is not repeatable as it would be in a
+Such syntheses are used extensively in the 17<i>c</i>/45 <a href="lex_c.htm#caterpillar">Caterpillar</a>. For
+example, here is a one-sided way to create an <a href="lex_l.htm#lwss">LWSS</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...O.....$....OO...$...OO....$.........$.........$.....O...$...O.O...$....OO...$.........$.........$.........$.........$......OOO$........O$.......O.$.........$.........$.........$OOO......$..O......$.O.......$"
+>...O.....
+....OO...
+...OO....
+.........
+.........
+.....O...
+...O.O...
+....OO...
+.........
+.........
+.........
+.........
+......OOO
+........O
+.......O.
+.........
+.........
+.........
+OOO......
+..O......
+.O.......
+</a></pre></td></tr></table></center>
+<p><a name=onetime>:</a><b>one-time</b> A term used for <a href="lex_t.htm#turner">turners</a> and <a href="lex_s.htm#splitter">splitters</a>, specifying that
+the reaction in question is not repeatable as it would be in a
 <a href="lex_r.htm#reflector">reflector</a> or <a href="lex_f.htm#fanout">fanout</a> device. Instead, the <a href="lex_c.htm#constellation">constellation</a> is used
-up in the course of the reaction, usually leaving nothing behind.
+up, usually in a <a href="lex_c.htm#clean">clean</a> reaction, but the much more common <a href="lex_d.htm#dirty">dirty</a>
+turners and splitters are also very useful in some situations.
 <p><a name=onionrings>:</a><b>onion rings</b> For each integer <i>n</i>&gt;1 onion rings of order <i>n</i> is a <a href="lex_s.htm#stable">stable</a>
 <a href="lex_a.htm#agar">agar</a> of <a href="lex_d.htm#density">density</a> 1/2 obtained by tiling the plane with a certain
 4<i>n</i> x 4<i>n</i> pattern. The tile for order 3 onion rings is shown below.
@@ -210,25 +234,61 @@ two; period 4194304 and period 8388608 versions have been
 constructed, with speeds of <i>c</i>/16384 and <i>c</i>/32768 respectively.
 <p>The MWSSes are converted to <a href="lex_h.htm#herschel">Herschels</a>, which produce a standard
 <a href="lex_s.htm#singlechannel">single-channel</a> glider stream that runs the Orthogonoid's single
-construction arm. After the child circuitry is complete, a <a href="lex_s.htm#snark">Snark</a>
-is built directly on the construction arm lane, converting it to a
-"destruction arm" that efficiently shoots down the previous
-constructor/reflector in the series as soon as it is no longer
-needed.
+construction arm. After the child circuitry is complete, a
+previously constructed <a href="lex_s.htm#snark">Snark</a> in the parent is removed from the
+construction arm lane, converting it to a "destruction arm" that
+shoots down the previous constructor/reflector in the series.
 <p><a name=oscillator>:</a><b>oscillator</b> Any pattern that is a <a href="lex_p.htm#predecessor">predecessor</a> of itself. The term
-is usually restricted to non-<a href="lex_s.htm#stable">stable</a> finite patterns. An oscillator
-is divided into a <a href="lex_r.htm#rotor">rotor</a> and a <a href="lex_s.htm#stator">stator</a>. See also <a href="#omniperiodic">omniperiodic</a>.
-<p>In general <a href="lex_c.htm#cellularautomaton">cellular automaton</a> theory the term "oscillator"
-usually covers <a href="lex_s.htm#spaceship">spaceships</a> as well, but this usage is not normal in
-Life.
+is usually restricted to non-<a href="lex_s.htm#stable">stable</a> finite patterns; period 1
+oscillators are <a href="lex_s.htm#stable">stable</a> and are usually just called <a href="lex_s.htm#stilllife">still lifes</a>.
+The <a href="lex_b.htm#blinker">blinker</a> is the smallest non-stable oscillator, having period 2.
+There are oscillators of almost all higher periods (see
+<a href="#omniperiodic">omniperiodic</a>). In general <a href="lex_c.htm#cellularautomaton">cellular automaton</a> theory the term
+"oscillator" usually covers <a href="lex_s.htm#spaceship">spaceships</a> as well, but this usage is
+not normal in Life.
+<p>Oscillators consisting of separate objects which do not react in
+any phase are usually ignored. For example, a separated <a href="lex_b.htm#blinker">blinker</a>
+and <a href="lex_p.htm#pulsar">pulsar</a> makes a period 6 oscillator, but is considered
+<a href="lex_t.htm#trivial">trivial</a>.
+<p>An oscillator can be divided into a <a href="lex_r.htm#rotor">rotor</a> and a <a href="lex_s.htm#stator">stator</a>, and the
+stator can be further subdivided into <a href="lex_b.htm#bushing">bushing</a> and <a href="lex_c.htm#casing">casing</a>. Some
+oscillators have no casing cells, and a few 100%-<a href="lex_v.htm#volatility">volatility</a>
+oscillators also have no bushing cells.
+<p>An oscillator can be constructed from any <a href="lex_g.htm#gun">gun</a> as long as <a href="lex_e.htm#eater">eaters</a>
+can be added to consume its output. If it is a <a href="lex_t.htm#true">true</a> <a href="lex_g.htm#gun">gun</a> then the
+period of the oscillator will be the same as the gun - unless the
+eating mechanism multiplies the period, as in the case of gliders
+caught by a <a href="lex_b.htm#boatbit">boat-bit</a>.
+<p>With the discovery of <a href="lex_r.htm#reflector">reflectors</a>, <a href="lex_r.htm#relay">relays</a> provide an easy way to
+create oscillators of all large periods. For example, eight gliders
+travelling in a loop created by four <a href="lex_s.htm#snark">Snarks</a> can create any period
+above 42, with a population never exceeding 356 live cells.
+<p>For the very lowest periods, whole families of <a href="lex_e.htm#extensible">extensible</a>
+oscillators are known. Examples of this are <a href="lex_b.htm#barberpole">barberpole</a>, <a href="lex_c.htm#cross">cross</a>,
+<a href="lex_p.htm#pentoad">pentoad</a>, <a href="lex_p.htm#p6shuttle">p6 shuttle</a>, <a href="lex_s.htm#snacker">snacker</a>, and <a href="lex_m.htm#multipleroteightors">multiple roteightors</a>. Any
+of the <a href="lex_s.htm#shuttle">shuttles</a> are oscillators by definition, for example the
+<a href="lex_q.htm#queenbeeshuttle">queen bee shuttle</a>. Many of these are also extensible. Other
+oscillators such as <a href="lex_f.htm#figure8">figure-8</a> and <a href="lex_t.htm#tumbler">tumbler</a> have unique mechanisms
+that are not part of an extended family.
+<p>Some oscillators are useful because of the <a href="lex_p.htm#perturbation">perturbations</a> they can
+cause to other objects. This is especially true if they provide a
+<a href="lex_s.htm#spark">spark</a> on their boundary. Some oscillators are explicitly found by
+<a href="lex_s.htm#searchprogram">search programs</a> in order to produce these sparks, such as
+<a href="lex_p.htm#pipsquirter">pipsquirters</a>.
+<p>Some higher period oscillators have been found while running random
+<a href="lex_s.htm#soup">soups</a>. This is especially true if the soup is run on a cylindrical
+or torus <a href="lex_u.htm#universe">universe</a>. Sometimes the found objects can be moved to the
+normal universe and supported there by added <a href="lex_c.htm#catalyst">catalysts</a>.
+<a href="lex_a.htm#achimsp144">Achim's p144</a> is an example.
 <p><a name=osqrtlogt>:</a><b>Osqrtlogt</b> (p1 circuitry) A pattern constructed by Adam P. Goucher in
 2010, which uses an unbounded triangular region as memory for a
-binary counter. Empty space is read as a zero, and a boat is a 1.
-The pattern's diametric growth rate is O(sqrt(log(<i>t</i>))), which is the
-slowest possible for any Life pattern, or indeed any 2D Euclidean
-cellular automaton. Since the population returns infinitely often to
-its initial minimum value (during carry operations from 11111...1 to
-100000...0, it can be considered to be an unusual form of <a href="lex_s.htm#sawtooth">sawtooth</a>.
+binary counter. Empty space is read as a zero, and a boat as a one,
+as shown in the example pattern in <a href="lex_m.htm#memorycell">memory cell</a>. The pattern's
+diametric growth rate is O(sqrt(log(<i>t</i>))), which is the slowest
+possible for any Life pattern, or indeed any 2D Euclidean cellular
+automaton. The population returns infinitely often to its initial
+minimum value (during carry operations from 11111...1 to 100000...0,
+so it can be considered to be an unusual form of <a href="lex_s.htm#sawtooth">sawtooth</a>.
 <p><a name=otcametapixel>:</a><b>OTCA metapixel</b> (p46 circuitry) A 2048 x 2048 period 35328 <a href="lex_m.htm#metacell">metacell</a>
 constructed by Brice Due in 2006. It contains a large "pixel" area
 that contains a large population of <a href="lex_l.htm#lwss">LWSSes</a> when the metacell state

@@ -45,14 +45,14 @@
 
 </center>
 <hr>
-<p><a name=halfbakedknightship>:</a><b>half-baked knightship</b> ((6,3)<i>c</i>/2621440, p2621440) An
-adjustable-period, fixed-direction <a href="lex_m.htm#macrospaceship">macro-spaceship</a> based on the
-<a href="#halfbakeryreaction">half-bakery reaction</a>. This was the first spaceship based on this
-reaction, constructed in December 2014 by Adam P. Goucher. It moves 6
-cells horizontally and 3 cells vertically every 2621440+8<i>N</i> ticks,
-depending on the relative spacing of the two halves. It is one of
-the slowest known <a href="lex_k.htm#knightship">knightships</a>, and the first one that was not a
-<a href="lex_g.htm#geminoid">Geminoid</a>. Chris Cain optimized the design a few days later to
+<p><a name=halfbakedknightship>:</a><b>half-baked knightship</b> ((6,3)<i>c</i>/2621440, p2621440) A <a href="lex_s.htm#selfsupporting">self-supporting</a>
+<a href="lex_m.htm#macrospaceship">macro-spaceship</a> with adjustable period but fixed direction, based
+on the <a href="#halfbakeryreaction">half-bakery reaction</a>. This was the first spaceship based on
+this reaction, constructed in December 2014 by Adam P. Goucher. It
+moves 6 cells horizontally and 3 cells vertically every 2621440+8<i>N</i>
+ticks, depending on the relative spacing of the two halves. It is
+one of the slowest known <a href="lex_k.htm#knightship">knightships</a>, and the first one that was
+not a <a href="lex_g.htm#geminoid">Geminoid</a>. Chris Cain optimized the design a few days later to
 create the <a href="lex_p.htm#parallelhbk">Parallel HBK</a>.
 <p>The spaceship produces gliders from near-diagonal lines of
 half-bakeries, which collide with each other at 180 degrees. These
@@ -112,8 +112,8 @@ half the plane.
 <p><a name=hammer>:</a><b>hammer</b> To hammer a <a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a> or <a href="#hwss">HWSS</a> is to smash things into
 the rear end of it in order to transform it into a different type of
 <a href="lex_s.htm#spaceship">spaceship</a>. A hammer is the object used to do the hammering. In the
-following example by Dieter Leithner a LWSS is hammered by two more
-LWSS to make it into a MWSS.
+following example by Dieter Leithner an LWSS is hammered by two more
+LWSS to make it into an MWSS.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:O..O................$....O...OO..........$O...O..OOO.....OOOO.$.OOOO..OO.O....O...O$........OOO....O....$.........O......O..O$"
 >O..O................
 ....O...OO..........
@@ -418,10 +418,10 @@ with names in common use are the <a href="lex_b.htm#bheptomino">B-heptomino</a>,
 the <a href="lex_p.htm#piheptomino">pi-heptomino</a>.
 <p><a name=herschel>:</a><b>Herschel</b> (stabilizes at time 128) The following pattern which occurs
 at generation 20 of the <a href="lex_b.htm#bheptomino">B-heptomino</a>.
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:O..$OOO$O.O$..O$"
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:O..$O.O$OOO$..O$"
 >O..
-OOO
 O.O
+OOO
 ..O
 </a></pre></td></tr></table></center>
 <p>The name is commonly ascribed to the Herschel heptomino's
@@ -436,20 +436,51 @@ circuitry. <a href="lex_r.htm#rpentomino">R-pentominoes</a> and <a href="lex_b.h
 Herschels, and <a href="lex_c.htm#converter">converters</a> have also been found that change
 <a href="lex_p.htm#piheptomino">pi-heptominoes</a> and several other signal types into Herschels, and
 vice versa. See <a href="lex_e.htm#elementaryconduit">elementary conduit</a>.
+<p><a name=herschelcircuit>:</a><b>Herschel circuit</b> A series of <a href="#herschelconduit">Herschel conduits</a> or other components,
+connected by placing them so that the output <a href="#herschel">Herschels</a> from early
+conduits become the input Herschels for later conduits. Often the
+initial component is a <a href="lex_c.htm#converter">converter</a> accepting some other signal type
+as input - usually a glider, in which case a <a href="lex_s.htm#syringe">syringe</a> is most
+commonly used. The <a href="lex_s.htm#silverreflector">Silver reflector</a> is a well-known early
+<a href="lex_s.htm#spartan">Spartan</a> Herschel circuit from before the syringe was discovered,
+where the initial converter is a <a href="lex_c.htm#callahangtoh">Callahan G-to-H</a>.
+<p>Sometimes a direct connection between two conduits is not possible
+due to unwanted gliders that destroy required <a href="lex_c.htm#catalyst">catalysts</a>, or wanted
+gliders that are not able to escape. In this case, small "spacer"
+conduits such as <a href="lex_f.htm#f116">F116</a>, <a href="lex_f.htm#f117">F117</a>, <a href="lex_f.htm#fx77">Fx77</a>, <a href="lex_r.htm#r64">R64</a>, <a href="lex_l.htm#l112">L112</a>, or <a href="lex_l.htm#l156">L156</a> can
+be inserted between the other conduits to solve the problem.
+<p>Some converter or <a href="lex_f.htm#factory">factory</a> conduits do not produce a Herschel as
+output, instead generating other useful results such as gliders,
+<a href="lex_b.htm#boat">boats</a> or <a href="lex_m.htm#mwss">MWSSes</a>. See <a href="#herscheltoglider">Herschel-to-glider</a>, <a href="lex_d.htm#demultiplexer">demultiplexer</a>, and
+<a href="#htomwss">H-to-MWSS</a> respectively for examples of these. For those conduits
+which do produce an unwanted Herschel, an <a href="lex_e.htm#eater">eater</a> such as <a href="lex_s.htm#sw2">SW-2</a> can
+be added to delete it.
+<p>If the first and last conduits of a chain connect to each other in
+a loop then there is no need for a syringe to generate the first
+Herschel, or an eater to consume the last one. The circuit becomes a
+self-supporting <a href="#herschelloop">Herschel loop</a>. A loop is also formed by a
+<a href="lex_s.htm#syringe">syringe</a> connected to a Herschel-to-glider converter, with the
+glider reflected back to the syringe's input with glider reflectors
+of the appropriate colour, usually <a href="lex_s.htm#snark">Snarks</a>. In either case, if the
+loop has a surplus <a href="lex_g.htm#glider">glider</a> output, it becomes a <a href="lex_g.htm#gun">gun</a>; if no output
+is available it is an <a href="lex_e.htm#emu">emu</a>.
 <p><a name=herschelclimber>:</a><b>Herschel climber</b> Any <a href="lex_r.htm#reburnablefuse">reburnable fuse</a> reaction involving
 <a href="#herschel">Herschels</a>. May refer specifically to the
 <a href="lex_1.htm#a-235c79herschelclimber">(23,5)c/79 Herschel climber</a> used in the <a href="lex_w.htm#waterbear">waterbear</a>, or one of
 several similar reactions with various velocities. See also
 <a href="#herschelpairclimber">Herschel-pair climber</a>.
+<p><a name=herschelcomponent>:</a><b>Herschel component</b> = <a href="#herschelconduit">Herschel conduit</a>
 <p><a name=herschelconduit>:</a><b>Herschel conduit</b> A <a href="lex_c.htm#conduit">conduit</a> that moves a <a href="#herschel">Herschel</a> from one place
 to another. See also <a href="#herschelloop">Herschel loop</a>.
 <p>Well over a hundred simple stable Herschel conduits are currently
-known. As of October 2017 the number is approximately 130, depending
-on the precise definition of "simple" - e.g., fitting inside a
-100x100 bounding box, and producing output in no more than 300
-<a href="lex_t.htm#tick">ticks</a>. In general a Herschel conduit can be called "simple" if its
-active reaction does not return to a Herschel stage except at its
-output. Compare <a href="lex_e.htm#elementaryconduit">elementary conduit</a>, <a href="lex_c.htm#compositeconduit">composite conduit</a>.
+known. As of June 2018 the number is approximately 150, depending on
+the precise definition of "simple" - e.g., fitting inside a 100x100
+bounding box, and producing output in no more than 300 <a href="lex_t.htm#tick">ticks</a>. In
+general a Herschel conduit can be called "simple" if its active
+reaction does not return to a Herschel stage except at its output.
+Compare <a href="lex_e.htm#elementaryconduit">elementary conduit</a>, <a href="lex_c.htm#compositeconduit">composite conduit</a>. A description of
+common usage in complex circuitry, using <a href="lex_s.htm#syringe">syringes</a> and <a href="lex_s.htm#snark">Snarks</a> to
+make compact connections, can be found in <a href="#herschelcircuit">Herschel circuit</a>.
 <p>The original <a href="lex_u.htm#universal">universal</a> set consisted of sixteen stable Herschel
 conduits, discovered between 1995 and 1998 by Dave Buckingham (DJB)
 and Paul Callahan (PBC). These are shown in the following table. In
@@ -460,26 +491,26 @@ tells how the Herschel is moved (R = turned right, L = turned left, B
 displacement of the centre cell of the Herschel (assumed to start in
 the orientation shown above).
 <pre>
-        -----------------------------------------
-        name/steps  m     dx   dy     discovery
-        -----------------------------------------
-        <a href="lex_r.htm#r64">R64</a>         R    -11    9   DJB, Sep 1995
-        <a href="lex_f.htm#fx77">Fx77</a>        Ff   -25   -8   DJB, Aug 1996
-        <a href="lex_l.htm#l112">L112</a>        L    -12  -33   DJB, Jul 1996
-        <a href="lex_f.htm#f116">F116</a>        F    -32    1   PBC, Feb 1997
-        <a href="lex_f.htm#f117">F117</a>        F    -40   -6   DJB, Jul 1996
-        <a href="lex_b.htm#bx125">Bx125</a>       Bf     9  -17   PBC, Nov 1998
-        <a href="lex_f.htm#fx119">Fx119</a>       Ff   -20   14   DJB, Sep 1996
-        <a href="lex_f.htm#fx153">Fx153</a>       Ff   -48   -4   PBC, Feb 1997
-        <a href="lex_l.htm#l156">L156</a>        L    -17  -41   DJB, Aug 1996
-        <a href="lex_f.htm#fx158">Fx158</a>       Ff   -27   -5   DJB, Jul 1996
-        <a href="lex_f.htm#f166">F166</a>        F    -49    3   PBC, May 1997
-        <a href="lex_f.htm#fx176">Fx176</a>       Ff   -45    0   PBC, Oct 1997
-        <a href="lex_r.htm#r190">R190</a>        R    -24   16   DJB, Jul 1996
-        <a href="lex_l.htm#lx200">Lx200</a>       Lf   -17  -40   PBC, Jun 1997
-        <a href="lex_r.htm#rx202">Rx202</a>       Rf    -7   32   DJB, May 1997
-        <a href="lex_b.htm#bx222">Bx222</a>       Bf     6  -16   PBC, Oct 1998
-        -----------------------------------------
+  ------------------------------------------
+  name/steps  m      dx   dy     discovery
+  ------------------------------------------
+  <a href="lex_r.htm#r64">R64</a>         R      11    9   DJB, Sep 1995
+  <a href="lex_f.htm#fx77">Fx77</a>        Fflip  25   -8   DJB, Aug 1996
+  <a href="lex_l.htm#l112">L112</a>        L      12  -33   DJB, Jul 1996
+  <a href="lex_f.htm#f116">F116</a>        F      32    1   PBC, Feb 1997
+  <a href="lex_f.htm#f117">F117</a>        F      40   -6   DJB, Jul 1996
+  <a href="lex_b.htm#bx125">Bx125</a>       Bflip  -9  -17   PBC, Nov 1998
+  <a href="lex_f.htm#fx119">Fx119</a>       Fflip  20   14   DJB, Sep 1996
+  <a href="lex_f.htm#fx153">Fx153</a>       Fflip  48   -4   PBC, Feb 1997
+  <a href="lex_l.htm#l156">L156</a>        L      17  -41   DJB, Aug 1996
+  <a href="lex_f.htm#fx158">Fx158</a>       Fflip  27   -5   DJB, Jul 1996
+  <a href="lex_f.htm#f166">F166</a>        F      49    3   PBC, May 1997
+  <a href="lex_f.htm#fx176">Fx176</a>       Fflip  45    0   PBC, Oct 1997
+  <a href="lex_r.htm#r190">R190</a>        R      24   16   DJB, Jul 1996
+  <a href="lex_l.htm#lx200">Lx200</a>       Lflip  17  -40   PBC, Jun 1997
+  <a href="lex_r.htm#rx202">Rx202</a>       Rflip   7   32   DJB, May 1997
+  <a href="lex_b.htm#bx222">Bx222</a>       Bflip  -6  -16   PBC, Oct 1998
+  ------------------------------------------
 </pre>
 <p>See also <a href="#herscheltransceiver">Herschel transceiver</a>.
 <p><a name=herscheldescendant>:</a><b>Herschel descendant</b> A common active pattern occurring at generation
@@ -523,7 +554,12 @@ less than 120 generations has been constructed it is possible to make
 a higher-period track. In this way oscillators, and in most cases
 <a href="lex_g.htm#gun">guns</a>, of all periods from 54 onwards can now be constructed
 (although the p55 case is a bit strange, shooting itself with gliders
-in order to stabilize itself).
+in order to stabilize itself). A mechanism for a period-52 loop was
+found in April 2018, but it includes a stage where the signal is
+carried by a triplet of <a href="lex_g.htm#glider">gliders</a> so it may not be considered to be a
+pure Herschel loop. The missing period, 53, is a difficult case
+simply because 53 is prime and so no small sparkers or reflectors are
+available.
 <p>See <a href="lex_s.htm#simkinglidergun">Simkin glider gun</a> and <a href="lex_p.htm#p256gun">p256 gun</a> for the smallest known
 Herschel loops. See also <a href="lex_e.htm#emu">emu</a> and <a href="lex_o.htm#omniperiodic">omniperiodic</a>.
 <p><a name=herschelpairclimber>:</a><b>Herschel-pair climber</b> Any <a href="lex_r.htm#reburnablefuse">reburnable fuse</a> reaction involving pairs
@@ -532,14 +568,16 @@ of <a href="#herschel">Herschels</a>. May refer specifically to the
 several similar reactions with various velocities. See also
 <a href="#herschelclimber">Herschel climber</a>.
 <p><a name=herschelreceiver>:</a><b>Herschel receiver</b> Any <a href="lex_c.htm#circuit">circuit</a> that converts a <a href="lex_t.htm#tandemglider">tandem glider</a> into
-a Herschel signal. The following diagram shows a pattern found by
-Paul Callahan in 1996, as part of the first stable glider
+a <a href="#herschel">Herschel</a> <a href="lex_s.htm#signal">signal</a>. The following diagram shows a pattern found
+by Paul Callahan in 1996, as part of the first stable glider
 <a href="lex_r.htm#reflector">reflector</a>. Used as a receiver, it converts two parallel input
-gliders (with path separations of 2, 5, or 6) to an <a href="lex_r.htm#rpentomino">R-pentomino</a>,
-which is then converted to a Herschel by one of two known mechanisms
-(the first of which was found by Dave Buckingham way back in 1972,
-and the second by Stephen Silver in October 1997). The version using
-Buckingham's R-to-Herschel converter is shown below.
+gliders (with path separations of 2, 5, or 6) to an <a href="lex_r.htm#rpentomino">R-pentomino</a>.
+The signal is then converted to a Herschel by one of several known
+mechanisms, the first of which was found by Dave Buckingham way back
+in 1972. The second is <a href="lex_e.htm#elementaryconduit">elementary conduit</a> <a href="lex_r.htm#rf48h">RF48H</a>, found by
+Stephen Silver in October 1997. The receiver version shown below
+uses Buckingham's R-to-Herschel converter, which is made up of
+elementary conduit <a href="lex_r.htm#rf28b">RF28B</a> followed by <a href="lex_b.htm#bfx59h">BFx59H</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...............................................O.O$......................................OO.......OO.$......................................OO........O.$...OO.............................................$...O..............................................$....O.............................................$...OO.............................................$............OO....................................$...........O.O....................................$............O..............................O......$......................................OO...O.O....$.....................................O..O..OO.....$OO....................................OO..........$OO.............................OO.................$...............................OO.................$..................................................$..................................................$..................................................$..................................................$..................................................$..................................................$............................................OO....$............................................OO....$........................................OO........$........................................O.O.......$..........................................O.......$..........................................OO......$.............................OO...................$.............................OO...................$..................................................$..................................................$...........................OO.....................$...........................OO.....................$"
 >...............................................O.O
 ......................................OO.......OO.
@@ -623,7 +661,8 @@ collection of these H-to-G <a href="lex_c.htm#converter">converters</a> has been
 different output <a href="lex_l.htm#lane">lanes</a> and timings. These can be used to
 synchronize multiple signals to produce <a href="lex_g.htm#gun">gun</a> patterns or complex
 logic circuitry. See <a href="lex_n.htm#nw31t120">NW31T120</a> for an example.
-<p><a name=herscheltrack>:</a><b>Herschel track</b> A <a href="lex_t.htm#track">track</a> for <a href="#herschel">Herschels</a>. See also <a href="lex_b.htm#btrack">B track</a>.
+<p><a name=herscheltrack>:</a><b>Herschel track</b> A <a href="lex_t.htm#track">track</a> for <a href="#herschel">Herschels</a>. An equivalent term is
+<a href="#herschelcircuit">Herschel circuit</a>. See also <a href="lex_b.htm#btrack">B track</a>.
 <p><a name=herscheltransceiver>:</a><b>Herschel transceiver</b> An adjustable <a href="#herschelconduit">Herschel conduit</a> made up of a
 <a href="#herscheltransmitter">Herschel transmitter</a> and a <a href="#herschelreceiver">Herschel receiver</a>. The intermediate
 stage consists of a <a href="lex_t.htm#tandemglider">tandem glider</a> - two <a href="lex_g.htm#glider">gliders</a> on parallel
@@ -695,6 +734,33 @@ O.O......
 examples see <a href="lex_c.htm#century">century</a>, <a href="lex_s.htm#stairstephexomino">stairstep hexomino</a>, <a href="lex_t.htm#table">table</a>, <a href="lex_t.htm#toad">toad</a> and
 <a href="lex_z.htm#zhexomino">Z-hexomino</a>.
 <p><a name=hf>:</a><b>HF</b> = <a href="#honeyfarm">honey farm</a>
+<p><a name=hfx58b>:</a><b>HFx58B</b> A common <a href="#herschel">Herschel</a> to <a href="lex_b.htm#bheptomino">B-heptomino</a> converter, used as the
+first stage of <a href="lex_f.htm#f117">F117</a> and many other Herschel conduits. There are
+two variants, both shown in the pattern below.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..........O..............................O..........$..........OOO..........................OOO..........$.............O........................O.............$OO..........OO........................OO..........OO$.O................................................O.$.O.O............................................O.O.$..OO............................................OO..$.....................O........O.....................$.....................OO......OO.....................$......................OO....OO......................$......................O......O......................$.....................O........O.....................$....................................................$..O..............................................O..$..O.O..........................................O.O..$..OOO..........................................OOO..$....O...........OO.................OO..........O....$................O..................OO...............$.................OOO...................OO...........$...................O...................O............$........................................OOO.........$..........................................O.........$"
+>..........O..............................O..........
+..........OOO..........................OOO..........
+.............O........................O.............
+OO..........OO........................OO..........OO
+.O................................................O.
+.O.O............................................O.O.
+..OO............................................OO..
+.....................O........O.....................
+.....................OO......OO.....................
+......................OO....OO......................
+......................O......O......................
+.....................O........O.....................
+....................................................
+..O..............................................O..
+..O.O..........................................O.O..
+..OOO..........................................OOO..
+....O...........OO.................OO..........O....
+................O..................OO...............
+.................OOO...................OO...........
+...................O...................O............
+........................................OOO.........
+..........................................O.........
+</a></pre></td></tr></table></center>
 <p><a name=hheptomino>:</a><b>H-heptomino</b> Name given by Conway to the following <a href="#heptomino">heptomino</a>. After
 one generation this is the same as the <a href="lex_i.htm#iheptomino">I-heptomino</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OO..$.O..$.OOO$..O.$"
@@ -704,14 +770,15 @@ one generation this is the same as the <a href="lex_i.htm#iheptomino">I-heptomin
 ..O.
 </a></pre></td></tr></table></center>
 <p><a name=highbandwidthtelegraph>:</a><b>high-bandwidth telegraph</b> (p960, p30 circuitry) A variant of the
-<a href="lex_t.htm#telegraph">telegraph</a> constructed by Louis-Fran&ccedil;ois Handfield in February
-2017, using periodic components to achieve a transmission rate of one
-bit per 192 ticks. The same ten signals are sent as in the original
-telegraph and the <a href="lex_p.htm#p1telegraph">p1 telegraph</a>, but information is encoded more
+<a href="lex_t.htm#telegraph">telegraph</a> constructed by Louis-Fran&ccedil;ois Handfield in February 2017,
+using periodic components to achieve a transmission rate of one bit
+per 192 ticks. The same ten signals are sent as in the original
+<a href="lex_t.htm#telegraph">telegraph</a> and the <a href="lex_p.htm#p1telegraph">p1 telegraph</a>, but information is encoded more
 efficiently in the timing of those signals. Specifically, the new
 transmitter sends five bits every 960 ticks by adjusting the relative
 timings inside each of the five mirror-image paired subunits of the
 composite signal in the beehive-chain <a href="lex_l.htm#lightspeedwire">lightspeed wire</a> <a href="lex_f.htm#fuse">fuse</a>.
+<p><a name=highclearance>:</a><b>high-clearance</b> See <a href="lex_c.htm#clearance">clearance</a>.
 <p><a name=highwayrobber>:</a><b>highway robber</b> Any mechanism that can retrieve a signal from a
 spaceship <a href="lex_l.htm#lane">lane</a> while allowing spaceships on nearby lanes to pass by
 unaffected. In practice the spaceship is generally a glider. The
@@ -790,7 +857,7 @@ OOO.......O.................................
 <p><a name=hivenudger>:</a><b>hivenudger</b> (<i>c</i>/2 orthogonally, p4) A <a href="lex_s.htm#spaceship">spaceship</a> found by Hartmut
 Holzwart in July 1992. (The name is due to Bill Gosper.) It
 consists of a <a href="lex_p.htm#prebeehive">pre-beehive</a> escorted by four <a href="lex_l.htm#lwss">LWSS</a>. In fact any
-LWSS can be replaced by a <a href="lex_m.htm#mwss">MWSS</a> or a <a href="#hwss">HWSS</a>, so that there are 45
+LWSS can be replaced by a <a href="lex_m.htm#mwss">MWSS</a> or an <a href="#hwss">HWSS</a>, so that there are 45
 different single-hive hivenudgers.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OOOO.....O..O$O...O...O....$O.......O...O$.O..O...OOOO.$.............$.....OO......$.....OO......$.....OO......$.............$.O..O...OOOO.$O.......O...O$O...O...O....$OOOO.....O..O$"
 >OOOO.....O..O
@@ -874,7 +941,7 @@ affecting it. Thus a test input has an output for the "0" case, but
 not for the "1" case. For an alternative memory-unit mechanism with
 both "0" and "1" outputs, see <a href="lex_d.htm#demultiplexer">demultiplexer</a>.
 <p>The honey bit is also an interesting <a href="lex_e.htm#eater">eater</a> for the <a href="#hwss">HWSS</a> as
-shown below. A HWSS colliding with the pond happens to create the
+shown below. An HWSS colliding with the pond happens to create the
 exact same reset glider used in the above memory unit.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..OO...........$O....O......OO.$......O....O..O$O.....O....O..O$.OOOOOO.....OO.$...............$...............$...........OO..$...........OO..$"
 >..OO...........
