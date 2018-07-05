@@ -216,13 +216,8 @@ local currcursor = movecursor       -- current cursor
 local arrow_cursor = false          -- true if cursor is in tool bar
 
 DEFAULT_RULE = "3D5..7/6"           -- initial rule
-local rulestring = DEFAULT_RULE
-local survivals = {}
-local births = {}
-survivals[5] = true                 -- WARNING: must match DEFAULT_RULE
-survivals[6] = true                 -- ditto
-survivals[7] = true                 -- ditto
-births[6] = true                    -- ditto
+local rulestring = ""               -- so Initialize calls ParseRule
+local survivals, births             -- set by ParseRule
 local NextGeneration                -- set to NextGenMoore, NextGen6Faces, etc
 
 pattdir = g.getdir("data")          -- initial directory for OpenPattern/SavePattern
@@ -4145,7 +4140,7 @@ function UpdateCurrentGrid(newpattern)
     maxz = newpattern.newmaxz
     -- note that ClearCells has set minimal_live_bounds = true
 
-    ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
+    ParseRule(newpattern.newrule)   -- sets rulestring, survivals, births, NextGeneration
     gencount = newpattern.newgens
     startcount = gencount           -- for Reset
     stepsize = 1
@@ -9159,6 +9154,11 @@ function Initialize()
     CreatePopUpMenus()
     CreateAxes()
     InitDepthShading()
+    
+    if #rulestring == 0 then
+        -- first call must initialize rulestring, survivals, births and NextGeneration
+        ParseRule(DEFAULT_RULE)
+    end
 
     -- create reference cube (never displayed)
     refcube = CreateCube(0,0,0)
