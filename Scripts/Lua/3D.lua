@@ -474,7 +474,7 @@ function ReadSettings()
                 rulestring = tostring(value)
                 if not ParseRule(rulestring) then
                     g.warn("Resetting bad rule ("..rulestring..") to default.", false)
-                    rulestring = DEFAULT_RULE
+                    rulestring = ""  -- rule will be set to default by ParseRule
                 end
             end
         end
