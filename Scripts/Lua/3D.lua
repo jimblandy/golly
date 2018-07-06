@@ -216,9 +216,9 @@ local currcursor = movecursor       -- current cursor
 local arrow_cursor = false          -- true if cursor is in tool bar
 
 DEFAULT_RULE = "3D5..7/6"           -- initial rule
-local rulestring = ""               -- so Initialize calls ParseRule
+local rulestring = ""               -- so very first Initialize calls ParseRule(DEFAULT_RULE)
 local survivals, births             -- set by ParseRule
-local NextGeneration                -- set to NextGenMoore, NextGen6Faces, etc
+local NextGeneration                -- ditto (set to NextGenMoore, NextGen6Faces, etc)
 
 pattdir = g.getdir("data")          -- initial directory for OpenPattern/SavePattern
 scriptdir = g.getdir("app")         -- initial directory for RunScript
@@ -474,7 +474,7 @@ function ReadSettings()
                 rulestring = tostring(value)
                 if not ParseRule(rulestring) then
                     g.warn("Resetting bad rule ("..rulestring..") to default.", false)
-                    rulestring = ""  -- rule will be set to default by ParseRule
+                    ParseRule(DEFAULT_RULE)
                 end
             end
         end
