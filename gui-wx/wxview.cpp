@@ -2801,6 +2801,13 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
     int button = event.GetButton();
     int modifiers = GetMouseModifiers(event);
     
+    // ignore if a mouse button is already down
+    if (mouseisdown) return;
+
+    // flag that a mouse button is down
+    mouseisdown = true;
+    whichbuttondown = button;
+
     if (waitingforclick && button == wxMOUSE_BTN_LEFT) {
         // save paste location
         pastex = x;
@@ -2870,6 +2877,13 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
 
 void PatternView::OnMouseUp(wxMouseEvent& event)
 {
+    // if the button released was not the first held down then ignore
+    int button = event.GetButton();
+    if (button != whichbuttondown) return;
+
+    // same button released so process
+    mouseisdown = false;
+
     if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
         StopDraggingMouse();
     } else if (mainptr->draw_pending) {
@@ -3273,6 +3287,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     selectingcells = false;    // not selecting cells
     movingview = false;        // not moving view
     waitingforclick = false;   // not waiting for user to click
+    mouseisdown = false;       // mouse button is not down
     nopattupdate = false;      // enable pattern updates
     showcontrols = false;      // not showing translucent controls
     oldcursor = NULL;          // for toggling cursor via shift key

@@ -102,6 +102,8 @@ public:
     bool movingview;              // moving view due to dragging mouse?
     bool nopattupdate;            // disable pattern updates?
     bool showcontrols;            // draw translucent controls?
+    bool mouseisdown;             // mouse button held down?
+    int whichbuttondown;          // which mouse button is down
     wxRect controlsrect;          // location of translucent controls
     wxRect pasterect;             // area to be pasted
     wxCursor* oldcursor;          // non-NULL if shift key has toggled cursor
