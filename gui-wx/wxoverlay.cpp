@@ -26,6 +26,224 @@
 
 // -----------------------------------------------------------------------------
 
+const int clipbatch = 8;    // clip batch size for allocation
+
+ClipManager::ClipManager() {
+    nclips = 0;
+    nsize = clipbatch;
+    esize = clipbatch;
+    osize = clipbatch;
+    ncliplist = (const Clip**)malloc(nsize * sizeof(*ncliplist));
+    ecliplist = (const Clip**)malloc(esize * sizeof(*ecliplist));
+    ocliplist = (const Clip**)malloc(osize * sizeof(*ocliplist));
+}
+
+ClipManager::~ClipManager() {
+    if (ncliplist) free(ncliplist);
+    ncliplist = NULL;
+    if (ecliplist) free(ecliplist);
+    ecliplist = NULL;
+    if (ocliplist) free(ocliplist);
+    ocliplist = NULL;
+}
+
+void ClipManager::Clear() {
+    nclips = 0;
+    eclips = 0;
+    oclips = 0;
+    nclip = NULL;
+    eclip = NULL;
+    oclip = NULL;
+}
+
+void ClipManager::AddClip(const Clip* clip) {
+    if (nclips == nsize) {
+        // allocate more memory
+        nsize += clipbatch;
+        ncliplist = (const Clip**)realloc(ncliplist, nsize * sizeof(*ncliplist));
+    }
+    ncliplist[nclips++] = clip;
+}
+
+void ClipManager::AddEvenClip(const Clip* clip) {
+    if (eclips == esize) {
+        // allocate more memory
+        esize += clipbatch;
+        ecliplist = (const Clip**)realloc(ecliplist, esize * sizeof(*ecliplist));
+    }
+    ecliplist[eclips++] = clip;
+}
+
+void ClipManager::AddOddClip(const Clip* clip) {
+    if (oclips == osize) {
+        // allocate more memory
+        osize += clipbatch;
+        ocliplist = (const Clip**)realloc(ocliplist, osize * sizeof(*ocliplist));
+    }
+    ocliplist[oclips++] = clip;
+}
+
+const Clip** ClipManager::GetClips(int* numclips) {
+    *numclips = nclips;
+    return ncliplist;
+}
+
+const Clip** ClipManager::GetEvenClips(int* numclips) {
+    *numclips = eclips;
+    return ecliplist;
+}
+
+const Clip** ClipManager::GetOddClips(int* numclips) {
+    *numclips = oclips;
+    return ocliplist;
+}
+
+void ClipManager::SetClip(const Clip* normalclip) {
+    nclip = normalclip;
+}
+
+void ClipManager::SetOddClip(const Clip* oddclip) {
+    oclip = oddclip;
+}
+
+void ClipManager::SetEvenClip(const Clip* evenclip) {
+    eclip = evenclip;
+}
+
+const Clip* ClipManager::GetClip() {
+    return nclip;
+}
+
+const Clip* ClipManager::GetOddClip() {
+    return oclip;
+}
+
+const Clip* ClipManager::GetEvenClip() {
+    return eclip;
+}
+
+// -----------------------------------------------------------------------------
+
+Table::Table() {
+    nkeys = 0;
+    keys = NULL;
+    values = NULL;
+    exists = NULL;
+}
+
+Table::~Table() {
+    FreeMemory();
+}
+
+bool Table::SetSize(int sz) {
+    bool result = true;
+
+    // reallocate memory
+    FreeMemory();
+    size = sz;
+    nkeys = 0;
+    AllocateMemory();
+    // check allocation
+    if (keys == NULL || values == NULL || exists == NULL) {
+        result = false;
+    }
+    return result;
+}
+
+void Table::Clear() {
+    // clear the table (no need to clear the keys just zero the number)
+    nkeys = 0;
+    memset(exists, 0, size * sizeof(*exists));
+    memset(values, 0, size * sizeof(*values));
+}
+
+const int* Table::GetKeys(int* numkeys) {
+    // return the number of keys
+    *numkeys = nkeys;
+
+    // return the list of keys
+    return keys;
+}
+
+const unsigned char* Table::GetValues() {
+    // return the list of values
+    return values;
+}
+
+void Table::SetValue(const int key, const unsigned char value) {
+    // check if the key exists
+    if (!exists[key]) {
+        // create a new key
+        keys[nkeys++] = key;
+
+        // mark the key as exists
+        exists[key] = true;
+    }
+
+    // set the value at the key
+    values[key] = value;
+}
+
+void Table::AddToValue(const int key, const unsigned char amount) {
+    // check if the key exists
+    if (!exists[key]) {
+        // create a new key
+        keys[nkeys++] = key;
+
+        // set the value to the amount
+        values[key] = amount;
+
+        // mark the key as exists
+        exists[key] = true;
+    } else {
+        // add the amount to the value at the key
+        values[key] += amount;
+    }
+}
+
+void Table::SortKeys() {
+    int* key = keys;
+    char* exist = exists;
+    int* lastkey = key + nkeys;
+    while (key < lastkey) {
+        if (*exist) {
+            *key++ = exist - exists;
+        }
+        exist++;
+    }
+}
+
+void Table::Copy(const Table& from) {
+    if (from.size != size) {
+        SetSize(from.size);
+    }
+    nkeys = from.nkeys;
+    memcpy(values, from.values, size * sizeof(*values));
+    memcpy(exists, from.exists, size * sizeof(*exists));
+    // create keys in ascending order from exists flags
+    SortKeys();
+}
+
+void Table::FreeMemory() {
+    if (values) free(values);
+    values = NULL;
+    if (keys) free(keys);
+    keys = NULL;
+    if (exists) free(exists);
+    exists = NULL;
+}
+
+void Table::AllocateMemory() {
+    // allocate keys
+    keys   = (int*)malloc(size * sizeof(*keys));
+
+    // allocate and clear values and key exists
+    values = (unsigned char*)calloc(size, sizeof(*values));
+    exists = (char*)calloc(size, sizeof(*exists));
+}
+
+// -----------------------------------------------------------------------------
+
 class Clip {
 public:
     Clip(int w, int h, bool use_calloc = false) {
@@ -166,6 +384,9 @@ const double radToDeg = 180 / M_PI;
 // for replace
 const int matchany = -1;            // match any component value
 
+// for 3D
+const int MAXN = 100;               // maximum 3D grid size
+
 #ifdef __WXMAC__
     // on Mac we'll need to increase the line height of text by 1 or 2 pixels to avoid
     // a GetTextExtent bug that clips the bottom pixels of descenders like "gjpqy"
@@ -188,6 +409,7 @@ Overlay::Overlay()
     #ifdef ENABLE_SOUND
     engine = NULL;
     #endif
+    coords2d = NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -195,6 +417,9 @@ Overlay::Overlay()
 Overlay::~Overlay()
 {
     DeleteOverlay();
+
+    // delete coordinates if allocated
+    if (coords2d) free(coords2d);
 }
 
 // -----------------------------------------------------------------------------
@@ -2645,7 +2870,7 @@ const char* Overlay::DoReplace(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetRGBATable(const char* cmd, lua_State* L, int n, int* nresults)
+const char* Overlay::DoSetRGBA(const char* cmd, lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -2855,7 +3080,83 @@ const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetTable(lua_State* L, int n, int* nresults)
+const char* Overlay::DoSetPixel(const int* coords, int n)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+    if (n < 2) return("set command requires coordinate pairs");
+    if ((n & 1) != 0) return ("set command requires an even number of arguments");
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
+    // check for alpha blending
+    int ci = 0;
+    if (alphablend && a < 255) {
+        // use alpha blending
+        // do nothing if source pixel is transparent
+        if (a > 0) {
+            do {
+                // get next pixel coordinate
+                int x = coords[ci++];
+                int y = coords[ci++];
+
+                // ignore pixel if outside pixmap edges
+                if (PixelInTarget(x, y)) {
+                    unsigned char* p = pixmap + y*wd*4 + x*4;
+                    // source pixel is translucent so blend with destination pixel;
+                    // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                    unsigned char destr = p[0];
+                    unsigned char destg = p[1];
+                    unsigned char destb = p[2];
+                    unsigned char desta = p[3];
+                    if (desta == 255) {
+                        // destination pixel is opaque
+                        unsigned int alpha = a + 1;
+                        unsigned int invalpha = 256 - a;
+                        p[0] = (alpha * r + invalpha * destr) >> 8;
+                        p[1] = (alpha * g + invalpha * destg) >> 8;
+                        p[2] = (alpha * b + invalpha * destb) >> 8;
+                        // no need to change p[3] (alpha stays at 255)
+                    } else {
+                        // destination pixel is translucent
+                        float alpha = a / 255.0;
+                        float inva = 1.0 - alpha;
+                        float destalpha = desta / 255.0;
+                        float outa = alpha + destalpha * inva;
+                        p[3] = int(outa * 255);
+                        if (p[3] > 0) {
+                            p[0] = int((r * alpha + destr * destalpha * inva) / outa);
+                            p[1] = int((g * alpha + destg * destalpha * inva) / outa);
+                            p[2] = int((b * alpha + destb * destalpha * inva) / outa);
+                        }
+                    }
+                }
+            } while (ci < n - 1);
+        }
+    }
+    else {
+        // use fast copy
+        unsigned int rgba = 0;
+        SetRGBA(r, g, b, a, &rgba);
+        unsigned int* lpixmap = (unsigned int*)pixmap;
+        do {
+            // get next pixel coordinate
+            int x = coords[ci++];
+            int y = coords[ci++];
+
+            // ignore pixel if outside pixmap edges
+            if (PixelInTarget(x, y)) {
+                *(lpixmap + y*wd + x) = rgba;
+            }
+        } while (ci < n - 1);
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -3008,7 +3309,7 @@ const char* Overlay::DoSetPixel(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoGetTable(lua_State* L, int n, int* nresults)
+const char* Overlay::DoGet(lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return "";
 
@@ -3539,7 +3840,7 @@ void Overlay::DrawAntialiasedLine(int x0, int y0, int x1, int y1)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLineTable(lua_State* L, int n, bool connected, int* nresults)
+const char* Overlay::DoLine(lua_State* L, int n, bool connected, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4202,7 +4503,7 @@ void Overlay::FillRect(int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFillTable(lua_State* L, int n, int* nresults)
+const char* Overlay::DoFill(lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4532,7 +4833,7 @@ const char* Overlay::DoOptimize(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPasteTable(lua_State* L, int n, int* nresults)
+const char* Overlay::DoPaste(lua_State* L, int n, int* nresults)
 {
     const char* result = NULL;
 
@@ -4588,7 +4889,7 @@ const char* Overlay::DoPasteTable(lua_State* L, int n, int* nresults)
         // check if the coordinates were all numbers
         if (valid) {
             // call the required function
-            result = DoPasteTableInternal(coords, j, clipname);
+            result = DoPaste(coords, j, clipname);
         }
 
         // free argument list
@@ -4604,28 +4905,15 @@ const char* Overlay::DoPasteTable(lua_State* L, int n, int* nresults)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPasteTableInternal(const int* coords, int n, const char* clip)
+const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     // check that coordinates are supplied and that there are an even number
-    if (clip == NULL) return OverlayError("paste command requires a clip name");
+    if (clipptr == NULL) return OverlayError("paste command requires a clip");
     if (n < 2) return OverlayError("paste command requires coordinate pairs");
     if ((n & 1) != 0) return OverlayError("paste command has illegal coordinates");
 
-    // lookup the named clip
-    std::string name = clip;
-    std::map<std::string,Clip*>::iterator it;
-    it = clips.find(name);
-    if (it == clips.end()) {
-        static std::string msg;
-        msg = "unknown paste clip (";
-        msg += name;
-        msg += ")";
-        return OverlayError(msg.c_str());
-    }
-
-    Clip* clipptr = it->second;
     int w = clipptr->cwd;
     int h = clipptr->cht;
 
@@ -4830,6 +5118,34 @@ const char* Overlay::DoPasteTableInternal(const int* coords, int n, const char* 
     while (ci < n - 1);
 
     return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoPaste(const int* coords, int n, const char* clip)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // check that coordinates are supplied and that there are an even number
+    if (clip == NULL) return OverlayError("paste command requires a clip name");
+    if (n < 2) return OverlayError("paste command requires coordinate pairs");
+    if ((n & 1) != 0) return OverlayError("paste command has illegal coordinates");
+
+    // lookup the named clip
+    std::string name = clip;
+    std::map<std::string,Clip*>::iterator it;
+    it = clips.find(name);
+    if (it == clips.end()) {
+        static std::string msg;
+        msg = "unknown paste clip (";
+        msg += name;
+        msg += ")";
+        return OverlayError(msg.c_str());
+    }
+
+    Clip* clipptr = it->second;
+
+    return DoPaste(coords, n, clipptr);
 }
 
 // -----------------------------------------------------------------------------
@@ -5595,7 +5911,7 @@ const char* Overlay::DoFlood(const char* args)
     // do flood fill using fast scanline algorithm
     // (based on code at http://lodev.org/cgtutor/floodfill.html)
     bool slowdraw = alphablend && a < 255;
-    int maxy = ht - 1;
+    int maxyv = ht - 1;
     std::vector<int> xcoord;
     std::vector<int> ycoord;
     xcoord.push_back(x);
@@ -5641,7 +5957,7 @@ const char* Overlay::DoFlood(const char* args)
                 }
             }
 
-            if (y < maxy) {
+            if (y < maxyv) {
                 unsigned char* bpxl = newpxl + rowbytes;    // pixel at x, y+1
 
                 if (!below && PixelsMatch(bpxl,oldr,oldg,oldb,olda)) {
@@ -6573,6 +6889,1496 @@ const char* Overlay::OverlayError(const char* msg)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::ReadLuaBoolean(lua_State *L, int n, int i, bool* value, const char* name) {
+    static std::string err;
+    if (i > n)  {
+        err = "missing argument: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    lua_rawgeti(L, 1, i);
+    int type = lua_type(L, -1);
+    if (type != LUA_TBOOLEAN) {
+        lua_pop(L, 1);
+        err = "argument is not a boolean: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    *value = (bool)lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::ReadLuaNumber(lua_State *L, int n, int i, double* value, const char* name) {
+    static std::string err;
+    if (i > n)  {
+        err = "missing argument: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    lua_rawgeti(L, 1, i);
+    int type = lua_type(L, -1);
+    if (type != LUA_TNUMBER) {
+        lua_pop(L, 1);
+        err = "argument is not a number: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    *value = (double)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::ReadLuaInteger(lua_State *L, int n, int i, int* value, const char* name) {
+    static std::string err;
+    if (i > n)  {
+        err = "missing argument: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    lua_rawgeti(L, 1, i);
+    int type = lua_type(L, -1);
+    if (type != LUA_TNUMBER) {
+        lua_pop(L, 1);
+        err = "argument is not a number: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    *value = (int)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::ReadLuaString(lua_State *L, int n, int i, const char** value, const char* name) {
+    static std::string err;
+    if (i > n)  {
+        err = "missing argument: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    lua_rawgeti(L, 1, i);
+    int type = lua_type(L, -1);
+    if (type != LUA_TSTRING) {
+        lua_pop(L, 1);
+        err = "argument is not a string: ";
+        err += name;
+        return OverlayError(err.c_str());
+    }
+    *value = lua_tostring(L, -1);
+    lua_pop(L, 1);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetCellType(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // get depth shading flag
+    const char* type = NULL;
+
+    int idx = 2;
+    if ((error = ReadLuaString(L, n, idx++, &type, "type")) != NULL) return error;
+    if (strcmp(type, "cube") == 0) {
+        celltype = cube;
+    } else {
+        if (strcmp(type, "sphere") == 0) {
+            celltype = sphere;
+        } else {
+            if (strcmp(type, "point") == 0) {
+                celltype = point;
+            } else {
+                return OverlayError("illegal cell type");
+            }
+        }
+    }
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetDepthShading(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // get depth shading flag
+    int idx = 2;
+    if ((error = ReadLuaBoolean(L, n, idx++, &depthshading, "depthshading")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &depthlayers, "depthlayers")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &mindepth, "mindepth")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &maxdepth, "maxdepth")) != NULL) return error;
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetTransform(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // get transformation matrix
+    int idx = 2;
+    if ((error = ReadLuaNumber(L, n, idx++, &xixo, "xixo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &xiyo, "xiyo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &xizo, "xizo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &yixo, "yixo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &yiyo, "yiyo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &yizo, "yizo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &zixo, "zixo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &ziyo, "ziyo")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &zizo, "zizo")) != NULL) return error;
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+const Clip* Overlay::GetClip(const char* clipname) {
+    Clip* result = NULL;
+
+    // lookup the named clip
+    std::string name = clipname;
+    std::map<std::string,Clip*>::iterator it;
+    it = clips.find(name);
+    if (it != clips.end()) {
+        result = it->second;
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Update3DClips() {
+    char clipname[20];
+    const Clip* current;
+    int numclips = maxdepth - mindepth + 1;
+
+    // clear current clips
+    clipmanager.Clear();
+
+    // check algo
+    if (ruletype == bb || ruletype == bbw) {
+        // busyboxes
+        if (depthshading && celltype != point) {
+            // get depth shading clips
+            for (int i = 0; i < numclips; i++) {
+                sprintf(clipname, "E%d", i + mindepth);
+                if ((current = GetClip(clipname)) == NULL) return OverlayError("missing even depth clip");
+                clipmanager.AddEvenClip(current);
+                sprintf(clipname, "O%d", i + mindepth);
+                if ((current = GetClip(clipname)) == NULL) return OverlayError("missing even depth clip");
+                clipmanager.AddOddClip(current);
+            }
+        } else {
+            // get standard clips
+            if (celltype == point) {
+                // get even and odd clips for points
+                if ((current = GetClip("Ep")) == NULL) return OverlayError("missing even clip for points");
+                clipmanager.SetEvenClip(current);
+                if ((current = GetClip("Op")) == NULL) return OverlayError("missing odd clip for points");
+                clipmanager.SetOddClip(current);
+            } else {
+                // get even and odd clips
+                if ((current = GetClip("E")) == NULL) return OverlayError("missing even clip");
+                clipmanager.SetEvenClip(current);
+                if ((current = GetClip("O")) == NULL) return OverlayError("missing odd clip");
+                clipmanager.SetOddClip(current);
+            }
+        }
+    } else {
+        // standard algos
+        if (depthshading && celltype != point) {
+            // get depth shading clips
+            for (int i = 0; i < numclips; i++) {
+                if (celltype == cube) {
+                    sprintf(clipname, "c%d", i + mindepth);
+                } else {
+                    sprintf(clipname, "S%d", i + mindepth);
+                }
+                if ((current = GetClip(clipname)) == NULL) return OverlayError("missing depth clip");
+                clipmanager.AddClip(current);
+            }
+        } else {
+            // get standard clips
+            if (celltype == cube) {
+                if ((current = GetClip("c")) == NULL) return OverlayError("missing clip for cube");
+                clipmanager.SetClip(current);
+            } else {
+                if (celltype == sphere) {
+                    if ((current = GetClip("S")) == NULL) return OverlayError("missing clip for sphere");
+                    clipmanager.SetClip(current);
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DDisplayCells(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // ensure required clips are preset
+    error = Update3DClips();
+    if (error) return error;
+
+    // get grid traversal order
+    int fromx, tox, stepx;
+    int fromy, toy, stepy;
+    int fromz, toz, stepz;
+    double c, m;
+    double mx, my;
+
+    int idx = 2;
+    if ((error = ReadLuaInteger(L, n, idx++, &fromx, "fromx")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &tox, "tox")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &stepx, "stepx")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &fromy, "fromy")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &toy, "toy")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &stepy, "stepy")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &fromz, "fromz")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &toz, "toz")) != NULL) return error;
+    if ((error = ReadLuaInteger(L, n, idx++, &stepz, "stepz")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &c, "c")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &m, "m")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &mx, "mx")) != NULL) return error;
+    if ((error = ReadLuaNumber(L, n, idx++, &my, "my")) != NULL) return error;
+
+    // get the number of live cells in the grid
+    int numkeys;
+    grid3d.GetKeys(&numkeys);
+
+    // check if the coordinates list has been allocated
+    if (coords2d == NULL) {
+        // not allocate so create the list
+        numcoords = numkeys * 2;
+        coords2d = (int*)malloc(numcoords * sizeof(*coords2d));
+    } else {
+        // allocated so check if it is big enough for the live cells
+        if (numkeys * 2 > numcoords) {
+            // needs to grow so delete the previous buffer and allocate a bigger one
+            numcoords = numkeys * 2;
+            free(coords2d);
+            coords2d = (int*)malloc(numcoords * sizeof(*coords2d));
+        }
+    }
+    int* coord = coords2d;
+
+    // iterate over the grid in the order specified
+    const unsigned char* grid3values = grid3d.GetValues();
+    int x, y, z;
+    int N = gridsize;
+    int stepi = N * stepy;
+    int stepj = N * stepz;
+    int j = N * fromz;
+    tox += stepx;
+    toy += stepy;
+    toz += stepz;
+    double zdepth = N * c * 0.5;
+    double zdepth2 = zdepth + zdepth;
+
+    // check rule family
+    if (ruletype == bb || ruletype == bbw) {
+        // lookup busyboxes clips
+        int numevenclips, numoddclips;
+        const Clip** eclips = clipmanager.GetEvenClips(&numevenclips);
+        const Clip** oclips = clipmanager.GetOddClips(&numoddclips);
+        const Clip* eclip = clipmanager.GetEvenClip();
+        const Clip* oclip = clipmanager.GetOddClip();
+
+        // iterate over cells back to front
+        const Clip *curclip = NULL;
+        for (z = fromz; z != toz; z += stepz) {
+            int i = N * (fromy + j);
+            for (y = fromy; y != toy; y += stepy) {
+                int evencell = ((fromx + y + z) & 1) == 0;
+                for (x = fromx; x != tox; x += stepx) {
+                    if (grid3values[i + x]) {
+                        coord = coords2d;
+                        // use orthographic projection
+                        double xc = x * c + m;
+                        double yc = y * c + m;
+                        double zc = z * c + m;
+                        *coord++ = (mx + xc * xixo + yc * xiyo + zc * xizo);
+                        *coord++ = (my + xc * yixo + yc * yiyo + zc * yizo);
+                        if (depthshading && celltype != point) {
+                            double zval = xc * zixo + yc * ziyo + zc * zizo;
+                            int layer = depthlayers * (zval + zdepth) / zdepth2;
+                            if (evencell) {
+                                curclip = eclips[layer - mindepth];
+                            } else {
+                                curclip = oclips[layer - mindepth];
+                            }
+                        } else {
+                            if (evencell) {
+                                curclip = eclip;
+                            } else {
+                                curclip = oclip;
+                            }
+                        }
+                        DoPaste(coords2d, 2, curclip);
+                    }
+                    evencell = !evencell;
+                }
+                i += stepi;
+            }
+            j += stepj;
+        }
+    } else {
+        // lookup standard clips
+        if (depthshading && celltype != point) {
+            // depth shading
+            int numclips;
+            const Clip** cellclips = clipmanager.GetClips(&numclips);
+            int lastlayer = -1;
+            // iterate over cells back to front
+            for (z = fromz; z != toz; z += stepz) {
+                int i = N * (fromy + j);
+                for (y = fromy; y != toy; y += stepy) {
+                    for (x = fromx; x != tox; x += stepx) {
+                        if (grid3values[i + x]) {
+                            // use orthographic projection
+                            double xc = x * c + m;
+                            double yc = y * c + m;
+                            double zc = z * c + m;
+                            double zval = xc * zixo + yc * ziyo + zc * zizo;
+                            int layer = depthlayers * (zval + zdepth) / zdepth2 - mindepth;
+                            if (layer != lastlayer) {
+                                if (lastlayer != -1) {
+                                    DoPaste(coords2d, coord - coords2d, cellclips[lastlayer]);
+                                }
+                                lastlayer = layer;
+                                coord = coords2d;
+                            }
+                            *coord++ = (mx + xc * xixo + yc * xiyo + zc * xizo);
+                            *coord++ = (my + xc * yixo + yc * yiyo + zc * yizo);
+                        }
+                    }
+                    i += stepi;
+                }
+                j += stepj;
+            }
+            DoPaste(coords2d, coord - coords2d, cellclips[lastlayer]);
+        } else {
+            // flat shading
+            // iterate over cells back to front
+            for (z = fromz; z != toz; z += stepz) {
+                int i = N * (fromy + j);
+                for (y = fromy; y != toy; y += stepy) {
+                    for (x = fromx; x != tox; x += stepx) {
+                        if (grid3values[i + x]) {
+                            // use orthographic projection
+                            double xc = x * c + m;
+                            double yc = y * c + m;
+                            double zc = z * c + m;
+                            *coord++ = (mx + xc * xixo + yc * xiyo + zc * xizo);
+                            *coord++ = (my + xc * yixo + yc * yiyo + zc * yizo);
+                        }
+                    }
+                    i += stepi;
+                }
+                j += stepj;
+            }
+            // draw the cells
+            if (celltype == point) {
+                DoSetPixel(coords2d, numkeys * 2);
+            } else {
+                DoPaste(coords2d, numkeys * 2, clipmanager.GetClip());
+            }
+        }
+    }
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetStepSize(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // get grid size
+    int idx = 2;
+    int N;
+    if ((error = ReadLuaInteger(L, n, idx++, &N, "step")) != NULL) return error;
+    if (N < 1 || N > 100) return OverlayError("step must be from 1 to 100");
+
+    // set the step size
+    stepsize = N;
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetGridSize(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // get grid size
+    int idx = 2;
+    int N;
+    if ((error = ReadLuaInteger(L, n, idx++, &N, "size")) != NULL) return error;
+    if (N < 1 || N > MAXN) return OverlayError("size must be from 1 to 100");
+
+    // set the grid size
+    gridsize = N;
+    int NNN = N * N * N;
+
+    // resize tables if required
+    if (tablesize != NNN) {
+        tablesize = NNN;
+        if (!grid3d.SetSize(tablesize)) return OverlayError("could not allocate grid3d");
+        if (!count1.SetSize(tablesize)) return OverlayError("could not allocate count1");
+        if (!count2.SetSize(tablesize)) return OverlayError("could not allocate count2");
+        if (!next3d.SetSize(tablesize)) return OverlayError("could not allocate next3d");
+    }
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetRule(lua_State* L, int n, int* nresults) {
+    const char* error = NULL;
+
+    // read rule type
+    int idx = 2;
+    const char* rulestring;
+    if ((error = ReadLuaString(L, n, idx++, &rulestring, "type")) != NULL) return error;
+    if (strcmp(rulestring, "") == 0) {
+        ruletype = moore;
+    } else {
+        if (strcmp(rulestring, "F") == 0) {
+            ruletype = face;
+        } else {
+            if (strcmp(rulestring, "C") == 0) {
+                ruletype = corner;
+            } else {
+                if (strcmp(rulestring, "E") == 0) {
+                    ruletype = edge;
+                } else {
+                    if (strcmp(rulestring, "H") == 0) {
+                        ruletype = hexahedral;
+                    } else {
+                        if (strcmp(rulestring, "BB") == 0) {
+                            ruletype = bb;
+                        } else {
+                            if (strcmp(rulestring, "BBW") == 0) {
+                                ruletype = bbw;
+                            } else {
+                                return OverlayError("type argument is invalid");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // don't need survivals and births for BusyBoxes rules
+    if (ruletype != bb && ruletype != bbw) {
+        // initialize survivals and births
+        for (int i = 0; i < 27; i++) {
+            survivals[i] = false;
+            births[i]    = false;
+        }
+
+        // read survivals list
+        if (idx > n) return OverlayError("missing survivals argument");
+        lua_rawgeti(L, 1, idx);
+        int type = lua_type(L, -1);
+        if (type != LUA_TTABLE) {
+            lua_pop(L, 1);
+            return OverlayError("survivals argument is not a table");
+        }
+        lua_pushvalue(L, -1);
+        lua_pushnil(L);
+        while (lua_next(L, -2)) {
+            lua_pushvalue(L, -2);
+            int k = lua_tointeger(L, -1);
+            lua_pop(L, 2);
+            survivals[k] = true;
+        }
+        lua_pop(L, 1);
+    
+        // read births list
+        idx++;
+        if (idx > n) return OverlayError("missing births argument");
+        lua_rawgeti(L, 1, idx);
+        type = lua_type(L, -1);
+        if (type != LUA_TTABLE) {
+            lua_pop(L, 1);
+            return OverlayError("births argument is not a table");
+        }
+        lua_pushvalue(L, -1);
+        lua_pushnil(L);
+        while (lua_next(L, -2)) {
+            lua_pushvalue(L, -2);
+            int k = lua_tointeger(L, -1);
+            lua_pop(L, 2);
+            births[k] = true;
+        }
+        lua_pop(L, 1);
+    }
+
+    return error;
+}
+
+// -----------------------------------------------------------------------------
+
+int Overlay::CreateResultsFromC1(lua_State *L, bool laststep) {
+    // save grid
+    if (laststep) {
+        lua_newtable(L);
+    }
+    next3d.Clear();
+    int newpop = 0;
+    int numkeys, k, i;
+    unsigned char v;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+    const int* count1keys = count1.GetKeys(&numkeys);
+    const unsigned char* count1values = count1.GetValues();
+    for (i = 0; i < numkeys; i++) {
+        k = count1keys[i];
+        v = count1values[k];
+        if (v) {
+            // create a live cell in next grid
+            if (laststep) {
+                lua_pushnumber(L, 1);
+                lua_rawseti(L, -2, k);
+            }
+            next3d.SetValue(k, 1);
+            newpop++;
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            if (x < minx) minx = x;
+            if (y < miny) miny = y;
+            if (z < minz) minz = z;
+            if (x > maxx) maxx = x;
+            if (y > maxy) maxy = y;
+            if (z > maxz) maxz = z;
+        }
+    }
+    grid3d.Copy(next3d);
+    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
+        liveedge = 1;
+    }
+    return newpop;
+}
+
+// -----------------------------------------------------------------------------
+
+int Overlay::CreateResultsFromC1G3(lua_State *L, bool laststep) {
+    // apply neighbor rule
+    if (laststep) {
+        lua_newtable(L);
+    }
+    next3d.Clear();
+    int newpop = 0;
+    int numkeys, k, i;
+    unsigned char v;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+    const int* count1keys = count1.GetKeys(&numkeys);
+    const unsigned char* count1values = count1.GetValues();
+    unsigned char src;
+    const unsigned char* grid3dvalues = grid3d.GetValues();
+    for (i = 0; i < numkeys; i++) {
+        k = count1keys[i];
+        v = count1values[k];
+        src = grid3dvalues[k];
+        if ((src && survivals[v - 1]) || (births[v] && !src)) {
+            // create a live cell in next grid
+            if (laststep) {
+                lua_pushnumber(L, 1);
+                lua_rawseti(L, -2, k);
+            }
+            next3d.SetValue(k, 1);
+            newpop++;
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            if (x < minx) minx = x;
+            if (y < miny) miny = y;
+            if (z < minz) minz = z;
+            if (x > maxx) maxx = x;
+            if (y > maxy) maxy = y;
+            if (z > maxz) maxz = z;
+        }
+    }
+    grid3d.Copy(next3d);
+    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
+        liveedge = 1;
+    }
+    return newpop;
+}
+
+// -----------------------------------------------------------------------------
+
+int Overlay::CreateResultsFromC1C2(lua_State *L, bool laststep) {
+    // apply neighbor rule
+    if (laststep) {
+        lua_newtable(L);
+    } else {
+        next3d.Clear();
+    }
+    int newpop = 0;
+    int numkeys, k, i;
+    unsigned char v;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+
+    // use count1 and survivals to put live cells in grid
+    const int* count1keys = count1.GetKeys(&numkeys);
+    const unsigned char* count1values = count1.GetValues();
+    for (i = 0; i < numkeys; i++) {
+        k = count1keys[i];
+        v = count1values[k];
+        if (survivals[v]) {
+            // create a live cell in grid2
+            if (laststep) {
+                lua_pushnumber(L, 1);
+                lua_rawseti(L, -2, k);
+            }
+            next3d.SetValue(k, 1);
+            newpop++;
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            if (x < minx) minx = x;
+            if (y < miny) miny = y;
+            if (z < minz) minz = z;
+            if (x > maxx) maxx = x;
+            if (y > maxy) maxy = y;
+            if (z > maxz) maxz = z;
+        }
+    }
+
+    // use count2 and births to put live cells in grid
+    const int* count2keys = count2.GetKeys(&numkeys);
+    const unsigned char* count2values = count2.GetValues();
+    for (i = 0; i < numkeys; i++) {
+        k = count2keys[i];
+        v = count2values[k];
+        if (births[v]) {
+            // create a live cell in grid2
+            if (laststep) {
+                lua_pushnumber(L, 1);
+                lua_rawseti(L, -2, k);
+                newpop++;
+            } else {
+                next3d.SetValue(k, 1);
+            }
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            if (x < minx) minx = x;
+            if (y < miny) miny = y;
+            if (z < minz) minz = z;
+            if (x > maxx) maxx = x;
+            if (y > maxy) maxy = y;
+            if (z > maxz) maxz = z;
+        }
+    }
+    grid3d.Copy(next3d);
+    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
+        liveedge = 1;
+    }
+    return newpop;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DSetPattern(lua_State* L, int n, int* nresults) {
+    // fill source table
+    grid3d.Clear();
+    int idx = 2;
+    if (idx > n) return OverlayError("missing grid argument");
+    lua_rawgeti(L, 1, idx);
+    int type = lua_type(L, -1);
+    if (type != LUA_TTABLE) {
+        lua_pop(L, 1);
+        return OverlayError("grid argument is not a table");
+    }
+    lua_pushvalue(L, -1);
+    lua_pushnil(L);
+    while (lua_next(L, -2)) {
+        lua_pushvalue(L, -2);
+        int k = lua_tointeger(L, -1);
+        lua_pop(L, 2);
+        grid3d.SetValue(k, 1);
+    }
+    lua_pop(L, 1);
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
+    // get the grid size
+    int N = gridsize;
+
+    // fill source table
+    grid3d.Clear();
+    int idx = 2;
+    if (idx > n) return OverlayError("missing grid argument");
+    lua_rawgeti(L, 1, idx);
+    int type = lua_type(L, -1);
+    if (type != LUA_TTABLE) {
+        lua_pop(L, 1);
+        return OverlayError("grid argument is not a table");
+    }
+    lua_pushvalue(L, -1);
+    lua_pushnil(L);
+    while (lua_next(L, -2)) {
+        lua_pushvalue(L, -2);
+        int k = lua_tointeger(L, -1);
+        lua_pop(L, 2);
+        grid3d.SetValue(k, 1);
+    }
+    lua_pop(L, 1);
+
+    liveedge = 0;
+    int gencount = 0;
+    // for BusyBoxes get the gencount
+    if (ruletype == bb || ruletype == bbw) {
+        idx++;
+        if (idx > n) return OverlayError("missing gencount argument");
+        lua_rawgeti(L, 1, idx);
+        type = lua_type(L, -1);
+        if (type != LUA_TNUMBER) {
+            lua_pop(L, 1);
+            return OverlayError("gencount argument is not a number");
+        }
+        gencount = (int)lua_tonumber(L, -1);
+        lua_pop(L, 1);
+    } else {
+        // for other algos get liveedge
+        idx++;
+        if (idx > n) return OverlayError("missing edge argument");
+        lua_rawgeti(L, 1, idx);
+        type = lua_type(L, -1);
+        if (type != LUA_TBOOLEAN) {
+            lua_pop(L, 1);
+            return OverlayError("edge argument is not a boolean");
+        }
+        liveedge = (int)lua_toboolean(L, -1);
+        lua_pop(L, 1);
+    }
+
+    // process each step
+    int step = 1;
+    int newpop = 0;
+    bool laststep = false;
+
+    while (step <= stepsize) {
+        // set min, max defaults
+        minx = N;
+        maxx = -1;
+        miny = N;
+        maxy = -1;
+        minz = N;
+        maxz = -1;
+
+        // set the laststep flag
+        if (step == stepsize) laststep = true;
+
+        // clear the intermediate counts
+        count1.Clear();
+        count2.Clear();
+
+        // call the appropriate algorithm
+        switch (ruletype) {
+            case moore:
+                Do3DNextGenMoore();
+                newpop = CreateResultsFromC1G3(L, laststep);
+                break;
+            case face:
+                Do3DNextGenFace();
+                newpop = CreateResultsFromC1C2(L, laststep);
+                break;
+            case corner:
+                Do3DNextGenCorner();
+                newpop = CreateResultsFromC1C2(L, laststep);
+                break;
+            case edge:
+                Do3DNextGenEdge();
+                newpop = CreateResultsFromC1C2(L, laststep);
+                break;
+            case hexahedral:
+                Do3DNextGenHexahedral();
+                newpop = CreateResultsFromC1C2(L, laststep);
+                break;
+            case bb:
+                if ((gridsize & 1) == 1) return OverlayError("grid size must be even for BusyBoxes");
+                Do3DNextGenBB(true, gencount + step - 1);
+                newpop = CreateResultsFromC1(L, laststep);
+            break;
+                case bbw:
+                if ((gridsize & 1) == 1) return OverlayError("grid size must be even for BusyBoxes");
+                Do3DNextGenBB(false, gencount + step - 1);
+                newpop = CreateResultsFromC1(L, laststep);
+                break;
+            default:
+                return OverlayError("illegal rule specified");
+        }
+
+        // next step
+        step++;
+
+        // exit if population is zero
+        if (newpop == 0) break;
+    }
+        
+    // return the population
+    lua_pushinteger(L, newpop);
+
+    // return the grid bounding box
+    lua_pushinteger(L, minx);
+    lua_pushinteger(L, maxx);
+    lua_pushinteger(L, miny);
+    lua_pushinteger(L, maxy);
+    lua_pushinteger(L, minz);
+    lua_pushinteger(L, maxz);
+
+    *nresults = 8;  // table, popcount, minx, maxx, miny, maxy, minz, maxz
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::Do3DNextGenBB(bool mirror, int gencount) {
+    // the algorithm used below is a slightly modified (and corrected!)
+    // version of the kernel code in Ready's Salt 3D example
+    // (see Patterns/CellularAutomata/Salt/salt3D_circular330.vti);
+    // it uses a rule based on 28 cells in a 7x7 neighborhood for each live cell
+
+    // swap site locations
+    int swap1[] = { 1,  1};
+    int swap2[] = {-1,  1};
+    int swap3[] = {-1, -1};
+    int swap4[] = { 1, -1};
+
+    // activator locations
+    int act5[]  = { 2, -1};
+    int act6[]  = { 2,  1};
+    int act7[]  = { 1,  2};
+    int act8[]  = {-1,  2};
+    int act9[]  = {-2,  1};
+    int act10[] = {-2, -1};
+    int act11[] = {-1, -2};
+    int act12[] = { 1, -2};
+
+    // inhibitor locations
+    int inhib13[] = {-2, -3};
+    int inhib14[] = { 0, -3};
+    int inhib15[] = { 2, -3};
+    int inhib16[] = {-3, -2};
+    int inhib17[] = { 3, -2};
+    int inhib18[] = { 0, -1};
+    int inhib19[] = {-3,  0};
+    int inhib20[] = {-1,  0};
+    int inhib21[] = { 1,  0};
+    int inhib22[] = { 3,  0};
+    int inhib23[] = { 0,  1};
+    int inhib24[] = {-3,  2};
+    int inhib25[] = { 3,  2};
+    int inhib26[] = {-2,  3};
+    int inhib27[] = { 0,  3};
+    int inhib28[] = { 2,  3};
+
+    int* coords[] = {
+        // 1 to 4 are the coordinates for the 4 potential swap sites:
+        swap1, swap2, swap3, swap4,
+        // 5 to 12 are activators:
+        act5, act6, act7, act8, act9, act10, act11, act12,
+        // 13 to 28 are inhibitors:
+        inhib13, inhib14, inhib15, inhib16, inhib17, inhib18,
+        inhib19, inhib20, inhib21, inhib22, inhib23, inhib24,
+        inhib25, inhib26, inhib27, inhib28
+    };
+
+    // numbers are indices into the coords array
+    int actidx1[] = {4,  7};
+    int actidx2[] = {6,  9};
+    int actidx3[] = {8, 11};
+    int actidx4[] = {5, 10};
+    int* activators[] = { actidx1, actidx2, actidx3, actidx4 };
+
+    int inhibidx1[] = {17, 24, 21, 26, 19, 27, 6,  9,  8, 11,  5, 10};
+    int inhibidx2[] = {17, 23, 18, 26, 20, 25, 4,  7,  8, 11,  5, 10};
+    int inhibidx3[] = {15, 22, 13, 18, 12, 20, 4,  7,  6,  9,  5, 10};
+    int inhibidx4[] = {19, 14, 13, 21, 16, 22, 4,  7,  6,  9,  8, 11};
+    int* inhibitors[] = { inhibidx1, inhibidx2, inhibidx3, inhibidx4 };
+
+    int numkeys, k, i;
+    int x, y, z;
+    int phase = gencount % 6;
+    int N = gridsize;
+    int NN = N * N;
+    const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+    const unsigned char* grid3dvalues = grid3d.GetValues();
+
+    // apply rule
+    for (i = 0; i < numkeys; i++) {
+        k = grid3dkeys[i];
+        x = k % N;
+        y = (k / N) % N;
+        z = k / NN;
+        if (((x + y + z) & 1) == (phase & 1)) {
+            // this live cell has the right parity so get values for its 28 neighbors
+            unsigned char val[28];
+            int sx, sy, sz;
+            for (int j = 0; j <= 27; j++) {
+                if (phase == 0 || phase == 3) {
+                    // use XY plane
+                    sx = (x + N + coords[j][0]) % N;
+                    sy = (y + N + coords[j][1]) % N;
+                    sz = z;
+                } else {
+                    if (phase == 1 || phase == 4) {
+                        // use YZ plane
+                        sx = x;
+                        sy = (y + N + coords[j][0]) % N;
+                        sz = (z + N + coords[j][1]) % N;
+                    } else {
+                        // phase == 2 or 5 so use XZ plane
+                        sx = (x + N + coords[j][0]) % N;
+                        sy = y;
+                        sz = (z + N + coords[j][1]) % N;
+                    }
+                }
+                val[j] = grid3dvalues[sx + N * (sy + N * sz)];
+            }
+
+            // find the potential swaps
+            int numswaps = 0;
+            int swapi = 0;
+            for (int j = 0; j <= 3; j++) {
+                // if either activator is a live cell then the swap is possible,
+                // but if any inhibitor is a live cell then the swap is forbidden
+                if ((val[activators[j][0]] || val[activators[j][1]])
+                    && ! (val[inhibitors[j][0]] || val[inhibitors[j][1]] ||
+                             val[inhibitors[j][2]] || val[inhibitors[j][3]] ||
+                             val[inhibitors[j][4]] || val[inhibitors[j][5]] ||
+                             val[inhibitors[j][6]] || val[inhibitors[j][7]] ||
+                             val[inhibitors[j][8]] || val[inhibitors[j][9]] ||
+                             val[inhibitors[j][10]] || val[inhibitors[j][11]])) {
+                    numswaps++;
+                    if (numswaps > 1) break;
+                    swapi = j;   // index of swap location in coords array (0..3)
+                }
+            }
+
+            // if only one swap, and only to an empty cell, then do it
+            if (numswaps == 1 && ! val[swapi]) {
+                // calculate the swap position
+                int newx, newy, newz;
+                if (phase == 0 || phase == 3) {
+                    // use XY plane
+                    newx = x + coords[swapi][0];
+                    newy = y + coords[swapi][1];
+                    newz = z;
+                } else {
+                    if (phase == 1 || phase == 4) {
+                        // use YZ plane
+                        newx = x;
+                        newy = y + coords[swapi][0];
+                        newz = z + coords[swapi][1];
+                    } else {
+                        // phase == 2 or 5 so use XZ plane
+                        newx = x + coords[swapi][0];
+                        newy = y;
+                        newz = z + coords[swapi][1];
+                    }
+                }
+                // if using mirror mode then don't wrap
+                if (mirror &&
+                    ( newx < 0 || newx >= N ||
+                      newy < 0 || newy >= N ||
+                      newz < 0 || newz >= N )) {
+                    // swap position is outside grid so don't do it
+                    count1.SetValue(k, 1);
+                } else {
+                    // do the swap, wrapping if necessary
+                    x = (newx + N) % N;
+                    y = (newy + N) % N;
+                    z = (newz + N) % N;
+                    count1.SetValue(x + N * (y + N * z), 1);
+                }
+            } else {
+                // don't swap this live cell
+                count1.SetValue(k, 1);
+            }
+        } else {
+            // live cell with wrong parity
+            count1.SetValue(k, 1);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::Do3DNextGenFace() {
+    int numkeys, k, i;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+
+    // check whether to use wrap
+    if (liveedge) {
+        // use wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+            int Ny = N * y;
+            int NNz = NN * z;
+            int NypNNz = Ny + NNz;
+            int xpNNz = x + NNz;
+            int xpNy = x + Ny;
+
+            // calculate the positions of the 6 cells next to each face of this cell
+            int xp1 = (x + 1) % N + NypNNz;
+            int xm1 = (x - 1 + N) % N + NypNNz;
+            int yp1 = N * ((y + 1) % N) + xpNNz;
+            int ym1 = N * ((y - 1 + N) % N) + xpNNz;
+            int zp1 = NN * ((z + 1) % N) + xpNy;
+            int zm1 = NN * ((z - 1 + N) % N) + xpNy;
+
+            if (grid3dvalues[xp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xp1, 1); }
+            if (grid3dvalues[xm1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xm1, 1); }
+            if (grid3dvalues[yp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(yp1, 1); }
+            if (grid3dvalues[ym1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ym1, 1); }
+            if (grid3dvalues[zp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(zp1, 1); }
+            if (grid3dvalues[zm1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(zm1, 1); }
+        }
+    } else {
+        // use no wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            count1.SetValue(k, 0);
+
+            // calculate the positions of the 6 cells next to each face of this cell
+            int xp1 = k + 1;
+            int xm1 = k - 1;
+            int yp1 = k + N;
+            int ym1 = k - N;
+            int zp1 = k + NN;
+            int zm1 = k - NN;
+
+            if (grid3dvalues[xp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xp1, 1); }
+            if (grid3dvalues[xm1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xm1, 1); }
+            if (grid3dvalues[yp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(yp1, 1); }
+            if (grid3dvalues[ym1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ym1, 1); }
+            if (grid3dvalues[zp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(zp1, 1); }
+            if (grid3dvalues[zm1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(zm1, 1); }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::Do3DNextGenCorner() {
+    int numkeys, k, i;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+
+    // check whether to use wrap
+    if (liveedge) {
+        // use wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+
+            int xp1 = (x + 1) % N;
+            int xm1 = (x - 1 + N) % N;
+            int yp1 = N * ((y + 1) % N);
+            int ym1 = N * ((y - 1 + N) % N);
+            int zp1 = NN * ((z + 1) % N);
+            int zm1 = NN * ((z - 1 + N) % N);
+
+            // calculate the positions of the 8 cells cells touching each corner of this cell
+            int ppp = xp1 + yp1 + zp1;
+            int mmm = xm1 + ym1 + zm1;
+            int ppm = xp1 + yp1 + zm1;
+            int mmp = xm1 + ym1 + zp1;
+            int mpp = xm1 + yp1 + zp1;
+            int pmm = xp1 + ym1 + zm1;
+            int pmp = xp1 + ym1 + zp1;
+            int mpm = xm1 + yp1 + zm1;
+
+            if (grid3dvalues[ppp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppp, 1); }
+            if (grid3dvalues[mmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmm, 1); }
+            if (grid3dvalues[ppm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppm, 1); }
+            if (grid3dvalues[mmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmp, 1); }
+            if (grid3dvalues[mpp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpp, 1); }
+            if (grid3dvalues[pmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmm, 1); }
+            if (grid3dvalues[pmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmp, 1); }
+            if (grid3dvalues[mpm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpm, 1); }
+        }
+    } else {
+        // use no wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+
+            // calculate the positions of the 8 cells cells touching each corner of this cell
+            int ppp = k + 1 + N + NN;
+            int mmm = k - 1 - N - NN;
+            int ppm = k + 1 + N - NN;
+            int mmp = k - 1 - N + NN;
+            int mpp = k - 1 + N + NN;
+            int pmm = k + 1 - N - NN;
+            int pmp = k + 1 - N + NN;
+            int mpm = k - 1 + N - NN;
+
+            if (grid3dvalues[ppp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppp, 1); }
+            if (grid3dvalues[mmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmm, 1); }
+            if (grid3dvalues[ppm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppm, 1); }
+            if (grid3dvalues[mmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmp, 1); }
+            if (grid3dvalues[mpp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpp, 1); }
+            if (grid3dvalues[pmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmm, 1); }
+            if (grid3dvalues[pmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmp, 1); }
+            if (grid3dvalues[mpm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpm, 1); }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::Do3DNextGenEdge() {
+    int numkeys, k, i;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+
+    // check whether to use wrap
+    if (liveedge) {
+        // use wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+
+            int xp1 = (x + 1) % N;
+            int xm1 = (x - 1 + N) % N;
+            int yp1 = N * ((y + 1) % N);
+            int ym1 = N * ((y - 1 + N) % N);
+            int zp1 = NN * ((z + 1) % N);
+            int zm1 = NN * ((z - 1 + N) % N);
+            int Ny = N * y;
+            int NNz = NN * z;
+
+            // calculate the positions of the 12 cells next to each edge of this cell
+            int xpp = x + yp1 + zp1;
+            int xmm = x + ym1 + zm1;
+            int xpm = x + yp1 + zm1;
+            int xmp = x + ym1 + zp1;
+
+            int pyp = xp1 + Ny + zp1;
+            int mym = xm1 + Ny + zm1;
+            int pym = xp1 + Ny + zm1;
+            int myp = xm1 + Ny + zp1;
+
+            int ppz = xp1 + yp1 + NNz;
+            int mmz = xm1 + ym1 + NNz;
+            int pmz = xp1 + ym1 + NNz;
+            int mpz = xm1 + yp1 + NNz;
+
+            if (grid3dvalues[xpp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpp, 1); }
+            if (grid3dvalues[xmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmm, 1); }
+            if (grid3dvalues[xpm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpm, 1); }
+            if (grid3dvalues[xmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmp, 1); }
+
+            if (grid3dvalues[pyp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pyp, 1); }
+            if (grid3dvalues[mym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mym, 1); }
+            if (grid3dvalues[pym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pym, 1); }
+            if (grid3dvalues[myp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(myp, 1); }
+
+            if (grid3dvalues[ppz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppz, 1); }
+            if (grid3dvalues[mmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmz, 1); }
+            if (grid3dvalues[pmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmz, 1); }
+            if (grid3dvalues[mpz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpz, 1); }
+        }
+    } else {
+        // use no wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+
+            // calculate the positions of the 12 cells next to each edge of this cell
+            int xpp = k + N + NN;
+            int xmm = k - N - NN;
+            int xpm = k + N - NN;
+            int xmp = k - N + NN;
+
+            int pyp = k + 1 + NN;
+            int mym = k - 1 - NN;
+            int pym = k + 1 - NN;
+            int myp = k - 1 + NN;
+
+            int ppz = k + 1 + N;
+            int mmz = k - 1 - N;
+            int pmz = k + 1 - N;
+            int mpz = k - 1 + N;
+
+            if (grid3dvalues[xpp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpp, 1); }
+            if (grid3dvalues[xmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmm, 1); }
+            if (grid3dvalues[xpm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpm, 1); }
+            if (grid3dvalues[xmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmp, 1); }
+
+            if (grid3dvalues[pyp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pyp, 1); }
+            if (grid3dvalues[mym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mym, 1); }
+            if (grid3dvalues[pym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pym, 1); }
+            if (grid3dvalues[myp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(myp, 1); }
+
+            if (grid3dvalues[ppz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppz, 1); }
+            if (grid3dvalues[mmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmz, 1); }
+            if (grid3dvalues[pmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmz, 1); }
+            if (grid3dvalues[mpz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpz, 1); }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::Do3DNextGenHexahedral() {
+    int numkeys, k, i;
+    int x, y, z;
+    int N = gridsize;
+    int NN = N * N;
+
+    // check whether to use wrap
+    if (liveedge) {
+        // use wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+
+            int xp1 = (x + 1) % N;
+            int xm1 = (x - 1 + N) % N;
+            int yp1 = N * ((y + 1) % N);
+            int ym1 = N * ((y - 1 + N) % N);
+            int zp1 = NN * ((z + 1) % N);
+            int zm1 = NN * ((z - 1 + N) % N);
+            int Ny = N * y;
+            int NNz = NN * z;
+
+            // calculate the positions of the 12 neighboring cells (using the top offsets given
+            // on page 872 in http://www.complex-systems.com/pdf/01-5-1.pdf)
+            int xym = x + Ny + zm1;
+            int xyp = x + Ny + zp1;
+            int xpm = x + yp1 + zm1;
+            int xpz = x + yp1 + NNz;
+            int xmp = x + ym1 + zp1;
+            int xmz = x + ym1 + NNz;
+            int pym = xp1 + Ny + zm1;
+            int pyz = xp1 + Ny + NNz;
+            int myp = xm1 + Ny + zp1;
+            int myz = xm1 + Ny + NNz;
+            int pmz = xp1 + ym1 + NNz;
+            int mpz = xm1 + yp1 + NNz;
+
+            if (grid3dvalues[xym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xym, 1); }
+            if (grid3dvalues[xyp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xyp, 1); }
+            if (grid3dvalues[xpm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpm, 1); }
+            if (grid3dvalues[xpz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpz, 1); }
+
+            if (grid3dvalues[xmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmp, 1); }
+            if (grid3dvalues[xmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmz, 1); }
+            if (grid3dvalues[pym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pym, 1); }
+            if (grid3dvalues[pyz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pyz, 1); }
+
+            if (grid3dvalues[myp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(myp, 1); }
+            if (grid3dvalues[myz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(myz, 1); }
+            if (grid3dvalues[pmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmz, 1); }
+            if (grid3dvalues[mpz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpz, 1); }
+        }
+    } else {
+        // use no wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char* grid3dvalues = grid3d.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            x = k % N;
+            y = (k / N) % N;
+            z = k / NN;
+            count1.SetValue(k, 0);
+
+            // calculate the positions of the 12 neighboring cells (using the top offsets given
+            // on page 872 in http://www.complex-systems.com/pdf/01-5-1.pdf)
+            int xym = k - NN;
+            int xyp = k + NN;
+            int xpm = k + N - NN;
+            int xpz = k + N;
+            int xmp = k - N + NN;
+            int xmz = k - N;
+            int pym = k + 1 - NN;
+            int pyz = k + 1;
+            int myp = k - 1 + NN;
+            int myz = k - 1;
+            int pmz = k + 1 - N;
+            int mpz = k - 1 + N;
+
+            if (grid3dvalues[xym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xym, 1); }
+            if (grid3dvalues[xyp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xyp, 1); }
+            if (grid3dvalues[xpm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpm, 1); }
+            if (grid3dvalues[xpz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpz, 1); }
+
+            if (grid3dvalues[xmp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmp, 1); }
+            if (grid3dvalues[xmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmz, 1); }
+            if (grid3dvalues[pym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pym, 1); }
+            if (grid3dvalues[pyz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pyz, 1); }
+
+            if (grid3dvalues[myp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(myp, 1); }
+            if (grid3dvalues[myz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(myz, 1); }
+            if (grid3dvalues[pmz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(pmz, 1); }
+            if (grid3dvalues[mpz]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mpz, 1); }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::Do3DNextGenMoore() {
+    int numkeys, k, i;
+    unsigned char v;
+    int x, y;
+    const int* count1keys = NULL;
+    const unsigned char* count1values = NULL;
+    int N = gridsize;
+    int NN = N * N;
+    int NNN = NN * N;
+
+    // check whether to use wrap
+    if (liveedge) {
+        // use wrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        int NNmN = NN - N;
+        int k2;
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            count1.AddToValue(k, 1);
+            y = k % NN;
+            k2 = k + (y + N) % NN - y;
+            count1.AddToValue(k2, 1);
+            k2 = k + (y + NNmN) % NN - y;
+            count1.AddToValue(k2, 1);
+        }
+
+        // get keys and values in count1
+        count1keys = count1.GetKeys(&numkeys);
+        count1values = count1.GetValues();
+        int Nm1 = N - 1;
+        for (i = 0; i < numkeys; i++) {
+            k = count1keys[i];
+            v = count1values[k];
+            count2.AddToValue(k, v);
+            x = k % N;
+            k2 = k + (x + 1) % N - x;
+            count2.AddToValue(k2, v);
+            k2 = k + (x + Nm1) % N - x;
+            count2.AddToValue(k2, v);
+        }
+
+        // get keys and values in count2
+        const int* count2keys = count2.GetKeys(&numkeys);
+        const unsigned char* count2values = count2.GetValues();
+        int NNNmNN = NNN - NN;
+        count1.Clear();
+        for (i = 0; i < numkeys; i++) {
+            k = count2keys[i];
+            v = count2values[k];
+            count1.AddToValue(k, v);
+            k2 = (k + NN) % NNN;
+            count1.AddToValue(k2, v);
+            k2 = (k + NNNmNN) % NNN;
+            count1.AddToValue(k2, v);
+        }
+    } else {
+        // use nowrap version
+        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        for (i = 0; i < numkeys; i++) {
+            k = grid3dkeys[i];
+            count1.AddToValue(k, 1);
+            count1.AddToValue(k + N, 1);
+            count1.AddToValue(k - N, 1);
+        }
+
+        // get keys and values in count1
+        count1keys = count1.GetKeys(&numkeys);
+        count1values = count1.GetValues();
+        for (i = 0; i < numkeys; i++) {
+            k = count1keys[i];
+            v = count1values[k];
+            count2.AddToValue(k, v);
+            count2.AddToValue(k + 1, v);
+            count2.AddToValue(k - 1, v);
+        }
+
+        // get keys and values in count2
+        const int* count2keys = count2.GetKeys(&numkeys);
+        const unsigned char* count2values = count2.GetValues();
+        count1.Clear();
+        for (i = 0; i < numkeys; i++) {
+            k = count2keys[i];
+            v = count2values[k];
+            count1.AddToValue(k, v);
+            count1.AddToValue(k + NN, v);
+            count1.AddToValue(k - NN, v);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoOverlayCommand(const char* cmd)
 {
     // determine which command to run
@@ -6620,12 +8426,24 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
 const char* Overlay::DoOverlayTable(const char* cmd, lua_State* L, int n, int* nresults)
 {
     // determine which command to run
-    if ((strcmp(cmd, "set")) == 0)      return DoSetTable(L, n, nresults);
-    if ((strcmp(cmd, "get")) == 0)      return DoGetTable(L, n, nresults);
-    if ((strcmp(cmd, "paste")) == 0)    return DoPasteTable(L, n, nresults);
-    if ((strcmp(cmd, "rgba")) == 0)     return DoSetRGBATable(cmd, L, n, nresults);
-    if ((strcmp(cmd, "line")) == 0)     return DoLineTable(L, n, true, nresults);
-    if ((strcmp(cmd, "lines")) == 0)    return DoLineTable(L, n, false, nresults);
-    if ((strcmp(cmd, "fill")) == 0)     return DoFillTable(L, n, nresults);
+    if ((strcmp(cmd, "set")) == 0)               return DoSetPixel(L, n, nresults);
+    if ((strcmp(cmd, "get")) == 0)               return DoGet(L, n, nresults);
+    if ((strcmp(cmd, "paste")) == 0)             return DoPaste(L, n, nresults);
+    if ((strcmp(cmd, "rgba")) == 0)              return DoSetRGBA(cmd, L, n, nresults);
+    if ((strcmp(cmd, "line")) == 0)              return DoLine(L, n, true, nresults);
+    if ((strcmp(cmd, "lines")) == 0)             return DoLine(L, n, false, nresults);
+    if ((strcmp(cmd, "fill")) == 0)              return DoFill(L, n, nresults);
+
+    // 3D
+    if ((strcmp(cmd, "nextgen3d")) == 0)         return Do3DNextGen(L, n, nresults);
+    if ((strcmp(cmd, "setrule3d")) == 0)         return Do3DSetRule(L, n, nresults);
+    if ((strcmp(cmd, "setsize3d")) == 0)         return Do3DSetGridSize(L, n, nresults);
+    if ((strcmp(cmd, "setstep3d")) == 0)         return Do3DSetStepSize(L, n, nresults);
+    if ((strcmp(cmd, "settrans3d")) == 0)        return Do3DSetTransform(L, n, nresults);
+    if ((strcmp(cmd, "displaycells3d")) == 0)    return Do3DDisplayCells(L, n, nresults);
+    if ((strcmp(cmd, "setcelltype3d")) == 0)     return Do3DSetCellType(L, n, nresults);
+    if ((strcmp(cmd, "setdepthshading3d")) == 0) return Do3DSetDepthShading(L, n, nresults);
+    if ((strcmp(cmd, "setpattern3d")) == 0)      return Do3DSetPattern(L, n, nresults);
+
     return OverlayError("unknown command");
 }

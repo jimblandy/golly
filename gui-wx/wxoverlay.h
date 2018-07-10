@@ -37,6 +37,107 @@ typedef enum {
 // in a named "clipboard" for later use by other commands (eg. paste, replace):
 class Clip;
 
+// The ClipManager class manages a list of clips.
+class ClipManager {
+public:
+    ClipManager();
+    ~ClipManager();
+
+    // clear the list of clips managed (does not delete the clips)
+    void Clear();
+
+    // add the named clip to the list to manage
+    void AddClip(const Clip* clip);
+
+    // add the named clip to the even list to manage
+    void AddEvenClip(const Clip* clip);
+
+    // add the named clip to the odd list to manage
+    void AddOddClip(const Clip* clip);
+
+    // get an array of the clips managed and the number of clips
+    const Clip** GetClips(int* numclips);
+
+    // get an array of the even clips managed and the number of clips
+    const Clip** GetEvenClips(int* numclips);
+
+    // get an array of the clips managed and the number of clips
+    const Clip** GetOddClips(int* numclips);
+
+    // set the clip
+    void SetClip(const Clip* normalclip);
+
+    // set the odd clip
+    void SetOddClip(const Clip* oddclip);
+
+    // set the even clip
+    void SetEvenClip(const Clip *evenclip);
+
+    // get the standard clip
+    const Clip* GetClip();
+
+    // get the odd clip
+    const Clip* GetOddClip();
+
+    // get the even clip
+    const Clip* GetEvenClip();
+
+private:
+    int nsize;
+    int esize;
+    int osize;
+    int nclips;
+    int eclips;
+    int oclips;
+    const Clip** ncliplist;
+    const Clip** ecliplist;
+    const Clip** ocliplist;
+    const Clip* nclip;
+    const Clip* oclip;
+    const Clip* eclip;
+};
+
+// The Table class is used during next generation calculations for 3D rules
+// and is an unsigned char array with integer keys.
+class Table {
+public:
+    Table();
+    ~Table();
+
+    // set the size of the table (will clear current contents)
+    bool SetSize(int sz);
+
+    // clear the contents of the table
+    void Clear();
+
+    // get an array of the keys and the number of keys
+    const int* GetKeys(int* numkeys);
+
+    // get an array of the table contents
+    const unsigned char* GetValues();
+
+    // set the value at the specified key
+    void SetValue(const int key, const unsigned char value);
+
+    // add an amount to the value at the specified key
+    void AddToValue(const int key, const unsigned char amount);
+
+    // sort keys to allow more memory friendly iteration
+    void SortKeys();
+
+    // copy contents
+    void Copy(const Table& from);
+
+private:
+    void FreeMemory();
+    void AllocateMemory();
+    unsigned char* values;
+    int*  keys;
+    char* exists;
+    int   size;
+    int   nkeys;
+};
+
 class Overlay {
 public:
     Overlay();
@@ -92,6 +193,9 @@ public:
     // Save overlay in given PNG file.
 
 private:
+    const Clip* GetClip(const char* clipname);
+    // Get the named clip.
+
     const char* GetCoordinatePair(char* args, int* x, int* y);
     // Decode a pair of integers from the supplied string.
     // Returns a pointer to the first non-space character after
@@ -138,15 +242,15 @@ private:
     // of the form "r g b a".
     
     void DrawPixel(int x, int y);
-    // Called by DoSetPixel, DoLine, etc to set a given pixel
+    // Called by some drawing functions to set a given pixel
     // that is within the render target.
     
     void DrawAAPixel(int x, int y, double opacity);
     // Draw an antialiased pixel in the render target.
 
     const char* DoSetPixel(const char* args);
-    // Set the given pixel to the current RGBA values.
-    // Does nothing if the pixel is outside the edges of the render target.
+    // Set the given pixels to the current RGBA values.
+    // Ignores pixels outside the render target.
     
     const char* DoGetPixel(const char* args);
     // Return the RGBA values of the given pixel as a string of the
@@ -200,7 +304,7 @@ private:
     // and linewidth is 1.
     
     const char* DoFill(const char* args);
-    // Fill a given rectangle with the current RGBA values.
+    // Fill the given rectangles with the current RGBA values.
     // Automatically clips any parts of the rectangle outside the render target.
 
     void FillRect(int x, int y, int w, int h);
@@ -211,7 +315,7 @@ private:
     // The rectangle must be within the render target.
     
     const char* DoPaste(const char* args);
-    // Paste the named Clip data into the render target at the given location.
+    // Paste the named Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
     
     const char* DoScale(const char* args);
@@ -419,15 +523,157 @@ private:
     void DeleteStars();
     // Free the memory used by the stars.
 
-    // overlay table API calls
+    // ovtable Lua API calls
 
-    const char* DoFillTable(lua_State* L, int n, int* nresults);
-    const char* DoGetTable(lua_State* L, int n, int* nresults);
-    const char* DoLineTable(lua_State* L, int n, bool connected, int* nresults);
-    const char* DoPasteTable(lua_State* L, int n, int* nresults);
-    const char* DoPasteTableInternal(const int* coords, int n, const char* clip);
-    const char* DoSetTable(lua_State* L, int n, int* nresults);
-    const char* DoSetRGBATable(const char* cmd, lua_State* L, int n, int* nresults);
+    // these have the same functionality as the string
+    // API calls but take Lua parameters
+
+    const char* DoFill(lua_State* L, int n, int* nresults);
+    // Fill the given rectangles with the current RGBA values.
+    // Automatically clips any parts of the rectangle outside the render target.
+
+    const char* DoGet(lua_State* L, int n, int* nresults);
+    // Return the RGBA values of the given pixel as individual Lua numbers
+    // r, g, b, a. Values will be -1 if the pixel is outside the render target.
+
+    const char* DoLine(lua_State* L, int n, bool connected, int* nresults);
+    // Draw a one or more optionally connected lines using the current RGBA values.
+    // Automatically clips any parts of the line outside the render target.
+
+    const char* DoPaste(lua_State* L, int n, int* nresults);
+    // Paste the named Clip data into the render target at the given locations.
+    // Automatically clips any pixels outside the render target.
+
+    const char* DoSetPixel(lua_State* L, int n, int* nresults);
+    // Set the given pixels to the current RGBA values.
+    // Ignores pixels outside the render target.
+
+    const char* DoSetRGBA(const char* cmd, lua_State* L, int n, int* nresults);
+    // Set the current RGBA values and return the old values a Lua table
+    // of the form {"rgba", r, g, b, a}.
+
+    // internal array API calls
+    
+    // These have the same functionality as the string
+    // API calls but take C++ arrays and are used internally
+    // by the Overlay for speed.
+
+    const char* DoSetPixel(const int* coords, int n);
+    // Set the given pixels to the current RGBA values.
+    // Ignores pixels outside the render target.
+
+    const char* DoPaste(const int* coords, int n, const char* clip);
+    // Paste the given Clip data into the render target at the given locations.
+    // Automatically clips any pixels outside the render target.
+
+    const char* DoPaste(const int* coords, int n, const Clip* clipptr);
+    // Paste the named Clip data into the render target at the given locations.
+    // Automatically clips any pixels outside the render target.
+
+    // 3D calls
+
+    const char* Do3DNextGen(lua_State* L, int n, int* nresults);
+    // Compute the next generation of the 3D grid and returns
+    // the new grid and population.
+
+    const char* Do3DSetRule(lua_State* L, int n, int* nresults);
+    // Set the current 3D rule.
+
+    const char* Do3DSetGridSize(lua_State* L, int n, int* nresults);
+    // Sets the current 3D grid size (3 to 100).
+
+    const char* Do3DSetStepSize(lua_State* L, int n, int* nresults);
+    // Sets the number of generations to compute for each
+    // Do3DNextGen call (1 to 100).
+
+    const char* Do3DSetTransform(lua_State* L, int n, int* nresults);
+    // Sets the current transformation matrix.
+
+    const char* Do3DDisplayCells(lua_State* L, int n, int* nresults);
+    // Draws the most recent 3D grid using the current cell type,
+    // depth shading mode and transformation.
+
+    const char* Do3DSetCellType(lua_State* L, int n, int* nresults);
+    // Set the cell type for drawing cells.
+
+    const char* Do3DSetDepthShading(lua_State* L, int n, int* nresults);
+    // Sets depth shading on or off for Cubes or Spheres.
+
+    const char* Do3DSetPattern(lua_State* L, int n, int* nresults);
+    // Sets the current 3D grid to the supplied pattern.
+
+    const char* Update3DClips();
+    // Updates the clips needed for rendering the cells based on
+    // the cell type and algo.
+
+    int CreateResultsFromC1C2(lua_State* L, bool laststep);
+    // Creates the Lua grid result for the 3D Moore algo.
+
+    int CreateResultsFromC1G3(lua_State* L, bool laststep);
+    // Creates the Lua grid result for the 3D Face, Corner,
+    // Edge and Hexahedral algos.
+
+    int CreateResultsFromC1(lua_State* L, bool laststep);
+    // Creates the Lua grid result for the 3D BusyBoxes algo.
+
+    void Do3DNextGenMoore();
+    // Computes the next generation using the 3D Moore algo.
+
+    void Do3DNextGenFace();
+    // Computes the next generation using the 3D Face algo.
+
+    void Do3DNextGenCorner();
+    // Computes the next generation using the 3D Corner algo.
+
+    void Do3DNextGenEdge();
+    // Computes the next generation using the 3D Edge algo.
+
+    void Do3DNextGenHexahedral();
+    // Computes the next generation using the 3D Hexahedral algo.
+
+    void Do3DNextGenBB(bool mirror, int gencount);
+    // Computes the next generation using the 3D BusyBoxes algo
+    // (standard and wrap)
+
+    // helpers to read Lua types
+
+    const char* ReadLuaBoolean(lua_State* L, int n, int i, bool* value, const char* name);
+    // Read a Lua boolean.
+
+    const char* ReadLuaNumber(lua_State* L, int n, int i, double* value, const char* name);
+    // Read a Lua number (floating point).
+
+    const char* ReadLuaInteger(lua_State* L, int n, int i, int* value, const char* name);
+    // Read a Lua integer.
+
+    const char* ReadLuaString(lua_State* L, int n, int i, const char** value, const char* name);
+    // Read a Lua string.
+
+    // 3D
+    typedef enum { moore, face, corner, edge, hexahedral, bb, bbw } ruletypes;
+    ruletypes ruletype;             // current 3D algo
+    Table grid3d;                   // source grid
+    Table count1;                   // intermediate counts
+    Table count2;                   // intermediate counts
+    Table next3d;                   // next grid used when stepsize > 1
+    int* coords2d;                  // 2d transformed coordinates
+    int numcoords;                  // size of coordinate list
+    char survivals[27];             // survival flags
+    char births[27];                // birth flags
+    int gridsize;                   // grid edge length
+    int stepsize = 1;               // number of generations to compute
+    int liveedge;                   // whether there is a live cell on the grid edge
+    int tablesize;                  // grid size in cells
+    int minx, maxx, miny, maxy, minz, maxz;             // bounding cube
+    double xixo, xiyo, xizo;        // transformation matrix
+    double yixo, yiyo, yizo;
+    double zixo, zizo, ziyo;
+    bool depthshading = false;      // whether to draw with depth shading
+    typedef enum { cube, sphere, point } celltypes;
+    celltypes celltype = cube;      // what shape to use for cells
+    int depthlayers;                // number of depth layers
+    int mindepth, maxdepth;         // depth layer range
+    ClipManager clipmanager;        // manage the list of clips needed for rendering
 
     // render target
     unsigned char* pixmap;          // current render target RGBA data (wd * ht * 4 bytes)
