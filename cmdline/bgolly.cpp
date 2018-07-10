@@ -615,6 +615,8 @@ case 's':
    }
    bool boundedgrid = imp->unbounded && (imp->gridwd > 0 || imp->gridht > 0) ;
    if (boundedgrid) {
+      if (hyperxxx || inc > 1)
+         lifewarning("Step size must be 1 for a bounded grid") ;
       hyperxxx = 0 ;
       inc = 1 ;     // only step by 1
    }
@@ -631,10 +633,10 @@ case 's':
    }
    int fc = 0 ;
    for (;;) {
-   if (benchmark)
-      cout << timestamp() << " " ;
-   else
-      timestamp() ;
+      if (benchmark)
+         cout << timestamp() << " " ;
+      else
+         timestamp() ;
       if (quiet < 2) {
          cout << imp->getGeneration().tostring() ;
          if (!quiet) {
