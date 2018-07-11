@@ -650,6 +650,7 @@ private:
     // Read a Lua string.
 
     // 3D
+    typedef enum { cube, sphere, point } celltypes;
     typedef enum { moore, face, corner, edge, hexahedral, bb, bbw } ruletypes;
     ruletypes ruletype;             // current 3D algo
     Table grid3d;                   // source grid
@@ -661,16 +662,15 @@ private:
     char survivals[27];             // survival flags
     char births[27];                // birth flags
     int gridsize;                   // grid edge length
-    int stepsize = 1;               // number of generations to compute
+    int stepsize;                   // number of generations to compute
     int liveedge;                   // whether there is a live cell on the grid edge
     int tablesize;                  // grid size in cells
-    int minx, maxx, miny, maxy, minz, maxz;             // bounding cube
+    int minx, maxx, miny, maxy, minz, maxz;             // bounding box for live cells
     double xixo, xiyo, xizo;        // transformation matrix
     double yixo, yiyo, yizo;
     double zixo, zizo, ziyo;
-    bool depthshading = false;      // whether to draw with depth shading
-    typedef enum { cube, sphere, point } celltypes;
-    celltypes celltype = cube;      // what shape to use for cells
+    bool depthshading;              // whether to draw with depth shading
+    celltypes celltype;             // what shape to use for cells
     int depthlayers;                // number of depth layers
     int mindepth, maxdepth;         // depth layer range
     ClipManager clipmanager;        // manage the list of clips needed for rendering

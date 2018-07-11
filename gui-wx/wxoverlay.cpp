@@ -410,6 +410,9 @@ Overlay::Overlay()
     engine = NULL;
     #endif
     coords2d = NULL;
+    stepsize = 1;
+    depthshading = false;
+    celltype = cube;
 }
 
 // -----------------------------------------------------------------------------
