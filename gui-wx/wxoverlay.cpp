@@ -384,9 +384,6 @@ const double radToDeg = 180 / M_PI;
 // for replace
 const int matchany = -1;            // match any component value
 
-// for 3D
-const int MAXN = 100;               // maximum 3D grid size
-
 #ifdef __WXMAC__
     // on Mac we'll need to increase the line height of text by 1 or 2 pixels to avoid
     // a GetTextExtent bug that clips the bottom pixels of descenders like "gjpqy"
@@ -7332,7 +7329,7 @@ const char* Overlay::Do3DSetGridSize(lua_State* L, int n, int* nresults) {
     int idx = 2;
     int N;
     if ((error = ReadLuaInteger(L, n, idx++, &N, "size")) != NULL) return error;
-    if (N < 1 || N > MAXN) return OverlayError("size must be from 1 to 100");
+    if (N < 1) return OverlayError("size must be > 0");
 
     // set the grid size
     gridsize = N;
@@ -7691,20 +7688,18 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
 
     liveedge = 0;
     int gencount = 0;
-    // for BusyBoxes get the gencount
-    if (ruletype == bb || ruletype == bbw) {
-        idx++;
-        if (idx > n) return OverlayError("missing gencount argument");
-        lua_rawgeti(L, 1, idx);
-        type = lua_type(L, -1);
-        if (type != LUA_TNUMBER) {
-            lua_pop(L, 1);
-            return OverlayError("gencount argument is not a number");
-        }
-        gencount = (int)lua_tonumber(L, -1);
+    idx++;
+    if (idx > n) return OverlayError("missing gencount argument");
+    lua_rawgeti(L, 1, idx);
+    type = lua_type(L, -1);
+    if (type != LUA_TNUMBER) {
         lua_pop(L, 1);
-    } else {
-        // for other algos get liveedge
+        return OverlayError("gencount argument is not a number");
+    }
+    gencount = (int)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    // for non-BusyBox algos get liveedge flag
+    if (!(ruletype == bb || ruletype == bbw)) {
         idx++;
         if (idx > n) return OverlayError("missing edge argument");
         lua_rawgeti(L, 1, idx);
@@ -7718,11 +7713,11 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
     }
 
     // process each step
-    int step = 1;
+    int lastgen = gencount - (gencount % stepsize) + stepsize;
     int newpop = 0;
     bool laststep = false;
 
-    while (step <= stepsize) {
+    while (gencount < lastgen) {
         // set min, max defaults
         minx = N;
         maxx = -1;
@@ -7732,7 +7727,7 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
         maxz = -1;
 
         // set the laststep flag
-        if (step == stepsize) laststep = true;
+        if (gencount == lastgen - 1) laststep = true;
 
         // clear the intermediate counts
         count1.Clear();
@@ -7762,12 +7757,12 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
                 break;
             case bb:
                 if ((gridsize & 1) == 1) return OverlayError("grid size must be even for BusyBoxes");
-                Do3DNextGenBB(true, gencount + step - 1);
+                Do3DNextGenBB(true, gencount);
                 newpop = CreateResultsFromC1(L, laststep);
             break;
                 case bbw:
                 if ((gridsize & 1) == 1) return OverlayError("grid size must be even for BusyBoxes");
-                Do3DNextGenBB(false, gencount + step - 1);
+                Do3DNextGenBB(false, gencount);
                 newpop = CreateResultsFromC1(L, laststep);
                 break;
             default:
@@ -7775,7 +7770,7 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
         }
 
         // next step
-        step++;
+        gencount++;
 
         // exit if population is zero
         if (newpop == 0) break;
@@ -7783,6 +7778,9 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
         
     // return the population
     lua_pushinteger(L, newpop);
+
+    // return the gencount
+    lua_pushinteger(L, gencount);
 
     // return the grid bounding box
     lua_pushinteger(L, minx);
@@ -7792,7 +7790,7 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
     lua_pushinteger(L, minz);
     lua_pushinteger(L, maxz);
 
-    *nresults = 8;  // table, popcount, minx, maxx, miny, maxy, minz, maxz
+    *nresults = 9;  // table, popcount, gencount, minx, maxx, miny, maxy, minz, maxz
 
     return NULL;
 }

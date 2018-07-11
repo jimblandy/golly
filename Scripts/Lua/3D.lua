@@ -2771,9 +2771,8 @@ function NextGenStandard(single)
     local oldstep = stepsize
     if single then SetStepSize(1) end
     gp.timerstart("NextGenStandard")  -- !!! remove later
-    grid1, popcount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", grid1, liveedge}
+    grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", grid1, gencount, liveedge}
     gp.timersave("NextGenStandard")  -- !!! remove later
-    gencount = gencount + stepsize
     if single then SetStepSize(oldstep) end
     if popcount == 0 then StopGenerating() end
     Refresh()
@@ -2791,9 +2790,8 @@ function NextGenBusyBoxes(single)
     local oldstep = stepsize
     if single then SetStepSize(1) end
     gp.timerstart("NextGenBusyBoxes")  -- !!! remove later
-    grid1, popcount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", grid1, gencount}
+    grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", grid1, gencount}
     gp.timersave("NextGenBusyBoxes")  -- !!! remove later
-    gencount = gencount + stepsize
     if single then SetStepSize(oldstep) end
     if popcount == 0 then StopGenerating() end
     Refresh()
