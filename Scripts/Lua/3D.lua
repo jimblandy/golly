@@ -2093,6 +2093,9 @@ function Refresh(update)
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
 
+    -- if the pattern has been modified then update
+    if dirty then ovt{"setpattern3d", grid1} end
+
     -- fill overlay with background color
     ov(BACK_COLOR)
     ovt{"fill"}
