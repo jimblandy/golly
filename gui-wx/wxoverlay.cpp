@@ -26,7 +26,7 @@
 
 // -----------------------------------------------------------------------------
 
-const int clipbatch = 8;    // clip batch size for allocation
+const int clipbatch = 16;    // clip batch size for allocation
 
 ClipManager::ClipManager() {
     nclips = 0;
@@ -413,6 +413,7 @@ Overlay::Overlay()
     stepsize = 1;
     depthshading = false;
     celltype = cube;
+    gridsize = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -7130,6 +7131,9 @@ const char* Overlay::Update3DClips() {
 const char* Overlay::Do3DDisplayCells(lua_State* L, int n, int* nresults) {
     const char* error = NULL;
 
+    int N = gridsize;
+    if (N == 0) return OverlayError("grid size not set");
+
     // ensure required clips are preset
     error = Update3DClips();
     if (error) return error;
@@ -7179,7 +7183,6 @@ const char* Overlay::Do3DDisplayCells(lua_State* L, int n, int* nresults) {
     // iterate over the grid in the order specified
     const unsigned char* grid3values = grid3d.GetValues();
     int x, y, z;
-    int N = gridsize;
     int stepi = N * stepy;
     int stepj = N * stepz;
     int j = N * fromz;
@@ -7393,6 +7396,7 @@ const char* Overlay::Do3DSetRule(lua_State* L, int n, int* nresults) {
             survivals[i] = false;
             births[i]    = false;
         }
+        bool valid = true;
 
         // read survivals list
         if (idx > n) return OverlayError("missing survivals argument");
@@ -7407,10 +7411,15 @@ const char* Overlay::Do3DSetRule(lua_State* L, int n, int* nresults) {
         while (lua_next(L, -2)) {
             lua_pushvalue(L, -2);
             int k = lua_tointeger(L, -1);
+            if (k < 0 || k >= 27) {
+                valid = false;
+                break;
+            }
             lua_pop(L, 2);
             survivals[k] = true;
         }
         lua_pop(L, 1);
+        if (!valid) return OverlayError("survivals element is out of range");
     
         // read births list
         idx++;
@@ -7426,10 +7435,15 @@ const char* Overlay::Do3DSetRule(lua_State* L, int n, int* nresults) {
         while (lua_next(L, -2)) {
             lua_pushvalue(L, -2);
             int k = lua_tointeger(L, -1);
+            if (k < 0 || k >= 27) {
+                valid = false;
+                break;
+            }
             lua_pop(L, 2);
             births[k] = true;
         }
         lua_pop(L, 1);
+        if (!valid) return OverlayError("births element is out of range");
     }
 
     return error;
@@ -7606,6 +7620,10 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, bool laststep) {
 // -----------------------------------------------------------------------------
 
 const char* Overlay::Do3DSetPattern(lua_State* L, int n, int* nresults) {
+    int N = gridsize;
+    if (N == 0) return OverlayError("grid size not set");
+    int NNN = N * N * N;
+
     // fill source table
     grid3d.Clear();
     int idx = 2;
@@ -7618,13 +7636,20 @@ const char* Overlay::Do3DSetPattern(lua_State* L, int n, int* nresults) {
     }
     lua_pushvalue(L, -1);
     lua_pushnil(L);
+    bool valid = true;
     while (lua_next(L, -2)) {
         lua_pushvalue(L, -2);
         int k = lua_tointeger(L, -1);
         lua_pop(L, 2);
+        // check that the cell coordinates are within the grid
+        if (k < 0 || k >= NNN) {
+            valid = false;
+            break;
+        }
         grid3d.SetValue(k, 1);
     }
     lua_pop(L, 1);
+    if (!valid) return OverlayError("pattern is larger than the grid");
 
     return NULL;
 }
@@ -7634,6 +7659,8 @@ const char* Overlay::Do3DSetPattern(lua_State* L, int n, int* nresults) {
 const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
     // get the grid size
     int N = gridsize;
+    if (N == 0) return OverlayError("grid size not set");
+    int NNN = N * N * N;
 
     // fill source table
     grid3d.Clear();
@@ -7647,13 +7674,20 @@ const char* Overlay::Do3DNextGen(lua_State* L, int n, int* nresults) {
     }
     lua_pushvalue(L, -1);
     lua_pushnil(L);
+    bool valid = true;
     while (lua_next(L, -2)) {
         lua_pushvalue(L, -2);
         int k = lua_tointeger(L, -1);
         lua_pop(L, 2);
+        // check that the cell coordinates are within the grid
+        if (k < 0 || k >= NNN) {
+            valid = false;
+            break;
+        }
         grid3d.SetValue(k, 1);
     }
     lua_pop(L, 1);
+    if (!valid) return OverlayError("pattern is larger than the grid");
 
     liveedge = 0;
     int gencount = 0;

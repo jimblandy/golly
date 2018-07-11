@@ -39,7 +39,8 @@ local floor = math.floor
 
 math.randomseed(os.time())          -- init seed for math.random
 
-local N = 30                        -- initial grid size (N*N*N cells)
+local N = 0                         -- current grid size (N*N*N cells)
+local DEFAULTN = 30                 -- default grid size
 local MINN = 3                      -- minimum grid size
 local MAXN = 100                    -- maximum grid size (must be even for BusyBoxes)
 local BORDER = 2                    -- space around live cubes
@@ -210,7 +211,7 @@ local arrow_cursor = false          -- true if cursor is in tool bar
 DEFAULT_RULE = "3D5..7/6"           -- initial rule
 local rulestring = ""               -- so very first Initialize calls ParseRule(DEFAULT_RULE)
 local survivals, births             -- set by ParseRule
-local NextGeneration                -- ditto (set to NextStandard or NextGenBusyBoxes)
+local NextGeneration                -- ditto (set to NextGenStandard or NextGenBusyBoxes)
 
 pattdir = g.getdir("data")          -- initial directory for OpenPattern/SavePattern
 scriptdir = g.getdir("app")         -- initial directory for RunScript
@@ -451,7 +452,7 @@ function ReadSettings()
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
             elseif keyword == "gridsize" then
-                N = tonumber(value) or 30
+                N = tonumber(value) or DEFAULTN
                 if N < MINN then N = MINN end
                 if N > MAXN then N = MAXN end
                 SetGridSizeOnly(N)
@@ -8007,6 +8008,11 @@ function Initialize()
     if #rulestring == 0 then
         -- first call must initialize rulestring, survivals, births and NextGeneration
         ParseRule(DEFAULT_RULE)
+    end
+
+    if N == 0 then
+        -- set grid size to default
+        SetGridSizeOnly(DEFAULTN)
     end
 
     -- create reference cube (never displayed)

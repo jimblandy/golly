@@ -525,8 +525,8 @@ private:
 
     // ovtable Lua API calls
 
-    // these have the same functionality as the string
-    // API calls but take Lua parameters
+    // These have the same functionality as the string
+    // API calls but take Lua parameters.
 
     const char* DoFill(lua_State* L, int n, int* nresults);
     // Fill the given rectangles with the current RGBA values.
@@ -633,7 +633,7 @@ private:
 
     void Do3DNextGenBB(bool mirror, int gencount);
     // Computes the next generation using the 3D BusyBoxes algo
-    // (standard and wrap)
+    // (standard and wrap).
 
     // helpers to read Lua types
 
@@ -665,7 +665,8 @@ private:
     int stepsize;                   // number of generations to compute
     int liveedge;                   // whether there is a live cell on the grid edge
     int tablesize;                  // grid size in cells
-    int minx, maxx, miny, maxy, minz, maxz;             // bounding box for live cells
+    int minx, miny, minz;           // bounding box for live cells
+    int maxx, maxy, maxz;
     double xixo, xiyo, xizo;        // transformation matrix
     double yixo, yiyo, yizo;
     double zixo, zizo, ziyo;
