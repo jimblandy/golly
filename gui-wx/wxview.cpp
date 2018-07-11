@@ -81,9 +81,7 @@ EVT_MIDDLE_DCLICK    (           PatternView::OnMouseDown)
 EVT_LEFT_UP          (           PatternView::OnMouseUp)
 EVT_RIGHT_UP         (           PatternView::OnMouseUp)
 EVT_MIDDLE_UP        (           PatternView::OnMouseUp)
-#if wxCHECK_VERSION(2, 8, 0)
 EVT_MOUSE_CAPTURE_LOST (         PatternView::OnMouseCaptureLost)
-#endif
 EVT_MOTION           (           PatternView::OnMouseMotion)
 EVT_ENTER_WINDOW     (           PatternView::OnMouseEnter)
 EVT_LEAVE_WINDOW     (           PatternView::OnMouseExit)
@@ -2901,17 +2899,14 @@ void PatternView::OnMouseUp(wxMouseEvent& event)
 
 // -----------------------------------------------------------------------------
 
-#if wxCHECK_VERSION(2, 8, 0)
-
 // mouse capture can be lost on Windows before mouse-up event
 void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 {
+    mouseisdown = false;
     if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
         StopDraggingMouse();
     }
 }
-
-#endif
 
 // -----------------------------------------------------------------------------
 
