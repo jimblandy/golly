@@ -3539,6 +3539,15 @@ end
 
 ----------------------------------------------------------------------
 
+function SetTemporaryGridSize(newsize)
+    N = newsize
+    -- do not call ovt{"setsize3d", N} here as newsize can be > MAXN
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
+end
+
+----------------------------------------------------------------------
+
 function SetGridSizeOnly(newsize)
     N = newsize
     ovt{"setsize3d", N}
@@ -7077,7 +7086,7 @@ function DragPaste(mousex, mousey, prevx, prevy, face)
     local oldN = N
     local oldplane = activeplane
     local oldpos = activepos
-    SetGridSizeOnly(N*3)
+    SetTemporaryGridSize(N*3)
     if face == "F" or face == "B" then
         -- mouse in front/back face
         SetActivePlane("XY", 0)
@@ -7094,7 +7103,7 @@ function DragPaste(mousex, mousey, prevx, prevy, face)
     local newcell = InsideActiveCell(mousex, mousey)
 
     -- restore the original active plane
-    SetGridSizeOnly(oldN)
+    SetTemporaryGridSize(oldN)
     SetActivePlane(oldplane, oldpos)
 
     -- check if mouse stayed in same cell, or moved outside temporary plane
@@ -7294,7 +7303,7 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
     local oldN = N
     local oldplane = activeplane
     local oldpos = activepos
-    SetGridSizeOnly(N*3)
+    SetTemporaryGridSize(N*3)
     if face == "F" or face == "B" then
         -- mouse in front/back face
         SetActivePlane("XY", 0)
@@ -7311,7 +7320,7 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
     local newcell = InsideActiveCell(mousex, mousey)
 
     -- restore the original active plane
-    SetGridSizeOnly(oldN)
+    SetTemporaryGridSize(oldN)
     SetActivePlane(oldplane, oldpos)
 
     -- check if mouse stayed in same cell, or moved outside temporary plane
@@ -7382,7 +7391,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     local oldN = N
     local oldplane = activeplane
     local oldpos = activepos
-    SetGridSizeOnly(N*3)
+    SetTemporaryGridSize(N*3)
     if activeplane == "XY" then
         if (rotz[5] <= rotz[1] and rotz[5] <= rotz[3] and rotz[7] <= rotz[3]) or
            (rotz[4] <= rotz[8] and rotz[4] <= rotz[6] and rotz[2] <= rotz[6]) then
@@ -7417,7 +7426,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     local newcell = InsideActiveCell(mousex, mousey)
 
     -- restore the original active plane
-    SetGridSizeOnly(oldN)
+    SetTemporaryGridSize(oldN)
     SetActivePlane(oldplane, oldpos)
 
     -- check if mouse stayed in same cell, or moved outside temporary plane
