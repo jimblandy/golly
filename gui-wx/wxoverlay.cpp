@@ -7545,9 +7545,8 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, bool laststep) {
     // apply neighbor rule
     if (laststep) {
         lua_newtable(L);
-    } else {
-        next3d.Clear();
     }
+    next3d.Clear();
     int newpop = 0;
     int numkeys, k, i;
     unsigned char v;
@@ -7592,10 +7591,9 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, bool laststep) {
             if (laststep) {
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
-                newpop++;
-            } else {
-                next3d.SetValue(k, 1);
             }
+            next3d.SetValue(k, 1);
+            newpop++;
             x = k % N;
             y = (k / N) % N;
             z = k / NN;
