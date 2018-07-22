@@ -46,8 +46,8 @@ public:
     // clear the list of clips managed (does not delete the clips)
     void Clear();
 
-    // add the named clip to the list to manage
-    void AddClip(const Clip* clip);
+    // add the named clip to the live list to manage
+    void AddLiveClip(const Clip* clip);
 
     // add the named clip to the even list to manage
     void AddEvenClip(const Clip* clip);
@@ -55,17 +55,23 @@ public:
     // add the named clip to the odd list to manage
     void AddOddClip(const Clip* clip);
 
-    // get an array of the clips managed and the number of clips
-    const Clip** GetClips(int* numclips);
+    // add the named clip to the history list to manage
+    void AddHistoryClip(const Clip* clip);
+
+    // get an array of the live clips managed and the number of clips
+    const Clip** GetLiveClips(int* numclips);
 
     // get an array of the even clips managed and the number of clips
     const Clip** GetEvenClips(int* numclips);
 
-    // get an array of the clips managed and the number of clips
+    // get an array of the odd clips managed and the number of clips
     const Clip** GetOddClips(int* numclips);
 
-    // set the clip
-    void SetClip(const Clip* normalclip);
+    // get an array of the history clips managed and the number of clips
+    const Clip** GetHistoryClips(int* numclips);
+
+    // set the live clip
+    void SetLiveClip(const Clip* liveclip);
 
     // set the odd clip
     void SetOddClip(const Clip* oddclip);
@@ -73,28 +79,87 @@ public:
     // set the even clip
     void SetEvenClip(const Clip *evenclip);
 
-    // get the standard clip
-    const Clip* GetClip();
+    // set the select clip
+    void SetSelectClip(const Clip* selectclip);
 
-    // get the odd clip
-    const Clip* GetOddClip();
+    // set the paste clip
+    void SetPasteClip(const Clip* pasteclip);
 
-    // get the even clip
-    const Clip* GetEvenClip();
+    // set the active clip
+    void SetActiveClip(const Clip* activeclip);
+
+    // set the not active live clip
+    void SetLiveNotActiveClip(const Clip* livenaclip);
+
+    // set the not active select clip
+    void SetSelectNotActiveClip(const Clip* selectnaclip);
+
+    // set the even not active live clip
+    void SetEvenLiveNotActiveClip(const Clip* evennaclip);
+
+    // set the odd not active live clip
+    void SetOddLiveNotActiveClip(const Clip* oddnaclip);
+
+    // set the history clip
+    void SetHistoryClip(const Clip* historyclip);
+
+    // get the live clip and return clip width if specified
+    const Clip* GetLiveClip(int* clipwd);
+
+    // get the odd clip and return clip width if specified
+    const Clip* GetOddClip(int* clipwd);
+
+    // get the even clip and return clip width if specified
+    const Clip* GetEvenClip(int* clipwd);
+
+    // get the select clip and return clip width if specified
+    const Clip* GetSelectClip(int* clipwd);
+
+    // get the paste clip and return clip width if specified
+    const Clip* GetPasteClip(int* clipwd);
+
+    // get the active clip and return clip width if specified
+    const Clip* GetActiveClip(int* clipwd);
+
+    // get the not active active clip and return clip width if specified
+    const Clip* GetLiveNotActiveClip(int* clipwd);
+
+    // get the not active select clip and return clip width if specified
+    const Clip* GetSelectNotActiveClip(int* clipwd);
+
+    // get the even not active live clip and return clip width if specified
+    const Clip* GetEvenLiveNotActiveClip(int* clipwd);
+
+    // get the odd not active select clip and return clip width if specified
+    const Clip* GetOddLiveNotActiveClip(int* clipwd);
+
+    // get the history clip and return clip width if specified
+    const Clip* GetHistoryClip(int* clipwd);
 
 private:
-    int nsize;
+    int lsize;
     int esize;
     int osize;
-    int nclips;
+    int hsize;
+    int lclips;
     int eclips;
     int oclips;
-    const Clip** ncliplist;
+    int hclips;
+    const Clip** lcliplist;
     const Clip** ecliplist;
     const Clip** ocliplist;
-    const Clip* nclip;
+    const Clip** hcliplist;
+    const Clip* lclip;
     const Clip* oclip;
     const Clip* eclip;
+    const Clip* sclip;
+    const Clip* pclip;
+    const Clip* aclip;
+    const Clip* lnaclip;
+    const Clip* snaclip;
+    const Clip* elnaclip;
+    const Clip* olnaclip;
+    const Clip* hclip;
 };
 
 // The Table class is used during next generation calculations for 3D rules
@@ -110,8 +175,14 @@ public:
     // clear the contents of the table
     void Clear();
 
+    // clear the keys of the table
+    void ClearKeys();
+
     // get an array of the keys and the number of keys
     const int* GetKeys(int* numkeys);
+
+    // get the number of keys
+    const int GetNumKeys();
 
     // get an array of the table contents
     const unsigned char* GetValues();
@@ -119,8 +190,14 @@ public:
     // set the value at the specified key
     void SetValue(const int key, const unsigned char value);
 
+    // set the value at the specified key to 1
+    void SetTo1(const int key);
+
     // add an amount to the value at the specified key
     void AddToValue(const int key, const unsigned char amount);
+
+    // decrement the value at the specified key but stop at 1.
+    void DecrementTo1(const int key);
 
     // sort keys to allow more memory friendly iteration
     void SortKeys();
@@ -558,10 +635,6 @@ private:
     // API calls but take C++ arrays and are used internally
     // by the Overlay for speed.
 
-    const char* DoSetPixel(const int* coords, int n);
-    // Set the given pixels to the current RGBA values.
-    // Ignores pixels outside the render target.
-
     const char* DoPaste(const int* coords, int n, const char* clip);
     // Paste the given Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
@@ -570,50 +643,84 @@ private:
     // Paste the named Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
 
+    void DoPaste(int x, int y, const Clip* clipptr);
+    // Paste the named Clip data into the render target at the given location.
+    // Ignores the pixel if outside the render target.
+
     // 3D calls
 
-    const char* Do3DNextGen(lua_State* L, int n, int* nresults);
+    const char* Do3DNextGen(lua_State* L, const int n, int* nresults);
     // Compute the next generation of the 3D grid and returns
     // the new grid and population.
 
-    const char* Do3DSetRule(lua_State* L, int n, int* nresults);
+    const char* Do3DSetRule(lua_State* L, const int n, int* nresults);
     // Set the current 3D rule.
 
-    const char* Do3DSetGridSize(lua_State* L, int n, int* nresults);
+    const char* Do3DSetGridSize(lua_State* L, const int n, int* nresults);
     // Sets the current 3D grid size (3 to 100).
 
-    const char* Do3DSetStepSize(lua_State* L, int n, int* nresults);
+    const char* Do3DSetStepSize(lua_State* L, const int n, int* nresults);
     // Sets the number of generations to compute for each
     // Do3DNextGen call (1 to 100).
 
-    const char* Do3DSetTransform(lua_State* L, int n, int* nresults);
+    const char* Do3DSetTransform(lua_State* L, const int n, int* nresults);
     // Sets the current transformation matrix.
 
-    const char* Do3DDisplayCells(lua_State* L, int n, int* nresults);
+    const char* Do3DDisplayCells(lua_State* L, const int n, int* nresults);
     // Draws the most recent 3D grid using the current cell type,
     // depth shading mode and transformation.
 
-    const char* Do3DSetCellType(lua_State* L, int n, int* nresults);
+    const char* Do3DSetCellType(lua_State* L, const int n, int* nresults);
     // Set the cell type for drawing cells.
 
-    const char* Do3DSetDepthShading(lua_State* L, int n, int* nresults);
+    const char* Do3DSetDepthShading(lua_State* L, const int n, int* nresults);
     // Sets depth shading on or off for Cubes or Spheres.
 
-    const char* Do3DSetPattern(lua_State* L, int n, int* nresults);
+    const char* Do3DSetPattern(lua_State* L, const int n, int* nresults);
     // Sets the current 3D grid to the supplied pattern.
 
-    const char* Update3DClips();
-    // Updates the clips needed for rendering the cells based on
-    // the cell type and algo.
+    const char* Do3DSetSelectPasteActive(lua_State* L, const int n, int* nresults);
+    // Sets the selected, paste and active cell grids.
 
-    int CreateResultsFromC1C2(lua_State* L, bool laststep);
+    const char* Do3DSetCellHistory(lua_State* L, const int n, int* nresults);
+    // Sets cell history display mode
+
+    void AddAverageToHistory();
+    // Add the average live cell position to history
+
+    void UpdateHistoryFromLive();
+    // Update history layer from live cells.
+
+    void UpdateBoundingBoxFromHistory();
+    // Update bounding box from history cells.
+
+    void Display3DNormal(const int midx, const int midy, const int stepi, const int stepj);
+    // Display live cells in Move mode for non-BusyBoxes algos
+
+    void Display3DBusyBoxes(const int midx, const int midy, const int stepi, const int stepj);
+    // Display live cells in Move mode for BusyBoxes algo.
+
+    void Display3DNormalEditing(const int midx, const int midy, const int stepi, const int stepj, const bool editing);
+    // Display live cells in Draw or Select modes for non-BusyBoxes algos.
+
+    void Display3DBusyBoxesEditing(const int midx, const int midy, const int stepi, const int stepj, const bool editing);
+    // Display live cells in Draw or Select modes for BusyBoxes algos.
+
+    const char* PopulateGrid(lua_State* L, const int n, int idx, Table& destgrid);
+    // Populate a grid from the supplied pattern.
+
+    const char* Update3DClips(const bool editing);
+    // Updates the clips needed for rendering the cells based on
+    // the cell type, algo and edit mode.
+
+    int CreateResultsFromC1C2(lua_State* L, const bool laststep);
     // Creates the Lua grid result for the 3D Moore algo.
 
-    int CreateResultsFromC1G3(lua_State* L, bool laststep);
+    int CreateResultsFromC1G3(lua_State* L, const bool laststep);
     // Creates the Lua grid result for the 3D Face, Corner,
     // Edge and Hexahedral algos.
 
-    int CreateResultsFromC1(lua_State* L, bool laststep);
+    int CreateResultsFromC1(lua_State* L, const bool laststep);
     // Creates the Lua grid result for the 3D BusyBoxes algo.
 
     void Do3DNextGenMoore();
@@ -631,22 +738,22 @@ private:
     void Do3DNextGenHexahedral();
     // Computes the next generation using the 3D Hexahedral algo.
 
-    void Do3DNextGenBB(bool mirror, int gencount);
+    void Do3DNextGenBB(const bool mirror, const int gencount);
     // Computes the next generation using the 3D BusyBoxes algo
     // (standard and wrap).
 
     // helpers to read Lua types
 
-    const char* ReadLuaBoolean(lua_State* L, int n, int i, bool* value, const char* name);
+    const char* ReadLuaBoolean(lua_State* L, const int n, int i, bool* value, const char* name);
     // Read a Lua boolean.
 
-    const char* ReadLuaNumber(lua_State* L, int n, int i, double* value, const char* name);
+    const char* ReadLuaNumber(lua_State* L, const int n, int i, double* value, const char* name);
     // Read a Lua number (floating point).
 
-    const char* ReadLuaInteger(lua_State* L, int n, int i, int* value, const char* name);
+    const char* ReadLuaInteger(lua_State* L, const int n, int i, int* value, const char* name);
     // Read a Lua integer.
 
-    const char* ReadLuaString(lua_State* L, int n, int i, const char** value, const char* name);
+    const char* ReadLuaString(lua_State* L, const int n, int i, const char** value, const char* name);
     // Read a Lua string.
 
     // 3D
@@ -657,13 +764,17 @@ private:
     Table count1;                   // intermediate counts
     Table count2;                   // intermediate counts
     Table next3d;                   // next grid used when stepsize > 1
-    int* coords2d;                  // 2d transformed coordinates
+    Table paste3d;                  // grid of paste cells
+    Table select3d;                 // grid of selected cells
+    Table active3d;                 // grid of active cells
+    Table history3d;                // history grid
+    int* coords2d;                  // 2d transformed coordinates for live cells
     int numcoords;                  // size of coordinate list
     char survivals[27];             // survival flags
     char births[27];                // birth flags
     int gridsize;                   // grid edge length
-    int stepsize;                   // number of generations to compute
-    int liveedge;                   // whether there is a live cell on the grid edge
+    int stepsize;                   // step size modulus
+    bool liveedge;                  // whether there is a live cell on the grid edge
     int tablesize;                  // grid size in cells
     int minx, miny, minz;           // bounding box for live cells
     int maxx, maxy, maxz;
@@ -675,6 +786,14 @@ private:
     int depthlayers;                // number of depth layers
     int mindepth, maxdepth;         // depth layer range
     ClipManager clipmanager;        // manage the list of clips needed for rendering
+    int fromx, tox, stepx;          // for grid traversal when rendering
+    int fromy, toy, stepy;
+    int fromz, toz, stepz;
+    int cellsize, midcell;          // cell size and mid point for rendering
+    int toolbarht;                  // toolbar height
+    int showhistory;                // cell history longevity: 0 off, >0 on
+    bool useaverage;                // whether to use average cell position when history is on
+    bool fadehistory;               // whether to fade history cells
 
     // render target
     unsigned char* pixmap;          // current render target RGBA data (wd * ht * 4 bytes)

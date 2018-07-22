@@ -13,6 +13,23 @@ Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2018.
 Thanks to Tom Rokicki for optimizing the generating code.
 Thanks to Chris Rowett for optimizing the rendering code and many
 other improvements.
+
+This script uses custom purpose ovtable commmands for increased
+performance when computing the next generation and displaying
+cells:
+
+nextgen3d           compute next generation
+setrule3d           set the rule for next generation calculation
+setsize3d           set the grid size
+setstep3d           set the step size modulus
+settrans3d          set the transformation matrix
+displaycells3d      display current grid
+setcelltype3d       set the cell shape for drawing
+setdepthshading3d   set whether depth shading should be used
+setpattern3d        set the current pattern
+setselpasact3d      set the select, paste and active grids
+sethistory3d        sets the cell history display mode
+
 --]]
 
 local g = golly()
@@ -50,6 +67,9 @@ local CELLSIZE = 15                 -- initial size of empty cells
 local HALFCELL = CELLSIZE/2.0       -- for drawing mid points of cells
 local LEN = CELLSIZE-BORDER*2       -- edge length of live cubes
 local DEGTORAD = math.pi/180.0      -- converts degrees to radians
+local MINHISTORY = 0                -- history off
+local DEFAULTHISTORY = 100          -- default history longevity
+local MINHISTORYALPHA = 12          -- minimum history alpha value when fading
 
 -- MIDGRID is used to ensure that rotation occurs about the
 -- mid point of the middle cube in the grid
@@ -66,6 +86,7 @@ SELPT_COLOR = "rgba 0 255 0 128"    -- for selected points (should be translucen
 PASTE_COLOR = "rgba 255 0 0 64"     -- for paste pattern (must be translucent)
 SELECT_COLOR = "rgba 0 255 0 64"    -- for selected cells (ditto)
 ACTIVE_COLOR = "rgba 0 0 255 48"    -- for active plane (ditto)
+HISTORY_COLOR = "rgba 240 240 0 64" -- for history cells (ditto)
 PASTE_MENU = "rgba 176 48 48 255"   -- for paste menu background (should match PASTE_COLOR)
 SELECT_MENU = "rgba 0 128 0 255"    -- for select menu background (should match SELECT_COLOR)
 X_COLOR = op.red                    -- for front X axes
@@ -84,11 +105,6 @@ EVEN_COLOR = "rgba 255 180 255 255"     -- for even cell points and spheres (pal
 ODD_COLOR = "rgba 140 255 255 255"      -- for odd cell points and spheres (pale cyan)
 EVEN_CUBE = "replace *# *#-50 *# *#"    -- for even cell cubes (change white to pale magenta)
 ODD_CUBE = "replace *#-110 *# *# *#"    -- for odd cell cubes (change white to pale cyan)
-
--- table versions of point and select point colors
-pointcol = {split(POINT_COLOR)}
-selpointcol = {split(SELPT_COLOR)}
-usingpointcol = false
 
 local xylattice = {}                -- lattice lines between XY axes
 local xzlattice = {}                -- lattice lines between XZ axes
@@ -116,15 +132,15 @@ local pastepatt = {}                -- grid positions of cells in paste pattern
 local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
-local DrawLiveCell                  -- set to AddCellToBatch, etc
-local DrawBusyBox                   -- set to DrawBusyCube, etc
 local depthshading = true           -- whether using depth shading
 local depthlayers = 64              -- number of shading layers
 local depthrange = 224              -- rgb levels for depth shading
 local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
-local zdepth, zdepth2               -- coefficients for z to depth layer mapping
 local xyline = { "lines" }          -- coordinates for batch line draw
 local xyln = 2                      -- index of next position in xyline
+local showhistory = MINHISTORY      -- cell history longevity: 0 = off, >0 = on
+local useaverage = false            -- whether to use average position for history when history on
+local fadehistory = true            -- whether to fade history cells
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -223,6 +239,10 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
+
+local showtiming = true     -- !!! remove later
+local mind = -1             -- !!! remove later
+local ming = -1             -- !!! remove later
 
 ----------------------------------------------------------------------
 
@@ -451,6 +471,11 @@ function ReadSettings()
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
+            elseif keyword == "history" then
+                showhistory = tonumber(value) or MINHISTORY
+                if showhistory ~= MINHISTORY and showhistory ~= DEFAULTHISTORY then showhistory = MINHISTORY end
+            elseif keyword == "average" then useaverage = tostring(value) == "true"
+            elseif keyword == "fadehistory" then fadehistory = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or DEFAULTN
                 if N < MINN then N = MINN end
@@ -484,6 +509,9 @@ function WriteSettings()
         f:write("axes="..tostring(showaxes), "\n")
         f:write("lines="..tostring(showlines), "\n")
         f:write("shading="..tostring(depthshading), "\n")
+        f:write("history="..tostring(showhistory), "\n")
+        f:write("average="..tostring(useaverage), "\n")
+        f:write("fadehistory="..tostring(fadehistory), "\n")
         f:close()
     end
 end
@@ -1106,6 +1134,38 @@ end
 
 ----------------------------------------------------------------------
 
+lastHistorySize = -1
+
+function CreateHistoryCells(clip, color)
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastHistorySize then return end
+    lastHistorySize = CELLSIZE
+
+    -- create translucent history cell
+    CreateTranslucentCell(clip, color)
+
+    -- create alpha fading clips if required
+    if fadehistory then
+        local _, _, _, _, starta = split(color)
+        local stopa = MINHISTORYALPHA
+        local adjust = (starta - stopa + 1) / showhistory
+        local alpha = starta
+        ov("target "..clip)
+        for i = 1, showhistory do
+            ov("target "..clip)
+            ov("copy 0 0 0 0 "..clip..i)
+            ov("target "..clip..i)
+            ovt{"rgba", 0, 0, 0, alpha}
+            ov("replace !0# 0# 0# *")
+            ov("optimize "..clip..i)
+            alpha = alpha - adjust
+        end
+        ov("target")
+    end
+end
+
+----------------------------------------------------------------------
+
 function CreateLayers(clip)
     local adjust = depthrange / (maxdepth - mindepth + 1)
     local total = 0
@@ -1152,8 +1212,8 @@ function CreateLiveCube()
 
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
-    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
-    ov("target c")
+    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." L")
+    ov("target L")
 
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
@@ -1172,11 +1232,11 @@ function CreateLiveCube()
 
     DrawCubeEdges()
 
-    ov("optimize c")
+    ov("optimize L")
 
     -- create faded versions of the clip if depth shading
     if depthshading then
-        CreateLayers("c")
+        CreateLayers("L")
     end
 
     ov("target")
@@ -1194,8 +1254,8 @@ function CreateLiveSphere()
     -- create a clip containing one sphere that will be used later
     -- to draw all live cells
     local diameter = CELLSIZE+1                     -- so orthogonally adjacent spheres touch
-    ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
-    ov("target S")
+    ov("create "..diameter.." "..diameter.." L")
+    ov("target L")
     ov("blend 1")
 
     local x = 0
@@ -1222,72 +1282,17 @@ function CreateLiveSphere()
 
     ov("blend 0")
     ov("lineoption width 1")
-    ov("optimize S")
+    ov("optimize L")
 
     -- create faded versions of the clip if depth shading
     if depthshading then
-        CreateLayers("S")
+        CreateLayers("L")
     end
 
     ov("target")
 end
 
 ----------------------------------------------------------------------
-
-function DrawCellDepth(x, y, z, mx, my)
-    local c, m = CELLSIZE, MIDCELL
-    -- add live cell at given grid position
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + mx
-    local newy = (x*yixo + y*yiyo + z*yizo) + my
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- compute the depth layer
-    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
-    local cmd = {"paste", newx, newy}
-    if celltype == "cube" then
-        cmd[4] = "c"..layer
-    elseif celltype == "sphere" then
-        cmd[4] = "S"..layer
-    else -- celltype == "point"
-        if not usingpointcol then
-            usingpointcol = true
-            ovt(pointcol)
-        end
-        cmd[1] = "set"
-    end
-    -- draw the cell
-    ovt(cmd)
-end
-
-----------------------------------------------------------------------
-
-function DrawCell(x, y, z, mx, my)
-    local c, m = CELLSIZE, MIDCELL
-    -- add live cell at given grid position
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + mx
-    local newy = (x*yixo + y*yiyo + z*yizo) + my
-    local cmd = {"paste", newx, newy}
-    if celltype == "cube" then
-        cmd[4] = "c"
-    elseif celltype == "sphere" then
-        cmd[4] = "S"
-    else -- celltype == "point"
-        if not usingpointcol then
-            usingpointcol = true
-            ovt(pointcol)
-        end
-        cmd[1] = "set"
-    end
-    -- draw the cell
-    ovt(cmd)
-end
 
 local function DrawPoint(x, y, z)
     local c, m = CELLSIZE, MIDCELL
@@ -1346,55 +1351,8 @@ end
 
 ----------------------------------------------------------------------
 
-local function TestCell(editing, gridpos, x, y, z, mx, my)
-    -- called from DisplayCells to test if given cell is in active plane,
-    -- or if it's selected, or if it's a paste cell, and to draw it accordingly
-    if editing then
-        if active[gridpos] then
-            if grid1[gridpos] then
-                -- draw live cell within active plane
-                DrawLiveCell(x, y, z, mx, my)
-            end
-            DrawActiveCell(x, y, z)
-            if selected[gridpos] then
-                DrawSelectedCell(x, y, z)
-            end
-        else
-            -- cell is outside active plane
-            if grid1[gridpos] then
-                -- live cell so draw a point
-                if not usingpointcol then
-                    usingpointcol = true
-                    ovt(pointcol)
-                end
-                DrawPoint(x, y, z)
-            end
-            if selected[gridpos] then
-                -- draw translucent point
-                ovt(selpointcol)
-                usingpointcol = false
-                DrawPoint(x, y, z)
-            end
-        end
-    else
-        -- active plane is not displayed
-        if grid1[gridpos] then
-            DrawLiveCell(x, y, z, mx, my)
-        end
-        if selected[gridpos] then
-            DrawSelectedCell(x, y, z)
-        end
-    end
-    if pastepatt[gridpos] then
-        DrawLiveCell(x, y, z, mx, my, true)
-        DrawPasteCell(x, y, z)
-    end
-end
-
-----------------------------------------------------------------------
-
 function DisplayCells(editing)
-    gp.timerstart("DisplayCells")  -- !!! remove later
+    gp.timerstart("Display")  -- !!! remove later
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1405,8 +1363,6 @@ function DisplayCells(editing)
     local z7 = rotrefz[7]
     local z8 = rotrefz[8]
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
-
-    ov("blend 1")
 
     local testcell = editing or selcount > 0 or pastecount > 0
 
@@ -1465,60 +1421,17 @@ function DisplayCells(editing)
     if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
-    -- select the cell drawing functions based on whether depth shading is required
-    if depthshading and celltype ~= "point" then
-        zdepth = N*CELLSIZE*0.5
-        zdepth2 = zdepth+zdepth
-        DrawLiveCell = DrawCellDepth
+    -- update the select, paste and active plane
+    if editing then
+        ovt{"setselpasact3d", selected, pastepatt, active}
     else
-        DrawLiveCell = DrawCell
+        ovt{"setselpasact3d", selected, pastepatt, {}}
     end
 
-    -- compute mid point
-    local mx, my
-    if celltype == "cube" then
-        mx = midx - HALFCUBECLIP
-        my = midy - HALFCUBECLIP
-    elseif celltype == "sphere" then
-        mx = midx - HALFCELL
-        my = midy - HALFCELL
-    else -- celltype == "point"
-        mx = midx
-        my = midy
-    end
-    -- add 0.5 so floor behaves like round
-    mx = mx + 0.5
-    my = my + 0.5
+    -- display the cells
+    ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, CELLSIZE, editing, toolbarht}
 
-    local i, j
-    local l_N = N
-    local stepi, stepj = l_N*stepy, l_N*stepz
-    if testcell then
-        -- setup the point colors
-        pointcol = {split(POINT_COLOR)}
-        selpointcol = {split(SELPT_COLOR)}
-        usingpointcol = false
-        -- draw each cell
-        j = l_N*fromz
-        for z = fromz, toz, stepz do
-            i = l_N*(fromy+j)
-            for y = fromy, toy, stepy do
-                for x = fromx, tox, stepx do
-                    TestCell(editing, i+x, x, y, z, mx, my)
-                end
-                i = i+stepi
-            end
-            j = j+stepj
-        end
-    else
-        -- only live cells need to be drawn
-        local c, m = CELLSIZE, MIDCELL
-        if celltype == "point" then ovt(pointcol) end
-        ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, c, m, mx, my}
-    end
-
-    ov("blend 0")
-    gp.timersave("DisplayCells")  -- !!! remove later
+    gp.timersave("Display")  -- !!! remove later
 end
 
 ----------------------------------------------------------------------
@@ -1639,73 +1552,7 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBusyCube(x, y, z, clipname)
-    -- draw odd/even cube at given grid position
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCUBECLIP
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCUBECLIP
-    -- use orthographic projection
-    ovt{"paste", newx, newy, clipname}
-end
-
-----------------------------------------------------------------------
-
-function DrawBusyCubeDepth(x, y, z, clipname)
-    -- draw odd/even cube at given grid position with shading
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCUBECLIP
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCUBECLIP
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- compute the depth layer
-    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
-    -- use orthographic projection
-    ovt{"paste", newx, newy, clipname..layer}
-end
-
-----------------------------------------------------------------------
-
-function DrawBusySphere(x, y, z, clipname)
-    -- draw odd/even sphere at given grid position
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCELL -- clip wd = CELLSIZE + 1
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCELL -- clip ht = CELLSIZE + 1
-    -- use orthographic projection
-    ovt{"paste", newx, newy, clipname}
-end
-
-----------------------------------------------------------------------
-
-function DrawBusySphereDepth(x, y, z, clipname)
-    -- draw odd/even sphere at given grid position with shading
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCELL -- clip wd = CELLSIZE+1
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCELL -- clip ht = CELLSIZE+1
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- compute the depth layer
-    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
-    -- use orthographic projection
-    ovt{"paste", newx, newy, clipname..layer}
-end
-
-----------------------------------------------------------------------
-
-function CreateBusyPoint(clipname, color)
+function CreatePoint(clipname, color)
     ov("create 1 1 "..clipname)
     ov("target "..clipname)
     -- set pixel to the given color
@@ -1716,64 +1563,8 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawBusyPoint(x, y, z, clipprefix)
-    -- draw mid point of busy box at given grid position
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point using orthographic projection
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy
-    -- clipprefix is "E" or "O"
-    ovt{"paste", newx, newy, clipprefix.."p"}
-end
-
-----------------------------------------------------------------------
-
-local function TestBusyBox(editing, gridpos, x, y, z, clipname)
-    -- called from DisplayBusyBoxes to test if given cell is in active plane,
-    -- or if it's selected, or if it's a paste cell, and to draw it accordingly
-    if editing then
-        if active[gridpos] then
-            if grid1[gridpos] then
-                -- draw live cell within active plane
-                DrawBusyBox(x, y, z, clipname)
-            end
-            DrawActiveCell(x, y, z)
-            if selected[gridpos] then
-                DrawSelectedCell(x, y, z)
-            end
-        else
-            -- cell is outside active plane
-            if grid1[gridpos] then
-                DrawBusyPoint(x, y, z, clipname)
-            end
-            if selected[gridpos] then
-                -- draw translucent point
-                ovt(selpointcol)
-                DrawPoint(x, y, z)
-            end
-        end
-    else
-        -- active plane is not displayed
-        if grid1[gridpos] then
-            DrawBusyBox(x, y, z, clipname)
-        end
-        if selected[gridpos] then
-            DrawSelectedCell(x, y, z)
-        end
-    end
-    if pastepatt[gridpos] then
-        DrawBusyBox(x, y, z, clipname)
-        DrawPasteCell(x, y, z)
-    end
-end
-
-----------------------------------------------------------------------
-
 function DisplayBusyBoxes(editing)
-    gp.timerstart("DisplayBusyBoxes")  -- !!! remove later
+    gp.timerstart("Display")  -- !!! remove later
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1785,7 +1576,6 @@ function DisplayBusyBoxes(editing)
     local z8 = rotrefz[8]
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
 
-    ov("blend 1")
     local testcell = editing or selcount > 0 or pastecount > 0
 
     -- find the extended boundary of all live/active/selected/paste cells
@@ -1843,74 +1633,17 @@ function DisplayBusyBoxes(editing)
     if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
-    -- select the cell drawing functions based on whether depth shading is required
-    if depthshading then
-        zdepth = N*CELLSIZE*0.5
-        zdepth2 = zdepth+zdepth
-        if celltype == "cube" then
-            DrawBusyBox = DrawBusyCubeDepth
-        elseif celltype == "sphere" then
-            DrawBusyBox = DrawBusySphereDepth
-        else -- celltype == "point"
-            DrawBusyBox = DrawBusyPoint     -- shading is not done for points
-        end
+    -- update the select, paste and active plane
+    if editing then
+        ovt{"setselpasact3d", selected, pastepatt, active}
     else
-        if celltype == "cube" then
-            DrawBusyBox = DrawBusyCube
-        elseif celltype == "sphere" then
-            DrawBusyBox = DrawBusySphere
-        else -- celltype == "point"
-            DrawBusyBox = DrawBusyPoint
-        end
+        ovt{"setselpasact3d", selected, pastepatt, {}}
     end
 
-    -- clip names for cubes/spheres ("p" will be appended if drawing points)
-    local evenclip = "E"
-    local oddclip = "O"
+    -- display the cells
+    ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, CELLSIZE, editing, toolbarht}
 
-    local i, j, evencell
-    local stepi, stepj = N*stepy, N*stepz
-    if testcell then
-        j = N*fromz
-        for z = fromz, toz, stepz do
-            i = N*(fromy+j)
-            for y = fromy, toy, stepy do
-                evencell = (fromx + y + z) % 2 == 0
-                for x = fromx, tox, stepx do
-                    if evencell then
-                        TestBusyBox(editing, i+x, x, y, z, evenclip)
-                    else
-                        TestBusyBox(editing, i+x, x, y, z, oddclip)
-                    end
-                    evencell = not evencell
-                end
-                i = i+stepi
-            end
-            j = j+stepj
-        end
-    else
-        -- only live cells need to be drawn
-        -- compute mid point
-        local mx, my
-        if celltype == "cube" then
-            mx = midx - HALFCUBECLIP
-            my = midy - HALFCUBECLIP
-        elseif celltype == "sphere" then
-            mx = midx - HALFCELL
-            my = midy - HALFCELL
-        else -- celltype == "point"
-            mx = midx
-            my = midy
-        end
-        -- add 0.5 so floor behaves like round
-        mx = mx + 0.5
-        my = my + 0.5
-        local c, m = CELLSIZE, MIDCELL
-        ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, c, m, mx, my}
-    end
-
-    ov("blend 0")
-    gp.timersave("DisplayBusyBoxes")  -- !!! remove later
+    gp.timersave("Display")  -- !!! remove later
 end
 
 --------------------------------------------------------------------------------
@@ -1997,6 +1730,10 @@ function DrawMenuBar()
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
+    mbar.tickitem(4, 12, fadehistory)
+    mbar.radioitem(4, 14, useaverage == false and showhistory == MINHISTORY)
+    mbar.radioitem(4, 15, useaverage == false and showhistory == DEFAULTHISTORY)
+    mbar.radioitem(4, 16, useaverage == true)
 
     mbar.show(0, 0, ovwd, mbarht)
 end
@@ -2044,7 +1781,7 @@ function DrawToolBar()
     x = x + selectbox.wd + gap
     movebox.show(x, y, currcursor == movecursor)
 
-    -- show slider to right of radio buttons
+    -- show step slider to right of radio buttons
     stepslider.show(x + movebox.wd + biggap, y, stepsize)
 
     -- show stepsize at right end of slider
@@ -2089,6 +1826,8 @@ function Refresh(update)
         return
     end
 
+    gp.timerstart("Refresh")    -- !!! remove later
+
     -- turn off event checking temporarily to avoid partial updates of overlay
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
@@ -2109,8 +1848,40 @@ function Refresh(update)
 
     if showaxes or showlines then DrawRearAxes() end
 
+    --[[
+        All types of cell are defined as named clips and are
+        the same for Cubes, Spheres or Points.
+        Only the clips required for the current settings need to be
+        created (algo, history, depth shading, mode, etc.).
+
+        Name    Description
+        a       active plane (Draw or Select mode)
+        h       history cell
+        h1..hn  fading history cell
+        p       paste target cell
+        s       selected cell
+        sN      selected cell not in active plane (Draw or Select mode)
+
+        Moore, Face, Corner, Edge and Hexahedral algos:
+        L       live cell without depth shading
+        L1..Ln  live cell with depth shading
+        LN      live cell not in active plane (Draw or Select mode)
+
+        BusyBoxes algo:
+        E       live even cell without depth shading
+        O       live odd cell without depth shading
+        E1..En  live even cell with depth shading
+        O1..En  live odd cell with depth shading
+        EN      live even cell not in active plane (Draw or Select Mode)
+        ON      live odd cell not in active plane (Draw or Select Mode)
+    ]]
+
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
+        if showhistory > MINHISTORY then
+            -- history cells will be translucent
+            CreateHistoryCells("h", HISTORY_COLOR)
+        end
         if pastecount > 0 then
             -- paste cells will be translucent
             CreateTranslucentCell("p", PASTE_COLOR)
@@ -2122,6 +1893,17 @@ function Refresh(update)
         if editing then
             -- cells in active plane will be translucent
             CreateTranslucentCell("a", ACTIVE_COLOR)
+
+            -- live cells not in active plane will be points
+            if rulestring:find("^BusyBoxes") then
+                CreatePoint("EN", EVEN_COLOR)
+                CreatePoint("ON", ODD_COLOR)
+            else
+                CreatePoint("LN", POINT_COLOR)
+            end
+
+            -- selected cells not in active plane will be points
+            CreatePoint("sN", SELPT_COLOR)
         end
         if rulestring:find("^BusyBoxes") then
             if celltype == "cube" then
@@ -2130,11 +1912,9 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateBusySphere("E")
                 CreateBusySphere("O")
-            end
-            if celltype == "point" or editing then
-                -- 1st char must match the above clip names
-                CreateBusyPoint("Ep", EVEN_COLOR)
-                CreateBusyPoint("Op", ODD_COLOR)
+            else -- celltype == "point"
+                CreatePoint("E", EVEN_COLOR)
+                CreatePoint("O", ODD_COLOR)
             end
             DisplayBusyBoxes(editing)
         else
@@ -2142,12 +1922,16 @@ function Refresh(update)
                 CreateLiveCube()
             elseif celltype == "sphere" then
                 CreateLiveSphere()
+            else -- celltype == "point" then
+                CreatePoint("L", POINT_COLOR)
             end
             DisplayCells(editing)
         end
     end
 
     if showaxes or showlines then DrawFrontAxes() end
+
+    gp.timersave("Refresh") -- !!! remove later
 
     -- show info in top left corner
     local info =
@@ -2160,7 +1944,24 @@ function Refresh(update)
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
     end
-    info = info.."\n"..gp.timervalueall()   --- !!! remove later
+    if showtiming then  -- !!! remove block later
+        if generating then
+            currt = gp.timervalue("Display")
+            currg = gp.timervalue("NextGen")
+            if currt > 0 then
+                if mind == -1 then mind = currt end
+                if currt < mind then mind = currt end
+            end
+            if currg > 0 then
+                if ming == -1 then ming = currg end
+                if currg < ming then ming = currg end
+            end
+        end
+        info = info.."\n"..gp.timervalueall()
+        if ming ~= -1 then
+            info = info.."\n"..string.format("Min Gen %.1fms", ming).." "..string.format("Min Display %.1fms", mind)
+        end
+    end     -- !!! remove block later
     ov(INFO_COLOR)
     local _, ht = op.maketext(info)
     op.pastetext(10, toolbarht + 10)
@@ -2179,6 +1980,12 @@ function Refresh(update)
     UpdateWindowTitle()
 
     g.check(true)   -- restore event checking
+end
+
+----------------------------------------------------------------------
+
+function RefreshIfNotGenerating()
+    if not generating then Refresh() end
 end
 
 ----------------------------------------------------------------------
@@ -2773,9 +2580,9 @@ function NextGenStandard(single)
 
     local oldstep = stepsize
     if single then SetStepSize(1) end
-    gp.timerstart("NextGenStandard")  -- !!! remove later
-    grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", grid1, gencount, liveedge}
-    gp.timersave("NextGenStandard")  -- !!! remove later
+    gp.timerstart("NextGen")  -- !!! remove later
+    grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", gencount, liveedge}
+    gp.timersave("NextGen")  -- !!! remove later
     if single then SetStepSize(oldstep) end
     if popcount == 0 then StopGenerating() end
     Refresh()
@@ -2792,9 +2599,9 @@ function NextGenBusyBoxes(single)
 
     local oldstep = stepsize
     if single then SetStepSize(1) end
-    gp.timerstart("NextGenBusyBoxes")  -- !!! remove later
-    grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", grid1, gencount}
-    gp.timersave("NextGenBusyBoxes")  -- !!! remove later
+    gp.timerstart("NextGen")  -- !!! remove later
+    grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", gencount}
+    gp.timersave("NextGen")  -- !!! remove later
     if single then SetStepSize(oldstep) end
     if popcount == 0 then StopGenerating() end
     Refresh()
@@ -4724,6 +4531,38 @@ end
 
 ----------------------------------------------------------------------
 
+function ZoomDouble()
+    if CELLSIZE < MAXSIZE then
+        -- zoom in by increasing size of cells
+        CELLSIZE = CELLSIZE*2
+        if CELLSIZE > MAXSIZE then CELLSIZE = MAXSIZE end
+        HALFCELL = CELLSIZE/2.0
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        LEN = CELLSIZE-BORDER*2
+        CreateAxes()
+        RefreshIfNotGenerating()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ZoomHalf()
+    if CELLSIZE > MINSIZE then
+        -- zoom out by decreasing size of cells
+        CELLSIZE = CELLSIZE//2
+        if CELLSIZE < MINSIZE then CELLSIZE = MINSIZE end
+        HALFCELL = CELLSIZE/2.0
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        LEN = CELLSIZE-BORDER*2
+        CreateAxes()
+        RefreshIfNotGenerating()
+    end
+end
+
+----------------------------------------------------------------------
+
 function ZoomIn()
     if CELLSIZE < MAXSIZE then
         -- zoom in by increasing size of cells
@@ -4733,7 +4572,7 @@ function ZoomIn()
         MIDCELL = HALFCELL-MIDGRID
         LEN = CELLSIZE-BORDER*2
         CreateAxes()
-        Refresh()
+        RefreshIfNotGenerating()
     end
 end
 
@@ -4748,7 +4587,7 @@ function ZoomOut()
         MIDCELL = HALFCELL-MIDGRID
         LEN = CELLSIZE-BORDER*2
         CreateAxes()
-        Refresh()
+        RefreshIfNotGenerating()
     end
 end
 
@@ -4768,6 +4607,8 @@ end
 ----------------------------------------------------------------------
 
 function StartStop()
+    mind = -1
+    ming = -1
     generating = not generating
     UpdateStartButton()
     Refresh()
@@ -4812,7 +4653,7 @@ end
 function Faster()
     if stepsize < 100 then
         SetStepSize(stepsize + 1)
-        Refresh()
+        RefreshIfNotGenerating()
     end
 end
 
@@ -4821,7 +4662,7 @@ end
 function Slower()
     if stepsize > 1 then
         SetStepSize(stepsize - 1)
-        Refresh()
+        RefreshIfNotGenerating()
     end
 end
 
@@ -4839,10 +4680,17 @@ end
 function StepChange(newval)
     -- called if stepslider position has changed
     SetStepSize(newval)
-    Refresh()
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
+
+function SetStepSizeTo1()
+    SetStepSize(1)
+    RefreshIfNotGenerating()
+end
+
+--------------------------------------------------------------------------------
 
 function Reset()
     if gencount > startcount then
@@ -5216,6 +5064,7 @@ function ShowHelp()
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#edit"><b>Edit menu</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#control"><b>Control menu</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#view"><b>View menu</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#help"><b>Help menu</b></a></dd>
 <dd><a href="#scripts"><b>Running scripts</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#shortcuts"><b>Creating your own keyboard shortcuts</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#functions"><b>Script functions</b></a></dd>
@@ -5338,10 +5187,14 @@ shortcuts):
 <tr><td align=right> F &nbsp;</td><td>&nbsp; fit entire grid within view </td></tr>
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
+<tr><td align=right> { &nbsp;</td><td>&nbsp; halve current zoom </td></tr>
+<tr><td align=right> } &nbsp;</td><td>&nbsp; double current zoom </td></tr>
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes </td></tr>
 <tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
+<tr><td align=right> Y &nbsp;</td><td>&nbsp; cycle cell history (off/all/average) </td></tr>
+<tr><td align=right> shift-Y &nbsp;</td><td>&nbsp; toggle history fade </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
 <tr><td align=right> R &nbsp;</td><td>&nbsp; change the rule </td></tr>
@@ -5589,7 +5442,31 @@ away they are from the front of the screen.  Depth shading is not done
 when displaying points.
 </dd>
 
-<a name="help"></a><p><dt><b>Help</b></dt>
+<a name="fadehistory"></a><p><dt><b>Fade History</b></dt>
+<dd>
+If ticked then history cells fade each generation. They do not fade
+away completely so you can always see where live cells have been.
+</dd>
+
+<a name="historyoff"></a><p><dt><b>History Off</b></dt>
+<dd>
+If selected then cell history is not displayed.
+</dd>
+
+<a name="historyall"></a><p><dt><b>History All Cells</b></dt>
+<dd>
+If selected then cell history is displayed for all live cells.
+</dd>
+
+<a name="historyaverage"></a><p><dt><b>History Cell Average</b></dt>
+<dd>
+If selected then the average position of all cells is displayed as history.
+</dd>
+
+<p><a name="help"></a><br>
+<font size=+1><b>Help menu</b></font>
+
+<a name="helpcontents"></a><p><dt><b>Contents</b></dt>
 <dd>
 Show this help.
 </dd>
@@ -6434,7 +6311,7 @@ function CycleCellType()
     end
     SetCellTypeOnly(celltype)
     ViewChanged(false)
-    if not generating then Refresh() end
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
@@ -6442,21 +6319,21 @@ end
 function SetCellType(newtype)
     SetCellTypeOnly(newtype)
     ViewChanged(false)
-    if not generating then Refresh() end
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
 
 function ToggleAxes()
     showaxes = not showaxes
-    if not generating then Refresh() end
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
 
 function ToggleLines()
     showlines = not showlines
-    if not generating then Refresh() end
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
@@ -6465,10 +6342,66 @@ function ToggleDepthShading()
     depthshading = not depthshading
     InitDepthShading()
     ViewChanged(false)
-    if not generating then Refresh() end
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
+
+function UpdateHistory()
+    ovt{"sethistory3d", showhistory, useaverage, fadehistory}
+    ViewChanged(false)
+end
+
+----------------------------------------------------------------------
+
+function CycleCellHistory()
+    -- cycle history mode: off -> all -> average -> off
+    if useaverage then
+        useaverage = false
+        showhistory = MINHISTORY
+    elseif showhistory == MINHISTORY then
+        useaverage = false
+        showhistory = DEFAULTHISTORY
+    else
+        useaverage = true
+        showhistory = DEFAULTHISTORY
+    end
+    UpdateHistory()
+    RefreshIfNotGenerating()
+end
+
+----------------------------------------------------------------------
+
+function SetCellHistory(newvalue)
+    if newvalue == "off" then
+        useaverage = false
+        showhistory = MINHISTORY
+    elseif newvalue == "all" then
+        useaverage = false
+        showhistory = DEFAULTHISTORY
+    else -- if newvalue == "average"
+        useaverage = true
+        showhistory = DEFAULTHISTORY
+    end
+    UpdateHistory()
+    RefreshIfNotGenerating()
+end
+
+----------------------------------------------------------------------
+
+function ToggleFadeHistory()
+    fadehistory = not fadehistory
+    UpdateHistory()
+end
+
+----------------------------------------------------------------------
+
+function ToggleTiming()   -- !!! remove function later
+    showtiming = not showtiming
+end
+
+----------------------------------------------------------------------
+
 function ToggleToolBar()
     if toolbarht > 0 then
         toolbarht = 0
@@ -7712,6 +7645,7 @@ function CreateMenuBar()
     mbar.addmenu("Edit")
     mbar.addmenu("Control")
     mbar.addmenu("View")
+    mbar.addmenu("Help")
 
     -- add items to File menu
     mbar.additem(1, "New Pattern", NewPattern)
@@ -7764,8 +7698,14 @@ function CreateMenuBar()
     mbar.additem(4, "Show Axes", ToggleAxes)
     mbar.additem(4, "Show Lattice Lines", ToggleLines)
     mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
+    mbar.additem(4, "Fade History", ToggleFadeHistory)
     mbar.additem(4, "---", nil)
-    mbar.additem(4, "Help", ShowHelp)
+    mbar.additem(4, "History Off", SetCellHistory, {"off"})
+    mbar.additem(4, "History All Cells", SetCellHistory, {"all"})
+    mbar.additem(4, "History Cell Average", SetCellHistory, {"average"})
+
+    -- add items to Help menu
+    mbar.additem(5, "Contents", ShowHelp)
 end
 
 ----------------------------------------------------------------------
@@ -7905,6 +7845,7 @@ end
 
 function ViewChanged(rotate)
     -- cube needs recreating on rotate or depth shade toggle
+    lastHistorySize = -1
     lastCubeSize = -1
     lastBusyCubeSize["E"] = -1
     lastBusyCubeSize["O"] = -1
@@ -7986,6 +7927,7 @@ function InitialView(display)
     xizo = 0.0; yizo = 0.0; zizo = 1.0
     ovt{"settrans3d", xixo, xiyo, xizo, yixo, yiyo, yizo, zixo, ziyo, zizo}
     ovt{"setpattern3d", grid1}
+    UpdateHistory()
 
     -- rotate to a nice view but don't call Refresh
     Rotate(160, 20, 0, false)
@@ -8014,6 +7956,7 @@ function Initialize()
     CreatePopUpMenus()
     CreateAxes()
     InitDepthShading()
+    UpdateHistory()
 
     if #rulestring == 0 then
         -- first call must initialize rulestring, survivals, births and NextGeneration
@@ -8085,7 +8028,7 @@ function HandleKey(event)
     elseif key == "delete" and mods == "shift" then ClearOutside()
     elseif key == "=" and mods == "none" then Faster()
     elseif key == "-" and mods == "none" then Slower()
-    elseif key == "1" and mods == "none" then SetStepSize(1)
+    elseif key == "1" and mods == "none" then SetStepSizeTo1()
     elseif key == "5" and mods == "none" then RandomPattern()
     elseif key == "n" and mods == CMDCTRL then NewPattern()
     elseif key == "o" and mods == CMDCTRL then OpenPattern()
@@ -8108,6 +8051,8 @@ function HandleKey(event)
     elseif key == "b" and mods == "none" then Rotate(0, 180, 0)
     elseif key == "[" and mods == "none" then ZoomOut()
     elseif key == "]" and mods == "none" then ZoomIn()
+    elseif key == "{" and mods == "none" then ZoomHalf()
+    elseif key == "}" and mods == "none" then ZoomDouble()
     elseif key == "i" and mods == "none" then InitialView()
     elseif key == "f" and mods == "none" then FitGrid()
     elseif key == "p" and mods == "none" then CycleCellType()
@@ -8124,6 +8069,9 @@ function HandleKey(event)
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
     elseif key == "h" and mods == "none" then ShowHelp()
+    elseif key == "y" and mods == "none" then CycleCellHistory()
+    elseif key == "y" and mods == "shift" then ToggleFadeHistory()
+    elseif key == "t" and mods == "alt" then ToggleTiming()  -- !!! remove later
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
