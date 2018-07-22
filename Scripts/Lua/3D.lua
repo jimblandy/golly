@@ -1563,91 +1563,6 @@ end
 
 ----------------------------------------------------------------------
 
-function DisplayBusyBoxes(editing)
-    gp.timerstart("Display")  -- !!! remove later
-    -- find the rotated reference cube vertex with maximum Z coordinate
-    local z1 = rotrefz[1]
-    local z2 = rotrefz[2]
-    local z3 = rotrefz[3]
-    local z4 = rotrefz[4]
-    local z5 = rotrefz[5]
-    local z6 = rotrefz[6]
-    local z7 = rotrefz[7]
-    local z8 = rotrefz[8]
-    local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
-
-    local testcell = editing or selcount > 0 or pastecount > 0
-
-    -- find the extended boundary of all live/active/selected/paste cells
-    local MINX, MINY, MINZ, MAXX, MAXY, MAXZ = minx, miny, minz, maxx, maxy, maxz
-    if testcell then
-        if editing then
-            if minactivex < MINX then MINX = minactivex end
-            if minactivey < MINY then MINY = minactivey end
-            if minactivez < MINZ then MINZ = minactivez end
-            if maxactivex > MAXX then MAXX = maxactivex end
-            if maxactivey > MAXY then MAXY = maxactivey end
-            if maxactivez > MAXZ then MAXZ = maxactivez end
-        end
-        if selcount > 0 then
-            if minselx < MINX then MINX = minselx end
-            if minsely < MINY then MINY = minsely end
-            if minselz < MINZ then MINZ = minselz end
-            if maxselx > MAXX then MAXX = maxselx end
-            if maxsely > MAXY then MAXY = maxsely end
-            if maxselz > MAXZ then MAXZ = maxselz end
-        end
-        if pastecount > 0 then
-            if minpastex < MINX then MINX = minpastex end
-            if minpastey < MINY then MINY = minpastey end
-            if minpastez < MINZ then MINZ = minpastez end
-            if maxpastex > MAXX then MAXX = maxpastex end
-            if maxpastey > MAXY then MAXY = maxpastey end
-            if maxpastez > MAXZ then MAXZ = maxpastez end
-        end
-    end
-
-    -- determine order to traverse x, y and z in the grid;
-    -- note that we need to draw cells from back to front
-    -- (assumes vertex order set in CreateCube)
-    local fromz, toz, stepz, fromy, toy, stepy, fromx, tox, stepx
-    if maxZ == z1 then
-        fromx, fromy, fromz = MINX, MINY, MAXZ
-    elseif maxZ == z2 then
-        fromx, fromy, fromz = MINX, MINY, MINZ
-    elseif maxZ == z3 then
-        fromx, fromy, fromz = MINX, MAXY, MAXZ
-    elseif maxZ == z4 then
-        fromx, fromy, fromz = MINX, MAXY, MINZ
-    elseif maxZ == z5 then
-        fromx, fromy, fromz = MAXX, MAXY, MAXZ
-    elseif maxZ == z6 then
-        fromx, fromy, fromz = MAXX, MAXY, MINZ
-    elseif maxZ == z7 then
-        fromx, fromy, fromz = MAXX, MINY, MAXZ
-    elseif maxZ == z8 then
-        fromx, fromy, fromz = MAXX, MINY, MINZ
-    end
-
-    if (fromx == MINX) then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
-    if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
-    if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
-
-    -- update the select, paste and active plane
-    if editing then
-        ovt{"setselpasact3d", selected, pastepatt, active}
-    else
-        ovt{"setselpasact3d", selected, pastepatt, {}}
-    end
-
-    -- display the cells
-    ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, CELLSIZE, editing, toolbarht}
-
-    gp.timersave("Display")  -- !!! remove later
-end
-
---------------------------------------------------------------------------------
-
 function EnableControls(bool)
     -- disable/enable unsafe menu items so that user scripts can call op.process
     -- File menu:
@@ -1916,7 +1831,6 @@ function Refresh(update)
                 CreatePoint("E", EVEN_COLOR)
                 CreatePoint("O", ODD_COLOR)
             end
-            DisplayBusyBoxes(editing)
         else
             if celltype == "cube" then
                 CreateLiveCube()
@@ -1925,8 +1839,8 @@ function Refresh(update)
             else -- celltype == "point" then
                 CreatePoint("L", POINT_COLOR)
             end
-            DisplayCells(editing)
         end
+        DisplayCells(editing)
     end
 
     if showaxes or showlines then DrawFrontAxes() end
@@ -4607,8 +4521,8 @@ end
 ----------------------------------------------------------------------
 
 function StartStop()
-    mind = -1
-    ming = -1
+    mind = -1  -- !!! remove later
+    ming = -1  -- !!! remove later
     generating = not generating
     UpdateStartButton()
     Refresh()
