@@ -1294,63 +1294,6 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawPoint(x, y, z)
-    local c, m = CELLSIZE, MIDCELL
-    -- draw mid point of cell at given grid position
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx + 0.5
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy + 0.5
-    -- use orthographic projection
-    ovt{"set", newx, newy}
-end
-
-----------------------------------------------------------------------
-
-local function DrawActiveCell(x, y, z)
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
-    -- draw the clip created by CreateTranslucentCell
-    ovt{"paste", newx, newy, "a"}
-end
-
-----------------------------------------------------------------------
-
-local function DrawSelectedCell(x, y, z)
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
-    -- draw the clip created by CreateTranslucentCell
-    ovt{"paste", newx, newy, "s"}
-end
-
-----------------------------------------------------------------------
-
-local function DrawPasteCell(x, y, z)
-    local c, m = CELLSIZE, MIDCELL
-    x = x * c + m
-    y = y * c + m
-    z = z * c + m
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
-    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
-    -- draw the clip created by CreateTranslucentCell
-    ovt{"paste", newx, newy, "p"}
-end
-
-----------------------------------------------------------------------
-
 function DisplayCells(editing)
     gp.timerstart("Display")  -- !!! remove later
     -- find the rotated reference cube vertex with maximum Z coordinate
@@ -1708,8 +1651,16 @@ function DrawToolBar()
         oldfont = ov("font 10 default-bold")
     end
     local oldbg = ov("textoption background 230 230 230 255")
-    local _, _ = op.maketext("Step="..stepsize)
+    local stepw, _ = op.maketext("Step="..stepsize)
     op.pastetext(stepslider.x + stepslider.wd + 2, y + 1)
+    -- show history mode
+    local mode = "Off"
+    if useaverage then mode = "Cell Average"
+    elseif showhistory > 0 then mode = "All Cells"
+    end
+    local _, _ = op.maketext("History "..mode)
+    x = stepslider.x + stepslider.wd + stepw + 2 + biggap
+    op.pastetext(x, y + 1)
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
 
@@ -1773,6 +1724,7 @@ function Refresh(update)
         a       active plane (Draw or Select mode)
         h       history cell
         h1..hn  fading history cell
+        hN      history cell not in active plane (Draw or Select mode)
         p       paste target cell
         s       selected cell
         sN      selected cell not in active plane (Draw or Select mode)
@@ -1819,6 +1771,11 @@ function Refresh(update)
 
             -- selected cells not in active plane will be points
             CreatePoint("sN", SELPT_COLOR)
+
+            -- history cells not in active plane will be points
+            if showhistory > MINHISTORY then
+                CreatePoint("hN", HISTORY_COLOR)
+            end
         end
         if rulestring:find("^BusyBoxes") then
             if celltype == "cube" then
@@ -7560,7 +7517,6 @@ function CreateMenuBar()
     mbar.addmenu("Edit")
     mbar.addmenu("Control")
     mbar.addmenu("View")
-    mbar.addmenu("Help")
 
     -- add items to File menu
     mbar.additem(1, "New Pattern", NewPattern)
@@ -7618,9 +7574,8 @@ function CreateMenuBar()
     mbar.additem(4, "History Off", SetCellHistory, {"off"})
     mbar.additem(4, "History All Cells", SetCellHistory, {"all"})
     mbar.additem(4, "History Cell Average", SetCellHistory, {"average"})
-
-    -- add items to Help menu
-    mbar.additem(5, "Contents", ShowHelp)
+    mbar.additem(4, "---", nil)
+    mbar.additem(4, "Help", ShowHelp)
 end
 
 ----------------------------------------------------------------------

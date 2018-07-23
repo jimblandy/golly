@@ -143,6 +143,7 @@ void ClipManager::Clear() {
     elnaclip = NULL;
     olnaclip = NULL;
     hclip = NULL;
+    hnaclip = NULL;
 }
 
 void ClipManager::AddLiveClip(const Clip* liveclip) {
@@ -245,6 +246,10 @@ void ClipManager::SetHistoryClip(const Clip* historyclip) {
     hclip = historyclip;
 }
 
+void ClipManager::SetHistoryNotActiveClip(const Clip* historynaclip) {
+    hnaclip = historynaclip;
+}
+
 const Clip* ClipManager::GetLiveClip(int* clipwd) {
     if (lclip && clipwd) *clipwd = lclip->cwd;
     return lclip;
@@ -298,6 +303,11 @@ const Clip* ClipManager::GetOddLiveNotActiveClip(int* clipwd) {
 const Clip* ClipManager::GetHistoryClip(int* clipwd) {
     if (hclip && clipwd) *clipwd = hclip->cwd;
     return hclip;
+}
+
+const Clip* ClipManager::GetHistoryNotActiveClip(int* clipwd) {
+    if (hnaclip && clipwd) *clipwd = hnaclip->cwd;
+    return hnaclip;
 }
 
 // -----------------------------------------------------------------------------
@@ -7409,19 +7419,24 @@ const char* Overlay::Update3DClips(const bool editing) {
             if ((current = GetClip("a")) == NULL) return OverlayError("missing active clip");
             clipmanager.SetActiveClip(current);
         }
-        // check for live non active clips
+        // check for live not active clips
         if (ruletype == bb || ruletype == bbw) {
-            if ((current = GetClip("EN")) == NULL) return OverlayError("missing even live non active clip");
+            if ((current = GetClip("EN")) == NULL) return OverlayError("missing even live not active clip");
             clipmanager.SetEvenLiveNotActiveClip(current);
-            if ((current = GetClip("ON")) == NULL) return OverlayError("missing odd live non active clip");
+            if ((current = GetClip("ON")) == NULL) return OverlayError("missing odd live not active clip");
             clipmanager.SetOddLiveNotActiveClip(current);
         } else {
-            if ((current = GetClip("LN")) == NULL) return OverlayError("missing live non active clip");
+            if ((current = GetClip("LN")) == NULL) return OverlayError("missing live not active clip");
             clipmanager.SetLiveNotActiveClip(current);
         }
-        // select non active clip
-        if ((current = GetClip("sN")) == NULL) return OverlayError("missing select non active clip");
+        // select not active clip
+        if ((current = GetClip("sN")) == NULL) return OverlayError("missing select not active clip");
         clipmanager.SetSelectNotActiveClip(current);
+        // history not active clip
+        if (showhistory > 0) {
+            if ((current = GetClip("hN")) == NULL) return OverlayError("missing history not active clip");
+            clipmanager.SetHistoryNotActiveClip(current);
+        }
     }
 
     return NULL;
@@ -7682,7 +7697,7 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
 
     // get required clips and compute midpoints
     // history cells
-    if (showhistory) {
+    if (showhistory > 0) {
         int numclips;
         if (fadehistory) {
             historyclips = clipmanager.GetHistoryClips(&numclips);
@@ -7714,6 +7729,8 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
     const Clip* livenotclip = clipmanager.GetLiveNotActiveClip(&livenotw);
     int selectnotw = 0;
     const Clip* selectnotclip = clipmanager.GetSelectNotActiveClip(&selectnotw);
+    int historynotw = 0;
+    const Clip* historynotclip = clipmanager.GetHistoryNotActiveClip(&historynotw);
     historyw >>= 1;
     livew >>= 1;
     selectw >>= 1;
@@ -7721,6 +7738,7 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
     activew >>= 1;
     livenotw >>= 1;
     selectnotw >>= 1;
+    historynotw >>= 1;
     const double zdepth = zd;
     const double zdepth2 = zd2;
 
@@ -7777,6 +7795,15 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
                                 // draw selected cell
                                 DoPaste(drawx - selectw, drawy - selectw, selectclip);
                             }
+                            // check for history
+                            if (hv) {
+                                // draw history cell
+                                if (fadehistory) {
+                                    DoPaste(drawx - historyw, drawy - historyw, historyclips[showhistory - hv]);
+                                } else {
+                                    DoPaste(drawx - historyw, drawy - historyw, historyclip);
+                                }
+                            }
                         } else {
                             // cell is outside of active plan
                             if (gv) {
@@ -7786,6 +7813,10 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
                             if (sv) {
                                 // draw selected cell as a point
                                 DoPaste(drawx - selectnotw, drawy - selectnotw, selectnotclip);
+                            }
+                            if (hv) {
+                                // draw history cell as a point
+                                DoPaste(drawx - historynotw, drawy - historynotw, historynotclip);
                             }
                         }
                     } else {
@@ -7798,6 +7829,15 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
                             // draw selected cell
                             DoPaste(drawx - selectw, drawy - selectw, selectclip);
                         }
+                        // check for history
+                        if (hv) {
+                            // draw history cell
+                            if (fadehistory) {
+                                DoPaste(drawx - historyw, drawy - historyw, historyclips[showhistory - hv]);
+                            } else {
+                                DoPaste(drawx - historyw, drawy - historyw, historyclip);
+                            }
+                        }
                     }
                     // check for paste
                     if (pv) {
@@ -7805,15 +7845,6 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
                         DoPaste(drawx - livew, drawy - livew, liveclip);
                         // draw paste cell
                         DoPaste(drawx - pastew, drawy - pastew, pasteclip);
-                    }
-                    // check for history
-                    if (hv) {
-                        // draw history cell
-                        if (fadehistory) {
-                            DoPaste(drawx - historyw, drawy - historyw, historyclips[showhistory - hv]);
-                        } else {
-                            DoPaste(drawx - historyw, drawy - historyw, historyclip);
-                        }
                     }
                 }
             }
@@ -7968,7 +7999,7 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
     const bool usedepth = (depthshading && celltype != point);
 
     // get history clip
-    if (showhistory) {
+    if (showhistory > 0) {
         int numclips;
         if (fadehistory) {
             historyclips = clipmanager.GetHistoryClips(&numclips);
@@ -8008,6 +8039,8 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
     const Clip* oddlivenotclip = clipmanager.GetOddLiveNotActiveClip(&oddlivenotw);
     int selectnotw = 0;
     const Clip* selectnotclip = clipmanager.GetSelectNotActiveClip(&selectnotw);
+    int historynotw = 0;
+    const Clip* historynotclip = clipmanager.GetHistoryNotActiveClip(&historynotw);
     evenw >>= 1;
     oddw >>= 1;
     selectw >>= 1;
@@ -8017,6 +8050,7 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
     oddlivenotw >>= 1;
     selectnotw >>= 1;
     historyw >>= 1;
+    historynotw >>= 1;
     const double zdepth = zd;
     const double zdepth2 = zd2;
 
@@ -8087,6 +8121,15 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
                                 // draw selected cell
                                 DoPaste(drawx - selectw, drawy - selectw, selectclip);
                             }
+                            // check for history
+                            if (hv) {
+                                // draw history cell
+                                if (fadehistory) {
+                                    DoPaste(drawx - historyw, drawy - historyw, historyclips[showhistory - hv]);
+                                } else {
+                                    DoPaste(drawx - historyw, drawy - historyw, historyclip);
+                                }
+                            }
                         } else {
                             // cell is outside of active plan
                             if (gv) {
@@ -8101,6 +8144,10 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
                                 // draw selected cell as a point
                                 DoPaste(drawx - selectnotw, drawy - selectnotw, selectnotclip);
                             }
+                            if (hv) {
+                                // draw history cell as a point
+                                DoPaste(drawx - historynotw, drawy - historynotw, historynotclip);
+                            }
                         }
                     } else {
                         // active plane is not displayed
@@ -8112,6 +8159,15 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
                             // draw selected cell
                             DoPaste(drawx - selectw, drawy - selectw, selectclip);
                         }
+                        // check for history
+                        if (hv) {
+                            // draw history cell
+                            if (fadehistory) {
+                                DoPaste(drawx - historyw, drawy - historyw, historyclips[showhistory - hv]);
+                            } else {
+                                DoPaste(drawx - historyw, drawy - historyw, historyclip);
+                            }
+                        }
                     }
                     // check for paste
                     if (pv) {
@@ -8119,15 +8175,6 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
                         DoPaste(drawx - livew, drawy - livew, liveclip);
                         // draw paste cell
                         DoPaste(drawx - pastew, drawy - pastew, pasteclip);
-                    }
-                    // check for history
-                    if (hv) {
-                        // draw history cell
-                        if (fadehistory) {
-                            DoPaste(drawx - historyw, drawy - historyw, historyclips[showhistory - hv]);
-                        } else {
-                            DoPaste(drawx - historyw, drawy - historyw, historyclip);
-                        }
                     }
                 }
                 evencell = !evencell;
@@ -8692,7 +8739,6 @@ const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
     // get the grid size
     if (gridsize == 0) return OverlayError("grid size not set");
 
-
     // read gencount
     int idx = 2;
     int gencount = 0;
@@ -8764,7 +8810,7 @@ const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
         }
 
         // update history if required
-        if (showhistory) {
+        if (showhistory > 0) {
             if (useaverage) {
                 AddAverageToHistory();
             } else {

@@ -103,6 +103,9 @@ public:
     // set the history clip
     void SetHistoryClip(const Clip* historyclip);
 
+    // set the history not active clip
+    void SetHistoryNotActiveClip(const Clip* historynaclip);
+
     // get the live clip and return clip width if specified
     const Clip* GetLiveClip(int* clipwd);
 
@@ -136,6 +139,9 @@ public:
     // get the history clip and return clip width if specified
     const Clip* GetHistoryClip(int* clipwd);
 
+    // get the history not active clip and return clip width if specified
+    const Clip* GetHistoryNotActiveClip(int* clipwd);
+
 private:
     int lsize;
     int esize;
@@ -160,6 +166,7 @@ private:
     const Clip* elnaclip;
     const Clip* olnaclip;
     const Clip* hclip;
+    const Clip* hnaclip;
 };
 
 // The Table class is used during next generation calculations for 3D rules
