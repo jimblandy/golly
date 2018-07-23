@@ -64,6 +64,7 @@ local BORDER = 2                    -- space around live cubes
 local MINSIZE = 1+BORDER*2          -- minimum size of empty cells
 local MAXSIZE = 100                 -- maximum size of empty cells
 local CELLSIZE = 15                 -- initial size of empty cells
+local ZOOMSIZE = CELLSIZE           -- used for mouse wheel zoom
 local HALFCELL = CELLSIZE/2.0       -- for drawing mid points of cells
 local LEN = CELLSIZE-BORDER*2       -- edge length of live cubes
 local DEGTORAD = math.pi/180.0      -- converts degrees to radians
@@ -4394,6 +4395,7 @@ function ZoomDouble()
         -- zoom in by doubling the cell size
         CELLSIZE = CELLSIZE*2
         if CELLSIZE > MAXSIZE then CELLSIZE = MAXSIZE end
+        ZOOMSIZE = CELLSIZE
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
         MIDCELL = HALFCELL-MIDGRID
@@ -4410,6 +4412,7 @@ function ZoomHalf()
         -- zoom out by halving the cell size
         CELLSIZE = CELLSIZE//2
         if CELLSIZE < MINSIZE then CELLSIZE = MINSIZE end
+        ZOOMSIZE = CELLSIZE
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
         MIDCELL = HALFCELL-MIDGRID
@@ -4425,6 +4428,7 @@ function ZoomIn()
     if CELLSIZE < MAXSIZE then
         -- zoom in by incrementing the cell size
         CELLSIZE = CELLSIZE+1
+        ZOOMSIZE = CELLSIZE
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
         MIDCELL = HALFCELL-MIDGRID
@@ -4440,6 +4444,41 @@ function ZoomOut()
     if CELLSIZE > MINSIZE then
         -- zoom out by decrementing the cell size
         CELLSIZE = CELLSIZE-1
+        ZOOMSIZE = CELLSIZE
+        HALFCELL = CELLSIZE/2.0
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        LEN = CELLSIZE-BORDER*2
+        CreateAxes()
+        RefreshIfNotGenerating()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ZoomInPower()
+    if CELLSIZE < MAXSIZE then
+        -- zoom in by increasing the cell size by a percentage
+        ZOOMSIZE = ZOOMSIZE * (1 + 1 / MINSIZE)
+        if ZOOMSIZE > MAXSIZE then ZOOMSIZE = MAXSIZE end
+        CELLSIZE = ZOOMSIZE // 1 | 0
+        HALFCELL = CELLSIZE/2.0
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        LEN = CELLSIZE-BORDER*2
+        CreateAxes()
+        RefreshIfNotGenerating()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ZoomOutPower()
+    if CELLSIZE > MINSIZE then
+        -- zoom out by reducing the cell size by a percentage
+        ZOOMSIZE = ZOOMSIZE / (1 + 1 / MINSIZE)
+        if ZOOMSIZE < MINSIZE then ZOOMSIZE = MINSIZE end
+        CELLSIZE = ZOOMSIZE // 1 | 0
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
         MIDCELL = HALFCELL-MIDGRID
@@ -4622,6 +4661,7 @@ function FitGrid(display)
         local ymax = max(y1,y2,y3,y4,y5,y6,y7,y8) + CELLSIZE
     until Visible(xmin,ymin) and Visible(xmin,ymax) and
           Visible(xmax,ymin) and Visible(xmax,ymax)
+    ZOOMSIZE = CELLSIZE
 
     if display then Refresh() end
 end
@@ -8068,9 +8108,9 @@ function EventLoop()
             elseif event:find("^mup") then
                 MouseUp(mouseinfo)
             elseif event:find("^ozoomout") then
-                if not arrow_cursor then ZoomOut() end
+                if not arrow_cursor then ZoomOutPower() end
             elseif event:find("^ozoomin") then
-                if not arrow_cursor then ZoomIn() end
+                if not arrow_cursor then ZoomInPower() end
             elseif event:find("^file") then
                 OpenFile(event:sub(6))
             end
