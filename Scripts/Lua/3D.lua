@@ -1651,16 +1651,8 @@ function DrawToolBar()
         oldfont = ov("font 10 default-bold")
     end
     local oldbg = ov("textoption background 230 230 230 255")
-    local stepw, _ = op.maketext("Step="..stepsize)
+    local _, _ = op.maketext("Step="..stepsize)
     op.pastetext(stepslider.x + stepslider.wd + 2, y + 1)
-    -- show history mode
-    local mode = "Off"
-    if useaverage then mode = "Cell Average"
-    elseif showhistory > 0 then mode = "All Cells"
-    end
-    local _, _ = op.maketext("History "..mode)
-    x = stepslider.x + stepslider.wd + stepw + 2 + biggap
-    op.pastetext(x, y + 1)
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
 
