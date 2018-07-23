@@ -1,4 +1,5 @@
 --[[
+
 This script lets people explore three-dimensional cellular automata
 using Golly.  Inspired by the work of Carter Bays and his colleagues
 (see http://www.cse.sc.edu/~bays/d4d4d4/).
@@ -15,8 +16,7 @@ Thanks to Chris Rowett for optimizing the rendering code and many
 other improvements.
 
 This script uses custom purpose ovtable commmands for increased
-performance when computing the next generation and displaying
-cells:
+performance when computing the next generation and displaying cells:
 
 nextgen3d           compute next generation
 setrule3d           set the rule for next generation calculation
@@ -28,7 +28,7 @@ setcelltype3d       set the cell shape for drawing
 setdepthshading3d   set whether depth shading should be used
 setpattern3d        set the current pattern
 setselpasact3d      set the select, paste and active grids
-sethistory3d        sets the cell history display mode
+sethistory3d        set the cell history display mode
 
 --]]
 
@@ -4447,7 +4447,7 @@ end
 
 function ZoomDouble()
     if CELLSIZE < MAXSIZE then
-        -- zoom in by increasing size of cells
+        -- zoom in by doubling the cell size
         CELLSIZE = CELLSIZE*2
         if CELLSIZE > MAXSIZE then CELLSIZE = MAXSIZE end
         HALFCELL = CELLSIZE/2.0
@@ -4463,7 +4463,7 @@ end
 
 function ZoomHalf()
     if CELLSIZE > MINSIZE then
-        -- zoom out by decreasing size of cells
+        -- zoom out by halving the cell size
         CELLSIZE = CELLSIZE//2
         if CELLSIZE < MINSIZE then CELLSIZE = MINSIZE end
         HALFCELL = CELLSIZE/2.0
@@ -4479,7 +4479,7 @@ end
 
 function ZoomIn()
     if CELLSIZE < MAXSIZE then
-        -- zoom in by increasing size of cells
+        -- zoom in by incrementing the cell size
         CELLSIZE = CELLSIZE+1
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
@@ -4494,7 +4494,7 @@ end
 
 function ZoomOut()
     if CELLSIZE > MINSIZE then
-        -- zoom out by decreasing size of cells
+        -- zoom out by decrementing the cell size
         CELLSIZE = CELLSIZE-1
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
@@ -6306,6 +6306,7 @@ end
 function ToggleFadeHistory()
     fadehistory = not fadehistory
     UpdateHistory()
+    RefreshIfNotGenerating()
 end
 
 ----------------------------------------------------------------------
