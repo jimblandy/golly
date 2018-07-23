@@ -692,9 +692,6 @@ private:
     const char* Do3DSetCellHistory(lua_State* L, const int n, int* nresults);
     // Sets cell history display mode
 
-    void AddAverageToHistory();
-    // Add the average live cell position to history
-
     void UpdateHistoryFromLive();
     // Update history layer from live cells.
 
@@ -799,7 +796,6 @@ private:
     int cellsize, midcell;          // cell size and mid point for rendering
     int toolbarht;                  // toolbar height
     int showhistory;                // cell history longevity: 0 off, >0 on
-    bool useaverage;                // whether to use average cell position when history is on
     bool fadehistory;               // whether to fade history cells
 
     // render target

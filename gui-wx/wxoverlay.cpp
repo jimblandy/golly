@@ -557,7 +557,6 @@ Overlay::Overlay()
     celltype = cube;
     gridsize = 0;
     showhistory = 0;
-    useaverage = false;
     fadehistory = false;
 }
 
@@ -8542,16 +8541,27 @@ const char* Overlay::PopulateGrid(lua_State* L, const int n, int idx, Table& des
 
 // -----------------------------------------------------------------------------
 // Arguments:
-// grid         table      integer
+// grid             table      integer
+// clearhistory     boolean
 
 const char* Overlay::Do3DSetPattern(lua_State* L, const int n, int* nresults) {
+    const char* error = NULL;
     if (gridsize == 0) return OverlayError("grid size not set");
 
-    // clear history if enabled
-    if (showhistory || useaverage) history3d.Clear();
-
     // populate the grid from the supplied pattern
-    return PopulateGrid(L, n, 2, grid3d);
+    int idx = 2;
+    if ((error = PopulateGrid(L, n, idx++, grid3d)) != NULL) return error;
+
+    // read the clear history flag
+    bool clearhistory = false;
+    if ((error = ReadLuaBoolean(L, n, idx++, &clearhistory, "clearhistory")) != NULL) return error;
+
+    // clear history if requested
+    if (clearhistory) {
+        history3d.Clear();
+    }
+
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -8598,48 +8608,6 @@ void Overlay::UpdateHistoryFromLive() {
 
 // -----------------------------------------------------------------------------
 
-void Overlay::AddAverageToHistory() {
-    int x = 0;
-    int y = 0;
-    int z = 0;
-    int k, i;
-    int numkeys = 0;
-    int numhistkeys = 0;
-    const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-    const int* history3keys = history3d.GetKeys(&numhistkeys);
-    const int N = gridsize;
-    const int NN = N * N;
-
-    if (fadehistory) {
-        // reduce history on all cells by 1
-        for (i = 0; i < numhistkeys; i++) {
-            k = history3keys[i];
-            history3d.DecrementTo1(k);
-        }
-    }
-
-    // check for no live cells
-    if (numkeys == 0) return;
-
-    // get the position of the live cells to compute the average
-    for (i = 0; i < numkeys; i++) {
-        k = grid3dkeys[i];
-        x += k % N;
-        y += (k / N) % N;
-        z += k / NN;
-    }
-
-    // compute the average
-    x /= numkeys;
-    y /= numkeys;
-    z /= numkeys;
-
-    // set the cell position in the history grid
-    history3d.SetValue(x + N * (y + N * z), showhistory);
-}
-
-// -----------------------------------------------------------------------------
-
 void Overlay::UpdateBoundingBoxFromHistory() {
     int x, y, z, k;
     const int N = gridsize;
@@ -8660,7 +8628,6 @@ void Overlay::UpdateBoundingBoxFromHistory() {
     // compute bounding box for history cells
     for (int i = 0; i < numhistkeys; i++) {
         k = history3keys[i];
-        history3d.DecrementTo1(k);
         x = k % N;
         y = (k / N) % N;
         z = k / NN;
@@ -8699,7 +8666,6 @@ void Overlay::UpdateBoundingBoxFromHistory() {
 // -----------------------------------------------------------------------------
 // Arguments:
 // showhistory      integer     0..255
-// useaverage       boolean
 // fadehistory      boolean
 
 const char* Overlay::Do3DSetCellHistory(lua_State* L, const int n, int* nresults) {
@@ -8708,20 +8674,16 @@ const char* Overlay::Do3DSetCellHistory(lua_State* L, const int n, int* nresults
     // read the show history longevity
     int idx = 2;
     int oldshow = showhistory;
-    bool oldaverage = useaverage;
     int value = 0;
     if ((error = ReadLuaInteger(L, n, idx++, &value, "showhistory")) != NULL) return error;
     if (value < 0 || value > 255) return OverlayError("showhistory must be from 0 to 255");
     showhistory = value;
 
-    // read the use average flag
-    if ((error = ReadLuaBoolean(L, n, idx++, &useaverage, "useaverage")) != NULL) return error;
-
     // read the fade history flag
     if ((error = ReadLuaBoolean(L, n, idx++, &fadehistory, "fadehistory")) != NULL) return error;
 
     // clear history if mode changed (but not if only fading changed)
-    if (!(oldshow == showhistory && oldaverage == useaverage)) {
+    if (oldshow != showhistory) {
         history3d.Clear();
     }
 
@@ -8811,11 +8773,7 @@ const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
 
         // update history if required
         if (showhistory > 0) {
-            if (useaverage) {
-                AddAverageToHistory();
-            } else {
-                UpdateHistoryFromLive();
-            }
+            UpdateHistoryFromLive();
         }
 
         // next step

@@ -67,7 +67,7 @@ local CELLSIZE = 15                 -- initial size of empty cells
 local HALFCELL = CELLSIZE/2.0       -- for drawing mid points of cells
 local LEN = CELLSIZE-BORDER*2       -- edge length of live cubes
 local DEGTORAD = math.pi/180.0      -- converts degrees to radians
-local MINHISTORY = 0                -- history off
+local HISTORYOFF = 0                -- history off
 local DEFAULTHISTORY = 100          -- default history longevity
 local MINHISTORYALPHA = 12          -- minimum history alpha value when fading
 
@@ -138,8 +138,7 @@ local depthrange = 224              -- rgb levels for depth shading
 local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
 local xyline = { "lines" }          -- coordinates for batch line draw
 local xyln = 2                      -- index of next position in xyline
-local showhistory = MINHISTORY      -- cell history longevity: 0 = off, >0 = on
-local useaverage = false            -- whether to use average position for history when history on
+local showhistory = HISTORYOFF      -- cell history longevity: 0 = off, >0 = on
 local fadehistory = true            -- whether to fade history cells
 
 local active = {}                   -- grid positions of cells in active plane
@@ -472,9 +471,8 @@ function ReadSettings()
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
             elseif keyword == "history" then
-                showhistory = tonumber(value) or MINHISTORY
-                if showhistory ~= MINHISTORY and showhistory ~= DEFAULTHISTORY then showhistory = MINHISTORY end
-            elseif keyword == "average" then useaverage = tostring(value) == "true"
+                showhistory = tonumber(value) or HISTORYOFF
+                if showhistory ~= HISTORYOFF and showhistory ~= DEFAULTHISTORY then showhistory = HISTORYOFF end
             elseif keyword == "fadehistory" then fadehistory = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or DEFAULTN
@@ -510,7 +508,6 @@ function WriteSettings()
         f:write("lines="..tostring(showlines), "\n")
         f:write("shading="..tostring(depthshading), "\n")
         f:write("history="..tostring(showhistory), "\n")
-        f:write("average="..tostring(useaverage), "\n")
         f:write("fadehistory="..tostring(fadehistory), "\n")
         f:close()
     end
@@ -1588,10 +1585,8 @@ function DrawMenuBar()
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
-    mbar.tickitem(4, 12, fadehistory)
-    mbar.radioitem(4, 14, useaverage == false and showhistory == MINHISTORY)
-    mbar.radioitem(4, 15, useaverage == false and showhistory == DEFAULTHISTORY)
-    mbar.radioitem(4, 16, useaverage == true)
+    mbar.tickitem(4, 12, showhistory > 0)
+    mbar.tickitem(4, 13, fadehistory)
 
     mbar.show(0, 0, ovwd, mbarht)
 end
@@ -1691,7 +1686,7 @@ function Refresh(update)
     g.check(false)
 
     -- if the pattern has been modified then update
-    if dirty then ovt{"setpattern3d", grid1} end
+    if dirty then ovt{"setpattern3d", grid1, false} end
 
     -- fill overlay with background color
     ov(BACK_COLOR)
@@ -1737,7 +1732,7 @@ function Refresh(update)
 
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
-        if showhistory > MINHISTORY then
+        if showhistory > HISTORYOFF then
             -- history cells will be translucent
             CreateHistoryCells("h", HISTORY_COLOR)
         end
@@ -1765,7 +1760,7 @@ function Refresh(update)
             CreatePoint("sN", SELPT_COLOR)
 
             -- history cells not in active plane will be points
-            if showhistory > MINHISTORY then
+            if showhistory > HISTORYOFF then
                 CreatePoint("hN", HISTORY_COLOR)
             end
         end
@@ -2070,7 +2065,7 @@ function RestoreState(state)
     maxpastey = state.savemaxpastey
     maxpastez = state.savemaxpastez
 
-    ovt{"setpattern3d", grid1}
+    ovt{"setpattern3d", grid1, true}
 end
 
 ----------------------------------------------------------------------
@@ -3352,7 +3347,7 @@ function SetGridSize(newsize)
     end
 
     -- reload the grid since it will have changed after resize
-    ovt{"setpattern3d", grid1}
+    ovt{"setpattern3d", grid1, true}
 
     CheckIfGenerating()
     FitGrid()   -- calls Refresh
@@ -4927,7 +4922,6 @@ function ShowHelp()
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#edit"><b>Edit menu</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#control"><b>Control menu</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#view"><b>View menu</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#help"><b>Help menu</b></a></dd>
 <dd><a href="#scripts"><b>Running scripts</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#shortcuts"><b>Creating your own keyboard shortcuts</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#functions"><b>Script functions</b></a></dd>
@@ -5056,7 +5050,7 @@ shortcuts):
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes </td></tr>
 <tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
-<tr><td align=right> Y &nbsp;</td><td>&nbsp; cycle cell history (off/all/average) </td></tr>
+<tr><td align=right> Y &nbsp;</td><td>&nbsp; toggle cell history </td></tr>
 <tr><td align=right> shift-Y &nbsp;</td><td>&nbsp; toggle history fade </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
@@ -5305,31 +5299,18 @@ away they are from the front of the screen.  Depth shading is not done
 when displaying points.
 </dd>
 
+<a name="showhistory"></a><p><dt><b>Show History</b></dt>
+<dd>
+If ticked then history cells are shown.
+</dd>
+
 <a name="fadehistory"></a><p><dt><b>Fade History</b></dt>
 <dd>
 If ticked then history cells fade each generation. They do not fade
 away completely so you can always see where live cells have been.
 </dd>
 
-<a name="historyoff"></a><p><dt><b>History Off</b></dt>
-<dd>
-If selected then cell history is not displayed.
-</dd>
-
-<a name="historyall"></a><p><dt><b>History All Cells</b></dt>
-<dd>
-If selected then cell history is displayed for all live cells.
-</dd>
-
-<a name="historyaverage"></a><p><dt><b>History Cell Average</b></dt>
-<dd>
-If selected then the average position of all cells is displayed as history.
-</dd>
-
-<p><a name="help"></a><br>
-<font size=+1><b>Help menu</b></font>
-
-<a name="helpcontents"></a><p><dt><b>Contents</b></dt>
+<a name="help"></a><p><dt><b>Help</b></dt>
 <dd>
 Show this help.
 </dd>
@@ -6211,40 +6192,17 @@ end
 ----------------------------------------------------------------------
 
 function UpdateHistory()
-    ovt{"sethistory3d", showhistory, useaverage, fadehistory}
+    ovt{"sethistory3d", showhistory, fadehistory}
     ViewChanged(false)
 end
 
 ----------------------------------------------------------------------
 
-function CycleCellHistory()
-    -- cycle history mode: off -> all -> average -> off
-    if useaverage then
-        useaverage = false
-        showhistory = MINHISTORY
-    elseif showhistory == MINHISTORY then
-        useaverage = false
+function ToggleShowHistory()
+    if showhistory == HISTORYOFF then
         showhistory = DEFAULTHISTORY
     else
-        useaverage = true
-        showhistory = DEFAULTHISTORY
-    end
-    UpdateHistory()
-    RefreshIfNotGenerating()
-end
-
-----------------------------------------------------------------------
-
-function SetCellHistory(newvalue)
-    if newvalue == "off" then
-        useaverage = false
-        showhistory = MINHISTORY
-    elseif newvalue == "all" then
-        useaverage = false
-        showhistory = DEFAULTHISTORY
-    else -- if newvalue == "average"
-        useaverage = true
-        showhistory = DEFAULTHISTORY
+        showhistory = HISTORYOFF
     end
     UpdateHistory()
     RefreshIfNotGenerating()
@@ -7561,11 +7519,8 @@ function CreateMenuBar()
     mbar.additem(4, "Show Axes", ToggleAxes)
     mbar.additem(4, "Show Lattice Lines", ToggleLines)
     mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
+    mbar.additem(4, "Show History", ToggleShowHistory)
     mbar.additem(4, "Fade History", ToggleFadeHistory)
-    mbar.additem(4, "---", nil)
-    mbar.additem(4, "History Off", SetCellHistory, {"off"})
-    mbar.additem(4, "History All Cells", SetCellHistory, {"all"})
-    mbar.additem(4, "History Cell Average", SetCellHistory, {"average"})
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
 end
@@ -7780,16 +7735,16 @@ end
 
 ----------------------------------------------------------------------
 
-function InitialView(display)
+function InitialView(display, clearhistory)
     if display == nil then display = true end
+    if clearhistory == nil then clearhistory = true end
 
     -- initialize the transformation matrix
     xixo = 1.0; yixo = 0.0; zixo = 0.0
     xiyo = 0.0; yiyo = 1.0; ziyo = 0.0
     xizo = 0.0; yizo = 0.0; zizo = 1.0
     ovt{"settrans3d", xixo, xiyo, xizo, yixo, yiyo, yizo, zixo, ziyo, zizo}
-    ovt{"setpattern3d", grid1}
-    UpdateHistory()
+    ovt{"setpattern3d", grid1, clearhistory}
 
     -- rotate to a nice view but don't call Refresh
     Rotate(160, 20, 0, false)
@@ -7915,7 +7870,7 @@ function HandleKey(event)
     elseif key == "]" and mods == "none" then ZoomIn()
     elseif key == "{" and mods == "none" then ZoomHalf()
     elseif key == "}" and mods == "none" then ZoomDouble()
-    elseif key == "i" and mods == "none" then InitialView()
+    elseif key == "i" and mods == "none" then InitialView(true, false)  -- don't clear history
     elseif key == "f" and mods == "none" then FitGrid()
     elseif key == "p" and mods == "none" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()
@@ -7931,7 +7886,7 @@ function HandleKey(event)
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
     elseif key == "h" and mods == "none" then ShowHelp()
-    elseif key == "y" and mods == "none" then CycleCellHistory()
+    elseif key == "y" and mods == "none" then ToggleShowHistory()
     elseif key == "y" and mods == "shift" then ToggleFadeHistory()
     elseif key == "t" and mods == "alt" then ToggleTiming()  -- !!! remove later
     elseif key == "q" then ExitScript()
