@@ -673,8 +673,7 @@ private:
     // Automatically clips any pixels outside the render target.
 
     void Draw3DCell(int x, int y, const Clip* clipptr);
-    //static void Draw3DCellLittle(int x, int y, const Clip* clipptr, const Overlay* current);
-    // Draw a 3D cell on little endian architectures.
+    // Draw a 3D cell.
 
     // 3D calls
 
