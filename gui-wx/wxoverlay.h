@@ -33,9 +33,41 @@ typedef enum {
     left, right, center
 } text_alignment;
 
+// Clips have a row index to optimize rendering.
+typedef enum {
+    mixed = 0,      // row contains at least one pixel that needs alpha blending
+    transparent,    // row contains only transparent pixels (alpha 0)
+    opaque,         // row contains only opaque pixels (alpha 255)
+    both,           // row contains a mixture of transparent and opaque pixels (alpha 0 and 255)
+    single          // row contains a mixture of transparent and a single global alpha
+} rowtype;
+
 // The Clip class is used by some commands (eg. copy, text) to store pixel data
 // in a named "clipboard" for later use by other commands (eg. paste, replace):
-class Clip;
+class Clip {
+public:
+    Clip(int w, int h, bool use_calloc = false);
+    ~Clip();
+
+    // add the row index to the clip to optimize rendering
+    int AddIndex();
+
+    // remove the row index from the clip (should be called when the Clip pixels change)
+    void RemoveIndex();
+
+public:
+    int cwd, cht;               // width and height of the clip in pixels
+    unsigned char* cdata;       // RGBA data (cwd * cht * 4 bytes)
+    unsigned char* cdatabb;     // top left pixel in non-transparent bounding box
+    rowtype* rowindex;          // contents type of each row
+    int xbb, ybb;               // x and y offset of top left of non-transparent pixel bounding box
+    int wbb, hbb;               // width and height of non-transparent pixel bounding box
+    unsigned int clipalpha;     // if clip has only 0 and one other alpha value then this is the other value
+
+private:
+    // compute the bounding box of non-zero alpha pixels in the Clip
+    void ComputeBoundingBox();
+};
 
 // The ClipManager class manages a list of clips.
 class ClipManager {
@@ -124,7 +156,7 @@ public:
     // get the active clip and return clip width if specified
     const Clip* GetActiveClip(int* clipwd);
 
-    // get the not active active clip and return clip width if specified
+    // get the not active live clip and return clip width if specified
     const Clip* GetLiveNotActiveClip(int* clipwd);
 
     // get the not active select clip and return clip width if specified
@@ -416,7 +448,7 @@ private:
     
     const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace,
                                  int* invreplace, int* delta, int component);
-    // Decodes a single argument for the replace comand.
+    // Decodes a single argument for the replace command.
 
     const char* DoReplace(const char* args);
     // Replace pixels of a specified RGBA color in the render target with the
@@ -503,7 +535,7 @@ private:
 
     const char* DoCellView(const char* args);
     // Create a cell view that tracks a rectangle of cells and can be rapidly
-    // drawn onto the the render target at a particular scale and angle.
+    // drawn onto the render target at a particular scale and angle.
 
     void DeleteCellView();
     // Deallocate all memory used by the cell view.
@@ -636,23 +668,13 @@ private:
     // Set the current RGBA values and return the old values a Lua table
     // of the form {"rgba", r, g, b, a}.
 
-    // internal array API calls
-    
-    // These have the same functionality as the string
-    // API calls but take C++ arrays and are used internally
-    // by the Overlay for speed.
-
-    const char* DoPaste(const int* coords, int n, const char* clip);
-    // Paste the given Clip data into the render target at the given locations.
-    // Automatically clips any pixels outside the render target.
-
     const char* DoPaste(const int* coords, int n, const Clip* clipptr);
     // Paste the named Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
 
-    void DoPaste(int x, int y, const Clip* clipptr);
-    // Paste the named Clip data into the render target at the given location.
-    // Ignores the pixel if outside the render target.
+    void Draw3DCell(int x, int y, const Clip* clipptr);
+    //static void Draw3DCellLittle(int x, int y, const Clip* clipptr, const Overlay* current);
+    // Draw a 3D cell on little endian architectures.
 
     // 3D calls
 
@@ -664,11 +686,10 @@ private:
     // Set the current 3D rule.
 
     const char* Do3DSetGridSize(lua_State* L, const int n, int* nresults);
-    // Sets the current 3D grid size (3 to 100).
+    // Sets the current 3D grid size.
 
     const char* Do3DSetStepSize(lua_State* L, const int n, int* nresults);
-    // Sets the number of generations to compute for each
-    // Do3DNextGen call (1 to 100).
+    // Sets the step modulus for Do3dNextGen.
 
     const char* Do3DSetTransform(lua_State* L, const int n, int* nresults);
     // Sets the current transformation matrix.
@@ -690,7 +711,7 @@ private:
     // Sets the selected, paste and active cell grids.
 
     const char* Do3DSetCellHistory(lua_State* L, const int n, int* nresults);
-    // Sets cell history display mode
+    // Sets cell history display mode.
 
     void UpdateHistoryFromLive();
     // Update history layer from live cells.
@@ -699,7 +720,7 @@ private:
     // Update bounding box from history cells.
 
     void Display3DNormal(const int midx, const int midy, const int stepi, const int stepj);
-    // Display live cells in Move mode for non-BusyBoxes algos
+    // Display live cells in Move mode for non-BusyBoxes algos.
 
     void Display3DBusyBoxes(const int midx, const int midy, const int stepi, const int stepj);
     // Display live cells in Move mode for BusyBoxes algo.
@@ -772,7 +793,6 @@ private:
     Table select3d;                 // grid of selected cells
     Table active3d;                 // grid of active cells
     Table history3d;                // history grid
-    int* coords2d;                  // 2d transformed coordinates for live cells
     int numcoords;                  // size of coordinate list
     char survivals[27];             // survival flags
     char births[27];                // birth flags
@@ -808,6 +828,7 @@ private:
     unsigned char* ovpixmap;        // overlay RGBA data
     int ovwd, ovht;                 // width and height of overlay pixmap
     unsigned char r, g, b, a;       // current RGBA values for drawing pixels
+    unsigned int rgbadraw;          // packed version of current RGBA values
     bool alphablend;                // do alpha blending when drawing translucent pixels?
     bool only_draw_overlay;         // set by DoUpdate, reset by OnlyDrawOverlay
     overlay_position pos;           // where to display overlay

@@ -532,15 +532,15 @@ use those values to do things like center the image within the render target.
 <a name="optimize"></a><p><dt><b>optimize <i>clipname</i></b></dt>
 <dd>
 Optimizes the named clip for improved <a href="#paste">paste</a> performance when
-using <a href="#blending">alpha blending</a> if the clip contains complete rows
-of transparent or opaque pixels.
-Returns the number of completely transparent rows.
+using <a href="#blending">alpha blending</a>.
+Returns the bounding box of non-zero alpha pixels within the clip as a string
+of the form "x y width height".
 A clip that is modified after optimization must be optimized again before use to get the
 performance benefit.
 Especially effective for text rendering and used automatically by the
 <a href="#maketext">op.maketext</a> function.
 </dd>
-<dd> Example: <b>local transparentrows = ov("optimize textclip")</b></dd>
+<dd> Example: <b>local x, y, w, h = ov("optimize textclip")</b></dd>
 </p>
 
 <a name="paste"></a><p><dt><b>paste <i>x1 y1 (...xn yn) clipname</i></b></dt>
