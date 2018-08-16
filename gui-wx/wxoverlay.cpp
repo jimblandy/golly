@@ -93,19 +93,34 @@
         *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | AMASK; \
     }
 
-// alpha blend source with destination
-#define ALPHABLEND(source, dest, resultptr, alpha, invalpha) \
-    if ((dest & AMASK) == AMASK) { \
-        ALPHABLENDOPAQUEDEST(source, dest, resultptr, alpha, invalpha); \
-    } else { \
+// alpha blend source with translucent destination
+#define ALPHABLENDTRANSDEST(source, dest, resultptr, alpha, invalpha) \
+    { \
         const unsigned int _destinva = (ALPHA2BYTE(dest) * invalpha) >> 8; \
-        unsigned int _outa = alpha + _destinva; \
+        const unsigned int _outa = alpha + _destinva; \
         const unsigned int _newr = (alpha * RED2BYTE(source)   + _destinva * RED2BYTE(dest))   / _outa; \
         const unsigned int _newg = (alpha * GREEN2BYTE(source) + _destinva * GREEN2BYTE(dest)) / _outa; \
         const unsigned int _newb = (alpha * BLUE2BYTE(source)  + _destinva * BLUE2BYTE(dest))  / _outa; \
         *resultptr = BYTE2RED(_newr) | BYTE2GREEN(_newg) | BYTE2BLUE(_newb) | BYTE2ALPHA(_outa - 1); \
     }
 
+// alpha blend source with destination
+#define ALPHABLEND(source, dest, resultptr, alpha, invalpha) \
+    if ((dest & AMASK) == AMASK) { \
+        ALPHABLENDOPAQUEDEST(source, dest, resultptr, alpha, invalpha); \
+    } else { \
+        ALPHABLENDTRANSDEST(source, dest, resultptr, alpha, invalpha); \
+    }
+
+// alpha blend premultiplied source with destination
+#define ALPHABLENDPRE(source, sourcearb, sourceag, dest, resultptr, alpha, invalpha) \
+    if ((dest & AMASK) == AMASK) { \
+        const unsigned int _newrb = (sourcearb + invalpha * RBRIGHT(dest & RBMASK)) >> 8; \
+        const unsigned int _newg  = (sourceag  + invalpha *        (dest & GMASK))  >> 8; \
+        *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | AMASK; \
+    } else { \
+        ALPHABLENDTRANSDEST(source, dest, resultptr, alpha, invalpha); \
+    }
 
 // -----------------------------------------------------------------------------
 
@@ -3418,6 +3433,8 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
             // compute pixel alpha
             const unsigned int alpha = a + 1;
             const unsigned int invalpha = 256 - a;
+            const unsigned int sourcearb = alpha * RBRIGHT(rgbadraw & RBMASK);
+            const unsigned int sourceag =  alpha *        (rgbadraw & GMASK);
             do {
                 // get next pixel coordinate
                 lua_rawgeti(L, 1, i++);
@@ -3433,7 +3450,7 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
                 if (PixelInTarget(x, y)) {
                     unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
                     const unsigned int dest = *lp;
-                    ALPHABLEND(rgbadraw, dest, lp, alpha, invalpha);
+                    ALPHABLENDPRE(rgbadraw, sourcearb, sourceag, dest, lp, alpha, invalpha);
                 }
             } while (i <= n);
 
@@ -4660,26 +4677,28 @@ void Overlay::FillRect(int x, int y, int w, int h)
         if (a) {
             const unsigned int alpha = a + 1;
             const unsigned int invalpha = 256 - a;
+            const unsigned int sourcearb = alpha * RBRIGHT(source & RBMASK);
+            const unsigned int sourceag =  alpha *        (source & GMASK);
             for (int j = 0; j < h; j++) {
                 // draw in 4 pixel chunks for speed
                 int w4 = w >> 2;
                 unsigned int dest;
                 for (int i = 0; i < w4; i++) {
                     dest = *lp;
-                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
                     dest = *++lp;
-                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
                     dest = *++lp;
-                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
                     dest = *++lp;
-                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
                     lp++;
                 }
                 // draw remaining pixels in row
                 w4 = w - (w4 << 2);
                 for (int i = 0; i < w4; i++) {
                     dest = *lp;
-                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
                     lp++;
                 }
                 lp += wd - w;
