@@ -39,20 +39,20 @@
 
 // shift RB components right and left to avoid overflow
 // R.B. becomes .R.B
-#define RBRIGHT(x) (x>>8)
+#define RBRIGHT(x) ((x)>>8)
 // .R.B becomes R.B.
-#define RBLEFT(x)  (x<<8)
+#define RBLEFT(x)  ((x)<<8)
 
 // get components as byte from pixel
-#define RED2BYTE(x)   (x>>24)
-#define GREEN2BYTE(x) ((x&GMASK)>>16)
-#define BLUE2BYTE(x)  ((x&BMASK)>>8)
-#define ALPHA2BYTE(x) (x&AMASK)
+#define RED2BYTE(x)   ((x)>>24)
+#define GREEN2BYTE(x) (((x)&GMASK)>>16)
+#define BLUE2BYTE(x)  (((x)&BMASK)>>8)
+#define ALPHA2BYTE(x) ((x)&AMASK)
 
 // set components from bytes in pixel
-#define BYTE2RED(x)   (x<<24)
-#define BYTE2GREEN(x) (x<<16)
-#define BYTE2BLUE(x)  (x<<8)
+#define BYTE2RED(x)   ((x)<<24)
+#define BYTE2GREEN(x) ((x)<<16)
+#define BYTE2BLUE(x)  ((x)<<8)
 #define BYTE2ALPHA(x) (x)
 
 #else
@@ -72,16 +72,16 @@
 #define RBLEFT(x)  (x)
 
 // get components as byte from pixel
-#define RED2BYTE(x)   (x&RMASK)
-#define GREEN2BYTE(x) ((x&GMASK)>>8)
-#define BLUE2BYTE(x)  ((x&BMASK)>>16)
-#define ALPHA2BYTE(x) (x>>24)
+#define RED2BYTE(x)   ((x)&RMASK)
+#define GREEN2BYTE(x) (((x)&GMASK)>>8)
+#define BLUE2BYTE(x)  (((x)&BMASK)>>16)
+#define ALPHA2BYTE(x) ((x)>>24)
 
 // set components from bytes in pixel
 #define BYTE2RED(x)   (x)
-#define BYTE2GREEN(x) (x<<8)
-#define BYTE2BLUE(x)  (x<<16)
-#define BYTE2ALPHA(x) (x<<24)
+#define BYTE2GREEN(x) ((x)<<8)
+#define BYTE2BLUE(x)  ((x)<<16)
+#define BYTE2ALPHA(x) ((x)<<24)
 
 #endif
 
@@ -98,26 +98,14 @@
     if ((dest & AMASK) == AMASK) { \
         ALPHABLENDOPAQUEDEST(source, dest, resultptr, alpha, invalpha); \
     } else { \
-        const unsigned int _desta = ALPHA2BYTE(dest) * invalpha; \
-        const unsigned int _outa = alpha + (_desta >> 8); \
-        const unsigned int _newrb = ((alpha * RBRIGHT(source & RBMASK)) + ((_desta * RBRIGHT(dest & RBMASK)) >> 8)) / _outa; \
-        const unsigned int _newg  = ((alpha *        (source & GMASK))  + ((_desta *        (dest & GMASK))  >> 8)) / _outa; \
-        *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | BYTE2ALPHA(_outa); \
+        const unsigned int _destinva = (ALPHA2BYTE(dest) * invalpha) >> 8; \
+        unsigned int _outa = alpha + _destinva; \
+        const unsigned int _newr = (alpha * RED2BYTE(source)   + _destinva * RED2BYTE(dest))   / _outa; \
+        const unsigned int _newg = (alpha * GREEN2BYTE(source) + _destinva * GREEN2BYTE(dest)) / _outa; \
+        const unsigned int _newb = (alpha * BLUE2BYTE(source)  + _destinva * BLUE2BYTE(dest))  / _outa; \
+        *resultptr = BYTE2RED(_newr) | BYTE2GREEN(_newg) | BYTE2BLUE(_newb) | BYTE2ALPHA(_outa - 1); \
     }
 
-// alpha blend premultiplied source RB and G with destination
-#define ALPHABLENDPRE(sourcearb, sourceag, dest, resultptr, invalpha) \
-    if ((dest & AMASK) == AMASK) { \
-        const unsigned int _newrb = (RBRIGHT(sourcearb) + invalpha * RBRIGHT(dest & RBMASK)) >> 8; \
-        const unsigned int _newg  = (        sourceag   + invalpha *        (dest & GMASK))  >> 8; \
-        *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | AMASK; \
-    } else { \
-        const unsigned int _desta = ALPHA2BYTE(dest) * invalpha; \
-        const unsigned int _outa  = alpha + (_desta >> 8); \
-        const unsigned int _newrb = (RBRIGHT(sourcearb) + ((_desta * RBRIGHT(dest & RBMASK)) >> 8)) / _outa; \
-        const unsigned int _newg  = (        sourceag   + ((_desta *        (dest & GMASK))  >> 8)) / _outa; \
-        *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | BYTE2ALPHA(_outa); \
-    }
 
 // -----------------------------------------------------------------------------
 
@@ -3430,8 +3418,6 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
             // compute pixel alpha
             const unsigned int alpha = a + 1;
             const unsigned int invalpha = 256 - a;
-            const unsigned int srcarb = alpha * (rgbadraw & RBMASK);
-            const unsigned int srcag = alpha * (rgbadraw & GMASK);
             do {
                 // get next pixel coordinate
                 lua_rawgeti(L, 1, i++);
@@ -3447,7 +3433,7 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
                 if (PixelInTarget(x, y)) {
                     unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
                     const unsigned int dest = *lp;
-                    ALPHABLENDPRE(srcarb, srcag, dest, lp, invalpha);
+                    ALPHABLEND(rgbadraw, dest, lp, alpha, invalpha);
                 }
             } while (i <= n);
 
@@ -4674,28 +4660,26 @@ void Overlay::FillRect(int x, int y, int w, int h)
         if (a) {
             const unsigned int alpha = a + 1;
             const unsigned int invalpha = 256 - a;
-            const unsigned int srcarb = alpha * (source & RBMASK);
-            const unsigned int srcag = alpha * (source & GMASK);
             for (int j = 0; j < h; j++) {
                 // draw in 4 pixel chunks for speed
                 int w4 = w >> 2;
                 unsigned int dest;
                 for (int i = 0; i < w4; i++) {
                     dest = *lp;
-                    ALPHABLENDPRE(srcarb, srcag, dest, lp, invalpha);
+                    ALPHABLEND(source, dest, lp, alpha, invalpha);
                     dest = *++lp;
-                    ALPHABLENDPRE(srcarb, srcag, dest, lp, invalpha);
+                    ALPHABLEND(source, dest, lp, alpha, invalpha);
                     dest = *++lp;
-                    ALPHABLENDPRE(srcarb, srcag, dest, lp, invalpha);
+                    ALPHABLEND(source, dest, lp, alpha, invalpha);
                     dest = *++lp;
-                    ALPHABLENDPRE(srcarb, srcag, dest, lp, invalpha);
+                    ALPHABLEND(source, dest, lp, alpha, invalpha);
                     lp++;
                 }
                 // draw remaining pixels in row
                 w4 = w - (w4 << 2);
                 for (int i = 0; i < w4; i++) {
                     dest = *lp;
-                    ALPHABLENDPRE(srcarb, srcag, dest, lp, invalpha);
+                    ALPHABLEND(source, dest, lp, alpha, invalpha);
                     lp++;
                 }
                 lp += wd - w;
