@@ -36,7 +36,7 @@ typedef enum {
 // Clips have a row index to optimize rendering.
 typedef enum {
     mixed = 0,      // row contains at least one pixel that needs alpha blending
-    transparent,    // row contains only transparent pixels (alpha 0)
+    alpha0,         // row contains only transparent pixels (alpha 0)
     opaque,         // row contains only opaque pixels (alpha 255)
     both,           // row contains a mixture of transparent and opaque pixels (alpha 0 and 255)
     single          // row contains a mixture of transparent and a single global alpha

@@ -152,7 +152,7 @@ void Clip::ComputeBoundingBox() {
     int x, y;
     for (y = 0; y < cht; y++) {
         // use row index if available
-        if (rowindex && rowindex[y] != transparent) break;
+        if (rowindex && rowindex[y] != alpha0) break;
 
         // otherwise look along the row for non-zero alpha
         x = 0;
@@ -169,7 +169,7 @@ void Clip::ComputeBoundingBox() {
         clipdata = ((unsigned int*)cdata) + cwd * cht;
         for (y = cht - 1; y > ybb; y--) {
             // use row index if available
-            if (rowindex && rowindex[y] != transparent) break;
+            if (rowindex && rowindex[y] != alpha0) break;
 
             // otherwise look along the row for non-zero alpha
             x = 0;
@@ -288,7 +288,7 @@ int Clip::AddIndex() {
             rowindex[i] = both;
         } else if (alpha == 0 && first == 0) {
             numopt++;
-            rowindex[i] = transparent;
+            rowindex[i] = alpha0;
         } else if (alpha == 255 && first == 255) {
             numopt++;
             rowindex[i] = opaque;
@@ -5254,7 +5254,7 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                             for (int j = rowoffset; j < h + rowoffset; j++) {
                                 unsigned char rowflag = rowindex[j];
                                 switch (rowflag) {
-                                case transparent:
+                                case alpha0:
                                     // if all pixels are transparent then skip the row
                                     ldata += w;
                                     lp += w;
@@ -5556,7 +5556,7 @@ const char* Overlay::DoPaste(const char* args)
                             for (int j = rowoffset; j < h + rowoffset; j++) {
                                 unsigned char rowflag = rowindex[j];
                                 switch (rowflag) {
-                                case transparent:
+                                case alpha0:
                                     // if all pixels are transparent then skip the row
                                     ldata += w;
                                     lp += w;
@@ -5771,7 +5771,7 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
         for (int j = rowoffset; j < h + rowoffset; j++) {
             unsigned char rowflag = rowindex[j];
             switch (rowflag) {
-            case transparent:
+            case alpha0:
                 // if all pixels are transparent then skip the row
                 ldata += w;
                 lp += w;
