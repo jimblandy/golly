@@ -87,9 +87,11 @@
 
 // alpha blend source with opaque destination
 #define ALPHABLENDOPAQUEDEST(source, dest, resultptr, alpha, invalpha) \
-    const unsigned int _newrb = (alpha * RBRIGHT(source & RBMASK) + invalpha * RBRIGHT(dest & RBMASK)) >> 8; \
-    const unsigned int _newg  = (alpha *        (source & GMASK)  + invalpha *        (dest & GMASK))  >> 8; \
-    *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | AMASK;
+    { \
+        const unsigned int _newrb = (alpha * RBRIGHT(source & RBMASK) + invalpha * RBRIGHT(dest & RBMASK)) >> 8; \
+        const unsigned int _newg  = (alpha *        (source & GMASK)  + invalpha *        (dest & GMASK))  >> 8; \
+        *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | AMASK; \
+    }
 
 // alpha blend source with destination
 #define ALPHABLEND(source, dest, resultptr, alpha, invalpha) \
