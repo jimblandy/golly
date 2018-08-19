@@ -112,12 +112,18 @@
         ALPHABLENDTRANSDEST(source, dest, resultptr, alpha, invalpha); \
     }
 
-// alpha blend premultiplied source with destination
-#define ALPHABLENDPRE(source, sourcearb, sourceag, dest, resultptr, alpha, invalpha) \
-    if ((dest & AMASK) == AMASK) { \
+// alpha blend premultiple source with opaque destination
+#define ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, resultptr, invalpha) \
+    { \
         const unsigned int _newrb = (sourcearb + invalpha * RBRIGHT(dest & RBMASK)) >> 8; \
         const unsigned int _newg  = (sourceag  + invalpha *        (dest & GMASK))  >> 8; \
         *resultptr = (RBLEFT(_newrb) & RBMASK) | (_newg & GMASK) | AMASK; \
+    }
+
+// alpha blend premultiplied source with destination
+#define ALPHABLENDPRE(source, sourcearb, sourceag, dest, resultptr, alpha, invalpha) \
+    if ((dest & AMASK) == AMASK) { \
+        ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, resultptr, invalpha); \
     } else { \
         ALPHABLENDTRANSDEST(source, dest, resultptr, alpha, invalpha); \
     }
@@ -133,7 +139,6 @@ Clip::Clip(int w, int h, bool use_calloc) {
         cdata = (unsigned char*) malloc(cwd * cht * 4 * sizeof(*cdata));
     }
     rowindex = NULL;
-    clipalpha = 0;
     // set bounding box to clip extent
     xbb = 0;
     ybb = 0;
@@ -226,79 +231,53 @@ void Clip::ComputeBoundingBox() {
 int Clip::AddIndex() {
     if (!rowindex) {
         // allocate the index
-        rowindex = (rowtype*) malloc(cht * sizeof(*rowindex));
+        rowindex = (rowtype*)malloc(cht * sizeof(*rowindex));
     }
-    unsigned char* p = cdata;
-    unsigned char alpha;
-    unsigned char first;
+    unsigned int* lp = (unsigned int*)cdata;
+    unsigned int alpha;
+    unsigned int first;
     bool bothrow = false;
-    bool clipalpharow = false;
-    clipalpha = 0;
     int j;
 
     // check each row
     int numopt = 0;
     for (int i = 0; i < cht; i++) {
         // check what type of pixels the row contains
-        first = p[3];
+        first = *lp & AMASK;
         alpha = first;
-        p += 4;
+        lp++;
         j = 1;
         bothrow = false;
-        clipalpharow = false;
         // check for all transparent or all opaque
-        if (first == 0 || first == 255) {
+        if (first == 0 || first == AMASK) {
             while (j < cwd && alpha == first) {
-                alpha = p[3];
-                p += 4;
+                alpha = *lp++ & AMASK;
                 j++;
             }
             if (j < cwd) {
                 // that failed so check for a mix of transparent and opaque
-                while (j < cwd && (alpha == 0 || alpha == 255)) {
-                    alpha = p[3];
-                    p += 4;
+                while (j < cwd && (alpha == 0 || alpha == AMASK)) {
+                    alpha = *lp++ & AMASK;
                     j++;
                 }
                 if (j == cwd) bothrow = true;
             }
         }
-        // check if row was classified
-        if (j < cwd && first != 255) {
-            // try a mix of transparent and clip alpha
-            if (!clipalpha && first > 0) clipalpha = first;
-            p -= j * 4;
-            p += 4;
-            j = 1;
-            while (j < cwd) {
-                alpha = p[3];
-                if (alpha > 0) {
-                    if (!clipalpha) clipalpha = alpha;
-                    if (alpha != clipalpha) break;
-                }
-                p += 4;
-                j++;
-            }
-            if (j == cwd) clipalpharow = true;
-        }
 
         // set this row's flag
-        if (clipalpharow) {
-            numopt++;
-            rowindex[i] = single;
-        } else if (bothrow) {
+       if (bothrow) {
             numopt++;
             rowindex[i] = both;
         } else if (alpha == 0 && first == 0) {
             numopt++;
             rowindex[i] = alpha0;
-        } else if (alpha == 255 && first == 255) {
+        } else if (alpha == AMASK && first == AMASK) {
             numopt++;
             rowindex[i] = opaque;
         } else {
             rowindex[i] = mixed;
         }
-        p += (cwd - j) * 4;
+        lp += cwd - j;
     }
 
     // compute non-zero alpha bounding box
@@ -929,14 +908,16 @@ void Overlay::RefreshCellView()
 
 void Overlay::GetPatternColors()
 {
-    unsigned char *rgb = (unsigned char *)cellRGBA;
+    unsigned long *rgba = (unsigned long *)cellRGBA;
 
     // read pattern colors
-    for (int i = 0; i <= currlayer->numicons; i++) {
-        *rgb++ = currlayer->cellr[i];
-        *rgb++ = currlayer->cellg[i];
-        *rgb++ = currlayer->cellb[i];
-        *rgb++ = 255; // opaque
+    const int numicons = currlayer->numicons;
+    const unsigned char* cellr = currlayer->cellr;
+    const unsigned char* cellg = currlayer->cellg;
+    const unsigned char* cellb = currlayer->cellb;
+
+    for (int i = 0; i <= numicons; i++) {
+        *rgba++ = BYTE2RED(cellr[i]) | BYTE2GREEN(cellg[i]) | BYTE2BLUE(cellb[i]) | AMASK;
     }
 
     // read border color from View Settings
@@ -1011,7 +992,6 @@ void Overlay::GetThemeColors(double brightness)
 
 void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int step)
 {
-    int h, w;
     unsigned char state;
     unsigned char max;
     const int halfstep = step >> 1;
@@ -1019,8 +999,8 @@ void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int ste
     unsigned char* row1 = source;
     unsigned char* row2 = source + halfstep * cellwd;
 
-    for (h = 0; h < cellht; h += step) {
-        for (w = 0; w < cellwd; w += step) {
+    for (int h = 0; h < cellht; h += step) {
+        for (int w = 0; w < cellwd; w += step) {
             // find the maximum state value in each 2x2 block
             max = row1[w];
             state = row1[w + halfstep];
@@ -1137,11 +1117,12 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
     unsigned int *overlayptr = (unsigned int *)pixmap;
     double x, y;
     int ix, iy;
-    int h, w;
 
     // draw each pixel
     y = sy;
-    for (h = 0; h < ht; h++) {
+    const int height = ht;
+    const int width = wd;
+    for (int h = 0; h < height; h++) {
         x = sx;
 
         // offset if hex rule
@@ -1149,7 +1130,7 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
             x += 0.5 * (int)y;
         }
 
-        for (w = 0; w < wd; w++) {
+        for (int w = 0; w < width; w++) {
             ix = (((int)x) & mask);
             iy = (((int)y) & mask);
 
@@ -1234,7 +1215,7 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
 
             // draw each pixel
             y = sy;
-            for (h = 0; h < ht; h++) {
+            for (int h = 0; h < ht; h++) {
                 x = sx;
 
                 // offset if hex rule
@@ -1242,7 +1223,7 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
                     x += 0.5 * (int)y;
                 }
 
-                for (w = 0; w < wd; w++) {
+                for (int w = 0; w < wd; w++) {
                     ix = (((int)x) & mask);
                     iy = (((int)y) & mask);
 
@@ -1657,31 +1638,18 @@ void Overlay::DrawVLine(int x, int y1, int y2, unsigned int color)
         }
     }
 
-    int offset = y1 * wd + x;
-    unsigned int *pix = (unsigned int*)pixmap;
-    pix += offset;
-
-    y2 -= y1;
-    y1 = 0;
-
-    int sectionsize = 4;   // size of unrolled loop
-    int endcol = y2 & ~(sectionsize - 1);
-
-    while (y1 < endcol) {
-        // draw section
-        *pix = color;
-        pix += wd;
-        *pix = color;
-        pix += wd;
-        *pix = color;
-        pix += wd;
-        *pix = color;
-        pix += wd;
-        y1 += sectionsize;
+    // ensure the y coordinates are in ascending order
+    if (y1 > y2) {
+        int temp = y1;
+        y1 = y2;
+        y2 = temp;
     }
 
-    // draw remaining pixels
-    while (y1 < y2) {
+    // get the starting pixel
+    unsigned int *pix = ((unsigned int*)pixmap) + y1 * wd + x;
+
+    // draw down the column
+    while (y1 <= y2) {
         *pix = color;
         pix += wd;
         y1++;
@@ -1697,28 +1665,34 @@ void Overlay::DrawHLine(int x1, int x2, int y, unsigned int color)
         return;
     }
 
-    int offset = y * wd + x1;
-    unsigned int *pix = (unsigned int*)pixmap;
-    pix += offset;
-
-    x2 -= x1;
-    x1 = 0;
-
-    int sectionsize = 4;   // size of unrolled loop
-    int endrow = x2 & ~(sectionsize - 1);
-
-    // check the line is on the display
-    while (x1 < endrow) {
-        // draw section
-        *pix++ = color;
-        *pix++ = color;
-        *pix++ = color;
-        *pix++ = color;
-        x1 += sectionsize;
+    // clip the line to the display
+    if (x1 < 0) {
+        x1 = 0;
+    } else {
+        if (x1 >= wd) {
+            x1 = wd - 1;
+        }
+    }
+    if (x2 < 0) {
+        x2 = 0;
+    } else {
+        if (x2 >= wd) {
+            x2 = wd - 1;
+        }
     }
 
-    // remaining pixels
-    while (x1 < x2) {
+    // ensure the x coordinates are in ascending order
+    if (x1 > x2) {
+        int temp = x1;
+        x1 = x2;
+        x2 = temp;
+    }
+
+    // get the starting pixel
+    unsigned int *pix = ((unsigned int*)pixmap) + y * wd + x1;
+
+    // draw along the row
+    while (x1 <= x2) {
         *pix++ = color;
         x1++;
     }
@@ -2529,7 +2503,7 @@ const char* Overlay::DoCreate(const char* args)
         SetRGBA(r, g, b, a, &rgbadraw);
 
         // don't do alpha blending initially
-        alphablend = false;
+        alphablend = 0;
 
         only_draw_overlay = false;
 
@@ -3435,24 +3409,47 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
             const unsigned int invalpha = 256 - a;
             const unsigned int sourcearb = alpha * RBRIGHT(rgbadraw & RBMASK);
             const unsigned int sourceag =  alpha *        (rgbadraw & GMASK);
-            do {
-                // get next pixel coordinate
-                lua_rawgeti(L, 1, i++);
-                int x = (int)lua_tonumberx(L, -1, &valid);
-                if (!valid) break;
-                lua_pop(L, 1);
-                lua_rawgeti(L, 1, i++);
-                int y = (int)lua_tonumberx(L, -1, &valid);
-                if (!valid) break;
-                lua_pop(L, 1);
-
-                // ignore pixel if outside pixmap edges
-                if (PixelInTarget(x, y)) {
-                    unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
-                    const unsigned int dest = *lp;
-                    ALPHABLENDPRE(rgbadraw, sourcearb, sourceag, dest, lp, alpha, invalpha);
-                }
-            } while (i <= n);
+            if (alphablend == 1) {
+                // full alpha blend
+                do {
+                    // get next pixel coordinate
+                    lua_rawgeti(L, 1, i++);
+                    int x = (int)lua_tonumberx(L, -1, &valid);
+                    if (!valid) break;
+                    lua_pop(L, 1);
+                    lua_rawgeti(L, 1, i++);
+                    int y = (int)lua_tonumberx(L, -1, &valid);
+                    if (!valid) break;
+                    lua_pop(L, 1);
+    
+                    // ignore pixel if outside pixmap edges
+                    if (PixelInTarget(x, y)) {
+                        unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+                        const unsigned int dest = *lp;
+                        ALPHABLENDPRE(rgbadraw, sourcearb, sourceag, dest, lp, alpha, invalpha);
+                    }
+                } while (i <= n);
+            } else {
+                // fast alpha blend (opaque destination)
+                do {
+                    // get next pixel coordinate
+                    lua_rawgeti(L, 1, i++);
+                    int x = (int)lua_tonumberx(L, -1, &valid);
+                    if (!valid) break;
+                    lua_pop(L, 1);
+                    lua_rawgeti(L, 1, i++);
+                    int y = (int)lua_tonumberx(L, -1, &valid);
+                    if (!valid) break;
+                    lua_pop(L, 1);
+    
+                    // ignore pixel if outside pixmap edges
+                    if (PixelInTarget(x, y)) {
+                        unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+                        const unsigned int dest = *lp;
+                        ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, lp, invalpha);
+                    }
+                } while (i <= n);
+            }
 
             // check if loop terminated because of failed number conversion
             if (!valid) {
@@ -4303,7 +4300,7 @@ void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
     if (ax > ay) {
         int d = ay - (ax / 2);
         while (x0 != x1) {
-        if (PixelInTarget(x0, y0)) *(lpixmap + y0*wd + x0) = rgba;
+            if (PixelInTarget(x0, y0)) *(lpixmap + y0*wd + x0) = rgba;
             if (d >= 0) {
                 y0 = y0 + sy;
                 d = d - ax;
@@ -4679,29 +4676,27 @@ void Overlay::FillRect(int x, int y, int w, int h)
             const unsigned int invalpha = 256 - a;
             const unsigned int sourcearb = alpha * RBRIGHT(source & RBMASK);
             const unsigned int sourceag =  alpha *        (source & GMASK);
-            for (int j = 0; j < h; j++) {
-                // draw in 4 pixel chunks for speed
-                int w4 = w >> 2;
-                unsigned int dest;
-                for (int i = 0; i < w4; i++) {
-                    dest = *lp;
-                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
-                    dest = *++lp;
-                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
-                    dest = *++lp;
-                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
-                    dest = *++lp;
-                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
-                    lp++;
+            unsigned int dest;
+            if (alphablend == 1) {
+                // full alpha blend
+                for (int j = 0; j < h; j++) {
+                    for (int i = 0; i < w; i++) {
+                        dest = *lp;
+                        ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
+                        lp++;
+                    }
+                    lp += wd - w;
                 }
-                // draw remaining pixels in row
-                w4 = w - (w4 << 2);
-                for (int i = 0; i < w4; i++) {
-                    dest = *lp;
-                    ALPHABLENDPRE(source, sourcearb, sourceag, dest, lp, alpha, invalpha);
-                    lp++;
+            } else {
+                // fast alpha blend (opaque destination)
+                for (int j = 0 ; j < h; j++) {
+                    for (int i = 0; i < w; i++) {
+                        dest = *lp;
+                        ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, lp, invalpha);
+                        lp++;
+                    }
+                    lp += wd - w;
                 }
-                lp += wd - w;
             }
         }
     } else {
@@ -5229,25 +5224,38 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                             // clip only has mixed alpha rows
                             for (int j = 0; j < h; j++) {
                                 // row contains pixels with different alpha values
-                                for (int i = 0; i < w; i++) {
-                                    // get the source pixel
-                                    source = *ldata;
-                                    pa = ALPHA2BYTE(source);
-                                    if (pa < 255) {
-                                        // source pixel is not opaque
-                                        if (pa) {
-                                            // source pixel is translucent so blend with destination pixel
-                                            alpha = pa + 1;
-                                            invalpha = 256 - pa;
-                                            dest = *lp;
-                                            ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                if (alphablend == 1) {
+                                    // full alpha blend
+                                    for (int i = 0; i < w ; i++) {
+                                        source = *ldata;
+                                        pa = ALPHA2BYTE(source);
+                                        if (pa < 255) {
+                                            // source pixel is not opaque
+                                            if (pa) {
+                                                // source pixel is translucent so blend with destination pixel
+                                                alpha = pa + 1;
+                                                invalpha = 256 - pa;
+                                                dest = *lp;
+                                                ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                            }
+                                        } else {
+                                            // pixel is opaque so copy it
+                                            *lp = source;
                                         }
-                                    } else {
-                                        // pixel is opaque so copy it
-                                        *lp = source;
+                                        lp++;
+                                        ldata++;
                                     }
-                                    lp++;
-                                    ldata++;
+                                } else {
+                                    // fast alpha blend (opaque destination)
+                                    for (int i = 0; i < w; i++) {
+                                        source = *ldata++;
+                                        pa = ALPHA2BYTE(source);
+                                        alpha = pa + 1;
+                                        invalpha = 256 - pa;
+                                        dest = *lp;
+                                        ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
+                                        lp++;
+                                    }
                                 }
                                 // next clip and target row
                                 lp += targetrowpixels - w;
@@ -5255,7 +5263,7 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                             }
                         } else {
                             for (int j = rowoffset; j < h + rowoffset; j++) {
-                                unsigned char rowflag = rowindex[j];
+                                rowtype rowflag = rowindex[j];
                                 switch (rowflag) {
                                 case alpha0:
                                     // if all pixels are transparent then skip the row
@@ -5281,39 +5289,38 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                                     break;
                                 case mixed:
                                     // row contains pixels with different alpha values
-                                    for (int i = 0; i < w; i++) {
-                                        // get the source pixel
-                                        source = *ldata;
-                                        pa = ALPHA2BYTE(source);
-                                        if (pa < 255) {
-                                            // source pixel is not opaque
-                                            if (pa) {
-                                                // source pixel is translucent so blend with destination pixel
-                                                alpha = pa + 1;
-                                                invalpha = 256 - pa;
-                                                dest = *lp;
-                                                ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                    if (alphablend == 1) {
+                                        // full alpha blend
+                                        for (int i = 0; i < w; i++) {
+                                            source = *ldata;
+                                            pa = ALPHA2BYTE(source);
+                                            if (pa < 255) {
+                                                // source pixel is not opaque
+                                                if (pa) {
+                                                    // source pixel is translucent so blend with destination pixel
+                                                    alpha = pa + 1;
+                                                    invalpha = 256 - pa;
+                                                    dest = *lp;
+                                                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                                }
+                                            } else {
+                                                // pixel is opaque so copy it
+                                                *lp = source;
                                             }
-                                        } else {
-                                            // pixel is opaque so copy it
-                                            *lp = source;
+                                            lp++;
+                                            ldata++;
                                         }
-                                        lp++;
-                                        ldata++;
-                                    }
-                                    break;
-                                case single:
-                                    // row contains a mix of clip alpha and transparent pixels
-                                    // pre-compute the clip alpha coefficients
-                                    alpha = clipptr->clipalpha + 1;
-                                    invalpha = 256 - alpha;
-                                    for (int i = 0; i < w; i++) {
-                                        source = *ldata++;
-                                        if (source & AMASK) {
+                                    } else {
+                                        // fast alpha blend (destination is opaque)
+                                        for (int i = 0; i < w; i++) {
+                                            source = *ldata++;
+                                            pa = ALPHA2BYTE(source);
+                                            alpha = pa + 1;
+                                            invalpha = 256 - pa;
                                             dest = *lp;
-                                            ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                            ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
+                                            lp++;
                                         }
-                                        lp++;
                                     }
                                     break;
                                 }
@@ -5531,25 +5538,39 @@ const char* Overlay::DoPaste(const char* args)
                             // clip only has mixed alpha rows
                             for (int j = 0; j < h; j++) {
                                 // row contains pixels with different alpha values
-                                for (int i = 0; i < w; i++) {
-                                    // get the source pixel
-                                    source = *ldata;
-                                    pa = ALPHA2BYTE(source);
-                                    if (pa < 255) {
-                                        // source pixel is not opaque
-                                        if (pa) {
-                                            // source pixel is translucent so blend with destination pixel
-                                            alpha = pa + 1;
-                                            invalpha = 256 - pa;
-                                            dest = *lp;
-                                            ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                if (alphablend == 1) {
+                                    // full alpha blend
+                                    for (int i = 0; i < w; i++) {
+                                        // get the source pixel
+                                        source = *ldata;
+                                        pa = ALPHA2BYTE(source);
+                                        if (pa < 255) {
+                                            // source pixel is not opaque
+                                            if (pa) {
+                                                // source pixel is translucent so blend with destination pixel
+                                                alpha = pa + 1;
+                                                invalpha = 256 - pa;
+                                                dest = *lp;
+                                                ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                            }
+                                        } else {
+                                            // pixel is opaque so copy it
+                                            *lp = source;
                                         }
-                                    } else {
-                                        // pixel is opaque so copy it
-                                        *lp = source;
+                                        lp++;
+                                        ldata++;
                                     }
-                                    lp++;
-                                    ldata++;
+                                } else {
+                                    // fast alpha blend (opaque destination)
+                                    for (int i = 0; i < w; i++) {
+                                        source = *ldata++;
+                                        pa = ALPHA2BYTE(source);
+                                        alpha = pa + 1;
+                                        invalpha = 256 - pa;
+                                        dest = *lp;
+                                        ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
+                                        lp++;
+                                    }
                                 }
                                 // next clip and target row
                                 lp += targetrowpixels - w;
@@ -5557,7 +5578,7 @@ const char* Overlay::DoPaste(const char* args)
                             }
                         } else {
                             for (int j = rowoffset; j < h + rowoffset; j++) {
-                                unsigned char rowflag = rowindex[j];
+                                rowtype rowflag = rowindex[j];
                                 switch (rowflag) {
                                 case alpha0:
                                     // if all pixels are transparent then skip the row
@@ -5583,39 +5604,39 @@ const char* Overlay::DoPaste(const char* args)
                                     break;
                                 case mixed:
                                     // row contains pixels with different alpha values
-                                    for (int i = 0; i < w; i++) {
-                                        // get the source pixel
-                                        source = *ldata;
-                                        pa = ALPHA2BYTE(source);
-                                        if (pa < 255) {
-                                            // source pixel is not opaque
-                                            if (pa) {
-                                                // source pixel is translucent so blend with destination pixel
-                                                alpha = pa + 1;
-                                                invalpha = 256 - pa;
-                                                dest = *lp;
-                                                ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                    if (alphablend == 1) {
+                                        // full alpha blend
+                                        for (int i = 0; i < w; i++) {
+                                            // get the source pixel
+                                            source = *ldata;
+                                            pa = ALPHA2BYTE(source);
+                                            if (pa < 255) {
+                                                // source pixel is not opaque
+                                                if (pa) {
+                                                    // source pixel is translucent so blend with destination pixel
+                                                    alpha = pa + 1;
+                                                    invalpha = 256 - pa;
+                                                    dest = *lp;
+                                                    ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                                }
+                                            } else {
+                                                // pixel is opaque so copy it
+                                                *lp = source;
                                             }
-                                        } else {
-                                            // pixel is opaque so copy it
-                                            *lp = source;
+                                            lp++;
+                                            ldata++;
                                         }
-                                        lp++;
-                                        ldata++;
-                                    }
-                                    break;
-                                case single:
-                                    // row contains a mix of clip alpha and transparent pixels
-                                    // pre-compute the clip alpha coefficients
-                                    alpha = clipptr->clipalpha + 1;
-                                    invalpha = 256 - alpha;
-                                    for (int i = 0; i < w; i++) {
-                                        source = *ldata++;
-                                        if (source & AMASK) {
+                                    } else {
+                                        // fast alpha blend (destination is opaque)
+                                        for (int i = 0; i < w; i++) {
+                                            source = *ldata++;
+                                            pa = ALPHA2BYTE(source);
+                                            alpha = pa + 1;
+                                            invalpha = 256 - pa;
                                             dest = *lp;
-                                            ALPHABLEND(source, dest, lp, alpha, invalpha);
+                                            ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
+                                            lp++;
                                         }
-                                        lp++;
                                     }
                                     break;
                                 }
@@ -5736,8 +5757,7 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
 
     // get the paste target data
     const int targetrowpixels = wd;
-    unsigned int* lp = (unsigned int*)pixmap;
-    lp += y * targetrowpixels + x;
+    unsigned int* lp = ((unsigned int*)pixmap) + y * targetrowpixels + x;
     unsigned int source, dest, pa, alpha, invalpha;
 
     // check if the clip has a row index
@@ -5747,24 +5767,13 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
         for (int j = 0; j < h; j++) {
             // row contains pixels with different alpha values
             for (int i = 0; i < w; i++) {
-                // get the source pixel
-                source = *ldata;
+                source = *ldata++;
                 pa = ALPHA2BYTE(source);
-                if (pa < 255) {
-                    // source pixel is not opaque
-                    if (pa) {
-                        // source pixel is translucent so blend with destination pixel
-                        alpha = pa + 1;
-                        invalpha = 256 - pa;
-                        dest = *lp;
-                        ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
-                    }
-                } else {
-                    // pixel is opaque so copy it
-                    *lp = source;
-                }
+                alpha = pa + 1;
+                invalpha = 256 - pa;
+                dest = *lp;
+                ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
                 lp++;
-                ldata++;
             }
             // next clip and target row
             lp += targetrowpixels - w;
@@ -5772,7 +5781,7 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
         }
     } else {
         for (int j = rowoffset; j < h + rowoffset; j++) {
-            unsigned char rowflag = rowindex[j];
+            rowtype rowflag = rowindex[j];
             switch (rowflag) {
             case alpha0:
                 // if all pixels are transparent then skip the row
@@ -5799,37 +5808,12 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
             case mixed:
                 // row contains pixels with different alpha values
                 for (int i = 0; i < w; i++) {
-                    // get the source pixel
-                    source = *ldata;
-                    pa = ALPHA2BYTE(source);
-                    if (pa < 255) {
-                        // source pixel is not opaque
-                        if (pa) {
-                            // source pixel is translucent so blend with destination pixel
-                            alpha = pa + 1;
-                            invalpha = 256 - pa;
-                            dest = *lp;
-                            ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
-                        }
-                    } else {
-                        // pixel is opaque so copy it
-                        *lp = source;
-                    }
-                    lp++;
-                    ldata++;
-                }
-                break;
-            case single:
-                // row contains a mix of clip alpha and transparent pixels
-                // pre-compute the clip alpha coefficients
-                alpha = clipptr->clipalpha + 1;
-                invalpha = 256 - alpha;
-                for (int i = 0; i < w; i++) {
                     source = *ldata++;
-                    if (source & AMASK) {
-                        dest = *lp;
-                        ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
-                    }
+                    pa = ALPHA2BYTE(source);
+                    alpha = pa + 1;
+                    invalpha = 256 - pa;
+                    dest = *lp;
+                    ALPHABLENDOPAQUEDEST(source, dest, lp, alpha, invalpha);
                     lp++;
                 }
                 break;
@@ -6405,12 +6389,12 @@ const char* Overlay::DoBlend(const char* args)
         return OverlayError("blend command requires 1 argument");
     }
 
-    if (i < 0 || i > 1) {
-        return OverlayError("blend value must be 0 or 1");
+    if (i < 0 || i > 2) {
+        return OverlayError("blend value must be 0, 1 or 2");
     }
 
-    int oldblend = alphablend ? 1 : 0;
-    alphablend = i > 0;
+    int oldblend = alphablend;
+    alphablend = i;
 
     // return old value
     static char result[2];
@@ -8451,14 +8435,14 @@ int Overlay::CreateResultsFromC1(lua_State *L, const bool laststep) {
         lua_newtable(L);
     }
     next3d.Clear();
-    int numkeys, k, i;
+    int numkeys, k;
     unsigned char v;
     int x, y, z;
     const int N = gridsize;
     const int NN = N * N;
     const int* count1keys = count1.GetKeys(&numkeys);
     const unsigned char* count1values = count1.GetValues();
-    for (i = 0; i < numkeys; i++) {
+    for (int i = 0; i < numkeys; i++) {
         k = count1keys[i];
         v = count1values[k];
         if (v) {
@@ -8496,7 +8480,7 @@ int Overlay::CreateResultsFromC1G3(lua_State *L, const bool laststep) {
         lua_newtable(L);
     }
     next3d.Clear();
-    int numkeys, k, i;
+    int numkeys, k;
     unsigned char v;
     int x, y, z;
     const int N = gridsize;
@@ -8505,7 +8489,7 @@ int Overlay::CreateResultsFromC1G3(lua_State *L, const bool laststep) {
     const unsigned char* count1values = count1.GetValues();
     unsigned char src;
     const unsigned char* grid3dvalues = grid3d.GetValues();
-    for (i = 0; i < numkeys; i++) {
+    for (int i = 0; i < numkeys; i++) {
         k = count1keys[i];
         v = count1values[k];
         src = grid3dvalues[k];
@@ -8544,7 +8528,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
         lua_newtable(L);
     }
     next3d.Clear();
-    int numkeys, k, i;
+    int numkeys, k;
     unsigned char v;
     int x, y, z;
     const int N = gridsize;
@@ -8553,7 +8537,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
     // use count1 and survivals to put live cells in grid
     const int* count1keys = count1.GetKeys(&numkeys);
     const unsigned char* count1values = count1.GetValues();
-    for (i = 0; i < numkeys; i++) {
+    for (int i = 0; i < numkeys; i++) {
         k = count1keys[i];
         v = count1values[k];
         if (survivals[v]) {
@@ -8578,7 +8562,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
     // use count2 and births to put live cells in grid
     const int* count2keys = count2.GetKeys(&numkeys);
     const unsigned char* count2values = count2.GetValues();
-    for (i = 0; i < numkeys; i++) {
+    for (int i = 0; i < numkeys; i++) {
         k = count2keys[i];
         v = count2values[k];
         if (births[v]) {
@@ -8689,7 +8673,7 @@ const char* Overlay::Do3DSetSelectPasteActive(lua_State* L, const int n, int* nr
 // -----------------------------------------------------------------------------
 
 void Overlay::UpdateHistoryFromLive() {
-    int i, k;
+    int k;
     int numkeys = 0;
     int numhistkeys = 0;
     const int* grid3dkeys = grid3d.GetKeys(&numkeys);
@@ -8697,14 +8681,14 @@ void Overlay::UpdateHistoryFromLive() {
 
     if (fadehistory) {
         // reduce history on all cells by 1
-        for (i = 0; i < numhistkeys; i++) {
+        for (int i = 0; i < numhistkeys; i++) {
             k = history3keys[i];
             history3d.DecrementTo1(k);
         }
     }
 
     // set history to maximum longevity for any live cells
-    for (i = 0; i < numkeys; i++) {
+    for (int i = 0; i < numkeys; i++) {
         k = grid3dkeys[i];
         history3d.SetValue(k, showhistory);
     }
@@ -8972,7 +8956,7 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
     static const int inhibidx4[] = {19, 14, 13, 21, 16, 22, 4,  7,  6,  9,  8, 11};
     static const int* inhibitors[] = {inhibidx1, inhibidx2, inhibidx3, inhibidx4};
 
-    int numkeys, k, i;
+    int numkeys, k;
     int x, y, z;
     const int phase = gencount % 6;
     const int N = gridsize;
@@ -8982,7 +8966,7 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
 
     // apply rule
     unsigned char val[28];
-    for (i = 0; i < numkeys; i++) {
+    for (int i = 0; i < numkeys; i++) {
         k = grid3dkeys[i];
         x = k % N;
         y = (k / N) % N;
@@ -9108,7 +9092,7 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenFace() {
-    int numkeys, k, i;
+    int numkeys, k;
     int x, y, z;
     const int N = gridsize;
     const int NN = N * N;
@@ -9118,7 +9102,7 @@ void Overlay::Do3DNextGenFace() {
         // use wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9149,7 +9133,7 @@ void Overlay::Do3DNextGenFace() {
         // use no wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             count1.SetValue(k, 0);
 
@@ -9174,7 +9158,7 @@ void Overlay::Do3DNextGenFace() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenCorner() {
-    int numkeys, k, i;
+    int numkeys, k;
     int x, y, z;
     const int N = gridsize;
     const int NN = N * N;
@@ -9184,7 +9168,7 @@ void Overlay::Do3DNextGenCorner() {
         // use wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9221,7 +9205,7 @@ void Overlay::Do3DNextGenCorner() {
         // use no wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9253,7 +9237,7 @@ void Overlay::Do3DNextGenCorner() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenEdge() {
-    int numkeys, k, i;
+    int numkeys, k;
     int x, y, z;
     const int N = gridsize;
     const int NN = N * N;
@@ -9263,7 +9247,7 @@ void Overlay::Do3DNextGenEdge() {
         // use wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9314,7 +9298,7 @@ void Overlay::Do3DNextGenEdge() {
         // use no wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9358,7 +9342,7 @@ void Overlay::Do3DNextGenEdge() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenHexahedral() {
-    int numkeys, k, i;
+    int numkeys, k;
     int x, y, z;
     const int N = gridsize;
     const int NN = N * N;
@@ -9368,7 +9352,7 @@ void Overlay::Do3DNextGenHexahedral() {
         // use wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9418,7 +9402,7 @@ void Overlay::Do3DNextGenHexahedral() {
         // use no wrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         const unsigned char* grid3dvalues = grid3d.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             x = k % N;
             y = (k / N) % N;
@@ -9461,7 +9445,7 @@ void Overlay::Do3DNextGenHexahedral() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenMoore() {
-    int numkeys, k, i;
+    int numkeys, k;
     unsigned char v;
     int x, y;
     const int* count1keys = NULL;
@@ -9476,7 +9460,7 @@ void Overlay::Do3DNextGenMoore() {
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
         int NNmN = NN - N;
         int k2;
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             count1.AddToValue(k, 1);
             y = k % NN;
@@ -9490,7 +9474,7 @@ void Overlay::Do3DNextGenMoore() {
         count1keys = count1.GetKeys(&numkeys);
         count1values = count1.GetValues();
         int Nm1 = N - 1;
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = count1keys[i];
             v = count1values[k];
             count2.AddToValue(k, v);
@@ -9506,7 +9490,7 @@ void Overlay::Do3DNextGenMoore() {
         const unsigned char* count2values = count2.GetValues();
         int NNNmNN = NNN - NN;
         count1.ClearKeys();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = count2keys[i];
             v = count2values[k];
             count1.AddToValue(k, v);
@@ -9518,7 +9502,7 @@ void Overlay::Do3DNextGenMoore() {
     } else {
         // use nowrap version
         const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = grid3dkeys[i];
             count1.AddToValue(k, 1);
             count1.AddToValue(k + N, 1);
@@ -9528,7 +9512,7 @@ void Overlay::Do3DNextGenMoore() {
         // get keys and values in count1
         count1keys = count1.GetKeys(&numkeys);
         count1values = count1.GetValues();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = count1keys[i];
             v = count1values[k];
             count2.AddToValue(k, v);
@@ -9540,7 +9524,7 @@ void Overlay::Do3DNextGenMoore() {
         const int* count2keys = count2.GetKeys(&numkeys);
         const unsigned char* count2values = count2.GetValues();
         count1.ClearKeys();
-        for (i = 0; i < numkeys; i++) {
+        for (int i = 0; i < numkeys; i++) {
             k = count2keys[i];
             v = count2values[k];
             count1.AddToValue(k, v);

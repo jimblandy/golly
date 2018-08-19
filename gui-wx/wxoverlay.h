@@ -38,8 +38,7 @@ typedef enum {
     mixed = 0,      // row contains at least one pixel that needs alpha blending
     alpha0,         // row contains only transparent pixels (alpha 0)
     opaque,         // row contains only opaque pixels (alpha 255)
-    both,           // row contains a mixture of transparent and opaque pixels (alpha 0 and 255)
-    single          // row contains a mixture of transparent and a single global alpha
+    both            // row contains a mixture of transparent and opaque pixels (alpha 0 and 255)
 } rowtype;
 
 // The Clip class is used by some commands (eg. copy, text) to store pixel data
@@ -62,7 +61,6 @@ public:
     rowtype* rowindex;          // contents type of each row
     int xbb, ybb;               // x and y offset of top left of non-transparent pixel bounding box
     int wbb, hbb;               // width and height of non-transparent pixel bounding box
-    unsigned int clipalpha;     // if clip has only 0 and one other alpha value then this is the other value
 
 private:
     // compute the bounding box of non-zero alpha pixels in the Clip
@@ -828,7 +826,7 @@ private:
     int ovwd, ovht;                 // width and height of overlay pixmap
     unsigned char r, g, b, a;       // current RGBA values for drawing pixels
     unsigned int rgbadraw;          // packed version of current RGBA values
-    bool alphablend;                // do alpha blending when drawing translucent pixels?
+    int alphablend;                 // whether to do alphablending when drawing (0 - no, 1 - full, 2 - opaque destination)
     bool only_draw_overlay;         // set by DoUpdate, reset by OnlyDrawOverlay
     overlay_position pos;           // where to display overlay
     const wxCursor* ovcursor;       // cursor to use when mouse is in overlay
