@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build     = 82
+local build     = 83
 local g         = golly()
 -- require "gplus.strict"
 local gp        = require "gplus"
@@ -234,8 +234,8 @@ local messages = {
     ["askleft"]    = { text = "Click or Enter to Confirm", size = 10, color = colors.white },
     ["askright"]   = { text = "Right Click to Cancel", size = 10, color = colors.white },
     ["resume"]     = { text = "Click or Enter to continue", size = 10, color = colors.white },
-    ["focus"]      = { text = "Move mouse onto overlay to continue", size = 10, color = colors.white },
-    ["manfocus"]   = { text = "Move mouse onto overlay and", size = 10, color = colors.white },
+    ["focus"]      = { text = "Move mouse onto game window to continue", size = 10, color = colors.white },
+    ["manfocus"]   = { text = "Move mouse onto game window and", size = 10, color = colors.white },
     ["quitgame"]   = { text = "Right Click to quit game", size = 10, color = colors.white },
     ["option"]     = { text = "Tab for Game Settings", size = 10, color = colors.white },
     ["restart"]    = { text = "Click or Enter to start again", size = 10, color = colors.white },
@@ -653,7 +653,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawparticles()
-    ov("blend 1")
+    ov("blend 2")
     local xy = {"fill"}
     local m = 2
     local color = {"rgba", 0, 0, 0, -1}
@@ -733,7 +733,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawpoints()
-    ov("blend 1")
+    ov("blend 2")
     for i = 1, #points do
         local item = points[i]
         -- check if item is still alive
@@ -771,7 +771,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawfadingbricks(pass, xoff, yoff)
-    ov("blend 1")
+    ov("blend 2")
     -- get the list of fading bricks
     local fading = brick.fading
     local fadecols = brick.fadecols
@@ -865,7 +865,7 @@ local function drawbricks()
     for pass = startpass, 2 do
         drawfadingbricks(pass, xoff, yoff)
         if pass == 1 then
-            ov("blend 1")
+            ov("blend 2")
             ovt(shadow.color)
         else
             ov("blend 0")
@@ -893,7 +893,7 @@ end
 
 local function drawball()
     local oldwidth = ov("lineoption width "..(ball.size // 2))
-    ov("blend 1")
+    ov("blend 2")
     if options.showshadows == 1 then
         ovt(shadow.color)
         ov("ellipse "..(((ball.x - ball.size // 2) + shadow.x) // 1 | 0).." "..(((ball.y - ball.size // 2) + shadow.y) // 1 | 0).." "..ball.size.." "..ball.size)
@@ -910,7 +910,7 @@ end
 
 local function drawbat(alpha)
     alpha = alpha or 256
-    ov("blend 1")
+    ov("blend 2")
     if options.showshadows == 1 then
         shadow.fadecolor[5] = alpha // 2
         ovt(shadow.fadecolor)
@@ -1368,7 +1368,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawscoreline()
-    ov("blend 1")
+    ov("blend 2")
     drawtextclip("score", 4, 4, text.alignleft)
     drawtextclip("balls", -4, 4, text.alignright)
     drawtextclip("high", 0, 4, text.aligncenter)
@@ -1398,7 +1398,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawgameover()
-    ov("blend 1")
+    ov("blend 2")
     if game.newhigh then
         local highscorew = drawtextclip("newhigh", 0, ht / 2 + 96 * text.fontscale, text.aligncenter)
         createparticles(edgegapl + (wd / 2 + highscorew / 2), (ht / 2 + 96 * text.fontscale), highscorew, 1, particle.highparticles)
@@ -1422,7 +1422,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawlevelcomplete()
-    ov("blend 1")
+    ov("blend 2")
     drawtextclip("complete", 0, ht / 2 - 30 * text.fontscale, text.aligncenter)
     drawtextclip("continue", 0, ht / 2 + 30 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("quitgame", 0, ht / 2 + 52 * text.fontscale, text.aligncenter, nil, true)
@@ -1432,7 +1432,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawbonuscomplete()
-    ov("blend 1")
+    ov("blend 2")
     drawtextclip("bcomplete", 0, ht / 2 - 30 * text.fontscale, text.aligncenter)
 
     local w = drawtextclip("awarded", 0, ht / 2, text.aligncenter)
@@ -1453,7 +1453,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawconfirm()
-    ov("blend 1")
+    ov("blend 2")
     drawtextclip("askquit", 0, ht / 2 - 15 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("askleft", 0, ht / 2 + 22 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("askright", 0, ht / 2 + 44 * text.fontscale, text.aligncenter, nil, true)
@@ -1462,7 +1462,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawpause()
-    ov("blend 1")
+    ov("blend 2")
     drawtextclip("pause", 0, ht / 2 - 15 * text.fontscale, text.aligncenter)
     if game.offoverlay and options.autopause ~= 0 then
         if options.autostart ~= 0 then
@@ -1483,7 +1483,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawnewball()
-    ov("blend 1")
+    ov("blend 2")
     drawtextclip("newball", 0, ht / 2 + 22 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("control", 0, ht / 2 + 44 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("quitgame", 0, ht / 2 + 66 * text.fontscale, text.aligncenter, nil, true)
@@ -1509,7 +1509,7 @@ local function drawtiming(t)
         average = average + timing.times[i]
     end
     average = average / #timing.times
-    local oldblend = ov("blend 1")
+    local oldblend = ov("blend 2")
     updatemessage("ms", string.format("%.1fms", average))
     drawtextclip("ms", -4, 0, text.alignright, text.alignbottom)
     ov("blend "..oldblend)
@@ -1555,7 +1555,7 @@ local function drawoptions()
     local state = {[0] = "off", [1] = "on"}
 
     -- draw header
-    ov("blend 1")
+    ov("blend 2")
     local h = messages["key"].height
     local y = (ht - 14 * h) // 2
     y = drawoption("key", "function", "state", leftx, h, y)
