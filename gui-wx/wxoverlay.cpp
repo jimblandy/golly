@@ -31,11 +31,12 @@
 // big endian 32bit pixel component order is RGBA
 
 // masks to isolate components in pixel
-#define RMASK  0xff000000
-#define GMASK  0x00ff0000
-#define BMASK  0x0000ff00
-#define AMASK  0x000000ff
-#define RBMASK 0xff00ff00
+#define RMASK   0xff000000
+#define GMASK   0x00ff0000
+#define BMASK   0x0000ff00
+#define AMASK   0x000000ff
+#define RBMASK  0xff00ff00
+#define RBGMASK 0xffffff00
 
 // shift RB components right and left to avoid overflow
 // R.B. becomes .R.B
@@ -60,11 +61,12 @@
 // little endian 32bit pixel component order is ABGR
 
 // masks to isolate components in pixel
-#define RMASK  0x000000ff
-#define GMASK  0x0000ff00
-#define BMASK  0x00ff0000
-#define AMASK  0xff000000
-#define RBMASK 0x00ff00ff
+#define RMASK   0x000000ff
+#define GMASK   0x0000ff00
+#define BMASK   0x00ff0000
+#define AMASK   0xff000000
+#define RBMASK  0x00ff00ff
+#define RGBMASK 0x00ffffff
 
 // shift RB components right and left to avoid overflow
 // not required for little endian
@@ -6774,8 +6776,9 @@ const char* Overlay::DoText(const char* args)
     dc.SelectObject(wxNullBitmap);
 
     // copy text from top left corner of offscreen image into clip data
-    unsigned char* m = textclip->cdata;
-    unsigned int bitmapr, bitmapg, bitmapb;
+    unsigned int* m = (unsigned int*)textclip->cdata;
+    unsigned char bitmapr;
+    const unsigned int rgbdraw = rgbadraw & RGBMASK;
 
     // get iterator over bitmap data
     wxAlphaPixelData data(bitmap);
@@ -6789,23 +6792,13 @@ const char* Overlay::DoText(const char* args)
             for (int x = 0; x < bitmapwd; x++) {
                 // get pixel RGB components
                 bitmapr = iter.Red();
-                bitmapg = iter.Green();
-                bitmapb = iter.Blue();
 
-                if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
+                if ((BYTE2RED(bitmapr) | BYTE2GREEN(iter.Green()) | BYTE2BLUE(iter.Blue())) == RGBMASK) {
                     // background found so replace with transparent pixel
                     *m++ = 0;
-                    *m++ = 0;
-                    *m++ = 0;
-                    *m++ = 0;
                 } else {
-                    // foreground found so replace with foreground color
-                    *m++ = r;
-                    *m++ = g;
-                    *m++ = b;
-
-                    // set alpha based on grayness
-                    *m++ = 255 - bitmapr;
+                    // foreground found so replace with foreground color and set alpha based on grayness
+                    *m++ = rgbdraw | BYTE2ALPHA(255 - bitmapr);
                 }
 
                 // pre-increment is faster
@@ -6819,10 +6812,7 @@ const char* Overlay::DoText(const char* args)
         for (int y = 0; y < bitmapht; y++) {
             wxAlphaPixelData::Iterator rowstart = iter;
             for (int x = 0; x < bitmapwd; x++) {
-                *m++ = iter.Red();
-                *m++ = iter.Green();
-                *m++ = iter.Blue();
-                *m++ = 255;
+                *m++ = BYTE2RED(iter.Red()) | BYTE2GREEN(iter.Green()) | BYTE2BLUE(iter.Blue()) | AMASK;
 
                 // pre-increment is faster
                 ++iter;
