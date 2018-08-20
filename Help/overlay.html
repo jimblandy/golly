@@ -180,8 +180,9 @@ The examples given below assume a script has started with these lines:
 
 <a name="blend"></a><p><dt><b>blend <i>i</i></b></dt>
 <dd>
-Turn <a href="#blending">alpha blending</a> on (<i>i</i> = 1) or off
-(<i>i</i> = 0) and return the previous blend state as a string ("0" or "1").
+Set <a href="#blending">alpha blending</a> off (<i>i</i> = 0), full
+(<i>i</i> = 1) or fast (<i>i</i> = 2) and return the previous blend state as a string ("0", "1" or "2").
+The fast mode should only be used when the target pixels are opaque.
 The commands affected by alpha blending are:
 <a href="#ellipse">ellipse</a>,
 <a href="#fill">fill</a>,
@@ -192,7 +193,7 @@ The commands affected by alpha blending are:
 <a href="#paste">paste</a>,
 <a href="#scale">scale</a> and
 <a href="#set">set</a>.
-Note that turning on alpha blending also forces ellipses and lines to be antialiased.
+Note that setting alpha blending to full or fast also forces ellipses and lines to be antialiased.
 </dd>
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
 </p>
@@ -1016,7 +1017,9 @@ to the right and y values increase downwards.
 <p>
 Alpha blending is a way of drawing translucent pixels on top of existing
 pixels to get nicer looking results.  When an overlay is created, alpha blending
-is initially turned off.  To turn it on a script needs to call "blend 1".
+is initially turned off.  To turn it on a script needs to call "blend 1", for blending
+with any target, or "blend 2", for faster blending when you know the target
+pixels are opaque.
 Consider this simple script which draws a translucent blue square on top
 of a translucent red square (both on top of an opaque white background):
 
