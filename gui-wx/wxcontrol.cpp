@@ -717,7 +717,9 @@ void MainFrame::DoPendingAction(bool restart)
         
         UpdateEverything();
         
-        // do the drawing
+        // do the drawing by creating a mouse down event so PatternView::OnMouseDown is called again,
+        // but we need to reset mouseisdown flag which is currently true
+        viewptr->mouseisdown = false;
         mouseevent.SetEventType(wxEVT_LEFT_DOWN);
         mouseevent.SetEventObject(viewptr);
         viewptr->GetEventHandler()->ProcessEvent(mouseevent);

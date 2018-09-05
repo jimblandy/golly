@@ -439,7 +439,12 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
             SetFocus();
             // waitingforclick becomes false if OnMouseDown is called
         }
-        
+
+        #ifdef __WXMAC__
+            // avoid problem on Mac due to OnMouseUp not being called
+            mouseisdown = false;
+        #endif
+
         if ( HasCapture() ) ReleaseMouse();
         mainptr->EnableAllMenus(true);
         mainptr->UpdateMenuAccelerators();  // restore accelerators
