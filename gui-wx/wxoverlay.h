@@ -49,16 +49,16 @@ public:
     ~Clip();
 
     // add the row index to the clip to optimize rendering
-    int AddIndex();
+    void AddIndex();
 
     // remove the row index from the clip (should be called when the Clip pixels change)
     void RemoveIndex();
 
 public:
     int cwd, cht;               // width and height of the clip in pixels
-    unsigned char* cdata;       // RGBA data (cwd * cht * 4 bytes)
-    unsigned char* cdatabb;     // top left pixel in non-transparent bounding box
-    rowtype* rowindex;          // contents type of each row
+    unsigned char *cdata;       // RGBA data (cwd * cht * 4 bytes)
+    unsigned char *cdatabb;     // top left pixel in non-transparent bounding box
+    rowtype *rowindex;          // contents type of each row
     int xbb, ybb;               // x and y offset of top left of non-transparent pixel bounding box
     int wbb, hbb;               // width and height of non-transparent pixel bounding box
 
@@ -77,126 +77,109 @@ public:
     void Clear();
 
     // add the named clip to the live list to manage
-    void AddLiveClip(const Clip* clip);
+    void AddLiveClip(const Clip *clip);
 
     // add the named clip to the even list to manage
-    void AddEvenClip(const Clip* clip);
+    void AddEvenClip(const Clip *clip);
 
     // add the named clip to the odd list to manage
-    void AddOddClip(const Clip* clip);
+    void AddOddClip(const Clip *clip);
 
     // add the named clip to the history list to manage
-    void AddHistoryClip(const Clip* clip);
+    void AddHistoryClip(const Clip *clip);
 
     // get an array of the live clips managed and the number of clips
-    const Clip** GetLiveClips(int* numclips);
+    const Clip **GetLiveClips(int *numclips);
 
     // get an array of the even clips managed and the number of clips
-    const Clip** GetEvenClips(int* numclips);
+    const Clip **GetEvenClips(int *numclips);
 
     // get an array of the odd clips managed and the number of clips
-    const Clip** GetOddClips(int* numclips);
+    const Clip **GetOddClips(int *numclips);
 
     // get an array of the history clips managed and the number of clips
-    const Clip** GetHistoryClips(int* numclips);
+    const Clip **GetHistoryClips(int *numclips);
 
     // set the live clip
-    void SetLiveClip(const Clip* liveclip);
+    void SetLiveClip(const Clip *liveclip);
 
     // set the odd clip
-    void SetOddClip(const Clip* oddclip);
+    void SetOddClip(const Clip *oddclip);
 
     // set the even clip
     void SetEvenClip(const Clip *evenclip);
 
     // set the select clip
-    void SetSelectClip(const Clip* selectclip);
+    void SetSelectClip(const Clip *selectclip);
 
     // set the paste clip
-    void SetPasteClip(const Clip* pasteclip);
+    void SetPasteClip(const Clip *pasteclip);
 
     // set the active clip
-    void SetActiveClip(const Clip* activeclip);
+    void SetActiveClip(const Clip *activeclip);
 
     // set the not active live clip
-    void SetLiveNotActiveClip(const Clip* livenaclip);
+    void SetLiveNotActiveClip(const Clip *livenaclip);
 
     // set the not active select clip
-    void SetSelectNotActiveClip(const Clip* selectnaclip);
+    void SetSelectNotActiveClip(const Clip *selectnaclip);
 
     // set the even not active live clip
-    void SetEvenLiveNotActiveClip(const Clip* evennaclip);
+    void SetEvenLiveNotActiveClip(const Clip *evennaclip);
 
     // set the odd not active live clip
-    void SetOddLiveNotActiveClip(const Clip* oddnaclip);
+    void SetOddLiveNotActiveClip(const Clip *oddnaclip);
 
     // set the history clip
-    void SetHistoryClip(const Clip* historyclip);
+    void SetHistoryClip(const Clip *historyclip);
 
     // set the history not active clip
-    void SetHistoryNotActiveClip(const Clip* historynaclip);
+    void SetHistoryNotActiveClip(const Clip *historynaclip);
 
     // get the live clip and return clip width if specified
-    const Clip* GetLiveClip(int* clipwd);
+    const Clip *GetLiveClip(int *clipwd);
 
     // get the odd clip and return clip width if specified
-    const Clip* GetOddClip(int* clipwd);
+    const Clip *GetOddClip(int *clipwd);
 
     // get the even clip and return clip width if specified
-    const Clip* GetEvenClip(int* clipwd);
+    const Clip *GetEvenClip(int *clipwd);
 
     // get the select clip and return clip width if specified
-    const Clip* GetSelectClip(int* clipwd);
+    const Clip *GetSelectClip(int *clipwd);
 
     // get the paste clip and return clip width if specified
-    const Clip* GetPasteClip(int* clipwd);
+    const Clip *GetPasteClip(int *clipwd);
 
     // get the active clip and return clip width if specified
-    const Clip* GetActiveClip(int* clipwd);
+    const Clip *GetActiveClip(int *clipwd);
 
     // get the not active live clip and return clip width if specified
-    const Clip* GetLiveNotActiveClip(int* clipwd);
+    const Clip *GetLiveNotActiveClip(int *clipwd);
 
     // get the not active select clip and return clip width if specified
-    const Clip* GetSelectNotActiveClip(int* clipwd);
+    const Clip *GetSelectNotActiveClip(int *clipwd);
 
     // get the even not active live clip and return clip width if specified
-    const Clip* GetEvenLiveNotActiveClip(int* clipwd);
+    const Clip *GetEvenLiveNotActiveClip(int *clipwd);
 
     // get the odd not active select clip and return clip width if specified
-    const Clip* GetOddLiveNotActiveClip(int* clipwd);
+    const Clip *GetOddLiveNotActiveClip(int *clipwd);
 
     // get the history clip and return clip width if specified
-    const Clip* GetHistoryClip(int* clipwd);
+    const Clip *GetHistoryClip(int *clipwd);
 
     // get the history not active clip and return clip width if specified
-    const Clip* GetHistoryNotActiveClip(int* clipwd);
+    const Clip *GetHistoryNotActiveClip(int *clipwd);
 
 private:
-    int lsize;
-    int esize;
-    int osize;
-    int hsize;
-    int lclips;
-    int eclips;
-    int oclips;
-    int hclips;
-    const Clip** lcliplist;
-    const Clip** ecliplist;
-    const Clip** ocliplist;
-    const Clip** hcliplist;
-    const Clip* lclip;
-    const Clip* oclip;
-    const Clip* eclip;
-    const Clip* sclip;
-    const Clip* pclip;
-    const Clip* aclip;
-    const Clip* lnaclip;
-    const Clip* snaclip;
-    const Clip* elnaclip;
-    const Clip* olnaclip;
-    const Clip* hclip;
-    const Clip* hnaclip;
+    int lsize, esize, osize, hsize;
+    int lclips, eclips, oclips, hclips;
+    const Clip **lcliplist, **ecliplist;
+    const Clip **ocliplist, **hcliplist;
+    const Clip *lclip, *oclip, *eclip, *sclip;
+    const Clip *pclip, *aclip, *lnaclip, *snaclip;
+    const Clip *elnaclip, *olnaclip, *hclip, *hnaclip;
 };
 
 // The Table class is used during next generation calculations for 3D rules
@@ -216,13 +199,13 @@ public:
     void ClearKeys();
 
     // get an array of the keys and the number of keys
-    const int* GetKeys(int* numkeys);
+    const int *GetKeys(int *numkeys);
 
     // get the number of keys
     const int GetNumKeys();
 
     // get an array of the table contents
-    const unsigned char* GetValues();
+    const unsigned char *GetValues();
 
     // set the value at the specified key
     void SetValue(const int key, const unsigned char value);
@@ -240,14 +223,14 @@ public:
     void SortKeys();
 
     // copy contents
-    void Copy(const Table& from);
+    void Copy(const Table &from);
 
 private:
     void FreeMemory();
-    void AllocateMemory();
-    unsigned char* values;
-    int*  keys;
-    char* exists;
+    bool AllocateMemory();
+    unsigned char *values;
+    int  *keys;
+    char *exists;
     int   size;
     int   nkeys;
 };
@@ -257,21 +240,21 @@ public:
     Overlay();
     ~Overlay();
     
-    const char* DoOverlayCommand(const char* cmd);
+    const char *DoOverlayCommand(const char *cmd);
     // Parse and execute the given command.
     // If an error is detected then return a string starting with "ERR:"
     // and immediately followed by an appropriate error message.
     // If no error then return either a string containing the results
     // of the command, or NULL if there are no results.
     
-    const char* DoOverlayTable(const char* cmd, lua_State* L, int n, int* nresults);
+    const char *DoOverlayTable(const char *cmd, lua_State *L, int n, int *nresults);
     // Parse and execute the given command.
     // Used for table API commands: fill, get, line, lines, paste, rgba and set
 
     void DeleteOverlay();
     // Deallocate all memory used by the overlay and reset pixmap to NULL.
 
-    bool PointInOverlay(int vx, int vy, int* ox, int* oy);
+    bool PointInOverlay(int vx, int vy, int *ox, int *oy);
     // Return true if the given pixel location within the current view
     // is within the overlay.  If so then return the overlay location.
 
@@ -286,7 +269,7 @@ public:
     void CheckCursor();
     // If the pixmap has changed then the cursor might need to be changed.
     
-    unsigned char* GetOverlayData() { return ovpixmap; }
+    unsigned char *GetOverlayData() { return ovpixmap; }
     // Return a pointer to the overlay's RGBA data (possibly NULL).
     // This data is used to render the overlay (see DrawOverlay in
     // wxrender.cpp).
@@ -303,22 +286,22 @@ public:
     bool OnlyDrawOverlay();
     // If true then DrawView (in wxrender.cpp) will only draw the overlay.
     
-    void SaveOverlay(const wxString& pngpath);
+    void SaveOverlay(const wxString &pngpath);
     // Save overlay in given PNG file.
 
 private:
-    const Clip* GetClip(const char* clipname);
+    const Clip *GetClip(const char *clipname);
     // Get the named clip.
 
-    const char* GetCoordinatePair(char* args, int* x, int* y);
+    const char *GetCoordinatePair(char *args, int *x, int *y);
     // Decode a pair of integers from the supplied string.
     // Returns a pointer to the first non-space character after
     // the coordinate pair or NULL if decode failed.
 
-    void SetRenderTarget(unsigned char* pix, int pwd, int pht, Clip* clip);
+    void SetRenderTarget(unsigned char *pix, int pwd, int pht, Clip *clip);
     // Set the render target pixmap and size.
 
-    const char* DoCreate(const char* args);
+    const char *DoCreate(const char *args);
     // Create the current render target with the given width and height.
     // All bytes are initialized to 0 (ie. all pixels are transparent).
     // If the render target is the overlay then additionally:
@@ -330,28 +313,28 @@ private:
     //   The current font is set to the default font at 10pt.
     //   No cell view is allocated.
 
-    const char* DoDelete(const char* args);
+    const char *DoDelete(const char *args);
     // Delete the named clip or if no clip specified delete the overlay.
     // It is an error to attempt to delete a clip if it is the render target.
     
-    const char* DoResize(const char* args);
+    const char *DoResize(const char *args);
     // Resize the named clip or if no clip specified resize the overlay.
     // Returns the previous size as a string.
     // Does not change any settings and keeps any existing cell view.
 
-    const char* DoPosition(const char* args);
+    const char *DoPosition(const char *args);
     // Specify where to display the overlay within the current view.
 
-    const char* DoCursor(const char* args);
+    const char *DoCursor(const char *args);
     // Specify which cursor to use when the mouse moves over a
     // non-transparent pixel and return the old cursor name.
     
-    const char* DoTarget(const char* args);
+    const char *DoTarget(const char *args);
     // Sets the render target to the named clip or the overlay
     // if no clip specified.
     // Returns the old render target clip name or "" for overlay.
 
-    const char* DoSetRGBA(const char* args);
+    const char *DoSetRGBA(const char *args);
     // Set the current RGBA values and return the old values as a string
     // of the form "r g b a".
     
@@ -362,28 +345,28 @@ private:
     void DrawAAPixel(int x, int y, double opacity);
     // Draw an antialiased pixel in the render target.
 
-    const char* DoSetPixel(const char* args);
+    const char *DoSetPixel(const char *args);
     // Set the given pixels to the current RGBA values.
     // Ignores pixels outside the render target.
     
-    const char* DoGetPixel(const char* args);
+    const char *DoGetPixel(const char *args);
     // Return the RGBA values of the given pixel as a string of the
     // form "r g b a", or "" if the pixel is outside the render target.
     
-    const char* DoGetXY();
+    const char *DoGetXY();
     // Return the current mouse position within the overlay as a string
     // of the form "x y", or "" if the mouse is outside the overlay.
     
-    const char* LineOptionWidth(const char* args);
+    const char *LineOptionWidth(const char *args);
     // Set linewidth and return previous value as a string.
     
-    const char* DoLineOption(const char* args);
+    const char *DoLineOption(const char *args);
     // Set a line option.
     
     void RenderLine(int x0, int y0, int x1, int y1);
     // Called by DoLine to render a line.
 
-    const char* DoLine(const char* args, bool connected);
+    const char *DoLine(const char *args, bool connected);
     // Draw a one or more optionally connected lines using the current RGBA values.
     // Automatically clips any parts of the line outside the render target.
     
@@ -403,7 +386,7 @@ private:
     // Called by DoLine to draw an antialiased line when alphablend is true
     // and linewidth is 1.
     
-    const char* DoEllipse(const char* args);
+    const char *DoEllipse(const char *args);
     // Draw an ellipse within the given rectangle.
 
     void DrawEllipse(int x0, int y0, int x1, int y1);
@@ -417,22 +400,22 @@ private:
     // Called by DoEllipse to draw an antialiased ellipse when alphablend is true
     // and linewidth is 1.
     
-    const char* DoFill(const char* args);
+    const char *DoFill(const char *args);
     // Fill the given rectangles with the current RGBA values.
     // Automatically clips any parts of the rectangle outside the render target.
 
     void FillRect(int x, int y, int w, int h);
     // Called by DoFill to set pixels in given rectangle.
     
-    const char* DoCopy(const char* args);
+    const char *DoCopy(const char *args);
     // Copy the pixels in a given rectangle into Clip data with a given name.
     // The rectangle must be within the render target.
     
-    const char* DoPaste(const char* args);
+    const char *DoPaste(const char *args);
     // Paste the named Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
     
-    const char* DoScale(const char* args);
+    const char *DoScale(const char *args);
     // Scale the named Clip data into the render target using the given rectangle.
     // Automatically clips any pixels outside the render target.
 
@@ -440,87 +423,87 @@ private:
     // Disable the index on the render target clip (used when it is written to which
     // invalidates the row index).
 
-    const char* DoOptimize(const char* args);
+    const char *DoOptimize(const char *args);
     // Optimize the clip for alpha blended rendering by ignoring any blank rows
     // of pixels (alpha = 0).
     
-    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace,
-                                 int* invreplace, int* delta, int component);
+    const char *DecodeReplaceArg(const char *arg, int *find, bool *negfind, int *replace,
+                                 int *invreplace, int *delta, int component);
     // Decodes a single argument for the replace command.
 
-    const char* DoReplace(const char* args);
+    const char *DoReplace(const char *args);
     // Replace pixels of a specified RGBA color in the render target with the
     // current RGBA values.
     // Return the number of pixels replaced.
 
-    const char* DoLoad(const char* args);
+    const char *DoLoad(const char *args);
     // Load the image from a given .bmp/gif/png/tiff file into the render target
     // at a given location, clipping if necessary.  If successful, return the
     // total dimensions of the image as a string of the form "width height".
     
-    const char* DoSave(const char* args);
+    const char *DoSave(const char *args);
     // Save the pixels in a given rectangle into a given .png file.
     // The rectangle must be within the render target.
     
-    const char* DoFlood(const char* args);
+    const char *DoFlood(const char *args);
     // Do a flood fill starting from the given pixel and using the
     // current RGBA values.
     
-    const char* DoBlend(const char* args);
+    const char *DoBlend(const char *args);
     // Turn alpha blending on or off and return the old setting as a string
     // of the form "1" or "0".
     
-    const char* DoFont(const char* args);
+    const char *DoFont(const char *args);
     // Set the current font according to the given point size and font name
     // and return the old font as a string of the form "fontsize fontname".
     
-    const char* TextOptionAlign(const char* args);
+    const char *TextOptionAlign(const char *args);
     // Set text alignment per column.
 
-    const char* TextOptionBackground(const char* args);
+    const char *TextOptionBackground(const char *args);
     // Set text background r, g, b, a color.
 
-    const char* DoTextOption(const char* args);
+    const char *DoTextOption(const char *args);
     // Set a text option.
 
-    const char* DoText(const char* args);
+    const char *DoText(const char *args);
     // Create Clip data with the given name containing the given text.
     // Return the dimensions of the text (which can have one or more lines)
     // as a string of the form "width height descent".
     
-    const char* DoTransform(const char* args);
+    const char *DoTransform(const char *args);
     // Set the affine transformation values used by later paste commands
     // and return the old values as a string of the form "axx axy ayx ayy".
     
-    const char* DoUpdate();
+    const char *DoUpdate();
     // Set only_draw_overlay to true and then update the current layer
     // so DrawView will only draw the overlay if OnlyDrawOverlay() is true.
 
 #ifdef ENABLE_SOUND
-    const char* SoundStop(const char* args);
+    const char *SoundStop(const char *args);
     // Stop sound playback for specified sound or all sounds if none specified.
 
-    const char* SoundPlay(const char* args, bool loop);
+    const char *SoundPlay(const char *args, bool loop);
     // Play the specified sound once or in a loop.
 
-    const char* SoundState(const char* args);
+    const char *SoundState(const char *args);
     // Returns whether the specified sound or any sound (if none specified) is playing.
     // Can be "playing", "stopped", or "unknown" if the specified sound is not found.
 
-    const char* SoundVolume(const char* args);
+    const char *SoundVolume(const char *args);
     // Sets the volume of the specified sound.
 
-    const char* SoundPause(const char* args);
+    const char *SoundPause(const char *args);
     // Pauses all or the specified sound.
 
-    const char* SoundResume(const char* args);
+    const char *SoundResume(const char *args);
     // Resumes all or the specified sound.
 #endif
 
-    const char* DoSound(const char* args);
+    const char *DoSound(const char *args);
     // Play, stop, pause or resume playback, get playback status, or set volume.
 
-    const char* OverlayError(const char* msg);
+    const char *OverlayError(const char *msg);
     // Return a string starting with "ERR:" followed by the given message.
 
     void SetRGBA(unsigned char r, unsigned char b, unsigned char g, unsigned char a, unsigned int *rgba);
@@ -531,7 +514,7 @@ private:
 
     // cell view
 
-    const char* DoCellView(const char* args);
+    const char *DoCellView(const char *args);
     // Create a cell view that tracks a rectangle of cells and can be rapidly
     // drawn onto the render target at a particular scale and angle.
 
@@ -550,61 +533,61 @@ private:
     void GetThemeColors(double brightness);
     // Get the state colors from the theme.
 
-    const char* DoUpdateCells();
+    const char *DoUpdateCells();
     // Update the cell view from the universe.
 
-    void UpdateZoomView(unsigned char* source, unsigned char *dest, int step);
+    void UpdateZoomView(unsigned char *source, unsigned char *dest, unsigned int step);
     // Update the zoom view from the cell view at the given step size.
 
-    void DrawCellsRotate(unsigned char* cells, int mask, double angle);
+    void DrawCellsRotate(unsigned char *cells, int mask, double angle);
     // Draw cells onto the render target with the given location mask and rotation.
 
-    void DrawCellsNoRotate(unsigned char* cells, int mask);
+    void DrawCellsNoRotate(unsigned char *cells, int mask);
     // Draw cells onto the render target with the given location mask but no rotation.
 
-    const char* DoDrawCells();
+    const char *DoDrawCells();
     // Draw the cells onto the overlay.
 
     // camera
 
-    const char* CamAngle(const char* args);
+    const char *CamAngle(const char *args);
     // Set the camera angle.
 
-    const char* CamZoom(const char* args);
+    const char *CamZoom(const char *args);
     // Set the camera zoom.
 
-    const char* CamXY(const char* args);
+    const char *CamXY(const char *args);
     // Set the camera position.
 
-    const char* DoCamera(const char* args);
+    const char *DoCamera(const char *args);
     // Set a camera parameter.
 
     // celloption
 
-    const char* CellOptionDepth(const char* args);
+    const char *CellOptionDepth(const char *args);
     // Set the cellview layer depth.
 
-    const char* CellOptionLayers(const char* args);
+    const char *CellOptionLayers(const char *args);
     // Set the cellview number of layers.
 
-    const char* CellOptionHex(const char* args);
+    const char *CellOptionHex(const char *args);
     // Set hex display mode on or off for the cellview.
 
-    const char* CellOptionGrid(const char* args);
+    const char *CellOptionGrid(const char *args);
     // Turn grid display on or off.
 
-    const char* CellOptionGridMajor(const char* args);
+    const char *CellOptionGridMajor(const char *args);
     // Set the grid major interval.
 
-    const char* CellOptionStars(const char* args);
+    const char *CellOptionStars(const char *args);
     // Set the stars display on or off.
 
-    const char* DoCellOption(const char* args);
+    const char *DoCellOption(const char *args);
     // Set a cellview option.
     
     // theme
 
-    const char* DoTheme(const char* args);
+    const char *DoTheme(const char *args);
     // Set the color theme RGB values in the form
     // "r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5" representing RGB values for cells:
     // r1 g1 b1  just born
@@ -642,72 +625,72 @@ private:
     // These have the same functionality as the string
     // API calls but take Lua parameters.
 
-    const char* DoFill(lua_State* L, int n, int* nresults);
+    const char *DoFill(lua_State *L, int n, int *nresults);
     // Fill the given rectangles with the current RGBA values.
     // Automatically clips any parts of the rectangle outside the render target.
 
-    const char* DoGet(lua_State* L, int n, int* nresults);
+    const char *DoGet(lua_State *L, int n, int *nresults);
     // Return the RGBA values of the given pixel as individual Lua numbers
     // r, g, b, a. Values will be -1 if the pixel is outside the render target.
 
-    const char* DoLine(lua_State* L, int n, bool connected, int* nresults);
+    const char *DoLine(lua_State *L, int n, bool connected, int *nresults);
     // Draw a one or more optionally connected lines using the current RGBA values.
     // Automatically clips any parts of the line outside the render target.
 
-    const char* DoPaste(lua_State* L, int n, int* nresults);
+    const char *DoPaste(lua_State *L, int n, int *nresults);
     // Paste the named Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
 
-    const char* DoSetPixel(lua_State* L, int n, int* nresults);
+    const char *DoSetPixel(lua_State *L, int n, int *nresults);
     // Set the given pixels to the current RGBA values.
     // Ignores pixels outside the render target.
 
-    const char* DoSetRGBA(const char* cmd, lua_State* L, int n, int* nresults);
+    const char *DoSetRGBA(const char *cmd, lua_State *L, int n, int *nresults);
     // Set the current RGBA values and return the old values a Lua table
     // of the form {"rgba", r, g, b, a}.
 
-    const char* DoPaste(const int* coords, int n, const Clip* clipptr);
+    const char *DoPaste(const int *coords, int n, const Clip *clipptr);
     // Paste the named Clip data into the render target at the given locations.
     // Automatically clips any pixels outside the render target.
 
-    void Draw3DCell(int x, int y, const Clip* clipptr);
+    void Draw3DCell(int x, int y, const Clip *clipptr);
     // Draw a 3D cell.
 
     // 3D calls
 
-    const char* Do3DNextGen(lua_State* L, const int n, int* nresults);
+    const char *Do3DNextGen(lua_State *L, const int n, int *nresults);
     // Compute the next generation of the 3D grid and returns
     // the new grid and population.
 
-    const char* Do3DSetRule(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetRule(lua_State *L, const int n, int *nresults);
     // Set the current 3D rule.
 
-    const char* Do3DSetGridSize(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetGridSize(lua_State *L, const int n, int *nresults);
     // Sets the current 3D grid size.
 
-    const char* Do3DSetStepSize(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetStepSize(lua_State *L, const int n, int *nresults);
     // Sets the step modulus for Do3dNextGen.
 
-    const char* Do3DSetTransform(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetTransform(lua_State *L, const int n, int *nresults);
     // Sets the current transformation matrix.
 
-    const char* Do3DDisplayCells(lua_State* L, const int n, int* nresults);
+    const char *Do3DDisplayCells(lua_State *L, const int n, int *nresults);
     // Draws the most recent 3D grid using the current cell type,
     // depth shading mode and transformation.
 
-    const char* Do3DSetCellType(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetCellType(lua_State *L, const int n, int *nresults);
     // Set the cell type for drawing cells.
 
-    const char* Do3DSetDepthShading(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetDepthShading(lua_State *L, const int n, int *nresults);
     // Sets depth shading on or off for Cubes or Spheres.
 
-    const char* Do3DSetPattern(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetPattern(lua_State *L, const int n, int *nresults);
     // Sets the current 3D grid to the supplied pattern.
 
-    const char* Do3DSetSelectPasteActive(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetSelectPasteActive(lua_State *L, const int n, int *nresults);
     // Sets the selected, paste and active cell grids.
 
-    const char* Do3DSetCellHistory(lua_State* L, const int n, int* nresults);
+    const char *Do3DSetCellHistory(lua_State *L, const int n, int *nresults);
     // Sets cell history display mode.
 
     void UpdateHistoryFromLive();
@@ -728,21 +711,21 @@ private:
     void Display3DBusyBoxesEditing(const int midx, const int midy, const int stepi, const int stepj, const bool editing);
     // Display live cells in Draw or Select modes for BusyBoxes algos.
 
-    const char* PopulateGrid(lua_State* L, const int n, int idx, Table& destgrid);
+    const char *PopulateGrid(lua_State *L, const int n, int idx, Table &destgrid);
     // Populate a grid from the supplied pattern.
 
-    const char* Update3DClips(const bool editing);
+    const char *Update3DClips(const bool editing);
     // Updates the clips needed for rendering the cells based on
     // the cell type, algo and edit mode.
 
-    int CreateResultsFromC1C2(lua_State* L, const bool laststep);
+    int CreateResultsFromC1C2(lua_State *L, const bool laststep);
     // Creates the Lua grid result for the 3D Moore algo.
 
-    int CreateResultsFromC1G3(lua_State* L, const bool laststep);
+    int CreateResultsFromC1G3(lua_State *L, const bool laststep);
     // Creates the Lua grid result for the 3D Face, Corner,
     // Edge and Hexahedral algos.
 
-    int CreateResultsFromC1(lua_State* L, const bool laststep);
+    int CreateResultsFromC1(lua_State *L, const bool laststep);
     // Creates the Lua grid result for the 3D BusyBoxes algo.
 
     void Do3DNextGenMoore();
@@ -764,18 +747,39 @@ private:
     // Computes the next generation using the 3D BusyBoxes algo
     // (standard and wrap).
 
+    bool CreateDivTable();
+    // Creates the divide and modulus lookup table.
+
+    void FreeDivTable();
+    // Frees the divide and modulus lookup table.
+
+    bool CreateAxisFlags();
+    // Creates the axis flags.
+
+    void FreeAxisFlags();
+    // Frees the axis flags.
+
+    void ClearAxisFlags();
+    // Clear the axis flags.
+
+    void PopulateAxis();
+    // Populate axis flags from live.
+
+    void UpdateBoundingBox();
+    // Update the bounding box from the axis flags.
+
     // helpers to read Lua types
 
-    const char* ReadLuaBoolean(lua_State* L, const int n, int i, bool* value, const char* name);
+    const char *ReadLuaBoolean(lua_State *L, const int n, int i, bool *value, const char *name);
     // Read a Lua boolean.
 
-    const char* ReadLuaNumber(lua_State* L, const int n, int i, double* value, const char* name);
+    const char *ReadLuaNumber(lua_State *L, const int n, int i, double *value, const char *name);
     // Read a Lua number (floating point).
 
-    const char* ReadLuaInteger(lua_State* L, const int n, int i, int* value, const char* name);
+    const char *ReadLuaInteger(lua_State *L, const int n, int i, int *value, const char *name);
     // Read a Lua integer.
 
-    const char* ReadLuaString(lua_State* L, const int n, int i, const char** value, const char* name);
+    const char *ReadLuaString(lua_State *L, const int n, int i, const char **value, const char *name);
     // Read a Lua string.
 
     // 3D
@@ -796,7 +800,6 @@ private:
     int gridsize;                   // grid edge length
     int stepsize;                   // step size modulus
     bool liveedge;                  // whether there is a live cell on the grid edge
-    int tablesize;                  // grid size in cells
     int minx, miny, minz;           // bounding box for live cells
     int maxx, maxy, maxz;
     double xixo, xiyo, xizo;        // transformation matrix
@@ -814,22 +817,25 @@ private:
     int toolbarht;                  // toolbar height
     int showhistory;                // cell history longevity: 0 off, >0 on
     bool fadehistory;               // whether to fade history cells
+    int *modN, *modNdivN;           // lookup tables for fast divide and mod operations
+    int *divNN, *modNN;
+    char *xaxis, *yaxis, *zaxis;    // flags for live cells on each axis used for fast bounding box
 
     // render target
-    unsigned char* pixmap;          // current render target RGBA data (wd * ht * 4 bytes)
+    unsigned char *pixmap;          // current render target RGBA data (wd * ht * 4 bytes)
     int wd, ht;                     // current render target pixmap width and height
-    Clip* renderclip;               // clip if render target
+    Clip *renderclip;               // clip if render target
     std::string targetname;         // render target name
 
     // overlay
-    unsigned char* ovpixmap;        // overlay RGBA data
+    unsigned char *ovpixmap;        // overlay RGBA data
     int ovwd, ovht;                 // width and height of overlay pixmap
     unsigned char r, g, b, a;       // current RGBA values for drawing pixels
     unsigned int rgbadraw;          // packed version of current RGBA values
     int alphablend;                 // whether to do alphablending when drawing (0 - no, 1 - full, 2 - opaque destination)
     bool only_draw_overlay;         // set by DoUpdate, reset by OnlyDrawOverlay
     overlay_position pos;           // where to display overlay
-    const wxCursor* ovcursor;       // cursor to use when mouse is in overlay
+    const wxCursor *ovcursor;       // cursor to use when mouse is in overlay
     std::string cursname;           // remember cursor name
     int axx, axy, ayx, ayy;         // affine transformation values
     bool identity;                  // true if transformation values are 1,0,0,1
@@ -841,7 +847,7 @@ private:
 #ifdef ENABLE_SOUND
     // sound
     std::map<std::string,ISound*> sounds;
-    ISoundEngine* engine;
+    ISoundEngine *engine;
 #endif
 
     // text
@@ -853,11 +859,11 @@ private:
 
     // cell view
     unsigned int cellRGBA[256];     // cell RGBA values
-    unsigned char* cellview;        // cell state data (cellwd * cellht bytes)
-    unsigned char* cellview1;       // cell state data (cellwd * cellht bytes) double buffer
-    unsigned char* zoomview;        // cell state data (cellwd * cellht bytes) for zoom out
-    int cellwd, cellht;             // width and height of cell view
-    int cellx, celly;               // x and y position of bottom left cell
+    unsigned char *cellview;        // cell state data (cellwd * cellht bytes)
+    unsigned char *cellview1;       // cell state data (cellwd * cellht bytes) double buffer
+    unsigned char *zoomview;        // cell state data (cellwd * cellht bytes) for zoom out
+    unsigned int cellwd, cellht;    // width and height of cell view
+    unsigned int cellx, celly;      // x and y position of bottom left cell
     bool ishex;                     // whether to display in hex mode
 
     // camera
@@ -887,13 +893,11 @@ private:
     bool customgridmajorcolor;      // whether major grid line color is custom
 
     // stars
-    double* starx;                  // star x coordinates
-    double* stary;                  // star y coordinates
-    double* starz;                  // star z coordinates
+    double *starx, *stary, *starz;  // star x, y, z coordinates
     unsigned int starRGBA;          // star color
     bool stars;                     // whether to display stars
 };
 
-extern Overlay* curroverlay;    // pointer to current overlay (set by client)
+extern Overlay *curroverlay;    // pointer to current overlay (set by client)
 
 #endif

@@ -679,6 +679,16 @@ Component values are clamped to the range 0 to 255.
 <dd><b>&nbsp;&nbsp;&nbsp;&nbsp;ov("update")</b></dd>
 <dd><b>end</b></dd>
 </p>
+<p>
+<dd>
+The postfixes can also be used without a target component. In which case the current
+<a href="#rgba">rgba</a> values are adjusted.
+</dd>
+<dd> Example:</dd>
+<dd><i>-- replace green pixels with the current drawing color minus 32 alpha (0 255 0 255 -> 255 0 0 96)</i></dd>
+<dd><b>ov("rgba 255 0 0 128")</b></dd>
+<dd><b>local replaced = ov("replace 0 255 0 255-32")</b></dd>
+</p>
 
 <a name="resize"></a><p><dt><b>resize <i>wd ht (clipname)</i></b></dt>
 <dd>

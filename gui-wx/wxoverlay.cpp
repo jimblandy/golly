@@ -114,7 +114,7 @@
         ALPHABLENDTRANSDEST(source, dest, resultptr, alpha, invalpha); \
     }
 
-// alpha blend premultiple source with opaque destination
+// alpha blend premultiplied source with opaque destination
 #define ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, resultptr, invalpha) \
     { \
         const unsigned int _newrb = (sourcearb + invalpha * RBRIGHT(dest & RBMASK)) >> 8; \
@@ -156,20 +156,22 @@ Clip::~Clip() {
 
 // compute non-transparent pixel bounding box
 void Clip::ComputeBoundingBox() {
-    unsigned int* clipdata = (unsigned int*)cdata;
+    unsigned int *clipdata = (unsigned int*)cdata;
 
     // discard transparent top rows
     int x, y;
     for (y = 0; y < cht; y++) {
         // use row index if available
-        if (rowindex && rowindex[y] != alpha0) break;
-
-        // otherwise look along the row for non-zero alpha
-        x = 0;
-        while (x < cwd && (!(*clipdata++ & AMASK))) {
-            x++;
+        if (rowindex) {
+            if (rowindex[y] != alpha0) break;
+        } else {
+            // otherwise look along the row for non-zero alpha
+            x = 0;
+            while (x < cwd && (!(*clipdata++ & AMASK))) {
+                x++;
+            }
+            if (x < cwd) break;
         }
-        if (x < cwd) break;
     }
     ybb = y;
     hbb = cht - y;
@@ -179,14 +181,16 @@ void Clip::ComputeBoundingBox() {
         clipdata = ((unsigned int*)cdata) + cwd * cht;
         for (y = cht - 1; y > ybb; y--) {
             // use row index if available
-            if (rowindex && rowindex[y] != alpha0) break;
-
-            // otherwise look along the row for non-zero alpha
-            x = 0;
-            while (x < cwd && (!(*--clipdata & AMASK))) {
-                x++;
+            if (rowindex) {
+                if (rowindex[y] != alpha0) break;
+            } else {
+                // otherwise look along the row for non-zero alpha
+                x = 0;
+                while (x < cwd && (!(*--clipdata & AMASK))) {
+                    x++;
+                }
+                if (x < cwd) break;
             }
-            if (x < cwd) break;
         }
         y = cht - 1 - y;
         hbb -= y;
@@ -195,7 +199,7 @@ void Clip::ComputeBoundingBox() {
         clipdata = (unsigned int*)cdata;
         for (x = 0; x < cwd; x++) {
             y = 0;
-            unsigned int* rowdata = clipdata;
+            unsigned int *rowdata = clipdata;
             while (y < cht && (!(*rowdata & AMASK))) {
                 y++;
                 rowdata += cwd;
@@ -212,7 +216,7 @@ void Clip::ComputeBoundingBox() {
             for (x = cwd - 1; x > xbb; x--) {
                 y = 0;
                 clipdata--;
-                unsigned int* rowdata = clipdata;
+                unsigned int *rowdata = clipdata;
                 while (y < cht && (!(*rowdata & AMASK))) {
                     y++;
                     rowdata += cwd;
@@ -230,12 +234,12 @@ void Clip::ComputeBoundingBox() {
 
 // add row index to the clip
 // if there are no rows that can be optimized the index will not be created
-int Clip::AddIndex() {
+void Clip::AddIndex() {
     if (!rowindex) {
         // allocate the index
         rowindex = (rowtype*)malloc(cht * sizeof(*rowindex));
     }
-    unsigned int* lp = (unsigned int*)cdata;
+    unsigned int *lp = (unsigned int*)cdata;
     unsigned int alpha;
     unsigned int first;
     bool bothrow = false;
@@ -287,9 +291,6 @@ int Clip::AddIndex() {
 
     // remove the index if there were no optimized rows
     if (numopt == 0) RemoveIndex();
-
-    // return number of rows optimized
-    return numopt;
 }
 
 // remove row index from the clip
@@ -346,7 +347,7 @@ void ClipManager::Clear() {
     hnaclip = NULL;
 }
 
-void ClipManager::AddLiveClip(const Clip* liveclip) {
+void ClipManager::AddLiveClip(const Clip *liveclip) {
     if (lclips == lsize) {
         // allocate more memory
         lsize += clipbatch;
@@ -355,7 +356,7 @@ void ClipManager::AddLiveClip(const Clip* liveclip) {
     lcliplist[lclips++] = liveclip;
 }
 
-void ClipManager::AddEvenClip(const Clip* clip) {
+void ClipManager::AddEvenClip(const Clip *clip) {
     if (eclips == esize) {
         // allocate more memory
         esize += clipbatch;
@@ -364,7 +365,7 @@ void ClipManager::AddEvenClip(const Clip* clip) {
     ecliplist[eclips++] = clip;
 }
 
-void ClipManager::AddOddClip(const Clip* clip) {
+void ClipManager::AddOddClip(const Clip *clip) {
     if (oclips == osize) {
         // allocate more memory
         osize += clipbatch;
@@ -373,7 +374,7 @@ void ClipManager::AddOddClip(const Clip* clip) {
     ocliplist[oclips++] = clip;
 }
 
-void ClipManager::AddHistoryClip(const Clip* clip) {
+void ClipManager::AddHistoryClip(const Clip *clip) {
     if (hclips == hsize) {
         // allocate more memory
         hsize += clipbatch;
@@ -382,130 +383,130 @@ void ClipManager::AddHistoryClip(const Clip* clip) {
     hcliplist[hclips++] = clip;
 }
 
-const Clip** ClipManager::GetLiveClips(int* numclips) {
+const Clip **ClipManager::GetLiveClips(int *numclips) {
     *numclips = lclips;
     return lcliplist;
 }
 
-const Clip** ClipManager::GetEvenClips(int* numclips) {
+const Clip **ClipManager::GetEvenClips(int *numclips) {
     *numclips = eclips;
     return ecliplist;
 }
 
-const Clip** ClipManager::GetOddClips(int* numclips) {
+const Clip **ClipManager::GetOddClips(int *numclips) {
     *numclips = oclips;
     return ocliplist;
 }
 
-const Clip** ClipManager::GetHistoryClips(int* numclips) {
+const Clip **ClipManager::GetHistoryClips(int *numclips) {
     *numclips = hclips;
     return hcliplist;
 }
 
-void ClipManager::SetLiveClip(const Clip* liveclip) {
+void ClipManager::SetLiveClip(const Clip *liveclip) {
     lclip = liveclip;
 }
 
-void ClipManager::SetOddClip(const Clip* oddclip) {
+void ClipManager::SetOddClip(const Clip *oddclip) {
     oclip = oddclip;
 }
 
-void ClipManager::SetEvenClip(const Clip* evenclip) {
+void ClipManager::SetEvenClip(const Clip *evenclip) {
     eclip = evenclip;
 }
 
-void ClipManager::SetSelectClip(const Clip* selectclip) {
+void ClipManager::SetSelectClip(const Clip *selectclip) {
     sclip = selectclip;
 }
 
-void ClipManager::SetPasteClip(const Clip* pasteclip) {
+void ClipManager::SetPasteClip(const Clip *pasteclip) {
     pclip = pasteclip;
 }
 
-void ClipManager::SetLiveNotActiveClip(const Clip* livenaclip) {
+void ClipManager::SetLiveNotActiveClip(const Clip *livenaclip) {
     lnaclip = livenaclip;
 }
 
-void ClipManager::SetSelectNotActiveClip(const Clip* selectnaclip) {
+void ClipManager::SetSelectNotActiveClip(const Clip *selectnaclip) {
     snaclip = selectnaclip;
 }
 
-void ClipManager::SetEvenLiveNotActiveClip(const Clip* evennaclip) {
+void ClipManager::SetEvenLiveNotActiveClip(const Clip *evennaclip) {
     elnaclip = evennaclip;
 }
 
-void ClipManager::SetOddLiveNotActiveClip(const Clip* oddnaclip) {
+void ClipManager::SetOddLiveNotActiveClip(const Clip *oddnaclip) {
     olnaclip = oddnaclip;
 }
 
-void ClipManager::SetActiveClip(const Clip* activeclip) {
+void ClipManager::SetActiveClip(const Clip *activeclip) {
     aclip = activeclip;
 }
 
-void ClipManager::SetHistoryClip(const Clip* historyclip) {
+void ClipManager::SetHistoryClip(const Clip *historyclip) {
     hclip = historyclip;
 }
 
-void ClipManager::SetHistoryNotActiveClip(const Clip* historynaclip) {
+void ClipManager::SetHistoryNotActiveClip(const Clip *historynaclip) {
     hnaclip = historynaclip;
 }
 
-const Clip* ClipManager::GetLiveClip(int* clipwd) {
+const Clip *ClipManager::GetLiveClip(int *clipwd) {
     if (lclip && clipwd) *clipwd = lclip->cwd;
     return lclip;
 }
 
-const Clip* ClipManager::GetOddClip(int* clipwd) {
+const Clip *ClipManager::GetOddClip(int *clipwd) {
     if (oclip && clipwd) *clipwd = oclip->cwd;
     return oclip;
 }
 
-const Clip* ClipManager::GetEvenClip(int* clipwd) {
+const Clip *ClipManager::GetEvenClip(int *clipwd) {
     if (eclip && clipwd) *clipwd = eclip->cwd;
     return eclip;
 }
 
-const Clip* ClipManager::GetSelectClip(int* clipwd) {
+const Clip *ClipManager::GetSelectClip(int *clipwd) {
     if (sclip && clipwd) *clipwd = sclip->cwd;
     return sclip;
 }
 
-const Clip* ClipManager::GetPasteClip(int* clipwd) {
+const Clip *ClipManager::GetPasteClip(int *clipwd) {
     if (pclip && clipwd) *clipwd = pclip->cwd;
     return pclip;
 }
 
-const Clip* ClipManager::GetActiveClip(int* clipwd) {
+const Clip *ClipManager::GetActiveClip(int *clipwd) {
     if (aclip && clipwd) *clipwd = aclip->cwd;
     return aclip;
 }
 
-const Clip* ClipManager::GetLiveNotActiveClip(int* clipwd) {
+const Clip *ClipManager::GetLiveNotActiveClip(int *clipwd) {
     if (lnaclip && clipwd) *clipwd = lnaclip->cwd;
     return lnaclip;
 }
 
-const Clip* ClipManager::GetSelectNotActiveClip(int* clipwd) {
+const Clip *ClipManager::GetSelectNotActiveClip(int *clipwd) {
     if (snaclip && clipwd) *clipwd = snaclip->cwd;
     return snaclip;
 }
 
-const Clip* ClipManager::GetEvenLiveNotActiveClip(int* clipwd) {
+const Clip *ClipManager::GetEvenLiveNotActiveClip(int *clipwd) {
     if (elnaclip && clipwd) *clipwd = elnaclip->cwd;
     return elnaclip;
 }
 
-const Clip* ClipManager::GetOddLiveNotActiveClip(int* clipwd) {
+const Clip *ClipManager::GetOddLiveNotActiveClip(int *clipwd) {
     if (olnaclip && clipwd) *clipwd = olnaclip->cwd;
     return olnaclip;
 }
 
-const Clip* ClipManager::GetHistoryClip(int* clipwd) {
+const Clip *ClipManager::GetHistoryClip(int *clipwd) {
     if (hclip && clipwd) *clipwd = hclip->cwd;
     return hclip;
 }
 
-const Clip* ClipManager::GetHistoryNotActiveClip(int* clipwd) {
+const Clip *ClipManager::GetHistoryNotActiveClip(int *clipwd) {
     if (hnaclip && clipwd) *clipwd = hnaclip->cwd;
     return hnaclip;
 }
@@ -524,25 +525,19 @@ Table::~Table() {
 }
 
 bool Table::SetSize(int sz) {
-    bool result = true;
-
     // reallocate memory
     FreeMemory();
     size = sz;
     nkeys = 0;
-    AllocateMemory();
-    // check allocation
-    if (keys == NULL || values == NULL || exists == NULL) {
-        result = false;
-    }
-    return result;
+    return AllocateMemory();
 }
 
 void Table::Clear() {
-    // clear the table (no need to clear the keys just zero the number)
-    nkeys = 0;
-    memset(exists, 0, size * sizeof(*exists));
-    memset(values, 0, size * sizeof(*values));
+    // clear the table
+    if (nkeys > 0) {
+        ClearKeys();
+        memset(values, 0, size * sizeof(*values));
+    }
 }
 
 void Table::ClearKeys() {
@@ -551,9 +546,9 @@ void Table::ClearKeys() {
     memset(exists, 0, size * sizeof(*exists));
 }
 
-const int* Table::GetKeys(int* numkeys) {
+const int *Table::GetKeys(int *numkeys) {
     // return the number of keys
-    *numkeys = nkeys;
+    if (numkeys) *numkeys = nkeys;
 
     // return the list of keys
     return keys;
@@ -564,7 +559,7 @@ const int Table::GetNumKeys() {
     return nkeys;
 }
 
-const unsigned char* Table::GetValues() {
+const unsigned char *Table::GetValues() {
     // return the list of values
     return values;
 }
@@ -620,9 +615,9 @@ void Table::DecrementTo1(const int key) {
 }
 
 void Table::SortKeys() {
-    int* key = keys;
-    char* exist = exists;
-    int* lastkey = key + nkeys;
+    int *key = keys;
+    char *exist = exists;
+    int *lastkey = key + nkeys;
     // sort keys into ascending order
     while (key < lastkey) {
         if (*exist) {
@@ -632,7 +627,7 @@ void Table::SortKeys() {
     }
 }
 
-void Table::Copy(const Table& from) {
+void Table::Copy(const Table &from) {
     if (from.size != size) {
         SetSize(from.size);
     }
@@ -652,13 +647,20 @@ void Table::FreeMemory() {
     exists = NULL;
 }
 
-void Table::AllocateMemory() {
+bool Table::AllocateMemory() {
     // allocate keys
     keys = (int*)malloc(size * sizeof(*keys));
 
     // allocate and clear values and key exists
     values = (unsigned char*)calloc(size, sizeof(*values));
     exists = (char*)calloc(size, sizeof(*exists));
+
+    // check allocation succeeded
+    if (keys == NULL || values == NULL || exists == NULL) {
+        FreeMemory();
+        return false;
+    }
+    return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -675,12 +677,10 @@ void Table::AllocateMemory() {
 #endif
 
 #define PixelInOverlay(x,y) \
-    (x >= 0 && x < ovwd && \
-     y >= 0 && y < ovht)
+    (((unsigned int)(x)) < (unsigned int)ovwd && ((unsigned int)(y)) < (unsigned int)ovht)
 
 #define PixelInTarget(x,y) \
-    (x >= 0 && x < wd && \
-     y >= 0 && y < ht)
+    (((unsigned int)(x)) < (unsigned int)wd && ((unsigned int)(y)) < (unsigned int)ht)
 
 #define RectOutsideTarget(x,y,w,h) \
     (x >= wd || x + w <= 0 || \
@@ -692,10 +692,10 @@ void Table::AllocateMemory() {
 
 // -----------------------------------------------------------------------------
 
-Overlay* curroverlay = NULL;        // pointer to current overlay
+Overlay *curroverlay = NULL;        // pointer to current overlay
 
-const char* no_overlay = "overlay has not been created";
-const char* no_cellview = "overlay does not have a cell view";
+const char *no_overlay = "overlay has not been created";
+const char *no_cellview = "overlay does not have a cell view";
 
 const int cellviewmaxsize = 4096;   // maximum dimension for cell view
 const int cellviewmultiple = 16;    // cellview dimensions must be a multiple of this value
@@ -751,6 +751,13 @@ Overlay::Overlay()
     gridsize = 0;
     showhistory = 0;
     fadehistory = false;
+    modN = NULL;
+    modNN = NULL;
+    divNN = NULL;
+    modNdivN = NULL;
+    xaxis = NULL;
+    yaxis = NULL;
+    zaxis = NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -795,6 +802,12 @@ void Overlay::DeleteOverlay()
 
     // delete cellview
     DeleteCellView();
+
+    // free div table
+    FreeDivTable();
+
+    // clear axis flags
+    FreeAxisFlags();
 }
 
 // -----------------------------------------------------------------------------
@@ -862,9 +875,8 @@ void Overlay::RefreshCellViewWithTheme()
 {
     // refresh the cellview for a 2 state pattern using LifeViewer theme
     unsigned char *cellviewptr = cellview;
-    unsigned char state;
-    unsigned char* cellviewptr1 = cellview1;
-    unsigned char *end = cellview + (cellwd * cellht);
+    unsigned char *cellviewptr1 = cellview1;
+    const unsigned char *end = cellview + (cellwd * cellht);
 
     // get the cells in the cell view
     lifealgo *algo = currlayer->algo;
@@ -872,7 +884,7 @@ void Overlay::RefreshCellViewWithTheme()
 
     // update based on the theme
     while (cellviewptr < end) {
-        state = *cellviewptr;
+        const unsigned char state = *cellviewptr;
         if (*cellviewptr1++) {
             // new cell is alive
             if (state >= aliveStart) {
@@ -914,9 +926,9 @@ void Overlay::GetPatternColors()
 
     // read pattern colors
     const int numicons = currlayer->numicons;
-    const unsigned char* cellr = currlayer->cellr;
-    const unsigned char* cellg = currlayer->cellg;
-    const unsigned char* cellb = currlayer->cellb;
+    const unsigned char *cellr = currlayer->cellr;
+    const unsigned char *cellg = currlayer->cellg;
+    const unsigned char *cellb = currlayer->cellb;
 
     for (int i = 0; i <= numicons; i++) {
         *rgba++ = BYTE2RED(cellr[i]) | BYTE2GREEN(cellg[i]) | BYTE2BLUE(cellb[i]) | AMASK;
@@ -935,7 +947,6 @@ void Overlay::GetPatternColors()
 void Overlay::GetThemeColors(double brightness)
 {
     unsigned char *rgb = (unsigned char *)cellRGBA;
-    double weight;
 
     // cell born color
     unsigned char aliveStartR, aliveStartG, aliveStartB, aliveStartA;
@@ -967,7 +978,7 @@ void Overlay::GetThemeColors(double brightness)
 
     // set decaying colors
     for (int i = deadEnd; i <= deadStart; i++) {
-        weight = 1 - ((double)(i - deadEnd) / (deadStart - deadEnd));
+        const double weight = 1 - ((double)(i - deadEnd) / (deadStart - deadEnd));
         *rgb++ = deadStartR * (1 - weight) + deadEndR * weight;
         *rgb++ = deadStartG * (1 - weight) + deadEndG * weight;
         *rgb++ = deadStartB * (1 - weight) + deadEndB * weight;
@@ -976,7 +987,7 @@ void Overlay::GetThemeColors(double brightness)
 
     // set living colors
     for (int i = aliveStart; i <= aliveEnd; i++) {
-        weight = 1 - ((double)(i - aliveStart) / (aliveEnd - aliveStart));
+        const double weight = 1 - ((double)(i - aliveStart) / (aliveEnd - aliveStart));
         *rgb++ = (aliveStartR * weight + aliveEndR * (1 - weight)) * brightness;
         *rgb++ = (aliveStartG * weight + aliveEndG * (1 - weight)) * brightness;
         *rgb++ = (aliveStartB * weight + aliveEndB * (1 - weight)) * brightness;
@@ -992,17 +1003,17 @@ void Overlay::GetThemeColors(double brightness)
 
 // -----------------------------------------------------------------------------
 
-void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int step)
+void Overlay::UpdateZoomView(unsigned char *source, unsigned char *dest, const unsigned int step)
 {
     unsigned char state;
     unsigned char max;
-    const int halfstep = step >> 1;
-    const int ystep = step * cellwd;
-    unsigned char* row1 = source;
-    unsigned char* row2 = source + halfstep * cellwd;
+    const unsigned int halfstep = step >> 1;
+    const unsigned int ystep = step * cellwd;
+    unsigned char *row1 = source;
+    unsigned char *row2 = source + halfstep * cellwd;
 
-    for (int h = 0; h < cellht; h += step) {
-        for (int w = 0; w < cellwd; w += step) {
+    for (unsigned int h = 0; h < cellht; h += step) {
+        for (unsigned int w = 0; w < cellwd; w += step) {
             // find the maximum state value in each 2x2 block
             max = row1[w];
             state = row1[w + halfstep];
@@ -1023,7 +1034,7 @@ void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int ste
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoDrawCells()
+const char *Overlay::DoDrawCells()
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
@@ -1062,8 +1073,7 @@ const char* Overlay::DoDrawCells()
     // pick renderer based on whether camera is rotated
     if (angle == 0) {
         DrawCellsNoRotate(cells, ~mask);
-    }
-    else {
+    } else {
         DrawCellsRotate(cells, ~mask, angle);
     }
 
@@ -1101,8 +1111,7 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
     if (theme) {
         // using theme colors
         GetThemeColors(brightness);
-    }
-    else {
+    } else {
         // using standard pattern colors
         GetPatternColors();
     }
@@ -1115,10 +1124,8 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
     double sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
 
     unsigned char state;
-    unsigned int rgba;
     unsigned int *overlayptr = (unsigned int *)pixmap;
     double x, y;
-    int ix, iy;
 
     // draw each pixel
     y = sy;
@@ -1132,27 +1139,38 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
             x += 0.5 * (int)y;
         }
 
-        for (int w = 0; w < width; w++) {
-            ix = (((int)x) & mask);
-            iy = (((int)y) & mask);
-
-            // check if pixel is in the cell view
-            if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
+        // check if entire row in on the grid
+        unsigned int ix = (((int)x) & mask);
+        unsigned int iy = (((int)y) & mask);
+        unsigned int tx = (((int)(x + dyy * wd)) & mask);
+        unsigned int ty = (((int)(y - dxy * wd)) & mask);
+        if (ix < cellwd && iy < cellht && tx < cellwd && ty < cellht) {
+            for (int w = 0; w < width; w++) {
+                ix = (((int)x) & mask);
+                iy = (((int)y) & mask);
                 state = cells[cellwd * iy + ix];
-                rgba = cellRGBA[state];
+                *overlayptr++ = cellRGBA[state];
+                x += dyy;
+                y -= dxy;
             }
-            else {
-                rgba = borderRGBA;
+        } else {
+            for (int w = 0; w < width; w++) {
+                ix = (((int)x) & mask);
+                iy = (((int)y) & mask);
+
+                // check if pixel is in the cell view
+                if (ix < cellwd && iy < cellht) {
+                    state = cells[cellwd * iy + ix];
+                    *overlayptr++ = cellRGBA[state];
+                } else {
+                    *overlayptr++ = borderRGBA;
+                }
+
+                // update row position
+                x += dyy;
+                y -= dxy;
             }
-
-            // set the pixel
-            *overlayptr++ = rgba;
-
-            // update row position
-            x += dyy;
-            y -= dxy;
         }
-
         // update column position
         sx += dxy;
         sy += dyy;
@@ -1187,16 +1205,13 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
             // compute which zoomview level to use for this layer
             if (layerzoom < 0.125) {
                 zoomlevel = 8;
-            }
-            else {
+            } else {
                 if (layerzoom < 0.25) {
                     zoomlevel = 4;
-                }
-                else {
+                } else {
                     if (layerzoom < 0.5) {
                         zoomlevel = 2;
-                    }
-                    else {
+                    } else {
                         if (layerzoom < 1) {
                             zoomlevel = 1;
                         }
@@ -1225,25 +1240,44 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
                     x += 0.5 * (int)y;
                 }
 
-                for (int w = 0; w < wd; w++) {
-                    ix = (((int)x) & mask);
-                    iy = (((int)y) & mask);
-
-                    // check if pixel is on the grid
-                    if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
+                // check if entire row in on the grid
+                unsigned int ix = (((int)x) & mask);
+                unsigned int iy = (((int)y) & mask);
+                unsigned int tx = (((int)(x + dyy * wd)) & mask);
+                unsigned int ty = (((int)(y - dxy * wd)) & mask);
+                if (ix < cellwd && iy < cellht && tx < cellwd && ty < cellht) {
+                    for (int w = 0; w < wd; w++) {
+                        ix = (((int)x) & mask);
+                        iy = (((int)y) & mask);
                         state = cells[cellwd * iy + ix];
-
-                        // check if it is transparent
                         if (state >= transparenttarget) {
-                            // draw the pixel
                             *overlayptr = cellRGBA[state];
                         }
+                        overlayptr++;
+                        x += dyy;
+                        y -= dxy;
                     }
-                    overlayptr++;
+                } else {
+                    for (int w = 0; w < wd; w++) {
+                        ix = (((int)x) & mask);
+                        iy = (((int)y) & mask);
 
-                    // update row position
-                    x += dyy;
-                    y -= dxy;
+                        // check if pixel is on the grid
+                        if (ix < cellwd && iy < cellht) {
+                            state = cells[cellwd * iy + ix];
+
+                            // check if it is transparent
+                            if (state >= transparenttarget) {
+                                // draw the pixel
+                                *overlayptr = cellRGBA[state];
+                            }
+                        }
+                        overlayptr++;
+
+                        // update row position
+                        x += dyy;
+                        y -= dxy;
+                    }
                 }
 
                 // update column position
@@ -1278,35 +1312,29 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
     if (theme) {
         // using theme colors
         GetThemeColors(brightness);
-    }
-    else {
+    } else {
         // using standard pattern colors
         GetPatternColors();
     }
 
-    // compute deltas in horizontal and vertical direction based on rotation
+    // compute deltas in horizontal and vertical direction
     double dyy = 1 / camzoom;
 
     double sy = -((ht / 2) * dyy) + camy;
     double sx = -((wd / 2) * dyy) + camx;
 
     unsigned char state;
-    unsigned int rgba;
-    unsigned int *overlayptr = (unsigned int *)pixmap;
+    unsigned int  *overlayptr = (unsigned int *)pixmap;
     unsigned char *rowptr;
     double x, y;
-    int ix, iy;
-    int h, w;
-    int sectionsize = 4;   // size of unrolled loop
-    int endrow = wd & ~(sectionsize - 1);
 
     // draw each pixel
     y = sy;
-    for (h = 0; h < ht; h++) {
-        iy = (((int)y) & mask);
+    for (int h = 0; h < ht; h++) {
+        unsigned int iy = (((int)y) & mask);
 
         // clip to the grid
-        if (iy >= 0 && iy < cellht) {
+        if (iy < cellht) {
             // get the row
             rowptr = cells + cellwd * iy;
             x = sx;
@@ -1316,103 +1344,36 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
                 x += 0.5 * (int)y;
             }
 
-            w = 0;
-            while (w < endrow) {
-                // check if pixel is in the cell view
-                ix = (((int)x) & mask);
-                if (ix >= 0 && ix < cellwd) {
+            // check if the whole row is on the grid
+            unsigned int ix = (((int)x) & mask);
+            unsigned int tx = (((int)(x + dyy * wd)) & mask);
+            if (ix < cellwd && tx < cellwd) {
+                for (int w = 0; w < wd; w++) {
+                    ix = (((int)x) & mask);
                     state = rowptr[ix];
-                    rgba = cellRGBA[state];
+                    *overlayptr++ = cellRGBA[state];
+                    x += dyy;
                 }
-                else {
-                    rgba = borderRGBA;
-                }
+            } else {
+                for (int w = 0; w < wd; w++) {
+                    // check if pixel is in the cell view
+                    ix = (((int)x) & mask);
+                    if (ix < cellwd) {
+                        state = rowptr[ix];
+                        *overlayptr++ = cellRGBA[state];
+                    } else {
+                        *overlayptr++ = borderRGBA;
+                    }
 
-                // set the pixel
-                *overlayptr++ = rgba;
-
-                // update row position
-                x += dyy;
-
-                // loop unroll
-                ix = (((int)x) & mask);
-                if (ix >= 0 && ix < cellwd) {
-                    state = rowptr[ix];
-                    rgba = cellRGBA[state];
+                    // update row position
+                    x += dyy;
                 }
-                else {
-                    rgba = borderRGBA;
-                }
-                *overlayptr++ = rgba;
-                x += dyy;
-
-                // loop unroll
-                ix = (((int)x) & mask);
-                if (ix >= 0 && ix < cellwd) {
-                    state = rowptr[ix];
-                    rgba = cellRGBA[state];
-                }
-                else {
-                    rgba = borderRGBA;
-                }
-                *overlayptr++ = rgba;
-                x += dyy;
-
-                // loop unroll
-                ix = (((int)x) & mask);
-                if (ix >= 0 && ix < cellwd) {
-                    state = rowptr[ix];
-                    rgba = cellRGBA[state];
-                }
-                else {
-                    rgba = borderRGBA;
-                }
-                *overlayptr++ = rgba;
-                x += dyy;
-
-                // next section
-                w += sectionsize;
             }
-
-            // remaining pixels
-            while (w < wd) {
-                // render pixel
-                ix = (((int)x) & mask);
-                if (ix >= 0 && ix < cellwd) {
-                    state = rowptr[ix];
-                    rgba = cellRGBA[state];
-                }
-                else {
-                    rgba = borderRGBA;
-                }
-                *overlayptr++ = rgba;
-                x += dyy;
-
-                // next pixel
-                w++;
-            }
-        }
-        else {
+        } else {
             // draw off grid row
-            w = 0;
-            while (w < endrow) {
-                // draw section
-                *overlayptr++ = borderRGBA;
-                *overlayptr++ = borderRGBA;
-                *overlayptr++ = borderRGBA;
-                *overlayptr++ = borderRGBA;
-
-                // next section
-                w += sectionsize;
-            }
-
-            // remaining pixels
-            while (w < wd) {
+            for (int w = 0; w < wd; w++) {
                 // draw pixel
                 *overlayptr++ = borderRGBA;
-
-                // next pixel
-                w++;
             }
         }
 
@@ -1448,16 +1409,13 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
             // compute which zoomview level to use for this layer
             if (layerzoom < 0.125) {
                 zoomlevel = 8;
-            }
-            else {
+            } else {
                 if (layerzoom < 0.25) {
                     zoomlevel = 4;
-                }
-                else {
+                } else {
                     if (layerzoom < 0.5) {
                         zoomlevel = 2;
-                    }
-                    else {
+                    } else {
                         if (layerzoom < 1) {
                             zoomlevel = 1;
                         }
@@ -1478,11 +1436,11 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
 
             // draw each pixel
             y = sy;
-            for (h = 0; h < ht; h++) {
-                iy = (((int)y) & mask);
+            for (int h = 0; h < ht; h++) {
+                unsigned int iy = (((int)y) & mask);
 
                 // clip to the grid
-                if (iy >= 0 && iy < cellht) {
+                if (iy < cellht) {
                     // get the row
                     rowptr = cells + cellwd * iy;
                     x = sx;
@@ -1492,99 +1450,41 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
                         x += 0.5 * (int)y;
                     }
 
-                    w = 0;
-                    while (w < endrow) {
-                        // check if pixel is on the grid
-                        ix = (((int)x) & mask);
-                        if (ix >= 0 && ix < cellwd) {
-                            state = rowptr[ix];
-
-                            // check if it is transparent
-                            if (state >= transparenttarget) {
-                                // draw the pixel
-                                *overlayptr = cellRGBA[state];
-                            }
-                        }
-                        overlayptr++;
-
-                        // update row position
-                        x += dyy;
-
-                        // loop unroll
-                        ix = (((int)x) & mask);
-                        if (ix >= 0 && ix < cellwd) {
+                    // check if the whole row is on the grid
+                    unsigned int ix = (((int)x) & mask);
+                    unsigned int tx = (((int)(x + dyy * wd)) & mask);
+                    if (ix < cellwd && tx < cellwd) {
+                        for (int w = 0; w < wd; w++) {
+                            ix = (((int)x) & mask);
                             state = rowptr[ix];
                             if (state >= transparenttarget) {
                                 *overlayptr = cellRGBA[state];
                             }
+                            overlayptr++;
+                            x += dyy;
                         }
-                        overlayptr++;
-                        x += dyy;
-
-                        // loop unroll
-                        ix = (((int)x) & mask);
-                        if (ix >= 0 && ix < cellwd) {
-                            state = rowptr[ix];
-                            if (state >= transparenttarget) {
-                                *overlayptr = cellRGBA[state];
+                    } else {
+                        for (int w = 0; w < wd; w++) {
+                            // check if pixel is on the grid
+                            ix = (((int)x) & mask);
+                            if (ix < cellwd) {
+                                state = rowptr[ix];
+                                // check if it is transparent
+                                if (state >= transparenttarget) {
+                                    // draw the pixel
+                                    *overlayptr = cellRGBA[state];
+                                }
                             }
+                            overlayptr++;
+                            // update row position
+                            x += dyy;
                         }
-                        overlayptr++;
-                        x += dyy;
-
-                        // loop unroll
-                        ix = (((int)x) & mask);
-                        if (ix >= 0 && ix < cellwd) {
-                            state = rowptr[ix];
-                            if (state >= transparenttarget) {
-                                *overlayptr = cellRGBA[state];
-                            }
-                        }
-                        overlayptr++;
-                        x += dyy;
-
-                        // next section
-                        w += sectionsize;
                     }
-
-                    // remaining pixels
-                    while (w < wd) {
-                        // render pixel
-                        ix = (((int)x) & mask);
-                        if (ix >= 0 && ix < cellwd) {
-                            state = rowptr[ix];
-                            if (state >= transparenttarget) {
-                                *overlayptr = cellRGBA[state];
-                            }
-                        }
-                        overlayptr++;
-                        x += dyy;
-
-                        // next pixel
-                        w++;
-                   }
-                }
-                else {
+                } else {
                     // draw off grid row
-                    w = 0;
-                    while (w < endrow) {
-                        // draw section
-                        *overlayptr++ = borderRGBA;
-                        *overlayptr++ = borderRGBA;
-                        *overlayptr++ = borderRGBA;
-                        *overlayptr++ = borderRGBA;
-
-                        // next section
-                        w += sectionsize;
-                    }
-
-                    // remaining pixels
-                    while (w < wd) {
+                    for (int w = 0; w < wd; w++) {
                         // draw pixel
                         *overlayptr++ = borderRGBA;
-
-                        // next pixel
-                        w++;
                     }
                 }
 
@@ -1598,15 +1498,14 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoUpdateCells()
+const char *Overlay::DoUpdateCells()
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
     // check if themes are used
     if (theme) {
         RefreshCellViewWithTheme();
-    }
-    else {
+    } else {
         RefreshCellView();
     }
 
@@ -1625,16 +1524,14 @@ void Overlay::DrawVLine(int x, int y1, int y2, unsigned int color)
     // clip the line to the display
     if (y1 < 0) {
         y1 = 0;
-    }
-    else {
+    } else {
         if (y1 >= ht) {
             y1 = ht - 1;
         }
     }
     if (y2 < 0) {
         y2 = 0;
-    }
-    else {
+    } else {
         if (y2 >= ht) {
             y2 = ht - 1;
         }
@@ -1755,8 +1652,7 @@ void Overlay::DrawGridLines()
                 // choose whether to use major or minor color
                 if (gridlineNum % gridmajor == 0) {
                     drawRGBA = gridmajorRGBA;
-                }
-                else {
+                } else {
                     drawRGBA = gridRGBA;
                 }
             }
@@ -1772,14 +1668,12 @@ void Overlay::DrawGridLines()
                     for (y = yoff - camzoom; y <= ht + camzoom; y += camzoom) {
                         if ((vlineNum & 1) != 0) {
                             DrawVLine(round(x + xoff + camzoom / 2), round(y + camzoom / 2), round(y + camzoom / 2 +  camzoom - 1), drawRGBA);
-                        }
-                        else {
+                        } else {
                             DrawVLine(round(x + xoff + camzoom), round(y + camzoom / 2), round(y + camzoom / 2 + camzoom - 1), drawRGBA);
                         }
                         vlineNum++;
                     }
-                }
-                else {
+                } else {
                     DrawVLine(round(x + xoff + camzoom / 2), 0, ht - 1, drawRGBA);
                 }
             }
@@ -1794,8 +1688,7 @@ void Overlay::DrawGridLines()
                 // choose whether to use major or minor color
                 if (gridlineNum % gridmajor == 0) {
                     drawRGBA = gridmajorRGBA;
-                }
-                else {
+                } else {
                     drawRGBA = gridRGBA;
                 }
             }
@@ -1864,29 +1757,24 @@ void Overlay::CreateStars()
 
 void Overlay::DrawStars(double angle)
 {
-    int i;
-    double x, y, z;
-    int ix, iy;
-    double radius;
-    double theta;
     int offset;
-    unsigned int* pixmapRGBA = (unsigned int*)pixmap;
+    unsigned int *pixmapRGBA = (unsigned int*)pixmap;
 
     // get the unoccupied cell pixel color
     unsigned int blankRGBA = cellRGBA[0];
-    unsigned char* blankCol = (unsigned char*)&blankRGBA;
+    unsigned char *blankCol = (unsigned char*)&blankRGBA;
     unsigned char blankR = *blankCol++;
     unsigned char blankG = *blankCol++;
     unsigned char blankB = *blankCol++;
 
     // get the star color components
-    unsigned char* starCol = (unsigned char*)&starRGBA;
+    unsigned char *starCol = (unsigned char*)&starRGBA;
     unsigned char starR = *starCol++;
     unsigned char starG = *starCol++;
     unsigned char starB = *starCol++;
 
     unsigned int pixelRGBA;
-    unsigned char* pixelCol = (unsigned char*)&pixelRGBA;
+    unsigned char *pixelCol = (unsigned char*)&pixelRGBA;
     pixelCol[3] = 255;
     unsigned char red, green, blue;
 
@@ -1896,25 +1784,24 @@ void Overlay::DrawStars(double angle)
     }
 
     // update each star
-    for (i = 0; i < numStars; i++) {
+    for (int i = 0; i < numStars; i++) {
         // get the 2d part of 3d position
-        x = starx[i] - camx;
-        y = stary[i] - camy;
+        double x = starx[i] - camx;
+        double y = stary[i] - camy;
 
         // check if angle is non zero
         if (angle != 0) {
             // compute radius
-            radius = sqrt((x * x) + (y * y));
+            double radius = sqrt((x * x) + (y * y));
 
             // get angle
-            theta = atan2(y, x) * radToDeg;
+            double theta = atan2(y, x) * radToDeg;
 
             // add current rotation
             theta += angle;
             if (theta < 0) {
                 theta += 360;
-            }
-            else {
+            } else {
                 if (theta >= 360) {
                     theta -= 360;
                 }
@@ -1926,9 +1813,9 @@ void Overlay::DrawStars(double angle)
         }
 
         // create the 2d position
-        z = (starz[i] / camzoom) * 2;
-        ix = (int)(x / z) + wd / 2;
-        iy = (int)(y / z) + ht / 2;
+        double z = (starz[i] / camzoom) * 2;
+        int ix = (int)(x / z) + wd / 2;
+        int iy = (int)(y / z) + ht / 2;
 
         // check the star and halo are on the display
         if (ix > 0 && ix < (wd - 1) && iy > 0 && iy < (ht - 1)) {
@@ -1989,7 +1876,7 @@ void Overlay::DrawStars(double angle)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCellView(const char* args)
+const char *Overlay::DoCellView(const char *args)
 {
     // check the arguments are valid
     int x, y, w, h;
@@ -2065,7 +1952,7 @@ const char* Overlay::DoCellView(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CamZoom(const char* args)
+const char *Overlay::CamZoom(const char *args)
 {
     // check the argument is valid
     double zoom;
@@ -2084,7 +1971,7 @@ const char* Overlay::CamZoom(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CamAngle(const char* args)
+const char *Overlay::CamAngle(const char *args)
 {
     // check the argument is valid
     double angle;
@@ -2103,7 +1990,7 @@ const char* Overlay::CamAngle(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CamXY(const char* args)
+const char *Overlay::CamXY(const char *args)
 {
     // check the arguments are valid
     double x;
@@ -2121,7 +2008,7 @@ const char* Overlay::CamXY(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCamera(const char* args)
+const char *Overlay::DoCamera(const char *args)
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
@@ -2134,7 +2021,7 @@ const char* Overlay::DoCamera(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CellOptionLayers(const char* args)
+const char *Overlay::CellOptionLayers(const char *args)
 {
     // check the argument is valid
     int howmany;
@@ -2154,7 +2041,7 @@ const char* Overlay::CellOptionLayers(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CellOptionDepth(const char* args)
+const char *Overlay::CellOptionDepth(const char *args)
 {
     // check the argument is valid
     double depth;
@@ -2172,7 +2059,7 @@ const char* Overlay::CellOptionDepth(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CellOptionHex(const char* args)
+const char *Overlay::CellOptionHex(const char *args)
 {
     int mode;
     if (sscanf(args, "%d", &mode) != 1) {
@@ -2186,7 +2073,7 @@ const char* Overlay::CellOptionHex(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CellOptionGrid(const char* args)
+const char *Overlay::CellOptionGrid(const char *args)
 {
     int mode;
     if (sscanf(args, "%d", &mode) != 1) {
@@ -2200,7 +2087,7 @@ const char* Overlay::CellOptionGrid(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CellOptionGridMajor(const char* args)
+const char *Overlay::CellOptionGridMajor(const char *args)
 {
     int major;
     if (sscanf(args, "%d", &major) != 1) {
@@ -2216,7 +2103,7 @@ const char* Overlay::CellOptionGridMajor(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::CellOptionStars(const char* args)
+const char *Overlay::CellOptionStars(const char *args)
 {
     int mode;
     if (sscanf(args, "%d", &mode) != 1) {
@@ -2230,7 +2117,7 @@ const char* Overlay::CellOptionStars(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCellOption(const char* args)
+const char *Overlay::DoCellOption(const char *args)
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
@@ -2246,7 +2133,7 @@ const char* Overlay::DoCellOption(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoTheme(const char* args)
+const char *Overlay::DoTheme(const char *args)
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
@@ -2277,8 +2164,7 @@ const char* Overlay::DoTheme(const char* args)
                 if (disable != -1) {
                     return OverlayError("theme command single argument must be -1");
                 }
-            }
-            else {
+            } else {
                 return OverlayError("theme command requires single argument -1, or 15 or 19 rgb components");
             }
         }
@@ -2327,8 +2213,7 @@ const char* Overlay::DoTheme(const char* args)
     // save the new values
     if (disable == -1) {
         theme = false;
-    }
-    else {
+    } else {
         theme = true;
         SetRGBA(asr, asg, asb, aa, &aliveStartRGBA);
         SetRGBA(aer, aeg, aeb, aa, &aliveEndRGBA);
@@ -2343,7 +2228,7 @@ const char* Overlay::DoTheme(const char* args)
 
 // -----------------------------------------------------------------------------
 
-void Overlay::SetRenderTarget(unsigned char* pix, int pwd, int pht, Clip* clip)
+void Overlay::SetRenderTarget(unsigned char *pix, int pwd, int pht, Clip *clip)
 {
     pixmap = pix;
     wd = pwd;
@@ -2353,7 +2238,7 @@ void Overlay::SetRenderTarget(unsigned char* pix, int pwd, int pht, Clip* clip)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoResize(const char* args)
+const char *Overlay::DoResize(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -2399,7 +2284,7 @@ const char* Overlay::DoResize(const char* args)
         clips.erase(it);
 
         // allocate the resized clip with calloc
-        Clip* newclip = new Clip(w, h, true);
+        Clip *newclip = new Clip(w, h, true);
         if (newclip == NULL || newclip->cdata == NULL) {
             delete newclip;
             return OverlayError("not enough memory to resize clip");
@@ -2444,7 +2329,7 @@ const char* Overlay::DoResize(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCreate(const char* args)
+const char *Overlay::DoCreate(const char *args)
 {
     // don't set wd and ht until we've checked the args are valid
     int w, h;
@@ -2476,7 +2361,7 @@ const char* Overlay::DoCreate(const char* args)
         }
 
         // allocate the clip with calloc
-        Clip* newclip = new Clip(w, h, true);
+        Clip *newclip = new Clip(w, h, true);
         if (newclip == NULL || newclip->cdata == NULL) {
             delete newclip;
             return OverlayError("not enough memory to create clip");
@@ -2569,7 +2454,7 @@ const char* Overlay::DoCreate(const char* args)
 
 // -----------------------------------------------------------------------------
 
-bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
+bool Overlay::PointInOverlay(int vx, int vy, int *ox, int *oy)
 {
     if (ovpixmap == NULL) return false;
 
@@ -2611,7 +2496,7 @@ bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPosition(const char* args)
+const char *Overlay::DoPosition(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -2639,8 +2524,9 @@ const char* Overlay::DoPosition(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int* delta, int component) {
-    // argument is a string defining the find component value and optional replacement
+const char *Overlay::DecodeReplaceArg(const char *arg, int *find, bool *negfind, int *replace, int *invreplace, int *delta, int component) {
+    // argument is a string defining the find component value, optional replacement specification and
+    // optional postfix value adjustment
     // find part is one of:
     //     *       (match any value)
     //     0..255  (match specific value)
@@ -2651,12 +2537,12 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
     //     b       (replace with blue component)
     //     a       (replace with alpha component)
     //     #       (leave this component unchanged)
-    // replacement part can be followed by one of:
-    //     -       (component value should be inverted: v -> 255-v)
-    //     --      (component value should be decremented)
-    //     ++      (component value should be incremented)
-    //     -0..255 (component value should have constant subtracted from it)
-    //     +0..255 (component value should have constant added to it)
+    // optional postfix is one of:
+    //     -       (value should be inverted: v -> 255-v)
+    //     --      (value should be decremented)
+    //     ++      (value should be incremented)
+    //     -0..255 (value should have constant subtracted from it)
+    //     +0..255 (value should have constant added to it)
     char *p     = (char*)arg;
     *find       = 0;
     *negfind    = false;
@@ -2668,8 +2554,7 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
         // match any
         *find = matchany;
         p++;
-    }
-    else {
+    } else {
         if (*p == '!') {
             // invert match
             *negfind = true;
@@ -2687,14 +2572,15 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
 
     // decode optional replacement
     if (*p != '\0') {
-        const char* valid = "rgba#";
-        char* match = strchr((char*)valid, *p);
-        if (match == NULL) {
-            return "replace argument postfix is invalid";
+        const char *valid = "rgba#";
+        char *match = strchr((char*)valid, *p);
+        if (match) {
+            *replace = match - valid + 1;
+            if (*replace == 5) *replace = component;
+            p++;
+        } else {
+            if (*p != '-') return "replace argument postfix is invalid";
         }
-        *replace = match - valid + 1;
-        if (*replace == 5) *replace = component;
-        p++;
         // check for invert, increment or decrement
         if (*p == '-') {
             p++;
@@ -2747,16 +2633,16 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoReplace(const char* args)
+const char *Overlay::DoReplace(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     // allocate memory for the arguments
-    char* buffer = (char*)malloc(strlen(args) + 1);
+    char *buffer = (char*)malloc(strlen(args) + 1);
     strcpy(buffer, args);
 
     // check the arguments exist
-    const char* delim = " ";
+    const char *delim = " ";
     const char *arg1 = strtok(buffer, delim);
     const char *arg2 = strtok(NULL, delim);
     const char *arg3 = strtok(NULL, delim);
@@ -2798,9 +2684,10 @@ const char* Overlay::DoReplace(const char* args)
     free(buffer);
 
     // get the current render target
-    unsigned char* clipdata = pixmap;
-    int w = wd;
-    int h = ht;
+    unsigned char *clipdata = pixmap;
+    const int w = wd;
+    const int h = ht;
+    const int allpixels = w * h;
 
     // check that negation is correctly used
     if (negg || negb || (nega && negr)) {
@@ -2818,27 +2705,27 @@ const char* Overlay::DoReplace(const char* args)
     int numchanged = 0;
     static char result[16];
 
-    bool allwild = (findr == matchany && findg == matchany && findb == matchany && finda == matchany);
-    bool zerodelta = (deltar == 0 && deltag == 0 && deltab == 0 && deltaa == 0);
-    bool zeroinv = (invr == 0 && invg == 0 && invb == 0 && inva == 0);
-    bool fixedreplace = (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0);
-    bool destreplace = (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 4);
+    const bool allwild = (findr == matchany && findg == matchany && findb == matchany && finda == matchany);
+    const bool zerodelta = (deltar == 0 && deltag == 0 && deltab == 0 && deltaa == 0);
+    const bool zeroinv = (invr == 0 && invg == 0 && invb == 0 && inva == 0);
+    const bool fixedreplace = (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0);
+    const bool destreplace = (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 4);
 
     // some specific common use cases are optimized for performance followed by the general purpose routine
     // the optimized versions are typically an order of magnitude faster
 
     // optimization case 1: fixed find and replace
     if ((findr != matchany && findg != matchany && findb != matchany && finda != matchany) &&
-        fixedreplace && !nega) {
+        fixedreplace && !nega && zeroinv && zerodelta) {
         // use 32 bit colors
-        unsigned int* cdata = (unsigned int*)clipdata;
+        unsigned int *cdata = (unsigned int*)clipdata;
         unsigned int findcol = 0;
-        unsigned int replacecol = rgbadraw;
+        const unsigned int replacecol = rgbadraw;
         SetRGBA(findr, findg, findb, finda, &findcol);
 
         // check for not equals case
         if (negr) {
-            for (int i = 0; i < w * h; i++) {
+            for (int i = 0; i < allpixels; i++) {
                 if (*cdata != findcol) {
                     *cdata = replacecol;
                     numchanged++;
@@ -2846,7 +2733,7 @@ const char* Overlay::DoReplace(const char* args)
                 cdata++;
             }
         } else {
-            for (int i = 0; i < w * h; i++) {
+            for (int i = 0; i < allpixels; i++) {
                 if (*cdata == findcol) {
                     *cdata = replacecol;
                     numchanged++;
@@ -2863,11 +2750,11 @@ const char* Overlay::DoReplace(const char* args)
     // optimization case 2: match pixels with different alpha and fixed replace
     if (zerodelta && fixedreplace && zeroinv && nega &&
         ((findr != matchany && findg != matchany && findb != matchany) || (findr == matchany && findg == matchany && findb == matchany))) {
-        unsigned int* cdata = (unsigned int*)clipdata;
-        unsigned int replacecol = rgbadraw;
+        unsigned int *cdata = (unsigned int*)clipdata;
+        const unsigned int replacecol = rgbadraw;
         if (findr != matchany) {
             // fixed match
-            for (int i = 0; i < w * h; i++) {
+            for (int i = 0; i < allpixels; i++) {
                 if (clipdata[0] == findr && clipdata[1] == findg && clipdata[2] == findb && clipdata[3] != finda) {
                     *cdata = replacecol;
                     numchanged++;
@@ -2877,8 +2764,9 @@ const char* Overlay::DoReplace(const char* args)
             }
         } else {
             // r g b wildcard match
-            for (int i = 0; i < w * h; i++) {
-                if (clipdata[3] != finda) {
+            clipdata += 3;
+            for (int i = 0; i < allpixels; i++) {
+                if (*clipdata != finda) {
                     *cdata = replacecol;
                     numchanged++;
                 }
@@ -2893,16 +2781,19 @@ const char* Overlay::DoReplace(const char* args)
     }
 
     // optimization case 3: fill
-    if (allwild && zerodelta && fixedreplace) {
+    if (allwild && zerodelta && zeroinv && fixedreplace) {
         // fill clip with current RGBA
-        unsigned int* cdata = (unsigned int*)clipdata;
-        unsigned int replacecol = rgbadraw;
-        for (int i = 0; i < w * h; i++) {
-            *cdata++ = replacecol;
+        unsigned int *cdata = (unsigned int*)clipdata;
+        const unsigned int replacecol = rgbadraw;
+        for (int i = 0; i < allpixels; i++) {
+            if (*cdata != replacecol) {
+                *cdata = replacecol;
+                numchanged++;
+            }
+            cdata++;
         }
 
         // return number of pixels replaced
-        numchanged = w * h;
         sprintf(result, "%d", numchanged);
         return result;
     }
@@ -2918,9 +2809,10 @@ const char* Overlay::DoReplace(const char* args)
     if (allwild && zerodelta && zeroinv &&
         (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 0)) {
         // set alpha
-        for (int i = 0; i < w * h; i++) {
-            if (clipdata[3] != a) {
-                clipdata[3] = a;
+        clipdata += 3;
+        for (int i = 0; i < allpixels; i++) {
+            if (*clipdata != a) {
+                *clipdata = a;
                 numchanged++;
             }
             clipdata += 4;
@@ -2931,33 +2823,59 @@ const char* Overlay::DoReplace(const char* args)
         return result;
     }
 
-    // optimization case 6: invert colors
-    if (allwild && zerodelta && destreplace &&
-        (invr != 0 && invg != 0 && invb != 0 && inva == 0)) {
-        // invert every pixel
-        unsigned int* cdata = (unsigned int*)clipdata;
+    // optimization case 6: invert one or more rgba components
+    if (allwild && zerodelta && !zeroinv && destreplace) {
+        // invert specified components of every pixel
+        unsigned int *cdata = (unsigned int*)clipdata;
         unsigned int invmask = 0;
-        SetRGBA(255, 255, 255, 0, &invmask);
+        SetRGBA(invr, invg, invb, inva, &invmask);
 
-        for (int i = 0; i < w * h; i++) {
+        for (int i = 0; i < allpixels; i++) {
             *cdata = *cdata ^ invmask;
             cdata++;
         }
 
         // return number of pixels replaced
-        numchanged = w * h;
+        numchanged = allpixels;
         sprintf(result, "%d", numchanged);
         return result;
     }
 
-    // optimization case 7: offset r g b a values
+    // optimization case 7: offset only alpha value
+    if (allwild && zeroinv && destreplace && deltar == 0 && deltag == 0 && deltab == 0 && deltaa != 0) {
+        // offset alpha value of every pixel
+        bool changed;
+        int value, orig;
+        unsigned int clamp;
+
+        clipdata += 3;
+        for (int i = 0; i < allpixels; i++) {
+            changed = false;
+            orig = *clipdata;
+            value = orig + deltaa;
+            clamp = value >> bytebits;
+            if (clamp) { value = ~clamp >> remainbits; }
+            changed = value != orig;
+            if (changed) {
+                *clipdata = value;
+                numchanged++;
+            }
+            clipdata += 4;
+        }
+
+        // return number of pixels replaced
+        sprintf(result, "%d", numchanged);
+        return result;
+    }
+
+    // optimization case 8: offset one or more rgba components
     if (allwild && zeroinv && destreplace && !zerodelta) {
         // offset rgba values of every pixel
         bool changed;
         int value, orig;
         unsigned int clamp;
 
-        for (int i = 0; i < w * h; i++) {
+        for (int i = 0; i < allpixels; i++) {
             changed = false;
 
             // change r if required
@@ -3016,12 +2934,27 @@ const char* Overlay::DoReplace(const char* args)
         return result;
     }
 
+    // optimization case 9: convert RGBA to ABGR
+    if (allwild && zeroinv && zerodelta && replacer == 4 && replaceg == 3 && replaceb == 2 && replacea == 1) {
+        unsigned int *cdata = (unsigned int*)clipdata;
+        unsigned int c;
+        for (int i = 0; i < allpixels; i++) {
+            c = *cdata;
+            *cdata++ = BYTE2RED(ALPHA2BYTE(c)) | BYTE2GREEN(BLUE2BYTE(c)) | BYTE2BLUE(GREEN2BYTE(c)) | BYTE2ALPHA(RED2BYTE(c));
+        }
+    
+        // return number changed
+        numchanged = allpixels;
+        sprintf(result, "%d", numchanged);
+        return result;
+    }
+
     // general case
     bool matchr, matchg, matchb, matcha, matchpixel;
     int value = 0;
     bool changed = false;
     unsigned int clamp;
-    for (int i = 0; i < w * h; i++) {
+    for (int i = 0; i < allpixels; i++) {
         // read the clip pixel
         clipr = clipdata[0];
         clipg = clipdata[1];
@@ -3052,7 +2985,7 @@ const char* Overlay::DoReplace(const char* args)
             switch (replacer) {
                 case 0:
                     // use current RGBA r component
-                    value = r;
+                    value = r ^ invr;
                     break;
                 case 1:
                     // use clip r component
@@ -3086,7 +3019,7 @@ const char* Overlay::DoReplace(const char* args)
             switch (replaceg) {
                 case 0:
                     // use current RGBA g component
-                    value = g;
+                    value = g ^ invg;
                     break;
                 case 1:
                     // use clip r component
@@ -3120,7 +3053,7 @@ const char* Overlay::DoReplace(const char* args)
             switch (replaceb) {
                 case 0:
                     // use current RGBA b component
-                    value = b;
+                    value = b ^ invb;
                     break;
                 case 1:
                     // use clip r component
@@ -3154,7 +3087,7 @@ const char* Overlay::DoReplace(const char* args)
             switch (replacea) {
                 case 0:
                     // use current RGBA a component
-                    value = a;
+                    value = a ^ inva;
                     break;
                 case 1:
                     // use clip r component
@@ -3175,6 +3108,8 @@ const char* Overlay::DoReplace(const char* args)
             }
             if (deltaa) {
                 value += deltaa;
+                clamp = value >> bytebits;
+                if (clamp) { value = ~clamp >> remainbits; }
             }
             if (value != clipa) {
                 *clipdata = value;
@@ -3184,8 +3119,6 @@ const char* Overlay::DoReplace(const char* args)
 
             // check if pixel changed
             if (changed) {
-                clamp = value >> bytebits;
-                if (clamp) { value = ~clamp >> remainbits; }
                 numchanged++;
             }
         } else {
@@ -3201,7 +3134,7 @@ const char* Overlay::DoReplace(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetRGBA(const char* cmd, lua_State* L, int n, int* nresults)
+const char *Overlay::DoSetRGBA(const char *cmd, lua_State *L, int n, int *nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -3267,7 +3200,7 @@ const char* Overlay::DoSetRGBA(const char* cmd, lua_State* L, int n, int* nresul
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetRGBA(const char* args)
+const char *Overlay::DoSetRGBA(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -3308,21 +3241,21 @@ void Overlay::DrawPixel(int x, int y)
     if (alphablend && a < 255) {
         // do nothing if source pixel is transparent
         if (a) {
-            unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+            unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
             const unsigned int alpha = a + 1;
             const unsigned int invalpha = 256 - a;
             const unsigned int dest = *lp;
             ALPHABLEND(rgbadraw, dest, lp, alpha, invalpha);
         }
     } else {
-        unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+        unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
         *lp = rgbadraw;
     }
 }
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
+const char *Overlay::GetCoordinatePair(char *args, int *x, int *y)
 {
     // attempt to decode integers
     char c = *args++;
@@ -3388,7 +3321,7 @@ const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
+const char *Overlay::DoSetPixel(lua_State *L, int n, int *nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -3426,7 +3359,7 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
     
                     // ignore pixel if outside pixmap edges
                     if (PixelInTarget(x, y)) {
-                        unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+                        unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
                         const unsigned int dest = *lp;
                         ALPHABLENDPRE(rgbadraw, sourcearb, sourceag, dest, lp, alpha, invalpha);
                     }
@@ -3446,7 +3379,7 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
     
                     // ignore pixel if outside pixmap edges
                     if (PixelInTarget(x, y)) {
-                        unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+                        unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
                         const unsigned int dest = *lp;
                         ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, lp, invalpha);
                     }
@@ -3460,11 +3393,10 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
                 lua_pop(L, 1);
             }
         }
-    }
-    else {
+    } else {
         // use fast copy
         unsigned int rgba = rgbadraw;
-        unsigned int* lpixmap = (unsigned int*)pixmap;
+        unsigned int *lpixmap = (unsigned int*)pixmap;
         do {
             // get next pixel coordinate
             lua_rawgeti(L, 1, i++);
@@ -3515,7 +3447,7 @@ const char* Overlay::DoSetPixel(lua_State* L, int n, int* nresults)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetPixel(const char* args)
+const char *Overlay::DoSetPixel(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -3543,7 +3475,7 @@ const char* Overlay::DoSetPixel(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoGet(lua_State* L, int n, int* nresults)
+const char *Overlay::DoGet(lua_State *L, int n, int *nresults)
 {
     if (pixmap == NULL) return "";
 
@@ -3571,7 +3503,7 @@ const char* Overlay::DoGet(lua_State* L, int n, int* nresults)
             lua_pushinteger(L, -1);
         } else {
             // get and return the pixel rgba values
-            unsigned char* p = pixmap + y*wd*4 + x*4;
+            unsigned char *p = pixmap + y*wd*4 + x*4;
             lua_pushinteger(L, p[0]);
             lua_pushinteger(L, p[1]);
             lua_pushinteger(L, p[2]);
@@ -3586,7 +3518,7 @@ const char* Overlay::DoGet(lua_State* L, int n, int* nresults)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoGetPixel(const char* args)
+const char *Overlay::DoGetPixel(const char *args)
 {
     if (pixmap == NULL) return "";
 
@@ -3598,7 +3530,7 @@ const char* Overlay::DoGetPixel(const char* args)
     // check if x,y is outside pixmap
     if (!PixelInTarget(x, y)) return "";
 
-    unsigned char* p = pixmap + y*wd*4 + x*4;
+    unsigned char *p = pixmap + y*wd*4 + x*4;
     static char result[16];
     sprintf(result, "%hhu %hhu %hhu %hhu", p[0], p[1], p[2], p[3]);
     return result;
@@ -3613,7 +3545,7 @@ bool Overlay::TransparentPixel(int x, int y)
     // check if x,y is outside pixmap
     if (!PixelInOverlay(x, y)) return false;
 
-    unsigned char* p = ovpixmap + y*ovwd*4 + x*4;
+    unsigned char *p = ovpixmap + y*ovwd*4 + x*4;
 
     // return true if alpha value is 0
     return p[3] == 0;
@@ -3635,7 +3567,7 @@ void Overlay::SetOverlayCursor()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCursor(const char* args)
+const char *Overlay::DoCursor(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -3695,7 +3627,7 @@ void Overlay::CheckCursor()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoGetXY()
+const char *Overlay::DoGetXY()
 {
     if (pixmap == NULL) return "";
     if (!mainptr->infront) return "";
@@ -3714,7 +3646,7 @@ const char* Overlay::DoGetXY()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::LineOptionWidth(const char* args)
+const char *Overlay::LineOptionWidth(const char *args)
 {
     int w, oldwidth;
     if (sscanf(args, " %d", &w) != 1) {
@@ -3734,7 +3666,7 @@ const char* Overlay::LineOptionWidth(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLineOption(const char* args)
+const char *Overlay::DoLineOption(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4074,7 +4006,7 @@ void Overlay::DrawAntialiasedLine(int x0, int y0, int x1, int y1)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLine(lua_State* L, int n, bool connected, int* nresults)
+const char *Overlay::DoLine(lua_State *L, int n, bool connected, int *nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4171,8 +4103,7 @@ const char* Overlay::DoLine(lua_State* L, int n, bool connected, int* nresults)
             type = lua_type(L, -1);
             lua_pop(L, 1);
         }
-    }
-    else {
+    } else {
         // no arguments supplied
         if (connected) {
             return OverlayError("line command requires at least two coordinate pairs");
@@ -4195,7 +4126,7 @@ const char* Overlay::DoLine(lua_State* L, int n, bool connected, int* nresults)
                         break;
                 }
             }
-        } else{
+        } else {
             // check if the argument number is a multiple of 4 and the argument is nil
             if (!((((i - 3) & 3) == 0) && (type == LUA_TNIL))) {
                 switch ((i - 3) & 1) {
@@ -4221,7 +4152,7 @@ const char* Overlay::DoLine(lua_State* L, int n, bool connected, int* nresults)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLine(const char* args, bool connected)
+const char *Overlay::DoLine(const char *args, bool connected)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4288,7 +4219,7 @@ void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
 
     // no alpha blending so use fast copy
     unsigned int rgba = rgbadraw;
-    unsigned int* lpixmap = (unsigned int*)pixmap;
+    unsigned int *lpixmap = (unsigned int*)pixmap;
 
     // draw a line of pixels from x0,y0 to x1,y1 using Bresenham's algorithm
     int dx = x1 - x0;
@@ -4629,7 +4560,7 @@ void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoEllipse(const char* args)
+const char *Overlay::DoEllipse(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4667,9 +4598,9 @@ const char* Overlay::DoEllipse(const char* args)
 void Overlay::FillRect(int x, int y, int w, int h)
 {
     // get rgba drawing color
-    unsigned int source = rgbadraw;
+    const unsigned int source = rgbadraw;
     // get destination location
-    unsigned int* lp = ((unsigned int*)pixmap) + y * wd + x;
+    unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
     // check for alphablending
     if (alphablend && a < 255) {
         // only draw if source not transparent
@@ -4703,7 +4634,7 @@ void Overlay::FillRect(int x, int y, int w, int h)
         }
     } else {
         // create first row
-        unsigned int* dest = lp;
+        unsigned int *dest = lp;
         for (int i = 0; i < w; i++) {
             *dest++ = source;
         }
@@ -4720,7 +4651,7 @@ void Overlay::FillRect(int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFill(lua_State* L, int n, int* nresults)
+const char *Overlay::DoFill(lua_State *L, int n, int *nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4825,7 +4756,7 @@ const char* Overlay::DoFill(lua_State* L, int n, int* nresults)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFill(const char* args)
+const char *Overlay::DoFill(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4902,7 +4833,7 @@ const char* Overlay::DoFill(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCopy(const char* args)
+const char *Overlay::DoCopy(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4940,7 +4871,7 @@ const char* Overlay::DoCopy(const char* args)
         use_calloc = true;
     }
 
-    Clip* newclip = new Clip(w, h, use_calloc);
+    Clip *newclip = new Clip(w, h, use_calloc);
     if (newclip == NULL || newclip->cdata == NULL) {
         delete newclip;
         return OverlayError("not enough memory to copy pixels");
@@ -4967,10 +4898,10 @@ const char* Overlay::DoCopy(const char* args)
             h = ymax - y + 1;
 
             // copy intersection rect from target into corresponding area of clip data
-            unsigned char* dest = newclip->cdata + clipy*cliprowbytes + clipx*4;
+            unsigned char *dest = newclip->cdata + clipy*cliprowbytes + clipx*4;
             int rowbytes = wd * 4;
             int wbytes = w * 4;
-            unsigned char* src = pixmap + y*rowbytes + x*4;
+            unsigned char *src = pixmap + y*rowbytes + x*4;
             for (int i = 0; i < h; i++) {
                 memcpy(dest, src, wbytes);
                 src += rowbytes;
@@ -4980,7 +4911,7 @@ const char* Overlay::DoCopy(const char* args)
     } else {
         // given rectangle is within target so fill newclip->cdata with
         // pixel data from that rectangle in pixmap
-        unsigned char* dest = newclip->cdata;
+        unsigned char *dest = newclip->cdata;
 
         if (x == 0 && y == 0 && w == wd && h == ht) {
             // clip and overlay are the same size so do a fast copy
@@ -4990,7 +4921,7 @@ const char* Overlay::DoCopy(const char* args)
             // use memcpy to copy each row
             int rowbytes = wd * 4;
             int wbytes = w * 4;
-            unsigned char* src = pixmap + y*rowbytes + x*4;
+            unsigned char *src = pixmap + y*rowbytes + x*4;
             for (int i = 0; i < h; i++) {
                 memcpy(dest, src, wbytes);
                 src += rowbytes;
@@ -5016,7 +4947,7 @@ void Overlay::DisableTargetClipIndex()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoOptimize(const char* args)
+const char *Overlay::DoOptimize(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -5037,7 +4968,7 @@ const char* Overlay::DoOptimize(const char* args)
         msg += ")";
         return OverlayError(msg.c_str());
     }
-    Clip* clipptr = it->second;
+    Clip *clipptr = it->second;
 
     // add index to the clip
     clipptr->AddIndex();
@@ -5050,17 +4981,17 @@ const char* Overlay::DoOptimize(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPaste(lua_State* L, int n, int* nresults)
+const char *Overlay::DoPaste(lua_State *L, int n, int *nresults)
 {
-    const char* result = NULL;
+    const char *result = NULL;
 
     // clip name
-    const char* clipname = NULL;
+    const char *clipname = NULL;
     int clipi = 0;
 
     // allocate space for coordinate values
     if (n > 1) {
-        int* coords = (int*)malloc((n - 1) * sizeof(int));
+        int *coords = (int*)malloc((n - 1) * sizeof(int));
         int j = 0;
 
         // get the array of coordinates
@@ -5074,8 +5005,7 @@ const char* Overlay::DoPaste(lua_State* L, int n, int* nresults)
             if (valid) {
                 // store the number
                 coords[j++] = (int)value;
-            }
-            else {
+            } else {
                 // was not a number so check the type
                 int type = lua_type(L, -1);
                 if (type == LUA_TSTRING) {
@@ -5085,8 +5015,7 @@ const char* Overlay::DoPaste(lua_State* L, int n, int* nresults)
                         clipi = i;
                         valid = true;
                     }
-                }
-                else {
+                } else {
                     if (type == LUA_TNIL) {
                         // if it's nil then stop
                         n = i - 1;
@@ -5120,7 +5049,7 @@ const char* Overlay::DoPaste(lua_State* L, int n, int* nresults)
                 DisableTargetClipIndex();
 
                 // call the required function
-                Clip* clipptr = it->second;
+                Clip *clipptr = it->second;
                 result = DoPaste(coords, j, clipptr);
             }
         }
@@ -5138,7 +5067,7 @@ const char* Overlay::DoPaste(lua_State* L, int n, int* nresults)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
+const char *Overlay::DoPaste(const int *coords, int n, const Clip *clipptr)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -5149,7 +5078,7 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
 
     // clip dimensions and data
     int w, h, xoff, yoff;
-    unsigned int* clipdata;
+    unsigned int *clipdata;
     if (alphablend) {
         // use non-zero alpha bounding box if alphablending
         w = clipptr->wbb;
@@ -5189,7 +5118,7 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                     memcpy(pixmap, clipptr->cdata, w * h * 4);
                 } else {
                     // get the clip data
-                    unsigned int* ldata = clipdata;
+                    unsigned int *ldata = clipdata;
                     int cliprowpixels = clipptr->cwd;
                     int rowoffset = yoff;
 
@@ -5214,14 +5143,14 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
 
                     // get the paste target data
                     int targetrowpixels = wd;
-                    unsigned int* lp = (unsigned int*)pixmap;
+                    unsigned int *lp = (unsigned int*)pixmap;
                     lp += y * targetrowpixels + x;
                     unsigned int source, dest, pa, alpha, invalpha;
 
                     // check for alpha blending
                     if (alphablend) {
                         // alpha blending
-                        rowtype* rowindex = clipptr->rowindex;
+                        const rowtype *rowindex = clipptr->rowindex;
                         if (!rowindex) {
                             // clip only has mixed alpha rows
                             for (int j = 0; j < h; j++) {
@@ -5343,7 +5272,7 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                 }
             } else {
                 // do an affine transformation
-                unsigned int* data = (unsigned int*)clipptr->cdata;
+                unsigned int *data = (unsigned int*)clipptr->cdata;
                 w = clipptr->cwd;
                 h = clipptr->cht;
                 x -= xoff;
@@ -5375,8 +5304,8 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
                     a = savea;
                 } else {
                     // no alpha blend
-                    unsigned int* ldata = (unsigned int*)data;
-                    unsigned int* lp = (unsigned int*)pixmap;
+                    unsigned int *ldata = (unsigned int*)data;
+                    unsigned int *lp = (unsigned int*)pixmap;
                     for (int j = 0; j < h; j++) {
                         for (int i = 0; i < w; i++) {
                             int newx = x0 + x * axx + y * axy;
@@ -5399,7 +5328,7 @@ const char* Overlay::DoPaste(const int* coords, int n, const Clip* clipptr)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPaste(const char* args)
+const char *Overlay::DoPaste(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -5418,7 +5347,7 @@ const char* Overlay::DoPaste(const char* args)
     strcpy(copy, args);
 
     // find the last argument which should be the clip name
-    char* lastarg = copy + arglen - 1;
+    char *lastarg = copy + arglen - 1;
 
     // skip trailing whitespace
     while (lastarg >= copy && *lastarg == ' ') {
@@ -5451,7 +5380,7 @@ const char* Overlay::DoPaste(const char* args)
         free(buffer);
         return OverlayError(msg.c_str());
     }
-    Clip* clipptr = it->second;
+    Clip *clipptr = it->second;
 
     // read the first coordinate pair
     copy = (char*)GetCoordinatePair(copy, &x, &y);
@@ -5465,7 +5394,7 @@ const char* Overlay::DoPaste(const char* args)
 
     // clip dimensions and data
     int w, h, xoff, yoff;
-    unsigned int* clipdata;
+    unsigned int *clipdata;
     if (alphablend) {
         // use non-zero alpha bounding box if alphablending
         w = clipptr->wbb;
@@ -5503,7 +5432,7 @@ const char* Overlay::DoPaste(const char* args)
                     memcpy(pixmap, clipptr->cdata, w * h * 4);
                 } else {
                     // get the clip data
-                    unsigned int* ldata = clipdata;
+                    unsigned int *ldata = clipdata;
                     int cliprowpixels = clipptr->cwd;
                     int rowoffset = yoff;
 
@@ -5528,14 +5457,14 @@ const char* Overlay::DoPaste(const char* args)
 
                     // get the paste target data
                     int targetrowpixels = wd;
-                    unsigned int* lp = (unsigned int*)pixmap;
+                    unsigned int *lp = (unsigned int*)pixmap;
                     lp += y * targetrowpixels + x;
                     unsigned int source, dest, pa, alpha, invalpha;
 
                     // check for alpha blending
                     if (alphablend) {
                         // alpha blending
-                        rowtype* rowindex = clipptr->rowindex;
+                        const rowtype *rowindex = clipptr->rowindex;
                         if (!rowindex) {
                             // clip only has mixed alpha rows
                             for (int j = 0; j < h; j++) {
@@ -5659,7 +5588,7 @@ const char* Overlay::DoPaste(const char* args)
                 }
             } else {
                 // do an affine transformation
-                unsigned int* data = (unsigned int*)clipptr->cdata;
+                unsigned int *data = (unsigned int*)clipptr->cdata;
                 w = clipptr->cwd;
                 h = clipptr->cht;
                 x -= xoff;
@@ -5691,8 +5620,8 @@ const char* Overlay::DoPaste(const char* args)
                     a = savea;
                 } else {
                     // no alpha blend
-                    unsigned int* ldata = (unsigned int*)data;
-                    unsigned int* lp = (unsigned int*)pixmap;
+                    unsigned int *ldata = (unsigned int*)data;
+                    unsigned int *lp = (unsigned int*)pixmap;
                     for (int j = 0; j < h; j++) {
                         for (int i = 0; i < w; i++) {
                             int newx = x0 + x * axx + y * axy;
@@ -5717,7 +5646,7 @@ const char* Overlay::DoPaste(const char* args)
 }
 
 // assumes alpha blend, identity transformation and opaque destination pixels
-void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
+void Overlay::Draw3DCell(int x, int y, const Clip *clipptr)
 {
     // check that a clip is supplied
     if (clipptr == NULL) return;
@@ -5759,11 +5688,11 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
 
     // get the paste target data
     const int targetrowpixels = wd;
-    unsigned int* lp = ((unsigned int*)pixmap) + y * targetrowpixels + x;
+    unsigned int *lp = ((unsigned int*)pixmap) + y * targetrowpixels + x;
     unsigned int source, dest, pa, alpha, invalpha;
 
     // check if the clip has a row index
-    rowtype* rowindex = clipptr->rowindex;
+    const rowtype *rowindex = clipptr->rowindex;
     if (!rowindex) {
         // clip only has mixed alpha rows
         for (int j = 0; j < h; j++) {
@@ -5829,7 +5758,7 @@ void Overlay::Draw3DCell(int x, int y, const Clip* clipptr)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoScale(const char* args)
+const char *Overlay::DoScale(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -5872,7 +5801,7 @@ const char* Overlay::DoScale(const char* args)
     // do nothing if scaled rect is completely outside target
     if (RectOutsideTarget(x, y, w, h)) return NULL;
 
-    Clip* clipptr = it->second;
+    Clip *clipptr = it->second;
     int clipw = clipptr->cwd;
     int cliph = clipptr->cht;
 
@@ -5882,7 +5811,7 @@ const char* Overlay::DoScale(const char* args)
         DisableTargetClipIndex();
         int xscale = w / clipw;
         int yscale = h / cliph;
-        unsigned int* data = (unsigned int*)clipptr->cdata;
+        unsigned int *data = (unsigned int*)clipptr->cdata;
 
         // save current RGBA values
         unsigned int savergba = rgbadraw;
@@ -5928,17 +5857,17 @@ const char* Overlay::DoScale(const char* args)
     }
 
     // get the clip's RGB and alpha data so we can create a wxImage
-    unsigned char* rgbdata = (unsigned char*) malloc(clipw * cliph * 3);
+    unsigned char *rgbdata = (unsigned char*) malloc(clipw * cliph * 3);
     if (rgbdata== NULL) {
         return OverlayError("not enough memory to scale rgb data");
     }
-    unsigned char* alphadata = (unsigned char*) malloc(clipw * cliph);
+    unsigned char *alphadata = (unsigned char*) malloc(clipw * cliph);
     if (alphadata == NULL) {
         free(rgbdata);
         return OverlayError("not enough memory to scale alpha data");
     }
 
-    unsigned char* p = clipptr->cdata;
+    unsigned char *p = clipptr->cdata;
     int rgbpos = 0;
     int alphapos = 0;
     for (int j = 0; j < cliph; j++) {
@@ -5965,8 +5894,8 @@ const char* Overlay::DoScale(const char* args)
     unsigned char savea = a;
 
     // copy the pixels from the scaled wxImage into the current target
-    unsigned char* rdata = image.GetData();
-    unsigned char* adata = image.GetAlpha();
+    unsigned char *rdata = image.GetData();
+    unsigned char *adata = image.GetAlpha();
     rgbpos = 0;
     alphapos = 0;
     for (int j = 0; j < h; j++) {
@@ -5997,7 +5926,7 @@ const char* Overlay::DoScale(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoTarget(const char* args)
+const char *Overlay::DoTarget(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6033,7 +5962,7 @@ const char* Overlay::DoTarget(const char* args)
             return OverlayError(msg.c_str());
         } else {
             // set clip as the target
-            Clip* clipptr = it->second;
+            Clip *clipptr = it->second;
             SetRenderTarget(clipptr->cdata, clipptr->cwd, clipptr->cht, clipptr);
             targetname = name;
         }
@@ -6045,7 +5974,7 @@ const char* Overlay::DoTarget(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoDelete(const char* args)
+const char *Overlay::DoDelete(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6092,7 +6021,7 @@ const char* Overlay::DoDelete(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLoad(const char* args)
+const char *Overlay::DoLoad(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6125,7 +6054,7 @@ const char* Overlay::DoLoad(const char* args)
         DisableTargetClipIndex();
 
         // use alpha data if it exists otherwise try looking for mask
-        unsigned char* alphadata = NULL;
+        unsigned char *alphadata = NULL;
         if (image.HasAlpha()) {
             alphadata = image.GetAlpha();
         }
@@ -6144,7 +6073,7 @@ const char* Overlay::DoLoad(const char* args)
         unsigned char saveb = b;
         unsigned char savea = a;
 
-        unsigned char* rgbdata = image.GetData();
+        unsigned char *rgbdata = image.GetData();
         int rgbpos = 0;
         int alphapos = 0;
         for (int j = 0; j < imght; j++) {
@@ -6184,7 +6113,7 @@ const char* Overlay::DoLoad(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSave(const char* args)
+const char *Overlay::DoSave(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6213,11 +6142,11 @@ const char* Overlay::DoSave(const char* args)
         return OverlayError("save file must have a .png extension");
     }
 
-    unsigned char* rgbdata = (unsigned char*) malloc(w * h * 3);
+    unsigned char *rgbdata = (unsigned char*) malloc(w * h * 3);
     if (rgbdata== NULL) {
         return OverlayError("not enough memory to save RGB data");
     }
-    unsigned char* alphadata = (unsigned char*) malloc(w * h);
+    unsigned char *alphadata = (unsigned char*) malloc(w * h);
     if (alphadata == NULL) {
         free(rgbdata);
         return OverlayError("not enough memory to save alpha data");
@@ -6229,7 +6158,7 @@ const char* Overlay::DoSave(const char* args)
     for (int j=y; j<y+h; j++) {
         for (int i=x; i<x+w; i++) {
             // get pixel at i,j
-            unsigned char* p = pixmap + j*rowbytes + i*4;
+            unsigned char *p = pixmap + j*rowbytes + i*4;
             rgbdata[rgbpos++] = p[0];
             rgbdata[rgbpos++] = p[1];
             rgbdata[rgbpos++] = p[2];
@@ -6250,26 +6179,26 @@ const char* Overlay::DoSave(const char* args)
 
 // -----------------------------------------------------------------------------
 
-void Overlay::SaveOverlay(const wxString& pngpath)
+void Overlay::SaveOverlay(const wxString &pngpath)
 {
     if (ovpixmap == NULL) {
         Warning(_("There is no overlay data to save!"));
         return;
     }
 
-    unsigned char* rgbdata = (unsigned char*) malloc(ovwd * ovht * 3);
+    unsigned char *rgbdata = (unsigned char*) malloc(ovwd * ovht * 3);
     if (rgbdata== NULL) {
         Warning(_("Not enough memory to copy RGB data."));
         return;
     }
-    unsigned char* alphadata = (unsigned char*) malloc(ovwd * ovht);
+    unsigned char *alphadata = (unsigned char*) malloc(ovwd * ovht);
     if (alphadata == NULL) {
         free(rgbdata);
         Warning(_("Not enough memory to copy alpha data."));
         return;
     }
 
-    unsigned char* p = ovpixmap;
+    unsigned char *p = ovpixmap;
     int rgbpos = 0;
     int alphapos = 0;
     for (int j=0; j<ht; j++) {
@@ -6293,7 +6222,7 @@ void Overlay::SaveOverlay(const wxString& pngpath)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFlood(const char* args)
+const char *Overlay::DoFlood(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6305,7 +6234,7 @@ const char* Overlay::DoFlood(const char* args)
     // // check if x,y is outside pixmap
     if (!PixelInTarget(x, y)) return NULL;
 
-    unsigned int* lp = (unsigned int*)pixmap;
+    unsigned int *lp = (unsigned int*)pixmap;
     unsigned int oldpxl = *(lp + y * wd + x);
 
     // do nothing if color of given pixel matches current RGBA values
@@ -6332,7 +6261,7 @@ const char* Overlay::DoFlood(const char* args)
         bool above = false;
         bool below = false;
 
-        unsigned int* newpxl = lp + y * wd + x;
+        unsigned int *newpxl = lp + y * wd + x;
         while (x >= 0 && *newpxl == oldpxl) {
             x--;
             newpxl--;
@@ -6349,7 +6278,7 @@ const char* Overlay::DoFlood(const char* args)
             }
 
             if (y > 0) {
-                unsigned int* apxl = newpxl - wd;    // pixel at x, y-1
+                unsigned int *apxl = newpxl - wd;    // pixel at x, y-1
 
                 if (!above && *apxl == oldpxl) {
                     xcoord.push_back(x);
@@ -6361,7 +6290,7 @@ const char* Overlay::DoFlood(const char* args)
             }
 
             if (y < maxyv) {
-                unsigned int* bpxl = newpxl + wd;    // pixel at x, y+1
+                unsigned int *bpxl = newpxl + wd;    // pixel at x, y+1
 
                 if (!below && *bpxl == oldpxl) {
                     xcoord.push_back(x);
@@ -6382,7 +6311,7 @@ const char* Overlay::DoFlood(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoBlend(const char* args)
+const char *Overlay::DoBlend(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6406,12 +6335,12 @@ const char* Overlay::DoBlend(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFont(const char* args)
+const char *Overlay::DoFont(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     bool samename = false;      // only change font size?
-    const char* newname = NULL;
+    const char *newname = NULL;
     int newsize;
     int namepos;
     char dummy;
@@ -6506,7 +6435,7 @@ const char* Overlay::DoFont(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::TextOptionAlign(const char* args)
+const char *Overlay::TextOptionAlign(const char *args)
 {
     text_alignment newalign;
 
@@ -6540,7 +6469,7 @@ const char* Overlay::TextOptionAlign(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::TextOptionBackground(const char* args)
+const char *Overlay::TextOptionBackground(const char *args)
 {
     int a1, a2, a3, a4;
     if (sscanf(args, " %d %d %d %d", &a1, &a2, &a3, &a4) != 4) {
@@ -6570,7 +6499,7 @@ const char* Overlay::TextOptionBackground(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoTextOption(const char* args)
+const char *Overlay::DoTextOption(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6582,7 +6511,7 @@ const char* Overlay::DoTextOption(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoText(const char* args)
+const char *Overlay::DoText(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -6590,7 +6519,7 @@ const char* Overlay::DoText(const char* args)
     // text to start with a space
     int namepos = 0;
     int textpos = 0;
-    const char* p = args;
+    const char *p = args;
     while (*p && *p == ' ') {
         namepos++;
         p++;
@@ -6645,8 +6574,8 @@ const char* Overlay::DoText(const char* args)
     }
 
     // allocate buffers for line width and start position
-    int* width = (int*) malloc(lines * sizeof(int));
-    char** line = (char**) malloc(lines * sizeof(char*));
+    int *width = (int*) malloc(lines * sizeof(int));
+    char **line = (char**) malloc(lines * sizeof(char*));
 
     // find first line
     char *textlines = textarg;
@@ -6694,7 +6623,7 @@ const char* Overlay::DoText(const char* args)
     }
 
     // create clip data with given name and big enough to enclose text
-    Clip* textclip = new Clip(bitmapwd, bitmapht);
+    Clip *textclip = new Clip(bitmapwd, bitmapht);
     if (textclip == NULL || textclip->cdata == NULL) {
         delete textclip;
         free(width);
@@ -6776,7 +6705,7 @@ const char* Overlay::DoText(const char* args)
     dc.SelectObject(wxNullBitmap);
 
     // copy text from top left corner of offscreen image into clip data
-    unsigned int* m = (unsigned int*)textclip->cdata;
+    unsigned int *m = (unsigned int*)textclip->cdata;
     unsigned char bitmapr;
     const unsigned int rgbdraw = rgbadraw & RGBMASK;
 
@@ -6834,22 +6763,21 @@ const char* Overlay::DoText(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* Overlay::SoundPlay(const char* args, bool loop)
+const char *Overlay::SoundPlay(const char *args, bool loop)
 {
     // check for engine
     if (engine) {
         if (*args == 0) {
             if (loop) {
                 return OverlayError("sound loop requires an argument");
-            }
-            else {
+            } else {
                 return OverlayError("sound play requires an argument");
             }
         }
 
         // check for the optional volume argument
         float v = 1;
-        const char* name = args;
+        const char *name = args;
 
         // skip name
         char *scan = (char*)args;
@@ -6863,8 +6791,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
                 if (v < 0.0 || v > 1.0) {
                     if (loop) {
                         return OverlayError("sound loop volume must be in the range 0 to 1");
-                    }
-                    else {
+                    } else {
                         return OverlayError("sound play volume must be in the range 0 to 1");
                     }
                 }
@@ -6875,7 +6802,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
         }
 
         // lookup the sound source
-        ISoundSource* source = engine->getSoundSource(name, false);
+        ISoundSource *source = engine->getSoundSource(name, false);
         if (!source) {
             // create and preload the sound source
             source = engine->addSoundSourceFromFile(name, ESM_AUTO_DETECT, true);
@@ -6886,7 +6813,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
         }
 
         // check if the sound exists
-        ISound* sound = NULL;
+        ISound *sound = NULL;
         std::map<std::string,ISound*>::iterator it;
         it = sounds.find(name);
         if (it != sounds.end()) {
@@ -6921,7 +6848,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* Overlay::SoundStop(const char* args)
+const char *Overlay::SoundStop(const char *args)
 {
     // check for engine
     if (engine) {
@@ -6929,22 +6856,21 @@ const char* Overlay::SoundStop(const char* args)
         if (*args == 0) {
             // stop all sounds
             engine->stopAllSounds();
-        }
-        else {
+        } else {
             // skip whitespace
             while (*args == ' ') {
                 args++;
             }
 
             // stop named sound
-            ISoundSource* source = engine->getSoundSource(args, false);
+            ISoundSource *source = engine->getSoundSource(args, false);
             if (source) {
                 // find the sound
                 std::map<std::string,ISound*>::iterator it;
                 it = sounds.find(args);
                 if (it != sounds.end()) {
                    // stop the sound
-                   ISound* sound = it->second;
+                   ISound *sound = it->second;
                    if (!sound->isFinished()) {
                        sound->stop();
                    }
@@ -6960,7 +6886,7 @@ const char* Overlay::SoundStop(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* Overlay::SoundState(const char* args)
+const char *Overlay::SoundState(const char *args)
 {
     bool playing = false;
     bool paused = false;
@@ -6975,24 +6901,22 @@ const char* Overlay::SoundState(const char* args)
                     playing = true;
                 }
             }
-        }
-        else {
+        } else {
             // skip whitespace
             while (*args == ' ') {
                 args++;
             }
 
             // see if named sound is playing
-            ISoundSource* source = engine->getSoundSource(args, false);
+            ISoundSource *source = engine->getSoundSource(args, false);
             if (!source) {
                 return "unknown";
-            }
-            else {
+            } else {
                 // find the sound
                 std::map<std::string,ISound*>::iterator it;
                 it = sounds.find(args);
                 if (it != sounds.end()) {
-                    ISound* sound = it->second;
+                    ISound *sound = it->second;
                     if (sound->getIsPaused()) {
                         paused = true;
                     }
@@ -7010,8 +6934,7 @@ const char* Overlay::SoundState(const char* args)
     } else {
         if (playing) {
             return "playing";
-        }
-        else {
+        } else {
             return "stopped";
         }
     }
@@ -7021,12 +6944,12 @@ const char* Overlay::SoundState(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* Overlay::SoundVolume(const char* args)
+const char *Overlay::SoundVolume(const char *args)
 {
     // check for engine
     if (engine) {
         float v = 1;
-        const char* name = args;
+        const char *name = args;
 
         // skip name
         char *scan = (char*)args;
@@ -7049,7 +6972,7 @@ const char* Overlay::SoundVolume(const char* args)
         }
 
         // lookup the sound
-        ISoundSource* source = engine->getSoundSource(name, false);
+        ISoundSource *source = engine->getSoundSource(name, false);
         if (source) {
             // set the default volume for the source
             source->setDefaultVolume(v);
@@ -7059,7 +6982,7 @@ const char* Overlay::SoundVolume(const char* args)
             it = sounds.find(name);
             if (it != sounds.end()) {
                // set the sound volume
-               ISound* sound = it->second;
+               ISound *sound = it->second;
                if (!sound->isFinished()) {
                    sound->setVolume(v);
                }
@@ -7074,7 +6997,7 @@ const char* Overlay::SoundVolume(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* Overlay::SoundPause(const char* args)
+const char *Overlay::SoundPause(const char *args)
 {
     // check for engine
     if (engine) {
@@ -7082,22 +7005,21 @@ const char* Overlay::SoundPause(const char* args)
         if (*args == 0) {
             // pause all sounds
             engine->setAllSoundsPaused();
-        }
-        else {
+        } else {
             // skip whitespace
             while (*args == ' ') {
                 args++;
             }
 
             // pause named sound
-            ISoundSource* source = engine->getSoundSource(args, false);
+            ISoundSource *source = engine->getSoundSource(args, false);
             if (source) {
                 // find the sound
                 std::map<std::string,ISound*>::iterator it;
                 it = sounds.find(args);
                 if (it != sounds.end()) {
                    // pause the sound
-                   ISound* sound = it->second;
+                   ISound *sound = it->second;
                    if (!sound->isFinished()) {
                        sound->setIsPaused();
                    }
@@ -7113,7 +7035,7 @@ const char* Overlay::SoundPause(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* Overlay::SoundResume(const char* args)
+const char *Overlay::SoundResume(const char *args)
 {
     // check for engine
     if (engine) {
@@ -7121,22 +7043,21 @@ const char* Overlay::SoundResume(const char* args)
         if (*args == 0) {
             // resume all paused sounds
             engine->setAllSoundsPaused(false);
-        }
-        else {
+        } else {
             // skip whitespace
             while (*args == ' ') {
                 args++;
             }
 
             // resume named sound
-            ISoundSource* source = engine->getSoundSource(args, false);
+            ISoundSource *source = engine->getSoundSource(args, false);
             if (source) {
                 // find the sound
                 std::map<std::string,ISound*>::iterator it;
                 it = sounds.find(args);
                 if (it != sounds.end()) {
                    // resume the sound
-                   ISound* sound = it->second;
+                   ISound *sound = it->second;
                    if (!sound->isFinished()) {
                        sound->setIsPaused(false);
                    }
@@ -7151,7 +7072,7 @@ const char* Overlay::SoundResume(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSound(const char* args)
+const char *Overlay::DoSound(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -7161,8 +7082,7 @@ const char* Overlay::DoSound(const char* args)
         if (engine) {
             // sound engine enabled
             return "2";
-        }
-        else {
+        } else {
             // sound engine failed to start
             return "1";
         }
@@ -7191,7 +7111,7 @@ const char* Overlay::DoSound(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoTransform(const char* args)
+const char *Overlay::DoTransform(const char *args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -7242,7 +7162,7 @@ bool Overlay::OnlyDrawOverlay()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoUpdate()
+const char *Overlay::DoUpdate()
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -7270,7 +7190,7 @@ const char* Overlay::DoUpdate()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::OverlayError(const char* msg)
+const char *Overlay::OverlayError(const char *msg)
 {
     static std::string err;
     err = "ERR:";
@@ -7280,7 +7200,7 @@ const char* Overlay::OverlayError(const char* msg)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::ReadLuaBoolean(lua_State *L, const int n, int i, bool* value, const char* name) {
+const char *Overlay::ReadLuaBoolean(lua_State *L, const int n, int i, bool *value, const char *name) {
     static std::string err;
     if (i > n)  {
         err = "missing argument: ";
@@ -7302,7 +7222,7 @@ const char* Overlay::ReadLuaBoolean(lua_State *L, const int n, int i, bool* valu
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::ReadLuaNumber(lua_State *L, const int n, int i, double* value, const char* name) {
+const char *Overlay::ReadLuaNumber(lua_State *L, const int n, int i, double *value, const char *name) {
     static std::string err;
     if (i > n)  {
         err = "missing argument: ";
@@ -7324,7 +7244,7 @@ const char* Overlay::ReadLuaNumber(lua_State *L, const int n, int i, double* val
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::ReadLuaInteger(lua_State *L, const int n, int i, int* value, const char* name) {
+const char *Overlay::ReadLuaInteger(lua_State *L, const int n, int i, int *value, const char *name) {
     static std::string err;
     if (i > n)  {
         err = "missing argument: ";
@@ -7346,7 +7266,7 @@ const char* Overlay::ReadLuaInteger(lua_State *L, const int n, int i, int* value
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::ReadLuaString(lua_State *L, const int n, int i, const char** value, const char* name) {
+const char *Overlay::ReadLuaString(lua_State *L, const int n, int i, const char **value, const char *name) {
     static std::string err;
     if (i > n)  {
         err = "missing argument: ";
@@ -7370,11 +7290,11 @@ const char* Overlay::ReadLuaString(lua_State *L, const int n, int i, const char*
 // Arguments:
 // type         string      "cube", "sphere", "point"
 
-const char* Overlay::Do3DSetCellType(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetCellType(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // get cell type
-    const char* type = NULL;
+    const char *type = NULL;
 
     int idx = 2;
     if ((error = ReadLuaString(L, n, idx++, &type, "type")) != NULL) return error;
@@ -7402,8 +7322,8 @@ const char* Overlay::Do3DSetCellType(lua_State* L, const int n, int* nresults) {
 // mindepth     integer
 // maxdepth     integer
 
-const char* Overlay::Do3DSetDepthShading(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetDepthShading(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // get depth shading flag
     int idx = 2;
@@ -7427,8 +7347,8 @@ const char* Overlay::Do3DSetDepthShading(lua_State* L, const int n, int* nresult
 // ziyo         number
 // zizo         number
 
-const char* Overlay::Do3DSetTransform(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetTransform(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // get transformation matrix
     int idx = 2;
@@ -7447,8 +7367,8 @@ const char* Overlay::Do3DSetTransform(lua_State* L, const int n, int* nresults) 
 
 // -----------------------------------------------------------------------------
 
-const Clip* Overlay::GetClip(const char* clipname) {
-    Clip* result = NULL;
+const Clip *Overlay::GetClip(const char *clipname) {
+    Clip *result = NULL;
 
     // lookup the named clip
     std::string name = clipname;
@@ -7463,9 +7383,9 @@ const Clip* Overlay::GetClip(const char* clipname) {
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::Update3DClips(const bool editing) {
+const char *Overlay::Update3DClips(const bool editing) {
     char clipname[20];
-    const Clip* current;
+    const Clip *current;
     int numclips = maxdepth - mindepth + 1;
 
     // clear current clips
@@ -7497,7 +7417,7 @@ const char* Overlay::Update3DClips(const bool editing) {
                 if ((current = GetClip(clipname)) == NULL) return OverlayError("missing even depth clip");
                 clipmanager.AddEvenClip(current);
                 sprintf(clipname, "O%d", i + mindepth);
-                if ((current = GetClip(clipname)) == NULL) return OverlayError("missing even depth clip");
+                if ((current = GetClip(clipname)) == NULL) return OverlayError("missing odd depth clip");
                 clipmanager.AddOddClip(current);
             }
         } else {
@@ -7580,11 +7500,14 @@ const char* Overlay::Update3DClips(const bool editing) {
 // editing      boolean
 // toolbarht    integer
 
-const char* Overlay::Do3DDisplayCells(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DDisplayCells(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     const int N = gridsize;
     if (N == 0) return OverlayError("grid size not set");
+
+    // check div table exists
+    if (modN == NULL) if (!CreateDivTable()) return OverlayError("could not allocate div table");
 
     // whether editing flag
     bool editing = false;
@@ -7624,10 +7547,7 @@ const char* Overlay::Do3DDisplayCells(lua_State* L, const int n, int* nresults) 
     const int stepj = gridsize * stepz;
 
     // check for history display
-    if (showhistory > 0) {
-        // update bounding box from history
-        UpdateBoundingBoxFromHistory();
-    }
+    if (showhistory > 0) UpdateBoundingBoxFromHistory();
 
     // adjust for loop
     tox += stepx;
@@ -7665,7 +7585,7 @@ const char* Overlay::Do3DDisplayCells(lua_State* L, const int n, int* nresults) 
 
 void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, const int stepj) {
     // iterate over the grid in the order specified
-    const unsigned char* grid3values = grid3d.GetValues();
+    const unsigned char *grid3values = grid3d.GetValues();
 
     // get midpoint
     int mx = 0;
@@ -7681,8 +7601,8 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
 
         // get depth shading clips
         int numclips;
-        const Clip** liveclips = clipmanager.GetLiveClips(&numclips);
-        const Clip* liveclip = *liveclips;
+        const Clip **liveclips = clipmanager.GetLiveClips(&numclips);
+        const Clip *liveclip = *liveclips;
         // get midpoint of clip
         int livew = liveclip->cwd >> 1;
         mx = midx - livew;
@@ -7690,29 +7610,33 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
 
         // iterate over cells back to front
         for (z = fromz; z != toz; z += stepz) {
-            int i = gridsize * (fromy + j);
-            for (y = fromy; y != toy; y += stepy) {
-                for (x = fromx; x != tox; x += stepx) {
-                    if (grid3values[i + x]) {
-                        // use orthographic projection
-                        double xc = x * cellsize + midcell;
-                        double yc = y * cellsize + midcell;
-                        double zc = z * cellsize + midcell;
-                        double zval = xc * zixo + yc * ziyo + zc * zizo;
-                        int layer = depthlayers * (zval + zdepth) / zdepth2 - mindepth;
-                        drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
-                        drawy = my + xc * yixo + yc * yiyo + zc * yizo;
-                        Draw3DCell(drawx, drawy, liveclips[layer]);
+            if (zaxis[z]) {
+                int i = gridsize * (fromy + j);
+                for (y = fromy; y != toy; y += stepy) {
+                    if (yaxis[y]) {
+                        for (x = fromx; x != tox; x += stepx) {
+                            if (grid3values[i + x]) {
+                                // use orthographic projection
+                                double xc = x * cellsize + midcell;
+                                double yc = y * cellsize + midcell;
+                                double zc = z * cellsize + midcell;
+                                double zval = xc * zixo + yc * ziyo + zc * zizo;
+                                int layer = depthlayers * (zval + zdepth) / zdepth2 - mindepth;
+                                drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
+                                drawy = my + xc * yixo + yc * yiyo + zc * yizo;
+                                Draw3DCell(drawx, drawy, liveclips[layer]);
+                            }
+                        }
                     }
+                    i += stepi;
                 }
-                i += stepi;
             }
             j += stepj;
         }
     } else {
         // flat shading
         int livew = 0;
-        const Clip* liveclip = clipmanager.GetLiveClip(&livew);
+        const Clip *liveclip = clipmanager.GetLiveClip(&livew);
         // get midpoint of clip
         livew >>= 1;
         mx = midx - livew;
@@ -7723,41 +7647,49 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
             // set the drawing color to the pixel in the clip
             unsigned int rgba = *(unsigned int*)liveclip->cdata;
             // iterate over cells back to front
-            unsigned int* lpixmap = (unsigned int*)pixmap;
+            unsigned int *lpixmap = (unsigned int*)pixmap;
             for (z = fromz; z != toz; z += stepz) {
-                int i = gridsize * (fromy + j);
-                for (y = fromy; y != toy; y += stepy) {
-                    for (x = fromx; x != tox; x += stepx) {
-                        if (grid3values[i + x]) {
-                            // use orthographic projection
-                            double xc = x * cellsize + midcell;
-                            double yc = y * cellsize + midcell;
-                            double zc = z * cellsize + midcell;
-                            drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
-                            drawy = my + xc * yixo + yc * yiyo + zc * yizo;
-                            if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = rgba;
+                if (zaxis[z]) {
+                    int i = gridsize * (fromy + j);
+                    for (y = fromy; y != toy; y += stepy) {
+                        if (yaxis[y]) {
+                            for (x = fromx; x != tox; x += stepx) {
+                                if (grid3values[i + x]) {
+                                    // use orthographic projection
+                                    double xc = x * cellsize + midcell;
+                                    double yc = y * cellsize + midcell;
+                                    double zc = z * cellsize + midcell;
+                                    drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
+                                    drawy = my + xc * yixo + yc * yiyo + zc * yizo;
+                                    if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = rgba;
+                                }
+                            }
                         }
+                        i += stepi;
                     }
-                    i += stepi;
                 }
                 j += stepj;
             }
         } else {
             for (z = fromz; z != toz; z += stepz) {
-                int i = gridsize * (fromy + j);
-                for (y = fromy; y != toy; y += stepy) {
-                    for (x = fromx; x != tox; x += stepx) {
-                        if (grid3values[i + x]) {
-                            // use orthographic projection
-                            double xc = x * cellsize + midcell;
-                            double yc = y * cellsize + midcell;
-                            double zc = z * cellsize + midcell;
-                            drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
-                            drawy = my + xc * yixo + yc * yiyo + zc * yizo;
-                            Draw3DCell(drawx, drawy, liveclip);
+                if (zaxis[z]) {
+                    int i = gridsize * (fromy + j);
+                    for (y = fromy; y != toy; y += stepy) {
+                        if (yaxis[y]) {
+                            for (x = fromx; x != tox; x += stepx) {
+                                if (grid3values[i + x]) {
+                                    // use orthographic projection
+                                    double xc = x * cellsize + midcell;
+                                    double yc = y * cellsize + midcell;
+                                    double zc = z * cellsize + midcell;
+                                    drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
+                                    drawy = my + xc * yixo + yc * yiyo + zc * yizo;
+                                    Draw3DCell(drawx, drawy, liveclip);
+                                }
+                            }
                         }
+                        i += stepi;
                     }
-                    i += stepi;
                 }
                 j += stepj;
             }
@@ -7769,14 +7701,14 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
 
 void Overlay::Display3DNormalEditing(const int midx, const int midy, const int stepi, const int stepj, const bool editing) {
     // iterate over the grid in the order specified
-    const unsigned char* grid3values = grid3d.GetValues();
+    const unsigned char *grid3values = grid3d.GetValues();
     int j = gridsize * fromz;
     int x, y, z;
-    const Clip** liveclips = NULL;
-    const Clip* liveclip = NULL;
+    const Clip **liveclips = NULL;
+    const Clip *liveclip = NULL;
     int livew = 0;
-    const Clip** historyclips = NULL;
-    const Clip* historyclip = NULL;
+    const Clip **historyclips = NULL;
+    const Clip *historyclip = NULL;
     int historyw = 0;
     double zd = 0;
     double zd2 = 0;
@@ -7807,17 +7739,17 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
     }
     // select paste, active, etc.
     int selectw = 0;
-    const Clip* selectclip = clipmanager.GetSelectClip(&selectw);
+    const Clip *selectclip = clipmanager.GetSelectClip(&selectw);
     int pastew = 0;
-    const Clip* pasteclip = clipmanager.GetPasteClip(&pastew);
+    const Clip *pasteclip = clipmanager.GetPasteClip(&pastew);
     int activew = 0;
-    const Clip* activeclip = clipmanager.GetActiveClip(&activew);
+    const Clip *activeclip = clipmanager.GetActiveClip(&activew);
     int livenotw = 0;
-    const Clip* livenotclip = clipmanager.GetLiveNotActiveClip(&livenotw);
+    const Clip *livenotclip = clipmanager.GetLiveNotActiveClip(&livenotw);
     int selectnotw = 0;
-    const Clip* selectnotclip = clipmanager.GetSelectNotActiveClip(&selectnotw);
+    const Clip *selectnotclip = clipmanager.GetSelectNotActiveClip(&selectnotw);
     int historynotw = 0;
-    const Clip* historynotclip = clipmanager.GetHistoryNotActiveClip(&historynotw);
+    const Clip *historynotclip = clipmanager.GetHistoryNotActiveClip(&historynotw);
     historyw >>= 1;
     livew >>= 1;
     selectw >>= 1;
@@ -7830,10 +7762,10 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
     const double zdepth2 = zd2;
 
     // lookup the select, paste, active and history grids
-    const unsigned char* select3values = select3d.GetValues();
-    const unsigned char* paste3values = paste3d.GetValues();
-    const unsigned char* active3values = active3d.GetValues();
-    const unsigned char* history3values = history3d.GetValues();
+    const unsigned char *select3values = select3d.GetValues();
+    const unsigned char *paste3values = paste3d.GetValues();
+    const unsigned char *active3values = active3d.GetValues();
+    const unsigned char *history3values = history3d.GetValues();
 
     unsigned char gv = 0;
     unsigned char sv = 0;
@@ -7944,14 +7876,14 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
 
 void Overlay::Display3DBusyBoxes(const int midx, const int midy, const int stepi, const int stepj) {
     // iterate over the grid in the order specified
-    const unsigned char* grid3values = grid3d.GetValues();
+    const unsigned char *grid3values = grid3d.GetValues();
     int x, y, z;
 
     // lookup busyboxes clips
-    const Clip** eclips = NULL;
-    const Clip** oclips = NULL;
-    const Clip* eclip = NULL;
-    const Clip* oclip = NULL;
+    const Clip **eclips = NULL;
+    const Clip **oclips = NULL;
+    const Clip *eclip = NULL;
+    const Clip *oclip = NULL;
     int evenw = 0;
     int oddw = 0;
     double zd = 0;
@@ -7990,65 +7922,73 @@ void Overlay::Display3DBusyBoxes(const int midx, const int midy, const int stepi
         unsigned int evenrgba = *(unsigned int*)eclip->cdata;
         // set the odd drawing color to the pixel in the clip
         unsigned int oddrgba = *(unsigned int*)oclip->cdata;
-        unsigned int* lpixmap = (unsigned int*)pixmap;
+        unsigned int *lpixmap = (unsigned int*)pixmap;
         // iterate over cells back to front
         for (z = fromz; z != toz; z += stepz) {
-            int i = gridsize * (fromy + j);
-            for (y = fromy; y != toy; y += stepy) {
-                int evencell = ((fromx + y + z) & 1) == 0;
-                for (x = fromx; x != tox; x += stepx) {
-                    if (grid3values[i + x]) {
-                        // use orthographic projection
-                        double xc = x * cellsize + midcell;
-                        double yc = y * cellsize + midcell;
-                        double zc = z * cellsize + midcell;
-                        drawx = midx + xc * xixo + yc * xiyo + zc * xizo;
-                        drawy = midy + xc * yixo + yc * yiyo + zc * yizo;
-                        if (evencell) {
-                            if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = evenrgba;
-                        } else {
-                            if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = oddrgba;
+            if (zaxis[z]) {
+                int i = gridsize * (fromy + j);
+                for (y = fromy; y != toy; y += stepy) {
+                    if (yaxis[y]) {
+                        int evencell = ((fromx + y + z) & 1) == 0;
+                        for (x = fromx; x != tox; x += stepx) {
+                            if (grid3values[i + x]) {
+                                // use orthographic projection
+                                double xc = x * cellsize + midcell;
+                                double yc = y * cellsize + midcell;
+                                double zc = z * cellsize + midcell;
+                                drawx = midx + xc * xixo + yc * xiyo + zc * xizo;
+                                drawy = midy + xc * yixo + yc * yiyo + zc * yizo;
+                                if (evencell) {
+                                    if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = evenrgba;
+                                } else {
+                                    if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = oddrgba;
+                                }
+                            }
+                            evencell = !evencell;
                         }
                     }
-                    evencell = !evencell;
+                    i += stepi;
                 }
-                i += stepi;
             }
             j += stepj;
         }
     } else {
         // iterate over cells back to front
         for (z = fromz; z != toz; z += stepz) {
-            int i = gridsize * (fromy + j);
-            for (y = fromy; y != toy; y += stepy) {
-                int evencell = ((fromx + y + z) & 1) == 0;
-                for (x = fromx; x != tox; x += stepx) {
-                    if (grid3values[i + x]) {
-                        // use orthographic projection
-                        double xc = x * cellsize + midcell;
-                        double yc = y * cellsize + midcell;
-                        double zc = z * cellsize + midcell;
-                        drawx = midx + xc * xixo + yc * xiyo + zc * xizo;
-                        drawy = midy + xc * yixo + yc * yiyo + zc * yizo;
-                        if (usedepth) {
-                            double zval = xc * zixo + yc * ziyo + zc * zizo;
-                            int layer = depthlayers * (zval + zdepth) / zdepth2;
-                            if (evencell) {
-                                Draw3DCell(drawx - evenw, drawy - evenw, eclips[layer - mindepth]);
-                            } else {
-                                Draw3DCell(drawx - oddw, drawy - oddw, oclips[layer - mindepth]);
+            if (zaxis[z]) {
+                int i = gridsize * (fromy + j);
+                for (y = fromy; y != toy; y += stepy) {
+                    if (yaxis[y]) {
+                        int evencell = ((fromx + y + z) & 1) == 0;
+                        for (x = fromx; x != tox; x += stepx) {
+                            if (grid3values[i + x]) {
+                                // use orthographic projection
+                                double xc = x * cellsize + midcell;
+                                double yc = y * cellsize + midcell;
+                                double zc = z * cellsize + midcell;
+                                drawx = midx + xc * xixo + yc * xiyo + zc * xizo;
+                                drawy = midy + xc * yixo + yc * yiyo + zc * yizo;
+                                if (usedepth) {
+                                    double zval = xc * zixo + yc * ziyo + zc * zizo;
+                                    int layer = depthlayers * (zval + zdepth) / zdepth2;
+                                    if (evencell) {
+                                        Draw3DCell(drawx - evenw, drawy - evenw, eclips[layer - mindepth]);
+                                    } else {
+                                        Draw3DCell(drawx - oddw, drawy - oddw, oclips[layer - mindepth]);
+                                    }
+                                } else {
+                                    if (evencell) {
+                                        Draw3DCell(drawx - evenw, drawy - evenw, eclip);
+                                    } else {
+                                        Draw3DCell(drawx - oddw, drawy - oddw, oclip);
+                                    }
+                                }
                             }
-                        } else {
-                            if (evencell) {
-                                Draw3DCell(drawx - evenw, drawy - evenw, eclip);
-                            } else {
-                                Draw3DCell(drawx - oddw, drawy - oddw, oclip);
-                            }
+                            evencell = !evencell;
                         }
                     }
-                    evencell = !evencell;
+                    i += stepi;
                 }
-                i += stepi;
             }
             j += stepj;
         }
@@ -8059,16 +7999,16 @@ void Overlay::Display3DBusyBoxes(const int midx, const int midy, const int stepi
 
 void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const int stepi, const int stepj, const bool editing) {
     // iterate over the grid in the order specified
-    const unsigned char* grid3values = grid3d.GetValues();
+    const unsigned char *grid3values = grid3d.GetValues();
     int x, y, z;
 
     // lookup busyboxes clips
-    const Clip** evenclips = NULL;
-    const Clip** oddclips = NULL;
-    const Clip** historyclips = NULL;
-    const Clip* evenclip = NULL;
-    const Clip* oddclip = NULL;
-    const Clip* historyclip = NULL;
+    const Clip **evenclips = NULL;
+    const Clip **oddclips = NULL;
+    const Clip **historyclips = NULL;
+    const Clip *evenclip = NULL;
+    const Clip *oddclip = NULL;
+    const Clip *historyclip = NULL;
     int evenw = 0;
     int oddw = 0;
     int historyw = 0;
@@ -8106,19 +8046,19 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
         oddclip = clipmanager.GetOddClip(&oddw);
     }
     int selectw = 0;
-    const Clip* selectclip = clipmanager.GetSelectClip(&selectw);
+    const Clip *selectclip = clipmanager.GetSelectClip(&selectw);
     int pastew = 0;
-    const Clip* pasteclip = clipmanager.GetPasteClip(&pastew);
+    const Clip *pasteclip = clipmanager.GetPasteClip(&pastew);
     int activew = 0;
-    const Clip* activeclip = clipmanager.GetActiveClip(&activew);
+    const Clip *activeclip = clipmanager.GetActiveClip(&activew);
     int evenlivenotw = 0;
-    const Clip* evenlivenotclip = clipmanager.GetEvenLiveNotActiveClip(&evenlivenotw);
+    const Clip *evenlivenotclip = clipmanager.GetEvenLiveNotActiveClip(&evenlivenotw);
     int oddlivenotw = 0;
-    const Clip* oddlivenotclip = clipmanager.GetOddLiveNotActiveClip(&oddlivenotw);
+    const Clip *oddlivenotclip = clipmanager.GetOddLiveNotActiveClip(&oddlivenotw);
     int selectnotw = 0;
-    const Clip* selectnotclip = clipmanager.GetSelectNotActiveClip(&selectnotw);
+    const Clip *selectnotclip = clipmanager.GetSelectNotActiveClip(&selectnotw);
     int historynotw = 0;
-    const Clip* historynotclip = clipmanager.GetHistoryNotActiveClip(&historynotw);
+    const Clip *historynotclip = clipmanager.GetHistoryNotActiveClip(&historynotw);
     evenw >>= 1;
     oddw >>= 1;
     selectw >>= 1;
@@ -8133,10 +8073,10 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
     const double zdepth2 = zd2;
 
     // lookup the select, paste, active and history grids
-    const unsigned char* select3values = select3d.GetValues();
-    const unsigned char* paste3values = paste3d.GetValues();
-    const unsigned char* active3values = active3d.GetValues();
-    const unsigned char* history3values = history3d.GetValues();
+    const unsigned char *select3values = select3d.GetValues();
+    const unsigned char *paste3values = paste3d.GetValues();
+    const unsigned char *active3values = active3d.GetValues();
+    const unsigned char *history3values = history3d.GetValues();
 
     unsigned char gv = 0;
     unsigned char sv = 0;
@@ -8145,7 +8085,7 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
     unsigned char hv = 0;
     int ix;
     int drawx, drawy;
-    const Clip* liveclip = NULL;
+    const Clip *liveclip = NULL;
     int livew = evenw;  // assume odd and even clips are the same size
 
     // iterate over cells back to front
@@ -8266,8 +8206,8 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
 // Arguments:
 // step         integer      >= 1
 
-const char* Overlay::Do3DSetStepSize(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetStepSize(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // get grid size
     int idx = 2;
@@ -8285,8 +8225,8 @@ const char* Overlay::Do3DSetStepSize(lua_State* L, const int n, int* nresults) {
 // Arguments:
 // size         integer      >= 1
 
-const char* Overlay::Do3DSetGridSize(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetGridSize(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // get grid size
     int idx = 2;
@@ -8296,20 +8236,23 @@ const char* Overlay::Do3DSetGridSize(lua_State* L, const int n, int* nresults) {
 
     // set the grid size
     gridsize = N;
-    int NNN = N * N * N;
+    const int NNN = N * N * N;
 
-    // resize tables if required
-    if (tablesize != NNN) {
-        tablesize = NNN;
-        if (!grid3d.SetSize(tablesize)) return OverlayError("could not allocate grid3d");
-        if (!count1.SetSize(tablesize)) return OverlayError("could not allocate count1");
-        if (!count2.SetSize(tablesize)) return OverlayError("could not allocate count2");
-        if (!next3d.SetSize(tablesize)) return OverlayError("could not allocate next3d");
-        if (!paste3d.SetSize(tablesize)) return OverlayError("could not allocate paste3d");
-        if (!select3d.SetSize(tablesize)) return OverlayError("could not allocate select3d");
-        if (!active3d.SetSize(tablesize)) return OverlayError("could not allocate active3d");
-        if (!history3d.SetSize(tablesize)) return OverlayError("could not allocate history3d");
-    }
+    // create the div table
+    if (!CreateDivTable()) return OverlayError("could not allocate div table");
+
+    // create the axis flags
+    if (!CreateAxisFlags()) return OverlayError("could not allocate axis flags");
+
+    // resize tables
+    if (!grid3d.SetSize(NNN)) return OverlayError("could not allocate grid3d");
+    if (!count1.SetSize(NNN)) return OverlayError("could not allocate count1");
+    if (!count2.SetSize(NNN)) return OverlayError("could not allocate count2");
+    if (!next3d.SetSize(NNN)) return OverlayError("could not allocate next3d");
+    if (!paste3d.SetSize(NNN)) return OverlayError("could not allocate paste3d");
+    if (!select3d.SetSize(NNN)) return OverlayError("could not allocate select3d");
+    if (!active3d.SetSize(NNN)) return OverlayError("could not allocate active3d");
+    if (!history3d.SetSize(NNN)) return OverlayError("could not allocate history3d");
 
     return error;
 }
@@ -8320,12 +8263,12 @@ const char* Overlay::Do3DSetGridSize(lua_State* L, const int n, int* nresults) {
 // survivals    table       boolean
 // births       table       boolean
 
-const char* Overlay::Do3DSetRule(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetRule(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // read rule type
     int idx = 2;
-    const char* rulestring;
+    const char *rulestring;
     if ((error = ReadLuaString(L, n, idx++, &rulestring, "type")) != NULL) return error;
     if (strcmp(rulestring, "") == 0) {
         ruletype = moore;
@@ -8419,44 +8362,191 @@ const char* Overlay::Do3DSetRule(lua_State* L, const int n, int* nresults) {
 
 // -----------------------------------------------------------------------------
 
+void Overlay::FreeDivTable() {
+    if (modN) {
+        free(modN);
+        modN = NULL;
+    }
+    if (modNN) {
+        free(modNN);
+        modNN = NULL;
+    }
+    if (modNdivN) {
+        free(modNdivN);
+        modNdivN = NULL;
+    }
+    if (divNN) {
+        free(divNN);
+        divNN = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+bool Overlay::CreateDivTable() {
+    if (gridsize == 0) return false;
+
+    const int N = gridsize;
+    const int NN = N * N;
+    const int NNN = NN * N;
+
+    // free existing table
+    FreeDivTable();
+
+    // allocate new table
+    modNdivN = (int*)malloc(NNN * sizeof(*modNdivN));
+    modN     = (int*)malloc(NNN * sizeof(*modN));
+    divNN    = (int*)malloc(NNN * sizeof(*divNN));
+    modNN    = (int*)malloc(NNN * sizeof(*modNN));
+
+    // check allocation succeeded
+    if (modNdivN == NULL || modN == NULL || divNN == NULL || modNN == NULL) {
+        FreeDivTable();
+        return false;
+    }
+
+    // populate table
+    for (int i = 0; i < NNN; i++) {
+        modN[i]  = i % N;
+        divNN[i] = i / NN;
+        modNN[i] = i % NN;
+    }
+    for (int i = 0; i < NNN; i++) {
+        modNdivN[i] = modN[i / N];
+    }
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::FreeAxisFlags() {
+    if (xaxis) {
+        free(xaxis);
+        xaxis = NULL;
+    }
+    if (yaxis) {
+        free(yaxis);
+        yaxis = NULL;
+    }
+    if (zaxis) {
+        free(zaxis);
+        zaxis = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+bool Overlay::CreateAxisFlags() {
+    if (gridsize == 0) return false;
+
+    const int N = gridsize;
+
+    // free existing flags
+    FreeAxisFlags();
+
+    // allocate flags
+    xaxis = (char*)malloc(N * sizeof(*xaxis));
+    yaxis = (char*)malloc(N * sizeof(*yaxis));
+    zaxis = (char*)malloc(N * sizeof(*zaxis));
+
+    // check allocation succeeded
+    if (xaxis == NULL || yaxis == NULL || zaxis == NULL) {
+        FreeAxisFlags();
+        return false;
+    }
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::ClearAxisFlags() {
+    if (gridsize == 0) return;
+
+    const int N = gridsize;
+
+    // clear the axis flags
+    memset(xaxis, 0, N * sizeof(*xaxis));
+    memset(yaxis, 0, N * sizeof(*yaxis));
+    memset(zaxis, 0, N * sizeof(*zaxis));
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::UpdateBoundingBox() {
+    if (gridsize == 0) return;
+    const int N = gridsize;
+
+    // guaranteed at least one live cell
+    minx = 0;
+    while (!xaxis[minx]) minx++;
+    miny = 0;
+    while (!yaxis[miny]) miny++;
+    minz = 0;
+    while (!zaxis[minz]) minz++;
+    maxx = N - 1;
+    while (!xaxis[maxx]) maxx--;
+    maxy = N - 1;
+    while (!yaxis[maxy]) maxy--;
+    maxz = N - 1;
+    while (!zaxis[maxz]) maxz--;
+
+    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
+        liveedge = true;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 int Overlay::CreateResultsFromC1(lua_State *L, const bool laststep) {
     // create results for BusyBoxes
     if (laststep) {
         lua_newtable(L);
     }
     next3d.Clear();
-    int numkeys, k;
-    unsigned char v;
-    int x, y, z;
-    const int N = gridsize;
-    const int NN = N * N;
-    const int* count1keys = count1.GetKeys(&numkeys);
-    const unsigned char* count1values = count1.GetValues();
-    for (int i = 0; i < numkeys; i++) {
-        k = count1keys[i];
-        v = count1values[k];
-        if (v) {
-            // create a live cell in next grid
-            if (laststep) {
+
+    // clear axes
+    ClearAxisFlags();
+
+    int numkeys;
+    const int *count1keys = count1.GetKeys(&numkeys);
+    const unsigned char *count1values = count1.GetValues();
+
+    if (laststep) {
+        // on the last step update the return grid
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count1keys[i];
+            if (count1values[k]) {
+                // create a live cell in next grid
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
+                next3d.SetTo1(k);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
             }
-            next3d.SetTo1(k);
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
-            if (x < minx) minx = x;
-            if (y < miny) miny = y;
-            if (z < minz) minz = z;
-            if (x > maxx) maxx = x;
-            if (y > maxy) maxy = y;
-            if (z > maxz) maxz = z;
+        }
+    } else {
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count1keys[i];
+            if (count1values[k]) {
+                // create a live cell in next grid
+                next3d.SetTo1(k);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
+            }
         }
     }
     grid3d.Copy(next3d);
-    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
-        liveedge = true;
-    }
+    UpdateBoundingBox();
 
     // return the population
     return next3d.GetNumKeys();
@@ -8470,41 +8560,52 @@ int Overlay::CreateResultsFromC1G3(lua_State *L, const bool laststep) {
         lua_newtable(L);
     }
     next3d.Clear();
-    int numkeys, k;
-    unsigned char v;
-    int x, y, z;
-    const int N = gridsize;
-    const int NN = N * N;
-    const int* count1keys = count1.GetKeys(&numkeys);
-    const unsigned char* count1values = count1.GetValues();
-    unsigned char src;
-    const unsigned char* grid3dvalues = grid3d.GetValues();
-    for (int i = 0; i < numkeys; i++) {
-        k = count1keys[i];
-        v = count1values[k];
-        src = grid3dvalues[k];
-        if ((src && survivals[v - 1]) || (births[v] && !src)) {
-            // create a live cell in next grid
-            if (laststep) {
+    int numkeys;
+    const int *count1keys = count1.GetKeys(&numkeys);
+    const unsigned char *count1values = count1.GetValues();
+    const unsigned char *grid3dvalues = grid3d.GetValues();
+
+    // clear axes
+    ClearAxisFlags();
+
+    if (laststep) {
+        // on the last step update the return grid
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count1keys[i];
+            const unsigned char v = count1values[k];
+            const unsigned char src = grid3dvalues[k];
+            if ((src && survivals[v - 1]) || (births[v] && !src)) {
+                // create a live cell in next grid
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
+                next3d.SetTo1(k);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
             }
-            next3d.SetTo1(k);
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
-            if (x < minx) minx = x;
-            if (y < miny) miny = y;
-            if (z < minz) minz = z;
-            if (x > maxx) maxx = x;
-            if (y > maxy) maxy = y;
-            if (z > maxz) maxz = z;
+        }
+    } else {
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count1keys[i];
+            const unsigned char v = count1values[k];
+            const unsigned char src = grid3dvalues[k];
+            if ((src && survivals[v - 1]) || (births[v] && !src)) {
+                // create a live cell in next grid
+                next3d.SetTo1(k);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
+            }
         }
     }
     grid3d.Copy(next3d);
-    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
-        liveedge = true;
-    }
+    UpdateBoundingBox();
 
     // return the population
     return next3d.GetNumKeys();
@@ -8518,65 +8619,89 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
         lua_newtable(L);
     }
     next3d.Clear();
-    int numkeys, k;
-    unsigned char v;
-    int x, y, z;
-    const int N = gridsize;
-    const int NN = N * N;
+
+    // clear axes
+    ClearAxisFlags();
 
     // use count1 and survivals to put live cells in grid
-    const int* count1keys = count1.GetKeys(&numkeys);
-    const unsigned char* count1values = count1.GetValues();
-    for (int i = 0; i < numkeys; i++) {
-        k = count1keys[i];
-        v = count1values[k];
-        if (survivals[v]) {
-            // create a live cell in grid2
-            if (laststep) {
+    int numkeys;
+    const int *count1keys = count1.GetKeys(&numkeys);
+    const unsigned char *count1values = count1.GetValues();
+
+    if (laststep) {
+        // on the last step update the return grid
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count1keys[i];
+            const unsigned char v = count1values[k];
+            if (survivals[v]) {
+                // create a live cell in grid2
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
+                next3d.SetValue(k, 1);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
             }
-            next3d.SetValue(k, 1);
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
-            if (x < minx) minx = x;
-            if (y < miny) miny = y;
-            if (z < minz) minz = z;
-            if (x > maxx) maxx = x;
-            if (y > maxy) maxy = y;
-            if (z > maxz) maxz = z;
+        }
+    } else {
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count1keys[i];
+            const unsigned char v = count1values[k];
+            if (survivals[v]) {
+                // create a live cell in grid2
+                next3d.SetValue(k, 1);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
+            }
         }
     }
 
     // use count2 and births to put live cells in grid
-    const int* count2keys = count2.GetKeys(&numkeys);
-    const unsigned char* count2values = count2.GetValues();
-    for (int i = 0; i < numkeys; i++) {
-        k = count2keys[i];
-        v = count2values[k];
-        if (births[v]) {
-            // create a live cell in grid2
-            if (laststep) {
+    const int *count2keys = count2.GetKeys(&numkeys);
+    const unsigned char *count2values = count2.GetValues();
+
+    if (laststep) {
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count2keys[i];
+            const unsigned char v = count2values[k];
+            if (births[v]) {
+                // create a live cell in grid2
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
+                next3d.SetValue(k, 1);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
             }
-            next3d.SetValue(k, 1);
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
-            if (x < minx) minx = x;
-            if (y < miny) miny = y;
-            if (z < minz) minz = z;
-            if (x > maxx) maxx = x;
-            if (y > maxy) maxy = y;
-            if (z > maxz) maxz = z;
+        }
+    } else {
+        for (int i = 0; i < numkeys; i++) {
+            const int k = count2keys[i];
+            const unsigned char v = count2values[k];
+            if (births[v]) {
+                // create a live cell in grid2
+                next3d.SetValue(k, 1);
+                const int x = modN[k];
+                const int y = modNdivN[k];
+                const int z = divNN[k];
+                xaxis[x] = 1;
+                yaxis[y] = 1;
+                zaxis[z] = 1;
+            }
         }
     }
     grid3d.Copy(next3d);
-    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
-        liveedge = true;
-    }
+    UpdateBoundingBox();
 
     // return the population
     return next3d.GetNumKeys();
@@ -8584,9 +8709,28 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::PopulateGrid(lua_State* L, const int n, int idx, Table& destgrid) {
+void Overlay::PopulateAxis() {
+    if (gridsize == 0) return;
+
+    int numkeys;
+    const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+    for (int i = 0; i < numkeys; i++) {
+        int k = grid3dkeys[i];
+        const int x = modN[k];
+        const int y = modNdivN[k];
+        const int z = divNN[k];
+        xaxis[x] = 1;
+        yaxis[y] = 1;
+        zaxis[z] = 1;
+    }
+    UpdateBoundingBox();
+}
+
+// -----------------------------------------------------------------------------
+
+const char *Overlay::PopulateGrid(lua_State *L, const int n, int idx, Table &destgrid) {
     const int N = gridsize;
-    const int NNN = N * N * N;
+    const unsigned int NNN = N * N * N;
 
     // fill grid
     destgrid.Clear();
@@ -8605,7 +8749,7 @@ const char* Overlay::PopulateGrid(lua_State* L, const int n, int idx, Table& des
         int k = lua_tointeger(L, -1);
         lua_pop(L, 2);
         // check that the cell coordinates are within the grid
-        if (k < 0 || k >= NNN) {
+        if ((unsigned int)k >= NNN) {
             valid = false;
             break;
         }
@@ -8622,13 +8766,14 @@ const char* Overlay::PopulateGrid(lua_State* L, const int n, int idx, Table& des
 // grid             table      integer
 // clearhistory     boolean
 
-const char* Overlay::Do3DSetPattern(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetPattern(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
     if (gridsize == 0) return OverlayError("grid size not set");
 
     // populate the grid from the supplied pattern
     int idx = 2;
     if ((error = PopulateGrid(L, n, idx++, grid3d)) != NULL) return error;
+    PopulateAxis();
 
     // read the clear history flag
     bool clearhistory = false;
@@ -8648,8 +8793,8 @@ const char* Overlay::Do3DSetPattern(lua_State* L, const int n, int* nresults) {
 // pastepatt        table       integer
 // active           table       integer
 
-const char* Overlay::Do3DSetSelectPasteActive(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetSelectPasteActive(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
     if (gridsize == 0) return OverlayError("grid size not set");
 
     int idx = 2;
@@ -8663,23 +8808,22 @@ const char* Overlay::Do3DSetSelectPasteActive(lua_State* L, const int n, int* nr
 // -----------------------------------------------------------------------------
 
 void Overlay::UpdateHistoryFromLive() {
-    int k;
     int numkeys = 0;
     int numhistkeys = 0;
-    const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-    const int* history3keys = history3d.GetKeys(&numhistkeys);
+    const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+    const int *history3keys = history3d.GetKeys(&numhistkeys);
 
     if (fadehistory) {
         // reduce history on all cells by 1
         for (int i = 0; i < numhistkeys; i++) {
-            k = history3keys[i];
+            int k = history3keys[i];
             history3d.DecrementTo1(k);
         }
     }
 
     // set history to maximum longevity for any live cells
     for (int i = 0; i < numkeys; i++) {
-        k = grid3dkeys[i];
+        int k = grid3dkeys[i];
         history3d.SetValue(k, showhistory);
     }
 }
@@ -8687,28 +8831,26 @@ void Overlay::UpdateHistoryFromLive() {
 // -----------------------------------------------------------------------------
 
 void Overlay::UpdateBoundingBoxFromHistory() {
-    int x, y, z, k;
     const int N = gridsize;
-    const int NN = N * N;
     int numhistkeys = 0;
-    const int* history3keys = history3d.GetKeys(&numhistkeys);
+    const int *history3keys = history3d.GetKeys(&numhistkeys);
 
     // do nothing if no history cells
     if (numhistkeys == 0) return;
 
     // set history min, max defaults
-    int hminx = gridsize;
+    int hminx = N;
     int hmaxx = -1;
-    int hminy = gridsize;
+    int hminy = N;
     int hmaxy = -1;
-    int hminz = gridsize;
+    int hminz = N;
     int hmaxz = -1;
     // compute bounding box for history cells
     for (int i = 0; i < numhistkeys; i++) {
-        k = history3keys[i];
-        x = k % N;
-        y = (k / N) % N;
-        z = k / NN;
+        const int k = history3keys[i];
+        const int x = modN[k];
+        const int y = modNdivN[k];
+        const int z = divNN[k];
         if (x < hminx) hminx = x;
         if (x > hmaxx) hmaxx = x;
         if (y < hminy) hminy = y;
@@ -8746,8 +8888,8 @@ void Overlay::UpdateBoundingBoxFromHistory() {
 // showhistory      integer     0..255
 // fadehistory      boolean
 
-const char* Overlay::Do3DSetCellHistory(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DSetCellHistory(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // read the show history longevity
     int idx = 2;
@@ -8773,8 +8915,8 @@ const char* Overlay::Do3DSetCellHistory(lua_State* L, const int n, int* nresults
 // gencount         integer
 // liveedge         boolean     (if algo is not BusyBoxes)
 
-const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
-    const char* error = NULL;
+const char *Overlay::Do3DNextGen(lua_State *L, const int n, int *nresults) {
+    const char *error = NULL;
 
     // get the grid size
     if (gridsize == 0) return OverlayError("grid size not set");
@@ -8790,20 +8932,15 @@ const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
         if ((error = ReadLuaBoolean(L, n, idx++, &liveedge, "liveedge")) != NULL) return error;
     }
 
+    // check div table exists
+    if (modN == NULL) if (!CreateDivTable()) return OverlayError("could not allocate div table");
+
     // process each step
     int lastgen = gencount - (gencount % stepsize) + stepsize;
     int newpop = 0;
     bool laststep = false;
 
     while (gencount < lastgen) {
-        // set min, max defaults
-        minx = gridsize;
-        maxx = -1;
-        miny = gridsize;
-        maxy = -1;
-        minz = gridsize;
-        maxz = -1;
-
         // set the laststep flag
         if (gencount == lastgen - 1) laststep = true;
 
@@ -8839,8 +8976,8 @@ const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
                 if ((gridsize & 1) == 1) return OverlayError("grid size must be even for BusyBoxes");
                 Do3DNextGenBB(true, gencount);
                 newpop = CreateResultsFromC1(L, laststep);
-            break;
-                case bbw:
+                break;
+            case bbw:
                 if ((gridsize & 1) == 1) return OverlayError("grid size must be even for BusyBoxes");
                 Do3DNextGenBB(false, gencount);
                 newpop = CreateResultsFromC1(L, laststep);
@@ -8850,9 +8987,7 @@ const char* Overlay::Do3DNextGen(lua_State* L, const int n, int* nresults) {
         }
 
         // update history if required
-        if (showhistory > 0) {
-            UpdateHistoryFromLive();
-        }
+        if (showhistory > 0) UpdateHistoryFromLive();
 
         // next step
         gencount++;
@@ -8922,7 +9057,7 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
     static const int inhib27[] = { 0,  3};
     static const int inhib28[] = { 2,  3};
 
-    static const int* coords[] = {
+    static const int *coords[] = {
         // 1 to 4 are the coordinates for the 4 potential swap sites:
         swap1, swap2, swap3, swap4,
         // 5 to 12 are activators:
@@ -8938,74 +9073,79 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
     static const int actidx2[] = {6,  9};
     static const int actidx3[] = {8, 11};
     static const int actidx4[] = {5, 10};
-    static const int* activators[] = {actidx1, actidx2, actidx3, actidx4};
+    static const int *activators[] = {actidx1, actidx2, actidx3, actidx4};
 
     static const int inhibidx1[] = {17, 24, 21, 26, 19, 27, 6,  9,  8, 11,  5, 10};
     static const int inhibidx2[] = {17, 23, 18, 26, 20, 25, 4,  7,  8, 11,  5, 10};
     static const int inhibidx3[] = {15, 22, 13, 18, 12, 20, 4,  7,  6,  9,  5, 10};
     static const int inhibidx4[] = {19, 14, 13, 21, 16, 22, 4,  7,  6,  9,  8, 11};
-    static const int* inhibitors[] = {inhibidx1, inhibidx2, inhibidx3, inhibidx4};
+    static const int *inhibitors[] = {inhibidx1, inhibidx2, inhibidx3, inhibidx4};
 
-    int numkeys, k;
-    int x, y, z;
+    int numkeys;
     const int phase = gencount % 6;
     const int N = gridsize;
     const int NN = N * N;
-    const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-    const unsigned char* grid3dvalues = grid3d.GetValues();
+    const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+    const unsigned char *grid3dvalues = grid3d.GetValues();
 
     // apply rule
     unsigned char val[28];
     for (int i = 0; i < numkeys; i++) {
-        k = grid3dkeys[i];
-        x = k % N;
-        y = (k / N) % N;
-        z = k / NN;
+        const int k = grid3dkeys[i];
+        int x = modN[k];
+        int y = modNdivN[k];
+        int z = divNN[k];
         if (((x + y + z) & 1) == (phase & 1)) {
             // this live cell has the right parity so get values for its 28 neighbors
             int sx, sy, sz;
             int j = 0;
-            const int* coordsj;
+            const int *coordsj;
             if (phase == 0 || phase == 3) {
                 const int Nz = N * z;
                 // use XY plane
+                x += N;
+                y += N;
                 while (j < 28) {
                     // compute the next two values
                     coordsj = coords[j];
-                    sx = (x + N + coordsj[0]) % N;
-                    sy = (y + N + coordsj[1]) % N;
+                    sx = modN[x + coordsj[0]];
+                    sy = modN[y + coordsj[1]];
                     val[j++] = grid3dvalues[sx + N * (sy + Nz)];
                     coordsj = coords[j];
-                    sx = (x + N + coordsj[0]) % N;
-                    sy = (y + N + coordsj[1]) % N;
+                    sx = modN[x + coordsj[0]];
+                    sy = modN[y + coordsj[1]];
                     val[j++] = grid3dvalues[sx + N * (sy + Nz)];
                 }
             } else {
                 if (phase == 1 || phase == 4) {
                     // use YZ plane
+                    y += N;
+                    z += N;
                     while (j < 28) {
                         // compute the next two values
                         coordsj = coords[j];
-                        sy = (y + N + coordsj[0]) % N;
-                        sz = (z + N + coordsj[1]) % N;
+                        sy = modN[y + coordsj[0]];
+                        sz = modN[z + coordsj[1]];
                         val[j++] = grid3dvalues[x + N * (sy + N * sz)];
                         coordsj = coords[j];
-                        sy = (y + N + coordsj[0]) % N;
-                        sz = (z + N + coordsj[1]) % N;
+                        sy = modN[y + coordsj[0]];
+                        sz = modN[z + coordsj[1]];
                         val[j++] = grid3dvalues[x + N * (sy + N * sz)];
                     }
                 } else {
                     // phase == 2 or 5 so use XZ plane
+                    x += N;
+                    z += N;
                     const int Ny = N * y;
                     while (j < 28) {
                         // compute the next two values
                         coordsj = coords[j];
-                        sx = (x + N + coordsj[0]) % N;
-                        sz = (z + N + coordsj[1]) % N;
+                        sx = modN[x + coordsj[0]];
+                        sz = modN[z + coordsj[1]];
                         val[j++] = grid3dvalues[sx + Ny + NN * sz];
                         coordsj = coords[j];
-                        sx = (x + N + coordsj[0]) % N;
-                        sz = (z + N + coordsj[1]) % N;
+                        sx = modN[x + coordsj[0]];
+                        sz = modN[z + coordsj[1]];
                         val[j++] = grid3dvalues[sx + Ny + NN * sz];
                     }
                 }
@@ -9015,8 +9155,8 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
             int numswaps = 0;
             int swapi = 0;
             for (j = 0; j <= 3; j++) {
-                const int* activatorsj = activators[j];
-                const int* inhibitorsj = inhibitors[j];
+                const int *activatorsj = activators[j];
+                const int *inhibitorsj = inhibitors[j];
                 // if either activator is a live cell then the swap is possible,
                 // but if any inhibitor is a live cell then the swap is forbidden
                 if ((val[activatorsj[0]] || val[activatorsj[1]])
@@ -9038,35 +9178,35 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
                 int newx, newy, newz;
                 if (phase == 0 || phase == 3) {
                     // use XY plane
-                    newx = x + coords[swapi][0];
-                    newy = y + coords[swapi][1];
+                    newx = x - N + coords[swapi][0];
+                    newy = y - N + coords[swapi][1];
                     newz = z;
                 } else {
                     if (phase == 1 || phase == 4) {
                         // use YZ plane
                         newx = x;
-                        newy = y + coords[swapi][0];
-                        newz = z + coords[swapi][1];
+                        newy = y - N + coords[swapi][0];
+                        newz = z - N + coords[swapi][1];
                     } else {
                         // phase == 2 or 5 so use XZ plane
-                        newx = x + coords[swapi][0];
+                        newx = x - N + coords[swapi][0];
                         newy = y;
-                        newz = z + coords[swapi][1];
+                        newz = z - N + coords[swapi][1];
                     }
                 }
                 // if using mirror mode then don't wrap
                 if (mirror &&
-                    ( newx < 0 || newx >= N ||
-                      newy < 0 || newy >= N ||
-                      newz < 0 || newz >= N )) {
+                    (newx < 0 || newx >= N ||
+                     newy < 0 || newy >= N ||
+                     newz < 0 || newz >= N)) {
                     // swap position is outside grid so don't do it
                     count1.SetTo1(k);
                 } else {
                     // do the swap, wrapping if necessary
-                    x = (newx + N) % N;
-                    y = (newy + N) % N;
-                    z = (newz + N) % N;
-                    count1.SetTo1(x + N * (y + N * z));
+                    newx = modN[newx + N];
+                    newy = modN[newy + N];
+                    newz = modN[newz + N];
+                    count1.SetTo1(newx + N * (newy + N * newz));
                 }
             } else {
                 // don't swap this live cell
@@ -9082,35 +9222,34 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenFace() {
-    int numkeys, k;
-    int x, y, z;
+    int numkeys;
     const int N = gridsize;
     const int NN = N * N;
 
     // check whether to use wrap
     if (liveedge) {
         // use wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
+            const int x = modN[k];
+            const int y = modNdivN[k];
+            const int z = divNN[k];
             count1.SetValue(k, 0);
-            int Ny = N * y;
-            int NNz = NN * z;
-            int NypNNz = Ny + NNz;
-            int xpNNz = x + NNz;
-            int xpNy = x + Ny;
+            const int Ny = N * y;
+            const int NNz = NN * z;
+            const int NypNNz = Ny + NNz;
+            const int xpNNz = x + NNz;
+            const int xpNy = x + Ny;
 
             // calculate the positions of the 6 cells next to each face of this cell
-            int xp1 = (x + 1) % N + NypNNz;
-            int xm1 = (x - 1 + N) % N + NypNNz;
-            int yp1 = N * ((y + 1) % N) + xpNNz;
-            int ym1 = N * ((y - 1 + N) % N) + xpNNz;
-            int zp1 = NN * ((z + 1) % N) + xpNy;
-            int zm1 = NN * ((z - 1 + N) % N) + xpNy;
+            const int xp1 = modN[x + 1] + NypNNz;
+            const int xm1 = modN[x - 1 + N] + NypNNz;
+            const int yp1 = N * modN[y + 1] + xpNNz;
+            const int ym1 = N * modN[y - 1 + N] + xpNNz;
+            const int zp1 = NN * modN[z + 1] + xpNy;
+            const int zm1 = NN * modN[z - 1 + N] + xpNy;
 
             if (grid3dvalues[xp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xp1, 1); }
             if (grid3dvalues[xm1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xm1, 1); }
@@ -9121,19 +9260,19 @@ void Overlay::Do3DNextGenFace() {
         }
     } else {
         // use no wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
+            const int k = grid3dkeys[i];
             count1.SetValue(k, 0);
 
             // calculate the positions of the 6 cells next to each face of this cell
-            int xp1 = k + 1;
-            int xm1 = k - 1;
-            int yp1 = k + N;
-            int ym1 = k - N;
-            int zp1 = k + NN;
-            int zm1 = k - NN;
+            const int xp1 = k + 1;
+            const int xm1 = k - 1;
+            const int yp1 = k + N;
+            const int ym1 = k - N;
+            const int zp1 = k + NN;
+            const int zm1 = k - NN;
 
             if (grid3dvalues[xp1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xp1, 1); }
             if (grid3dvalues[xm1]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xm1, 1); }
@@ -9148,39 +9287,38 @@ void Overlay::Do3DNextGenFace() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenCorner() {
-    int numkeys, k;
-    int x, y, z;
+    int numkeys;
     const int N = gridsize;
     const int NN = N * N;
 
     // check whether to use wrap
     if (liveedge) {
         // use wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
+            const int x = modN[k];
+            const int y = modNdivN[k];
+            const int z = divNN[k];
             count1.SetValue(k, 0);
 
-            int xp1 = (x + 1) % N;
-            int xm1 = (x - 1 + N) % N;
-            int yp1 = N * ((y + 1) % N);
-            int ym1 = N * ((y - 1 + N) % N);
-            int zp1 = NN * ((z + 1) % N);
-            int zm1 = NN * ((z - 1 + N) % N);
+            const int xp1 = modN[x + 1];
+            const int xm1 = modN[x - 1 + N];
+            const int yp1 = N * modN[y + 1];
+            const int ym1 = N * modN[y - 1 + N];
+            const int zp1 = NN * modN[z + 1];
+            const int zm1 = NN * modN[z - 1 + N];
 
             // calculate the positions of the 8 cells cells touching each corner of this cell
-            int ppp = xp1 + yp1 + zp1;
-            int mmm = xm1 + ym1 + zm1;
-            int ppm = xp1 + yp1 + zm1;
-            int mmp = xm1 + ym1 + zp1;
-            int mpp = xm1 + yp1 + zp1;
-            int pmm = xp1 + ym1 + zm1;
-            int pmp = xp1 + ym1 + zp1;
-            int mpm = xm1 + yp1 + zm1;
+            const int ppp = xp1 + yp1 + zp1;
+            const int mmm = xm1 + ym1 + zm1;
+            const int ppm = xp1 + yp1 + zm1;
+            const int mmp = xm1 + ym1 + zp1;
+            const int mpp = xm1 + yp1 + zp1;
+            const int pmm = xp1 + ym1 + zm1;
+            const int pmp = xp1 + ym1 + zp1;
+            const int mpm = xm1 + yp1 + zm1;
 
             if (grid3dvalues[ppp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppp, 1); }
             if (grid3dvalues[mmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmm, 1); }
@@ -9193,24 +9331,21 @@ void Overlay::Do3DNextGenCorner() {
         }
     } else {
         // use no wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
             count1.SetValue(k, 0);
 
             // calculate the positions of the 8 cells cells touching each corner of this cell
-            int ppp = k + 1 + N + NN;
-            int mmm = k - 1 - N - NN;
-            int ppm = k + 1 + N - NN;
-            int mmp = k - 1 - N + NN;
-            int mpp = k - 1 + N + NN;
-            int pmm = k + 1 - N - NN;
-            int pmp = k + 1 - N + NN;
-            int mpm = k - 1 + N - NN;
+            const int ppp = k + 1 + N + NN;
+            const int mmm = k - 1 - N - NN;
+            const int ppm = k + 1 + N - NN;
+            const int mmp = k - 1 - N + NN;
+            const int mpp = k - 1 + N + NN;
+            const int pmm = k + 1 - N - NN;
+            const int pmp = k + 1 - N + NN;
+            const int mpm = k - 1 + N - NN;
 
             if (grid3dvalues[ppp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(ppp, 1); }
             if (grid3dvalues[mmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(mmm, 1); }
@@ -9227,47 +9362,46 @@ void Overlay::Do3DNextGenCorner() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenEdge() {
-    int numkeys, k;
-    int x, y, z;
+    int numkeys;
     const int N = gridsize;
     const int NN = N * N;
 
     // check whether to use wrap
     if (liveedge) {
         // use wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
+            const int x = modN[k];
+            const int y = modNdivN[k];
+            const int z = divNN[k];
             count1.SetValue(k, 0);
 
-            int xp1 = (x + 1) % N;
-            int xm1 = (x - 1 + N) % N;
-            int yp1 = N * ((y + 1) % N);
-            int ym1 = N * ((y - 1 + N) % N);
-            int zp1 = NN * ((z + 1) % N);
-            int zm1 = NN * ((z - 1 + N) % N);
-            int Ny = N * y;
-            int NNz = NN * z;
+            const int xp1 = modN[x + 1];
+            const int xm1 = modN[x - 1 + N];
+            const int yp1 = N * modN[y + 1];
+            const int ym1 = N * modN[y - 1 + N];
+            const int zp1 = NN * modN[z + 1];
+            const int zm1 = NN * modN[z - 1 + N];
+            const int Ny = N * y;
+            const int NNz = NN * z;
 
             // calculate the positions of the 12 cells next to each edge of this cell
-            int xpp = x + yp1 + zp1;
-            int xmm = x + ym1 + zm1;
-            int xpm = x + yp1 + zm1;
-            int xmp = x + ym1 + zp1;
+            const int xpp = x + yp1 + zp1;
+            const int xmm = x + ym1 + zm1;
+            const int xpm = x + yp1 + zm1;
+            const int xmp = x + ym1 + zp1;
 
-            int pyp = xp1 + Ny + zp1;
-            int mym = xm1 + Ny + zm1;
-            int pym = xp1 + Ny + zm1;
-            int myp = xm1 + Ny + zp1;
+            const int pyp = xp1 + Ny + zp1;
+            const int mym = xm1 + Ny + zm1;
+            const int pym = xp1 + Ny + zm1;
+            const int myp = xm1 + Ny + zp1;
 
-            int ppz = xp1 + yp1 + NNz;
-            int mmz = xm1 + ym1 + NNz;
-            int pmz = xp1 + ym1 + NNz;
-            int mpz = xm1 + yp1 + NNz;
+            const int ppz = xp1 + yp1 + NNz;
+            const int mmz = xm1 + ym1 + NNz;
+            const int pmz = xp1 + ym1 + NNz;
+            const int mpz = xm1 + yp1 + NNz;
 
             if (grid3dvalues[xpp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpp, 1); }
             if (grid3dvalues[xmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmm, 1); }
@@ -9286,30 +9420,27 @@ void Overlay::Do3DNextGenEdge() {
         }
     } else {
         // use no wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
             count1.SetValue(k, 0);
 
             // calculate the positions of the 12 cells next to each edge of this cell
-            int xpp = k + N + NN;
-            int xmm = k - N - NN;
-            int xpm = k + N - NN;
-            int xmp = k - N + NN;
+            const int xpp = k + N + NN;
+            const int xmm = k - N - NN;
+            const int xpm = k + N - NN;
+            const int xmp = k - N + NN;
 
-            int pyp = k + 1 + NN;
-            int mym = k - 1 - NN;
-            int pym = k + 1 - NN;
-            int myp = k - 1 + NN;
+            const int pyp = k + 1 + NN;
+            const int mym = k - 1 - NN;
+            const int pym = k + 1 - NN;
+            const int myp = k - 1 + NN;
 
-            int ppz = k + 1 + N;
-            int mmz = k - 1 - N;
-            int pmz = k + 1 - N;
-            int mpz = k - 1 + N;
+            const int ppz = k + 1 + N;
+            const int mmz = k - 1 - N;
+            const int pmz = k + 1 - N;
+            const int mpz = k - 1 + N;
 
             if (grid3dvalues[xpp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xpp, 1); }
             if (grid3dvalues[xmm]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xmm, 1); }
@@ -9332,46 +9463,45 @@ void Overlay::Do3DNextGenEdge() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenHexahedral() {
-    int numkeys, k;
-    int x, y, z;
+    int numkeys;
     const int N = gridsize;
     const int NN = N * N;
 
     // check whether to use wrap
     if (liveedge) {
         // use wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
+            const int x = modN[k];
+            const int y = modNdivN[k];
+            const int z = divNN[k];
             count1.SetValue(k, 0);
 
-            int xp1 = (x + 1) % N;
-            int xm1 = (x - 1 + N) % N;
-            int yp1 = N * ((y + 1) % N);
-            int ym1 = N * ((y - 1 + N) % N);
-            int zp1 = NN * ((z + 1) % N);
-            int zm1 = NN * ((z - 1 + N) % N);
-            int Ny = N * y;
-            int NNz = NN * z;
+            const int xp1 = modN[x + 1];
+            const int xm1 = modN[x - 1 + N];
+            const int yp1 = N * modN[y + 1];
+            const int ym1 = N * modN[y - 1 + N];
+            const int zp1 = NN * modN[z + 1];
+            const int zm1 = NN * modN[z - 1 + N];
+            const int Ny = N * y;
+            const int NNz = NN * z;
 
             // calculate the positions of the 12 neighboring cells (using the top offsets given
             // on page 872 in http://www.complex-systems.com/pdf/01-5-1.pdf)
-            int xym = x + Ny + zm1;
-            int xyp = x + Ny + zp1;
-            int xpm = x + yp1 + zm1;
-            int xpz = x + yp1 + NNz;
-            int xmp = x + ym1 + zp1;
-            int xmz = x + ym1 + NNz;
-            int pym = xp1 + Ny + zm1;
-            int pyz = xp1 + Ny + NNz;
-            int myp = xm1 + Ny + zp1;
-            int myz = xm1 + Ny + NNz;
-            int pmz = xp1 + ym1 + NNz;
-            int mpz = xm1 + yp1 + NNz;
+            const int xym = x + Ny + zm1;
+            const int xyp = x + Ny + zp1;
+            const int xpm = x + yp1 + zm1;
+            const int xpz = x + yp1 + NNz;
+            const int xmp = x + ym1 + zp1;
+            const int xmz = x + ym1 + NNz;
+            const int pym = xp1 + Ny + zm1;
+            const int pyz = xp1 + Ny + NNz;
+            const int myp = xm1 + Ny + zp1;
+            const int myz = xm1 + Ny + NNz;
+            const int pmz = xp1 + ym1 + NNz;
+            const int mpz = xm1 + yp1 + NNz;
 
             if (grid3dvalues[xym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xym, 1); }
             if (grid3dvalues[xyp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xyp, 1); }
@@ -9390,29 +9520,26 @@ void Overlay::Do3DNextGenHexahedral() {
         }
     } else {
         // use no wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        const unsigned char* grid3dvalues = grid3d.GetValues();
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
-            x = k % N;
-            y = (k / N) % N;
-            z = k / NN;
+            const int k = grid3dkeys[i];
             count1.SetValue(k, 0);
 
             // calculate the positions of the 12 neighboring cells (using the top offsets given
             // on page 872 in http://www.complex-systems.com/pdf/01-5-1.pdf)
-            int xym = k - NN;
-            int xyp = k + NN;
-            int xpm = k + N - NN;
-            int xpz = k + N;
-            int xmp = k - N + NN;
-            int xmz = k - N;
-            int pym = k + 1 - NN;
-            int pyz = k + 1;
-            int myp = k - 1 + NN;
-            int myz = k - 1;
-            int pmz = k + 1 - N;
-            int mpz = k - 1 + N;
+            const int xym = k - NN;
+            const int xyp = k + NN;
+            const int xpm = k + N - NN;
+            const int xpz = k + N;
+            const int xmp = k - N + NN;
+            const int xmz = k - N;
+            const int pym = k + 1 - NN;
+            const int pyz = k + 1;
+            const int myp = k - 1 + NN;
+            const int myz = k - 1;
+            const int pmz = k + 1 - N;
+            const int mpz = k - 1 + N;
 
             if (grid3dvalues[xym]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xym, 1); }
             if (grid3dvalues[xyp]) { count1.AddToValue(k, 1); } else { count2.AddToValue(xyp, 1); }
@@ -9435,11 +9562,9 @@ void Overlay::Do3DNextGenHexahedral() {
 // -----------------------------------------------------------------------------
 
 void Overlay::Do3DNextGenMoore() {
-    int numkeys, k;
-    unsigned char v;
-    int x, y;
-    const int* count1keys = NULL;
-    const unsigned char* count1values = NULL;
+    int numkeys;
+    const int *count1keys = NULL;
+    const unsigned char *count1values = NULL;
     const int N = gridsize;
     const int NN = N * N;
     const int NNN = NN * N;
@@ -9447,53 +9572,46 @@ void Overlay::Do3DNextGenMoore() {
     // check whether to use wrap
     if (liveedge) {
         // use wrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
-        int NNmN = NN - N;
-        int k2;
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
+        const int NNmN = NN - N;
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
+            const int k = grid3dkeys[i];
+            const int y = modNN[k];
             count1.AddToValue(k, 1);
-            y = k % NN;
-            k2 = k + (y + N) % NN - y;
-            count1.AddToValue(k2, 1);
-            k2 = k + (y + NNmN) % NN - y;
-            count1.AddToValue(k2, 1);
+            count1.AddToValue(k + (y >= NNmN ? -NNmN: N), 1);
+            count1.AddToValue(k + (y < N ? NNmN : -N), 1);
         }
 
         // get keys and values in count1
         count1keys = count1.GetKeys(&numkeys);
         count1values = count1.GetValues();
-        int Nm1 = N - 1;
+        const int Nm1 = N - 1;
         for (int i = 0; i < numkeys; i++) {
-            k = count1keys[i];
-            v = count1values[k];
+            const int k = count1keys[i];
+            const unsigned char v = count1values[k];
+            const int x = modN[k];
             count2.AddToValue(k, v);
-            x = k % N;
-            k2 = k + (x + 1) % N - x;
-            count2.AddToValue(k2, v);
-            k2 = k + (x + Nm1) % N - x;
-            count2.AddToValue(k2, v);
+            count2.AddToValue(k + (x == Nm1 ? -Nm1 : 1), v);
+            count2.AddToValue(k + (x == 0 ? Nm1 : -1), v);
         }
 
         // get keys and values in count2
-        const int* count2keys = count2.GetKeys(&numkeys);
-        const unsigned char* count2values = count2.GetValues();
-        int NNNmNN = NNN - NN;
+        const int *count2keys = count2.GetKeys(&numkeys);
+        const unsigned char *count2values = count2.GetValues();
+        const int NNNmNN = NNN - NN;
         count1.ClearKeys();
         for (int i = 0; i < numkeys; i++) {
-            k = count2keys[i];
-            v = count2values[k];
+            const int k = count2keys[i];
+            const unsigned char v = count2values[k];
             count1.AddToValue(k, v);
-            k2 = (k + NN) % NNN;
-            count1.AddToValue(k2, v);
-            k2 = (k + NNNmNN) % NNN;
-            count1.AddToValue(k2, v);
+            count1.AddToValue(k >= NNNmNN ? k - NNNmNN : k + NN, v);
+            count1.AddToValue(k < NN ? k + NNNmNN : k - NN, v);
         }
     } else {
         // use nowrap version
-        const int* grid3dkeys = grid3d.GetKeys(&numkeys);
+        const int *grid3dkeys = grid3d.GetKeys(&numkeys);
         for (int i = 0; i < numkeys; i++) {
-            k = grid3dkeys[i];
+            const int k = grid3dkeys[i];
             count1.AddToValue(k, 1);
             count1.AddToValue(k + N, 1);
             count1.AddToValue(k - N, 1);
@@ -9503,20 +9621,20 @@ void Overlay::Do3DNextGenMoore() {
         count1keys = count1.GetKeys(&numkeys);
         count1values = count1.GetValues();
         for (int i = 0; i < numkeys; i++) {
-            k = count1keys[i];
-            v = count1values[k];
+            const int k = count1keys[i];
+            const unsigned char v = count1values[k];
             count2.AddToValue(k, v);
             count2.AddToValue(k + 1, v);
             count2.AddToValue(k - 1, v);
         }
 
         // get keys and values in count2
-        const int* count2keys = count2.GetKeys(&numkeys);
-        const unsigned char* count2values = count2.GetValues();
+        const int *count2keys = count2.GetKeys(&numkeys);
+        const unsigned char *count2values = count2.GetValues();
         count1.ClearKeys();
         for (int i = 0; i < numkeys; i++) {
-            k = count2keys[i];
-            v = count2values[k];
+            const int k = count2keys[i];
+            const unsigned char v = count2values[k];
             count1.AddToValue(k, v);
             count1.AddToValue(k + NN, v);
             count1.AddToValue(k - NN, v);
@@ -9526,7 +9644,7 @@ void Overlay::Do3DNextGenMoore() {
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoOverlayCommand(const char* cmd)
+const char *Overlay::DoOverlayCommand(const char *cmd)
 {
     // determine which command to run
     if (strncmp(cmd, "set ", 4) == 0)          return DoSetPixel(cmd+4);
@@ -9570,7 +9688,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoOverlayTable(const char* cmd, lua_State* L, int n, int* nresults)
+const char *Overlay::DoOverlayTable(const char *cmd, lua_State *L, int n, int *nresults)
 {
     // determine which command to run
     if ((strcmp(cmd, "set")) == 0)               return DoSetPixel(L, n, nresults);
