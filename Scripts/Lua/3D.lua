@@ -479,7 +479,6 @@ function ReadSettings()
                 N = tonumber(value) or DEFAULTN
                 if N < MINN then N = MINN end
                 if N > MAXN then N = MAXN end
-                SetGridSizeOnly(N)
             elseif keyword == "rule" then
                 rulestring = tostring(value)
                 if not ParseRule(rulestring) then
@@ -7823,6 +7822,8 @@ function Initialize()
     if N == 0 then
         -- set grid size to default
         SetGridSizeOnly(DEFAULTN)
+    else
+        SetGridSizeOnly(N)
     end
 
     -- create reference cube (never displayed)
