@@ -425,18 +425,20 @@ local replacements = {
     [3] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace !255 0 0 255", desc = "replace non-red pixels with yellow" },
     [4] = { col = {}, cmd = "replace *g *r *# *#", desc = "swap red and green components" },
     [5] = { col = {"rgba", 0, 0, 0, 128}, cmd = "replace *# *# *# *", desc = "make all pixels semi-transparent" },
-    [6] = { col = {}, cmd = "replace *r- *g- *b- *#", desc = "invert r g b components" },
-    [7] = { col = {}, cmd = "replace *# *# *# *#-", desc = "make transparent pixels opaque and vice versa" },
-    [8] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace * * * !255", desc = "replace non-opaque pixels with yellow" },
-    [9] = { col = {"rgba", 255, 255, 255, 255}, cmd = "replace *a *a *a *", desc = "convert alpha to grayscale" },
-    [10] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace 0 255 0 !255", desc = "replace non-opaque green with yellow" },
-    [11] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace * * * *", desc = "fill (replace any pixel with yellow)" },
-    [12] = { col = {}, cmd = "replace *# *# *# *#", desc = "no-op (replace pixels with clip pixels)" },
-    [13] = { col = {"rgba", 0, 0, 0, 128}, cmd = "replace *# *# *# *", desc = "make whole overlay semi-transparent", overlay = true },
-    [14] = { col = {}, cmd = "replace *#+64 *#+64 *#+64 *#", desc = "make pixels brighter" },
-    [15] = { col = {}, cmd = "replace *# *# *# *#-64", desc = "make pixels more transparent" },
-    [16] = { col = {}, cmd = "replace *#++ *#++ *#++ *#", desc = "fade to white using increment", overlay = true, loop = true },
-    [17] = { col = {}, cmd = "replace *#-4 *#-4 *#-4 *#", desc = "fast fade to black", overlay = true, loop = true }
+    [6] = { col = {}, cmd = "replace *r- *g- *b- *#", desc = "invert clip r g b components" },
+    [7] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace 255 0 0 255-64", desc = "replace red pixels with rgba -64 alpha" },
+    [8] = { col = {}, cmd = "replace *# *# *# *#-", desc = "make transparent pixels opaque and vice versa" },
+    [9] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace * * * !255", desc = "replace non-opaque pixels with yellow" },
+    [10] = { col = {"rgba", 255, 255, 255, 255}, cmd = "replace *a *a *a *", desc = "convert alpha to grayscale" },
+    [11] = { col = {}, cmd = "replace *a *b *g *r", desc = "convert RGBA to ABGR" },
+    [12] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace 0 255 0 !255", desc = "replace non-opaque green with yellow" },
+    [13] = { col = {"rgba", 255, 255, 0, 255}, cmd = "replace * * * *", desc = "fill (replace any pixel with yellow)" },
+    [14] = { col = {}, cmd = "replace *# *# *# *#", desc = "no-op (replace pixels with clip pixels)" },
+    [15] = { col = {"rgba", 0, 0, 0, 128}, cmd = "replace *# *# *# *", desc = "make whole overlay semi-transparent", overlay = true },
+    [16] = { col = {}, cmd = "replace *#+64 *#+64 *#+64 *#", desc = "make pixels brighter" },
+    [17] = { col = {}, cmd = "replace *# *# *# *#-64", desc = "make pixels more transparent" },
+    [18] = { col = {}, cmd = "replace *#++ *#++ *#++ *#", desc = "fade to white using increment", overlay = true, loop = true },
+    [19] = { col = {}, cmd = "replace *#-4 *#-4 *#-4 *#", desc = "fast fade to black", overlay = true, loop = true }
 }
 
 local function test_replace()
@@ -732,6 +734,7 @@ local function test_cellview()
     local running = true
     while running do
         local t1 = g.millisecs()
+        tstart("frame")
 
         -- check for resize
         local newwd, newht = g.getview(g.getlayer())
@@ -759,10 +762,14 @@ local function test_cellview()
         end
 
         -- next generation
+        tstart("run")
         g.run(1)
+        tsave("run")
 
         -- update cell view from pattern
+        tstart("cells")
         ov("updatecells")
+        tsave("cells")
 
         -- set the camera
         ov("camera angle "..angle)
@@ -842,8 +849,10 @@ local function test_cellview()
         end
 
         -- draw the cell view
+        tstart("drawcells")
         ov("blend 0")
         ov("drawcells")
+        tsave("drawcells")
 
         -- draw the world view
         ov("target world")
@@ -851,7 +860,9 @@ local function test_cellview()
         ov("camera zoom 1")
         ov("camera xy "..floor(size / 2).." "..floor(size / 2))
         ov("celloption layers 1")
+        tstart("worldcells")
         ov("drawcells")
+        tsave("worldcells")
         ovt{"rgba", 128, 128, 128, 255}
         ovt{"line", 0, 0, (worldsize - 1), 0}
         ovt{"line", 0, 0, 0, (worldsize - 1)}
@@ -862,7 +873,8 @@ local function test_cellview()
         ov("blend 1")
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
-        g.show("Time to test cellview: "..ms(g.millisecs()-t1))
+        tsave("frame")
+        g.show("Time to test cellview: "..tvalueall(2))
 
         -- update the overlay
         ov("update")
@@ -1673,8 +1685,8 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
         else
             if align == "right" then
                 align = "left"
-                transbg = 1 - transbg
-                if transbg == 1 then
+                transbg = 2 - transbg
+                if transbg == 2 then
                     shadow = 1 - shadow
                 end
             end
@@ -1690,7 +1702,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     -- set the text background color
     local oldbackground
     local transmsg
-    if transbg == 1 then
+    if transbg == 2 then
         oldbackground = ov("textoption background 0 0 0 0")
         transmsg = "transparent background"
     else
@@ -1900,10 +1912,10 @@ local function test_fill()
     ov(op.white)
     ovt{"fill"}
 
-    toggle = 1 - toggle
-    if toggle > 0 then
-        ov("blend 1") -- turn on alpha blending
-    end
+    toggle = toggle + 1
+    if toggle == 3 then toggle = 0 end
+    ov("blend "..toggle)
+    math.randomseed(531642)
 
     local maxx = wd-1
     local maxy = ht-1
@@ -2012,8 +2024,12 @@ local maxbatch  = 16384
 local function test_batch()
     ::restart::
 
+    ov("blend 0")
     ov(op.black)
     ovt{"fill"}
+
+    -- use fixed seed
+    math.randomseed(1234)
 
     -- udpate the batch size
     batchsize = batchsize * 2

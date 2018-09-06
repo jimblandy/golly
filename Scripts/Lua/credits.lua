@@ -453,7 +453,7 @@ Kenichi Morita
         ovt{"paste", 0, 0, "pattern"}
 
         -- draw bouncing scrolling text
-        ov("blend 1")
+        ov("blend 2")
         texty = floor(((ht - h) / 2 - (100 * sin(textx / 100))))
         pastetext(textx, texty, op.identity, gollyopaqueclip)
 
