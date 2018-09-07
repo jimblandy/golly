@@ -817,8 +817,8 @@ private:
     int toolbarht;                  // toolbar height
     int showhistory;                // cell history longevity: 0 off, >0 on
     bool fadehistory;               // whether to fade history cells
-    int *modN, *modNdivN;           // lookup tables for fast divide and mod operations
-    int *divNN, *modNN;
+    int *modN, *modNN;              // lookup tables for fast divide and mod operations
+    unsigned int *xyz;              // lookup table for offset to grid coordinate mapping
     char *xaxis, *yaxis, *zaxis;    // flags for live cells on each axis used for fast bounding box
 
     // render target

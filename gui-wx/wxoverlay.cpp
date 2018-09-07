@@ -753,8 +753,7 @@ Overlay::Overlay()
     fadehistory = false;
     modN = NULL;
     modNN = NULL;
-    divNN = NULL;
-    modNdivN = NULL;
+    xyz = NULL;
     xaxis = NULL;
     yaxis = NULL;
     zaxis = NULL;
@@ -8232,7 +8231,7 @@ const char *Overlay::Do3DSetGridSize(lua_State *L, const int n, int *nresults) {
     int idx = 2;
     int N;
     if ((error = ReadLuaInteger(L, n, idx++, &N, "size")) != NULL) return error;
-    if (N < 1) return OverlayError("size must be at least 1");
+    if (N < 1 || N > 256) return OverlayError("size must be from 1 to 256");
 
     // set the grid size
     gridsize = N;
@@ -8371,13 +8370,9 @@ void Overlay::FreeDivTable() {
         free(modNN);
         modNN = NULL;
     }
-    if (modNdivN) {
-        free(modNdivN);
-        modNdivN = NULL;
-    }
-    if (divNN) {
-        free(divNN);
-        divNN = NULL;
+    if (xyz) {
+        free(xyz);
+        xyz = NULL;
     }
 }
 
@@ -8394,13 +8389,12 @@ bool Overlay::CreateDivTable() {
     FreeDivTable();
 
     // allocate new table
-    modNdivN = (int*)malloc(NNN * sizeof(*modNdivN));
     modN     = (int*)malloc(NNN * sizeof(*modN));
-    divNN    = (int*)malloc(NNN * sizeof(*divNN));
     modNN    = (int*)malloc(NNN * sizeof(*modNN));
+    xyz      = (unsigned int*)malloc(NNN * sizeof(*xyz));
 
     // check allocation succeeded
-    if (modNdivN == NULL || modN == NULL || divNN == NULL || modNN == NULL) {
+    if (modN == NULL || modNN == NULL || xyz == NULL) {
         FreeDivTable();
         return false;
     }
@@ -8408,11 +8402,10 @@ bool Overlay::CreateDivTable() {
     // populate table
     for (int i = 0; i < NNN; i++) {
         modN[i]  = i % N;
-        divNN[i] = i / NN;
         modNN[i] = i % NN;
     }
     for (int i = 0; i < NNN; i++) {
-        modNdivN[i] = modN[i / N];
+        xyz[i] = (modN[i] << 16) | (modN[i / N] << 8) | i / NN;
     }
 
     return true;
@@ -8476,7 +8469,8 @@ void Overlay::ClearAxisFlags() {
 
 void Overlay::UpdateBoundingBox() {
     if (gridsize == 0) return;
-    const int N = gridsize;
+
+    const int Nm1 = gridsize - 1;
 
     // guaranteed at least one live cell
     minx = 0;
@@ -8485,14 +8479,14 @@ void Overlay::UpdateBoundingBox() {
     while (!yaxis[miny]) miny++;
     minz = 0;
     while (!zaxis[minz]) minz++;
-    maxx = N - 1;
+    maxx = Nm1;
     while (!xaxis[maxx]) maxx--;
-    maxy = N - 1;
+    maxy = Nm1;
     while (!yaxis[maxy]) maxy--;
-    maxz = N - 1;
+    maxz = Nm1;
     while (!zaxis[maxz]) maxz--;
 
-    if (minx == 0 || miny == 0 || minz == 0 || maxx == N - 1 || maxy == N - 1 || maxz == N - 1) {
+    if (minx == 0 || miny == 0 || minz == 0 || maxx == Nm1 || maxy == Nm1 || maxz == Nm1) {
         liveedge = true;
     }
 }
@@ -8522,12 +8516,10 @@ int Overlay::CreateResultsFromC1(lua_State *L, const bool laststep) {
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
                 next3d.SetTo1(k);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     } else {
@@ -8536,12 +8528,10 @@ int Overlay::CreateResultsFromC1(lua_State *L, const bool laststep) {
             if (count1values[k]) {
                 // create a live cell in next grid
                 next3d.SetTo1(k);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     }
@@ -8579,12 +8569,10 @@ int Overlay::CreateResultsFromC1G3(lua_State *L, const bool laststep) {
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
                 next3d.SetTo1(k);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     } else {
@@ -8595,12 +8583,10 @@ int Overlay::CreateResultsFromC1G3(lua_State *L, const bool laststep) {
             if ((src && survivals[v - 1]) || (births[v] && !src)) {
                 // create a live cell in next grid
                 next3d.SetTo1(k);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     }
@@ -8638,12 +8624,10 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
                 next3d.SetValue(k, 1);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     } else {
@@ -8653,12 +8637,10 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
             if (survivals[v]) {
                 // create a live cell in grid2
                 next3d.SetValue(k, 1);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     }
@@ -8676,12 +8658,10 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
                 next3d.SetValue(k, 1);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     } else {
@@ -8691,12 +8671,10 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
             if (births[v]) {
                 // create a live cell in grid2
                 next3d.SetValue(k, 1);
-                const int x = modN[k];
-                const int y = modNdivN[k];
-                const int z = divNN[k];
-                xaxis[x] = 1;
-                yaxis[y] = 1;
-                zaxis[z] = 1;
+                const unsigned int loc = xyz[k];
+                xaxis[loc >> 16] = 1;
+                yaxis[(loc >> 8) & 0xff] = 1;
+                zaxis[loc & 0xff] = 1;
             }
         }
     }
@@ -8716,12 +8694,10 @@ void Overlay::PopulateAxis() {
     const int *grid3dkeys = grid3d.GetKeys(&numkeys);
     for (int i = 0; i < numkeys; i++) {
         int k = grid3dkeys[i];
-        const int x = modN[k];
-        const int y = modNdivN[k];
-        const int z = divNN[k];
-        xaxis[x] = 1;
-        yaxis[y] = 1;
-        zaxis[z] = 1;
+        const unsigned int loc = xyz[k];
+        xaxis[loc >> 16] = 1;
+        yaxis[(loc >> 8) & 0xff] = 1;
+        zaxis[loc & 0xff] = 1;
     }
     UpdateBoundingBox();
 }
@@ -8848,9 +8824,10 @@ void Overlay::UpdateBoundingBoxFromHistory() {
     // compute bounding box for history cells
     for (int i = 0; i < numhistkeys; i++) {
         const int k = history3keys[i];
-        const int x = modN[k];
-        const int y = modNdivN[k];
-        const int z = divNN[k];
+        const unsigned int loc = xyz[k];
+        const int x = loc >> 16;
+        const int y = (loc >> 8) & 0xff;
+        const int z = loc & 0xff;
         if (x < hminx) hminx = x;
         if (x > hmaxx) hmaxx = x;
         if (y < hminy) hminy = y;
@@ -9092,9 +9069,10 @@ void Overlay::Do3DNextGenBB(const bool mirror, const int gencount) {
     unsigned char val[28];
     for (int i = 0; i < numkeys; i++) {
         const int k = grid3dkeys[i];
-        int x = modN[k];
-        int y = modNdivN[k];
-        int z = divNN[k];
+        const unsigned int loc = xyz[k];
+        int x = loc >> 16;
+        int y = (loc >> 8) & 0xff;
+        int z = loc & 0xff;
         if (((x + y + z) & 1) == (phase & 1)) {
             // this live cell has the right parity so get values for its 28 neighbors
             int sx, sy, sz;
@@ -9233,9 +9211,10 @@ void Overlay::Do3DNextGenFace() {
         const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
             const int k = grid3dkeys[i];
-            const int x = modN[k];
-            const int y = modNdivN[k];
-            const int z = divNN[k];
+            const unsigned int loc = xyz[k];
+            const int x = loc >> 16;
+            const int y = (loc >> 8) & 0xff;
+            const int z = loc & 0xff;
             count1.SetValue(k, 0);
             const int Ny = N * y;
             const int NNz = NN * z;
@@ -9298,9 +9277,10 @@ void Overlay::Do3DNextGenCorner() {
         const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
             const int k = grid3dkeys[i];
-            const int x = modN[k];
-            const int y = modNdivN[k];
-            const int z = divNN[k];
+            const unsigned int loc = xyz[k];
+            const int x = loc >> 16;
+            const int y = (loc >> 8) & 0xff;
+            const int z = loc & 0xff;
             count1.SetValue(k, 0);
 
             const int xp1 = modN[x + 1];
@@ -9373,9 +9353,10 @@ void Overlay::Do3DNextGenEdge() {
         const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
             const int k = grid3dkeys[i];
-            const int x = modN[k];
-            const int y = modNdivN[k];
-            const int z = divNN[k];
+            const unsigned int loc = xyz[k];
+            const int x = loc >> 16;
+            const int y = (loc >> 8) & 0xff;
+            const int z = loc & 0xff;
             count1.SetValue(k, 0);
 
             const int xp1 = modN[x + 1];
@@ -9474,9 +9455,10 @@ void Overlay::Do3DNextGenHexahedral() {
         const unsigned char *grid3dvalues = grid3d.GetValues();
         for (int i = 0; i < numkeys; i++) {
             const int k = grid3dkeys[i];
-            const int x = modN[k];
-            const int y = modNdivN[k];
-            const int z = divNN[k];
+            const unsigned int loc = xyz[k];
+            const int x = loc >> 16;
+            const int y = (loc >> 8) & 0xff;
+            const int z = loc & 0xff;
             count1.SetValue(k, 0);
 
             const int xp1 = modN[x + 1];
