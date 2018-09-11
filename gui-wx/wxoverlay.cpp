@@ -150,7 +150,10 @@ Clip::Clip(int w, int h, bool use_calloc) {
 }
 
 Clip::~Clip() {
-    if (cdata) free(cdata);
+    if (cdata) {
+        free(cdata);
+        cdata = NULL;
+    }
     RemoveIndex();
 }
 
@@ -318,14 +321,22 @@ ClipManager::ClipManager() {
 }
 
 ClipManager::~ClipManager() {
-    if (lcliplist) free(lcliplist);
-    lcliplist = NULL;
-    if (ecliplist) free(ecliplist);
-    ecliplist = NULL;
-    if (ocliplist) free(ocliplist);
-    ocliplist = NULL;
-    if (hcliplist) free(hcliplist);
-    hcliplist = NULL;
+    if (lcliplist) {
+        free(lcliplist);
+        lcliplist = NULL;
+    }
+    if (ecliplist) {
+        free(ecliplist);
+        ecliplist = NULL;
+    }
+    if (ocliplist) {
+        free(ocliplist);
+        ocliplist = NULL;
+    }
+    if (hcliplist) {
+        free(hcliplist);
+        hcliplist = NULL;
+    }
 }
 
 void ClipManager::Clear() {
@@ -639,12 +650,18 @@ void Table::Copy(const Table &from) {
 }
 
 void Table::FreeMemory() {
-    if (values) free(values);
-    values = NULL;
-    if (keys) free(keys);
-    keys = NULL;
-    if (exists) free(exists);
-    exists = NULL;
+    if (values) {
+        free(values);
+        values = NULL;
+    }
+    if (keys) {
+        free(keys);
+        keys = NULL;
+    }
+    if (exists) {
+        free(exists);
+        exists = NULL;
+    }
 }
 
 bool Table::AllocateMemory() {
@@ -8620,7 +8637,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
             const int k = count1keys[i];
             const unsigned char v = count1values[k];
             if (survivals[v]) {
-                // create a live cell in grid2
+                // create a live cell in next grid
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
                 next3d.SetValue(k, 1);
@@ -8635,7 +8652,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
             const int k = count1keys[i];
             const unsigned char v = count1values[k];
             if (survivals[v]) {
-                // create a live cell in grid2
+                // create a live cell in next grid
                 next3d.SetValue(k, 1);
                 const unsigned int loc = xyz[k];
                 xaxis[loc >> 16] = 1;
@@ -8654,7 +8671,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
             const int k = count2keys[i];
             const unsigned char v = count2values[k];
             if (births[v]) {
-                // create a live cell in grid2
+                // create a live cell in next grid
                 lua_pushnumber(L, 1);
                 lua_rawseti(L, -2, k);
                 next3d.SetValue(k, 1);
@@ -8669,7 +8686,7 @@ int Overlay::CreateResultsFromC1C2(lua_State *L, const bool laststep) {
             const int k = count2keys[i];
             const unsigned char v = count2values[k];
             if (births[v]) {
-                // create a live cell in grid2
+                // create a live cell in next grid
                 next3d.SetValue(k, 1);
                 const unsigned int loc = xyz[k];
                 xaxis[loc >> 16] = 1;
