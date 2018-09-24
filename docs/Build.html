@@ -365,18 +365,19 @@ directory (e.g., with <code>rm -R golly-build</code>).
 <h2>How to install optional sound with irrKlang</h2>
 
 <p>
-Golly can use the irrKlang library to play sounds. The Overlay has a sound command that can be used in Lua scripts to do this.
+Golly can use the irrKlang library to play sounds. The Overlay has a sound command that can be used
+in Lua scripts to do this.
 <p>
 You can download the irrKlang library from
 <a href="http://www.ambiera.com/irrklang/downloads.html">http://www.ambiera.com/irrklang/downloads.html</a>.
-Make sure you get the correct version, 32bit or 64bit, to match the build of Golly you want to do.
-The download is a zip file containing the library for Windows, Mac OS and Linux.
-Golly has been tested with irrKlang 1.5.
+Make sure you get the correct version, 32-bit or 64-bit, to match the build of Golly you want to do.
+The download is a zip file containing the libraries for Windows, Mac OS and Linux.
+Golly has been tested with irrKlang 1.5 and 1.6.
 
 <p>
-Once you have downloaded the library unzip the download file.
-<p>
-You then need to edit the makefile for your platform to enable sound and then <a href="#golly">build Golly</a>.
+Unzip the download file.  You then need to edit the makefile for your platform to enable sound and then
+<a href="#golly">build Golly</a>.
+
 <h3>On Windows</h3>
 Edit local-win.mk and uncomment the line:
 <pre>
@@ -384,12 +385,19 @@ ENABLE_SOUND = 1
 </pre>
 Change the path for IRRKLANGDIR to the full path of where you unzipped the irrKlang zip file.
 
+<h3>On Mac OS X</h3>
+Edit makefile-mac and uncomment the line:
+<pre>
+ENABLE_SOUND = 1
+</pre>
+Change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
+
 <h3>On Linux</h3>
 Edit makefile-gtk and uncomment the line:
 <pre>
 ENABLE_SOUND = 1
 </pre>
-Change the path for IRRKLANGDIR to the full path of where you unzipped the irrKlang zip file.
+Change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
 
 <a name="bgolly"></a>
 <h2>How to build bgolly</h2>

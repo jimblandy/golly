@@ -89,6 +89,22 @@ ifdef ENABLE_PERL
     CXXFLAGS += -DENABLE_PERL
 endif
 
+# uncomment next line and set IRRKLANGDIR to correct path to allow Lua scripts to play sounds:
+# ENABLE_SOUND = 1
+
+ifdef ENABLE_SOUND
+    IRRKLANGDIR = $(EXEDIR)/irrKlang-64bit-1.6.0
+    IRRKLANG_DYLIB = $(IRRKLANGDIR)/bin/macosx-gcc/libirrklang.dylib
+    # set appropriate RPATH so dyld can load the dylib from inside the app bundle
+    IRRKLANG_LINK = $(IRRKLANG_DYLIB) -Wl,-rpath,@loader_path/../Libs
+    CXXFLAGS += -DENABLE_SOUND
+    CPPFLAGS += -I$(IRRKLANGDIR)/include
+    # change ID name in libirrklang.dylib to use @rpath
+    CHANGE_IRRKLANG_ID = install_name_tool -id "@rpath/libirrklang.dylib" $(IRRKLANG_DYLIB)
+    CREATE_IRRKLANG_FOLDER = mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/Libs
+    COPY_IRRKLANG_DYLIB = cp -f $(IRRKLANG_DYLIB) $(EXEDIR)/$(APP_NAME).app/Contents/Libs
+endif
+
 LDFLAGS = -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
    -framework IOKit -framework Carbon -framework Cocoa -framework System 
@@ -169,13 +185,16 @@ app.bin: $(BASEOBJ) $(WXOBJ) $(LUALIB)
 $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
 $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__WXLIB_GL_p) \
 $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
-$(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
+$(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK) $(IRRKLANG_LINK)
 
 $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
 icons/app.icns icons/file-mc.icns icons/file-rle.icns
 	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents
 	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/MacOS
 	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/Resources
+	$(CHANGE_IRRKLANG_ID)
+	$(CREATE_IRRKLANG_FOLDER)
+	$(COPY_IRRKLANG_DYLIB)
 	
 	sed -e "s/VERSION/$(APP_VERSION)/" \
 	Info.plist.in >$(EXEDIR)/$(APP_NAME).app/Contents/Info.plist
