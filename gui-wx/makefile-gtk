@@ -46,7 +46,11 @@ LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 ifdef ENABLE_SOUND
     IRRKLANGDIR = /home/chris/irrKlang-64bit-1.6.0
     IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
-    IRRKLANG_LINK = $(IRRKLANGDIR)/bin/linux-gcc-64/libIrrKlang.so
+    IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
+    IRRKLANG_LIBNAME = IrrKlang
+    IRRKLANG_FULLNAME = lib$(IRRKLANG_LIBNAME).so
+    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -Wl,-rpath='$$ORIGIN' -l$(IRRKLANG_LIBNAME)
+    IRRKLANG_LOCAL = $(EXEDIR)/$(IRRKLANG_FULLNAME)
     CXXFLAGS += -DENABLE_SOUND
 endif
 
@@ -118,10 +122,15 @@ $(OBJDIR):
 
 clean: 
 	rm -f $(OBJDIR)/*.o
-	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
+	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree $(IRRKLANG_LOCAL)
 	-(cd $(LUADIR) && $(MAKE) clean)
 
-golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB)
+ifdef ENABLE_SOUND
+$(IRRKLANG_LOCAL):
+	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $@
+endif
+
+golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB) $(IRRKLANG_LOCAL)
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
 $(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
 
