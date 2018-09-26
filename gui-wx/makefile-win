@@ -85,7 +85,7 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
         $(IRRKLANG_CXXFLAGS) \
 	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) \
 	/D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS \
-	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR)
+	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR) /Qvec-report:1
 
 OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
@@ -399,7 +399,7 @@ clean:
 	-if exist golly.pdb del golly.pdb
 	-if exist $(LUADIR)\*.obj del $(LUADIR)\*.obj
 
-$(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res $(IRRKLANG_DLL_DEST)
+$(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)\Golly.exe $(LDFLAGS) $(__DEBUGINFO_1) /pdb:"golly.pdb" \
 	/MANIFEST:NO /LIBPATH:$(LIBDIRNAME) /SUBSYSTEM:WINDOWS $(BASEO) $(WXO) $(LUAO) golly.res \
 	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) \
