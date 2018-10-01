@@ -10,7 +10,6 @@
 <dd><a href="#rectlists"><b>Rectangle lists</b></a></dd>
 <dd><a href="#glife"><b>Using the glife package</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
-<dd><a href="#macpython"><b>Python on Mac OS X</b></a></dd>
 <dd><a href="#copyright"><b>Python copyright notice</b></a></dd>
 </p>
 
@@ -20,9 +19,7 @@
 
 <p>
 Before you can run a .py script, Python needs to be installed on your system.
-Mac OS X users don't need to do anything because Python is already installed
-(but see <a href="#macpython">below</a> for how to force Golly to use a newer
-version of Python).
+Mac OS X users don't need to do anything because Python is already installed.
 Windows and Linux users can download a Python installer from
 <a href="http://www.python.org/download/">www.python.org/download</a>.
 Note that a 32-bit version of Golly requires a 32-bit version of Python,
@@ -1523,12 +1520,10 @@ interface for the scripts you write.
 
 <p>
 1.
-The Python interpreter's memory allocator never releases memory back to the
+The Python interpreter's memory allocator doesn't always release memory back to the
 operating system.  If you run a complicated or buggy script that uses lots
 of (Python) memory then that memory is no longer available for use by Golly,
 so you might need to quit Golly and restart.
-Python 2.5 has a smarter memory allocator that does release memory in
-some stuations, but it's still far from ideal.
 
 <p>
 2.
@@ -1572,31 +1567,6 @@ when it finishes you can select "Undo Script Changes" from the Edit menu.
 Generating changes (due to <b>run</b> or <b>step</b> calls) are stored in
 temporary files; all other changes are stored in memory.
 </ul>
-
-
-<p><a name="macpython"></a>&nbsp;<br>
-<font size=+1><b>Python on Mac OS X</b></font>
-
-<p>
-Even though Apple supply Python with OS X, it is usually not the latest version.
-Golly is linked against the Python 2.6 framework stored in /System/Library/Frameworks.
-If you have Python 2.7 installed in your system you can tell Golly to use it by
-quitting Golly, opening Terminal.app and entering this command (on one line):
-<p>
-<dd><b>install_name_tool -change \</b></dd>
-<dd><b>/System/Library/Frameworks/Python.framework/Versions/2.6/Python \</b></dd>
-<dd><b>/Library/Frameworks/Python.framework/Versions/2.7/Python \</b></dd>
-<dd><b>/path/to/Golly/folder/Golly.app/Contents/MacOS/Golly</b></dd>
-</p>
-<p>
-If you ever need to switch back to the older Python then just
-run the command again with the framework paths swapped.
-To verify which version of Python Golly is using, copy the following code
-and select <b>Run Clipboard</b> from the File menu:
-<p>
-<dd><b>import golly, sys</b></dd>
-<dd><b>golly.note(sys.version)</b></dd>
-</p>
 
 
 <p><a name="copyright"></a>&nbsp;<br>
