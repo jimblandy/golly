@@ -3,13 +3,14 @@
 
 <h2>Changes</h2>
 
-<h3>Changes in version 1.2 (released January 2018)</h3>
+<h3>Changes in version 1.2 (released October 2018)</h3>
 
 <p>
 <ul>
 <li> Golly has a new algorithm that supports the
      <a href="Algorithms/Larger_than_Life.html">Larger than Life</a>
      family of rules.
+<li> HashLife and the other hash-based algorithms are faster and more responsive.
 <li> Added support for <a href="Algorithms/QuickLife.html#map">MAP rules</a> to
      QuickLife, HashLife and Generations.
 <li> QuickLife and HashLife now support
@@ -29,6 +30,9 @@
 <li> Fixed problem with Move button becoming enabled after a multi-finger pan/zoom.
 <li> Fixed an undo/reset bug that could occur if there was a rule change at the
      starting generation.
+<li> Fixed a bug where patterns larger than bounded grids were not correctly clipped.
+<li> Fixed a bug that could crash Golly if a .rule file contained invalid XPM data.
+<li> Updated the Life Lexicon to release 29.
 </ul>
 
 <h3>Changes in version 1.1 (released June 2015)</h3>
