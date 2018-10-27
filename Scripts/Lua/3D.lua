@@ -240,10 +240,6 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
 
-local showtiming = true     -- !!! remove later
-local mind = -1             -- !!! remove later
-local ming = -1             -- !!! remove later
-
 ----------------------------------------------------------------------
 
 function AddCount(item, counts, maxcount, bcount)
@@ -1292,7 +1288,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayCells(editing)
-    gp.timerstart("Display")  -- !!! remove later
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1370,8 +1365,6 @@ function DisplayCells(editing)
 
     -- display the cells
     ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, CELLSIZE, editing, toolbarht}
-
-    gp.timersave("Display")  -- !!! remove later
 end
 
 ----------------------------------------------------------------------
@@ -1679,8 +1672,6 @@ function Refresh(update)
         return
     end
 
-    gp.timerstart("Refresh")    -- !!! remove later
-
     -- turn off event checking temporarily to avoid partial updates of overlay
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
@@ -1789,8 +1780,6 @@ function Refresh(update)
 
     if showaxes or showlines then DrawFrontAxes() end
 
-    gp.timersave("Refresh") -- !!! remove later
-
     -- show info in top left corner
     local info =
         "Generation = "..gencount.."\n"..
@@ -1802,24 +1791,6 @@ function Refresh(update)
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
     end
-    if showtiming then  -- !!! remove block later
-        if generating then
-            currt = gp.timervalue("Display")
-            currg = gp.timervalue("NextGen")
-            if currt > 0 then
-                if mind == -1 then mind = currt end
-                if currt < mind then mind = currt end
-            end
-            if currg > 0 then
-                if ming == -1 then ming = currg end
-                if currg < ming then ming = currg end
-            end
-        end
-        info = info.."\n"..gp.timervalueall()
-        if ming ~= -1 then
-            info = info.."\n"..string.format("Min Gen %.1fms", ming).." "..string.format("Min Display %.1fms", mind)
-        end
-    end     -- !!! remove block later
     ov(INFO_COLOR)
     local _, ht = op.maketext(info)
     op.pastetext(10, toolbarht + 10)
@@ -2438,9 +2409,7 @@ function NextGenStandard(single)
 
     local oldstep = stepsize
     if single then SetStepSize(1) end
-    gp.timerstart("NextGen")  -- !!! remove later
     grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", gencount, liveedge}
-    gp.timersave("NextGen")  -- !!! remove later
     if single then SetStepSize(oldstep) end
     if popcount == 0 then StopGenerating() end
     Refresh()
@@ -2457,9 +2426,7 @@ function NextGenBusyBoxes(single)
 
     local oldstep = stepsize
     if single then SetStepSize(1) end
-    gp.timerstart("NextGen")  -- !!! remove later
     grid1, popcount, gencount, minx, maxx, miny, maxy, minz, maxz = ovt{"nextgen3d", gencount}
-    gp.timersave("NextGen")  -- !!! remove later
     if single then SetStepSize(oldstep) end
     if popcount == 0 then StopGenerating() end
     Refresh()
@@ -4503,8 +4470,6 @@ end
 ----------------------------------------------------------------------
 
 function StartStop()
-    mind = -1  -- !!! remove later
-    ming = -1  -- !!! remove later
     generating = not generating
     UpdateStartButton()
     Refresh()
@@ -6257,12 +6222,6 @@ end
 
 ----------------------------------------------------------------------
 
-function ToggleTiming()   -- !!! remove function later
-    showtiming = not showtiming
-end
-
-----------------------------------------------------------------------
-
 function ToggleToolBar()
     if toolbarht > 0 then
         toolbarht = 0
@@ -7929,7 +7888,6 @@ function HandleKey(event)
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "y" and mods == "none" then ToggleShowHistory()
     elseif key == "y" and mods == "shift" then ToggleFadeHistory()
-    elseif key == "t" and mods == "alt" then ToggleTiming()  -- !!! remove later
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
