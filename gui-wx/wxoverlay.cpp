@@ -741,7 +741,11 @@ const int matchany = -1;            // match any component value
 #ifdef __WXMAC__
     // on Mac we'll need to increase the line height of text by 1 or 2 pixels to avoid
     // a GetTextExtent bug that clips the bottom pixels of descenders like "gjpqy"
-    int extraht;
+    static int extraht;
+#endif
+
+#ifdef ENABLE_SOUND
+    static ISoundEngine *engine = NULL;
 #endif
 
 // -----------------------------------------------------------------------------
@@ -758,7 +762,11 @@ Overlay::Overlay()
     starz = NULL;
     renderclip = NULL;
     #ifdef ENABLE_SOUND
-    engine = NULL;
+    // initialize sound engine once (avoids "Could not add IO Proc for CoreAudio" warnings in Mac console)
+    if (engine == NULL) {
+        engine = createIrrKlangDevice(ESOD_AUTO_DETECT, ESEO_MULTI_THREADED | ESEO_LOAD_PLUGINS | ESEO_USE_3D_BUFFERS);
+        if (!engine) Warning(_("Unable to initialize sound!"));
+    }
     #endif
 
     // 3D
@@ -809,10 +817,6 @@ void Overlay::DeleteOverlay()
             itsnd->second->drop();
         }
         sounds.clear();
-
-        // delete engine
-        engine->drop();
-        engine = NULL;
     }
     #endif
 
@@ -2455,14 +2459,6 @@ const char *Overlay::DoCreate(const char *args)
         // set overlay as render target
         SetRenderTarget(ovpixmap, ovwd, ovht, NULL);
         targetname = "";
-
-        #ifdef ENABLE_SOUND
-        // initialise sound
-        engine = createIrrKlangDevice(ESOD_AUTO_DETECT, ESEO_MULTI_THREADED | ESEO_LOAD_PLUGINS | ESEO_USE_3D_BUFFERS);
-        if (!engine) {
-            Warning(_("Unable to initialize sound"));
-        }
-        #endif
     }
 
     return NULL;

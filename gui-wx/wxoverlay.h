@@ -847,7 +847,6 @@ private:
 #ifdef ENABLE_SOUND
     // sound
     std::map<std::string,ISound*> sounds;
-    ISoundEngine *engine;
 #endif
 
     // text
