@@ -1341,10 +1341,6 @@ void PatternView::CheckCursor(bool active)
         int ox, oy;
         if (numlayers > 1 && tilelayers && tileindex != currindex) {
             // show arrow cursor if over tile border (ie. bigview) or non-current tile
-            #ifdef __WXMAC__
-                // wxMac bug??? need this to fix probs after toggling status/tool bar
-                wxSetCursor(*wxSTANDARD_CURSOR);
-            #endif
             SetCursor(*wxSTANDARD_CURSOR);
             if (showcontrols) {
                 showcontrols = false;
@@ -1364,9 +1360,6 @@ void PatternView::CheckCursor(bool active)
                    !(drawingcells || selectingcells || movingview || waitingforclick) ) {
             // cursor is over translucent controls, or user clicked in a control
             // and hasn't released mouse button yet
-            #ifdef __WXMAC__
-                wxSetCursor(*wxSTANDARD_CURSOR);
-            #endif
             SetCursor(*wxSTANDARD_CURSOR);
             if (!showcontrols) {
                 showcontrols = true;
@@ -1375,9 +1368,6 @@ void PatternView::CheckCursor(bool active)
             
         } else {
             // show current cursor mode
-            #ifdef __WXMAC__
-                wxSetCursor(*currlayer->curs);
-            #endif
             SetCursor(*currlayer->curs);
             if (showcontrols) {
                 showcontrols = false;
@@ -1387,9 +1377,6 @@ void PatternView::CheckCursor(bool active)
         
     } else {
         // cursor is not in viewport
-        #ifdef __WXMAC__
-            wxSetCursor(*wxSTANDARD_CURSOR);
-        #endif
         SetCursor(*wxSTANDARD_CURSOR);
         if (showcontrols) {
             showcontrols = false;

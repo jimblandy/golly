@@ -1443,9 +1443,6 @@ void CheckScriptError(const wxString& ext)
             scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
         }
         Beep();
-        #ifdef __WXMAC__
-            wxSetCursor(*wxSTANDARD_CURSOR);
-        #endif
         wxMessageBox(scripterr, errtype, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
     }
     

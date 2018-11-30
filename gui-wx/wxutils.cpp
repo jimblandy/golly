@@ -33,9 +33,6 @@
 void Note(const wxString& msg, bool showCancel)
 {
     wxString title = wxGetApp().GetAppName() + _(" note:");
-#ifdef __WXMAC__
-    wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
     if (inscript && showCancel) {
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_INFORMATION,
@@ -54,9 +51,6 @@ void Warning(const wxString& msg, bool showCancel)
 {
     Beep();
     wxString title = wxGetApp().GetAppName() + _(" warning:");
-#ifdef __WXMAC__
-    wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
     if (inscript && showCancel) {
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_EXCLAMATION,
@@ -75,9 +69,6 @@ void Fatal(const wxString& msg)
 {
     Beep();
     wxString title = wxGetApp().GetAppName() + _(" error:");
-#ifdef __WXMAC__
-    wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
     wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
     
     exit(1);    // safer than calling wxExit()
@@ -437,9 +428,6 @@ void BeginProgress(const wxString& dlgtitle)
     // avoid cursor flickering if this is called during a script
     if (!inscript) {
         // let user know they'll have to wait
-#ifdef __WXMAC__
-        wxSetCursor(*wxHOURGLASS_CURSOR);
-#endif
         if (mainptr->infront) viewptr->SetCursor(*wxHOURGLASS_CURSOR);
     }
 }

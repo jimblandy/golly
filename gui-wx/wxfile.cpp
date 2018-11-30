@@ -398,9 +398,7 @@ void MainFrame::CheckBeforeRunning(const wxString& scriptpath, bool remember,
     
     if (ask) {
         UpdateEverything();     // in case OpenZipFile called LoadPattern
-#ifdef __WXMAC__
-        wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
+
         // create our own dialog with a View button???  probably no need now that
         // user can ctrl/right-click on link to open script in their text editor
         wxString msg = scriptpath + _("\n\nClick \"No\" if the script is from an untrusted source.");

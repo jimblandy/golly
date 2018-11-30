@@ -3571,9 +3571,6 @@ void Overlay::SetOverlayCursor()
         // currlayer->curs might have changed
         ovcursor = currlayer->curs;
     }
-    #ifdef __WXMAC__
-        wxSetCursor(*ovcursor);
-    #endif
     viewptr->SetCursor(*ovcursor);
 }
 

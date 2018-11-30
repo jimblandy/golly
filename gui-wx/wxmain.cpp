@@ -1539,11 +1539,6 @@ void MainFrame::OnActivate(wxActivateEvent& event)
         // (otherwise menu problems will occur on Ubuntu when using Unity)
         UpdateUserInterface();
         viewptr->SetFocus();    // play safe
-    } else {
-#ifdef __WXMAC__
-        // avoid problems with incorrect cursor in help window
-        wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
     }
     
     event.Skip();
