@@ -647,9 +647,11 @@ void generationsalgo::createCanonicalName(const char *base64) {
       totalistic = true ;
    }
 
-   // add neighborhood
-   if (neighbormask == HEXAGONAL) canonrule[p++] = 'H' ;
-   if (neighbormask == VON_NEUMANN) canonrule[p++] = 'V' ;
+   // add neighborhood if not MAP rule
+   if (!using_map) {
+      if (neighbormask == HEXAGONAL) canonrule[p++] = 'H' ;
+      if (neighbormask == VON_NEUMANN) canonrule[p++] = 'V' ;
+   }
 
    // check for bounded grid
    if (gridwd > 0 || gridht > 0) {
