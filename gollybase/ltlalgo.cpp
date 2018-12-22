@@ -2204,6 +2204,7 @@ const char *ltlalgo::setrule(const char *s)
        }
        maxn = cnt ;
     }
+    maxn -= (1 - m);    // adjust max neighbors by middle cell setting
     if (s1 < 0 || s1 > maxn || s2 < 0 || s2 > maxn) return "S value must be from 0 to max neighbors";
     if (b1 < 0 || b1 > maxn || b2 < 0 || b2 > maxn) return "B value must be from 0 to max neighbors";
     if (s[endpos] != 0 && s[endpos] != ':') return "bad suffix";
