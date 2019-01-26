@@ -8218,7 +8218,7 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
 const char *Overlay::Do3DSetStepSize(lua_State *L, const int n, int *nresults) {
     const char *error = NULL;
 
-    // get grid size
+    // get step size
     int idx = 2;
     int N;
     if ((error = ReadLuaInteger(L, n, idx++, &N, "step")) != NULL) return error;

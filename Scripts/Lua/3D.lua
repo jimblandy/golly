@@ -4504,6 +4504,10 @@ function NextStep()
             StopGenerating()
             Refresh()
         else
+            -- NextGeneration does nothing (except display a message) if popcount is 0
+            if popcount > 0 then
+                RememberCurrentState()
+            end
             NextGeneration()
         end
     end
