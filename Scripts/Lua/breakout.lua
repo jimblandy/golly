@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build     = 83
+local build     = 84
 local g         = golly()
 -- require "gplus.strict"
 local gp        = require "gplus"
@@ -1845,8 +1845,8 @@ local function breakout()
             -- draw the background
             drawbackground()
 
-            -- check if paused
-            if not game.pause and not options.confirming and not options.showoptions and bonus.current > 0 then
+            -- process next game step unless paused or game finished due to user quit
+            if not game.pause and not options.confirming and not options.showoptions and bonus.current > 0 and game.balls > 0 then
                 -- check for new ball
                 if not game.newball then
                     -- update ball position incrementally
@@ -2093,10 +2093,8 @@ local function breakout()
         -- if game is over destroy bat and display best game combo
         if game.balls == 0 then
             -- destroy bat
-            if game.balls == 0 then
-                createparticles(bat.x + bat.wd, bat.y, bat.wd, bat.ht, particle.lostparticles)
-                bat.fade = shadow.alpha
-            end
+            createparticles(bat.x + bat.wd, bat.y, bat.wd, bat.ht, particle.lostparticles)
+            bat.fade = shadow.alpha
             notify("Best Combo x"..game.maxcombo - 1)
         end
 
