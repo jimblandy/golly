@@ -2734,6 +2734,13 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
             PickCell(x, y);
             
         } else if (currlayer->curs == curs_cross) {
+            // note that we allow starting a selection outside the grid to make it
+            // easier to select all of a bounded grid, but not when a script is running
+            // because there's currently no way for the script to detect such a click
+            if (inscript && !PointInGrid(x, y)) {
+                Warning(_("Selecting is not allowed outside grid."));
+                return;
+            }
             TestAutoFit();
             StartSelectingCells(x, y, (modifiers & wxMOD_SHIFT) != 0);
             
