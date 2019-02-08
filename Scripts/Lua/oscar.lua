@@ -32,7 +32,7 @@ local r = g.getrule()
 r = string.match(r, "^(.+):") or r
 local hasB0notS8 = r:find("B0") == 1 and r:find("/") > 1 and r:sub(-1,-1) ~= "8"
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function show_spaceship_speed(period, deltax, deltay)
     -- we found a moving oscillator
@@ -65,7 +65,7 @@ local function show_spaceship_speed(period, deltax, deltay)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function oscillating()
     -- return true if the pattern is empty, stable or oscillating
@@ -141,7 +141,7 @@ local function oscillating()
     return false
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function fit_if_not_visible()
     -- fit pattern in viewport if not empty and not completely visible
@@ -149,7 +149,7 @@ local function fit_if_not_visible()
     if #r > 0 and not g.visrect(r) then g.fit() end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 g.show("Checking for oscillation... (hit escape to abort)")
 

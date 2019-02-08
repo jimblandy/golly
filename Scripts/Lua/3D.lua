@@ -240,7 +240,7 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function AddCount(item, counts, maxcount, bcount)
     local mincount = 0
@@ -259,7 +259,7 @@ function AddCount(item, counts, maxcount, bcount)
     return true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function AddCountRange(low, high, counts, maxcount, bcount)
     local mincount = 0
@@ -296,7 +296,7 @@ function AddCountRange(low, high, counts, maxcount, bcount)
     return true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function AppendCounts(array, counts, maxcount, bcount)
     for _, item in ipairs(array) do
@@ -509,7 +509,7 @@ function WriteSettings()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SaveGollyState()
     local oldstate = {}
@@ -526,7 +526,7 @@ function SaveGollyState()
     return oldstate
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RestoreGollyState(oldstate)
     ov("delete")
@@ -542,7 +542,7 @@ function RestoreGollyState(oldstate)
     g.setoption("showfiles", oldstate.files)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function TransformPoint(point)
     -- rotate given 3D point
@@ -558,21 +558,21 @@ local function TransformPoint(point)
     return newx, newy, newz
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function HorizontalLine(x1, x2, y)
     -- draw a horizontal line of pixels from x1,y to x2,y
     ovt{"line", x1, y, x2, y}
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function DrawEdge(start, finish)
     DrawLine(projectedx[start],  projectedy[start],
              projectedx[finish], projectedy[finish])
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
     -- fill given convex quadrilateral using modified code from here:
@@ -654,7 +654,7 @@ local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function CheckFaces(f1v1, f1v2, f1v3, f1v4,
                           f2v1, f2v2, f2v3, f2v4)
@@ -687,7 +687,7 @@ local function CheckFaces(f1v1, f1v2, f1v3, f1v4,
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function CreateCube(x, y, z)
     -- create cube at given grid position
@@ -725,7 +725,7 @@ local function CreateCube(x, y, z)
            }
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function DisplayLine(startpt, endpt)
     -- use orthographic projection to transform line's start and end points
@@ -753,7 +753,7 @@ local function AddLineToBatch(startpt, endpt)
     xyln = xyln + 2
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function DrawBatchLines()
     if xyln > 2 then
@@ -763,7 +763,7 @@ local function DrawBatchLines()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DrawRearAxes()
     -- draw lattice lines and/or axes that are behind rotated reference cube
@@ -816,7 +816,7 @@ function DrawRearAxes()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DrawFrontAxes()
     -- draw lattice lines and/or axes that are in front of rotated reference cube
@@ -869,7 +869,7 @@ function DrawFrontAxes()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateAxes()
     -- create axes and lattice lines
@@ -916,7 +916,7 @@ function CreateAxes()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateTranslucentCell(clipname, color)
     -- create a clip containing a translucent cube with given color
@@ -1031,7 +1031,7 @@ function CreateTranslucentCell(clipname, color)
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DrawCubeEdges()
     if LEN > 4 then
@@ -1125,7 +1125,7 @@ function DrawCubeEdges()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 lastHistorySize = -1
 
@@ -1157,7 +1157,7 @@ function CreateHistoryCells(clip, color)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateLayers(clip)
     local adjust = depthrange / (maxdepth - mindepth + 1)
@@ -1189,7 +1189,7 @@ function CreateLayers(clip)
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
 lastCubeSize = -1
@@ -1235,7 +1235,7 @@ function CreateLiveCube()
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 lastSphereSize = -1
 
@@ -1285,7 +1285,7 @@ function CreateLiveSphere()
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DisplayCells(editing)
     -- find the rotated reference cube vertex with maximum Z coordinate
@@ -1367,7 +1367,7 @@ function DisplayCells(editing)
     ovt{"displaycells3d", fromx, tox, stepx, fromy, toy, stepy, fromz, toz, stepz, CELLSIZE, editing, toolbarht}
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 lastBusyCubeSize = {E = -1, O = -1}
 
@@ -1416,7 +1416,7 @@ function CreateBusyCube(clipname)
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 lastBusySphereSize = { E = -1, O = -1 }
 
@@ -1483,7 +1483,7 @@ function CreateBusySphere(clipname)
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreatePoint(clipname, color)
     ov("create 1 1 "..clipname)
@@ -1494,7 +1494,7 @@ function CreatePoint(clipname, color)
     ov("target")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function EnableControls(bool)
     -- disable/enable unsafe menu items so that user scripts can call op.process
@@ -1651,7 +1651,7 @@ function DrawToolBar()
     helpbutton.show(x, y)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function UpdateWindowTitle()
     -- set window title if it has changed
@@ -1664,7 +1664,7 @@ function UpdateWindowTitle()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Refresh(update)
     if scriptlevel > 0 and not update then
@@ -1811,13 +1811,13 @@ function Refresh(update)
     g.check(true)   -- restore event checking
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RefreshIfNotGenerating()
     if not generating then Refresh() end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetActivePlane(orientation, pos)
     -- set the active plane; default is an XY plane half way along the Z axis
@@ -1887,7 +1887,7 @@ function UpdateStartButton()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StopGenerating()
     if generating then
@@ -1896,7 +1896,7 @@ function StopGenerating()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SaveState()
     -- return a table containing current state
@@ -1965,7 +1965,7 @@ function SaveState()
     return state
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RestoreState(state)
     -- restore state from given info (created earlier by SaveState)
@@ -2039,7 +2039,7 @@ function RestoreState(state)
     ovt{"setpattern3d", grid1, true}
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SameState(state)
     -- return true if given state matches the current state
@@ -2065,7 +2065,7 @@ function SameState(state)
     return true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ClearUndoRedo()
     -- this might be called if a user script is running (eg. if it calls NewPattern)
@@ -2074,7 +2074,7 @@ function ClearUndoRedo()
     dirty = false
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Undo()
     -- ignore if user script is running
@@ -2091,7 +2091,7 @@ function Undo()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Redo()
     -- ignore if user script is running
@@ -2107,7 +2107,7 @@ function Redo()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RememberCurrentState()
     -- ignore if user script is running
@@ -2126,7 +2126,7 @@ function CheckIfGenerating()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function InitLiveBoundary()
     -- check for cells on grid edge
@@ -2145,7 +2145,7 @@ function InitLiveBoundary()
     minimal_live_bounds = true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MinimizeLiveBoundary()
     if popcount > 0 and not minimal_live_bounds then
@@ -2170,7 +2170,7 @@ function MinimizeLiveBoundary()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function InitSelectionBoundary()
     minselx = math.maxinteger
@@ -2184,7 +2184,7 @@ function InitSelectionBoundary()
     minimal_sel_bounds = true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function UpdateSelectionBoundary(x, y, z)
     if x < minselx then minselx = x end
@@ -2195,7 +2195,7 @@ local function UpdateSelectionBoundary(x, y, z)
     if z > maxselz then maxselz = z end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MinimizeSelectionBoundary()
     if selcount > 0 and not minimal_sel_bounds then
@@ -2209,7 +2209,7 @@ function MinimizeSelectionBoundary()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ClearCells()
     grid1 = {}
@@ -2225,7 +2225,7 @@ function ClearCells()
     collectgarbage()    -- might help avoid long delay when script exits (only on Mac OS 10.13???)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MoveActivePlane(newpos, refresh)
     if currcursor ~= movecursor then
@@ -2252,7 +2252,7 @@ function MoveActivePlane(newpos, refresh)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CycleActivePlane()
     if currcursor ~= movecursor then
@@ -2270,7 +2270,7 @@ function CycleActivePlane()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function SetSelection(x, y, z, sel)
     local pos = x + N * (y + N * z)
@@ -2288,7 +2288,7 @@ local function SetSelection(x, y, z, sel)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function SetCellState(x, y, z, state)
     local pos = x + N * (y + N * z)
@@ -2318,7 +2318,7 @@ local function SetCellState(x, y, z, state)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function SetLiveCell(x, y, z)
     -- this must only be called to create a live cell
@@ -2334,7 +2334,7 @@ local function SetLiveCell(x, y, z)
     if z > maxz then maxz = z end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SaveCells()
     -- return an array of live cell positions relative to mid cell
@@ -2353,7 +2353,7 @@ function SaveCells()
     return livecells
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RestoreCells(livecells)
     -- restore pattern saved earlier by SaveCells
@@ -2376,7 +2376,7 @@ function RestoreCells(livecells)
     return clipped
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function AllDead()
     -- this function is called at the start of every NextGen* function
@@ -2402,7 +2402,7 @@ function AllDead()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function NextGenStandard(single)
     if AllDead() then return end
@@ -2415,7 +2415,7 @@ function NextGenStandard(single)
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function NextGenBusyBoxes(single)
     if N%2 == 1 then
@@ -2432,7 +2432,7 @@ function NextGenBusyBoxes(single)
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function NewPattern()
     pattname = "untitled"
@@ -2450,7 +2450,7 @@ function NewPattern()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ReadPattern(filepath)
     local f = io.open(filepath,"r")
@@ -2610,7 +2610,7 @@ function ReadPattern(filepath)
     return nil, newpattern, comments
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function UpdateCurrentGrid(newpattern)
     -- called by OpenPattern/OpenClipboard
@@ -2641,7 +2641,7 @@ function UpdateCurrentGrid(newpattern)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function OpenPattern(filepath)
     if filepath then
@@ -2670,7 +2670,7 @@ function OpenPattern(filepath)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CopyClipboardToFile()
     -- create a temporary file containing clipboard text
@@ -2688,7 +2688,7 @@ function CopyClipboardToFile()
     return filepath
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function OpenClipboard()
     local filepath = CopyClipboardToFile()
@@ -2707,7 +2707,7 @@ function OpenClipboard()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function PatternHeader(xpos, ypos, zpos)
     -- return RLE3 header line
@@ -2722,7 +2722,7 @@ function PatternHeader(xpos, ypos, zpos)
     return header
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function WritePattern(filepath, comments)
     local f = io.open(filepath,"w")
@@ -2826,7 +2826,7 @@ function WritePattern(filepath, comments)
     return nil  -- success
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function GetComments(f)
     local comments = ""
@@ -2851,7 +2851,7 @@ function GetComments(f)
     return comments
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SavePattern(filepath)
     if filepath then
@@ -2887,7 +2887,7 @@ function SavePattern(filepath)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CallScript(func, fromclip)
     -- avoid infinite recursion
@@ -2945,7 +2945,7 @@ function CallScript(func, fromclip)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RunScript(filepath)
     if filepath then
@@ -2984,7 +2984,7 @@ function RunScript(filepath)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RunClipboard()
     local cliptext = g.getclipstr()
@@ -3001,7 +3001,7 @@ function RunClipboard()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetStartupScript()
     -- prompt user for a .lua file to run automatically when 3D.lua starts up
@@ -3015,7 +3015,7 @@ function SetStartupScript()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RandomPattern(percentage, fill, sphere)
     local function getperc()
@@ -3111,7 +3111,7 @@ function RandomPattern(percentage, fill, sphere)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function GetSelectedCells()
     -- return an array of selected cell positions relative to mid cell
@@ -3130,7 +3130,7 @@ function GetSelectedCells()
     return selcells
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function GetSelectedLiveCells()
     -- return an array of selected *live* cell positions relative to mid cell
@@ -3151,7 +3151,7 @@ function GetSelectedLiveCells()
     return livecells
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function GetPasteCells()
     -- return an array of paste cell positions relative to mid cell
@@ -3170,7 +3170,7 @@ function GetPasteCells()
     return pcells
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetTemporaryGridSize(newsize)
     N = newsize
@@ -3179,7 +3179,7 @@ function SetTemporaryGridSize(newsize)
     MIDCELL = HALFCELL-MIDGRID
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetGridSizeOnly(newsize)
     N = newsize
@@ -3188,7 +3188,7 @@ function SetGridSizeOnly(newsize)
     MIDCELL = HALFCELL-MIDGRID
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetGridSize(newsize)
     -- change grid size to newsize or prompt user if newsize is nil
@@ -3320,7 +3320,7 @@ function SetGridSize(newsize)
     FitGrid()   -- calls Refresh
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ChangeRule()
     -- let user enter new rule as a string of the form 3Ds,s,.../b,b,...
@@ -3375,7 +3375,7 @@ function ChangeRule()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateRLE3Selection()
     -- convert selection to lines of RLE3 data
@@ -3471,7 +3471,7 @@ function CreateRLE3Selection()
     return lines
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CopySelection()
     if selcount > 0 then
@@ -3493,7 +3493,7 @@ function CopySelection()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ClearSelection()
     if selcount > 0 then
@@ -3513,7 +3513,7 @@ function ClearSelection()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ClearOutside()
     if selcount > 0 then
@@ -3533,7 +3533,7 @@ function ClearOutside()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CutSelection()
     if selcount > 0 then
@@ -3547,7 +3547,7 @@ function CutSelection()
     return false
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CancelSelection()
     if selcount > 0 then
@@ -3560,7 +3560,7 @@ function CancelSelection()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SelectAll()
     if popcount > 0 then
@@ -3587,7 +3587,7 @@ function SelectAll()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FlipSelectionX()
     if selcount > 0 then
@@ -3626,7 +3626,7 @@ function FlipSelectionX()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FlipSelectionY()
     if selcount > 0 then
@@ -3665,7 +3665,7 @@ function FlipSelectionY()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FlipSelectionZ()
     if selcount > 0 then
@@ -3704,7 +3704,7 @@ function FlipSelectionZ()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RotateSelectionX()
     if selcount > 0 then
@@ -3746,7 +3746,7 @@ function RotateSelectionX()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RotateSelectionY()
     if selcount > 0 then
@@ -3788,7 +3788,7 @@ function RotateSelectionY()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RotateSelectionZ()
     if selcount > 0 then
@@ -3830,7 +3830,7 @@ function RotateSelectionZ()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CancelPaste()
     if pastecount > 0 then
@@ -3842,7 +3842,7 @@ function CancelPaste()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Read2DPattern(filepath)
     -- call g.load via pcall to catch any error
@@ -3915,7 +3915,7 @@ function Read2DPattern(filepath)
     return nil, newpattern
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Paste()
     -- if a paste pattern already exists then cancel it
@@ -4107,7 +4107,7 @@ function Paste()
     return true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function PasteOR()
     if pastecount > 0 then
@@ -4126,7 +4126,7 @@ function PasteOR()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function PasteXOR()
     if pastecount > 0 then
@@ -4149,7 +4149,7 @@ function PasteXOR()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FlipPasteX()
     if pastecount > 0 then
@@ -4175,7 +4175,7 @@ function FlipPasteX()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FlipPasteY()
     if pastecount > 0 then
@@ -4201,7 +4201,7 @@ function FlipPasteY()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FlipPasteZ()
     if pastecount > 0 then
@@ -4227,7 +4227,7 @@ function FlipPasteZ()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RotatePasteX()
     if pastecount > 0 then
@@ -4264,7 +4264,7 @@ function RotatePasteX()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RotatePasteY()
     if pastecount > 0 then
@@ -4301,7 +4301,7 @@ function RotatePasteY()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RotatePasteZ()
     if pastecount > 0 then
@@ -4338,7 +4338,7 @@ function RotatePasteZ()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ChoosePasteAction(mousex, mousey)
     -- show red pop-up menu at mousex,mousey and let user choose a paste action
@@ -4346,7 +4346,7 @@ function ChoosePasteAction(mousex, mousey)
     pastemenu.show(mousex, mousey, ovwd, ovht)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ChooseSelectionAction(mousex, mousey)
     -- show green pop-up menu at mousex,mousey and let user choose a selection action
@@ -4354,7 +4354,7 @@ function ChooseSelectionAction(mousex, mousey)
     selmenu.show(mousex, mousey, ovwd, ovht)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ZoomDouble()
     if CELLSIZE < MAXSIZE then
@@ -4371,7 +4371,7 @@ function ZoomDouble()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ZoomHalf()
     if CELLSIZE > MINSIZE then
@@ -4388,7 +4388,7 @@ function ZoomHalf()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ZoomIn()
     if CELLSIZE < MAXSIZE then
@@ -4404,7 +4404,7 @@ function ZoomIn()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ZoomOut()
     if CELLSIZE > MINSIZE then
@@ -4420,7 +4420,7 @@ function ZoomOut()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ZoomInPower()
     if CELLSIZE < MAXSIZE then
@@ -4437,7 +4437,7 @@ function ZoomInPower()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ZoomOutPower()
     if CELLSIZE > MINSIZE then
@@ -4454,7 +4454,7 @@ function ZoomOutPower()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function OpenFile(filepath)
     if filepath:find("%.rle3$") then
@@ -4467,7 +4467,7 @@ function OpenFile(filepath)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StartStop()
     generating = not generating
@@ -4479,7 +4479,7 @@ function StartStop()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Step1()
     if generating then
@@ -4494,7 +4494,7 @@ function Step1()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function NextStep()
     if popcount == 0 or stepsize == 1 then
@@ -4513,7 +4513,7 @@ function NextStep()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Faster()
     if stepsize < 100 then
@@ -4522,7 +4522,7 @@ function Faster()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Slower()
     if stepsize > 1 then
@@ -4531,7 +4531,7 @@ function Slower()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetStepSize(newval)
     if newval >= 1 and newval <= 100 then
@@ -4548,7 +4548,7 @@ function StepChange(newval)
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetStepSizeTo1()
     SetStepSize(1)
@@ -4577,7 +4577,7 @@ function Reset()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function GetMidPoint(x, y, z)
     -- return mid point of cell at given grid position
@@ -4593,7 +4593,7 @@ local function GetMidPoint(x, y, z)
     return x, y
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FitGrid(display)
     if display == nil then display = true end
@@ -4634,7 +4634,7 @@ function FitGrid(display)
     if display then Refresh() end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- getters for user scripts
 
@@ -4647,7 +4647,7 @@ function GetCellType() return celltype end
 function GetStepSize() return stepsize end
 function GetBarHeight() return toolbarht end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function GetCells(selectedonly)
@@ -4673,7 +4673,7 @@ function GetCells(selectedonly)
     return cellarray
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function PutCells(cellarray, xoffset, yoffset, zoffset)
@@ -4698,7 +4698,7 @@ function PutCells(cellarray, xoffset, yoffset, zoffset)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function GetBounds()
@@ -4714,7 +4714,7 @@ function GetBounds()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function GetSelectionBounds()
@@ -4730,7 +4730,7 @@ function GetSelectionBounds()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function GetPasteBounds()
@@ -4745,7 +4745,7 @@ function GetPasteBounds()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function Step(n)
@@ -4757,7 +4757,7 @@ function Step(n)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function SetRule(newrule)
@@ -4767,7 +4767,7 @@ function SetRule(newrule)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function GetCell(x, y, z)
@@ -4779,7 +4779,7 @@ function GetCell(x, y, z)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function SetCell(x, y, z, state)
@@ -4788,7 +4788,7 @@ function SetCell(x, y, z, state)
     SetCellState(x+mid, y+mid, z+mid, state)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function SelectCell(x, y, z)
@@ -4796,7 +4796,7 @@ function SelectCell(x, y, z)
     SetSelection(x+mid, y+mid, z+mid, true)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function SelectedCell(x, y, z)
@@ -4808,7 +4808,7 @@ function SelectedCell(x, y, z)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function DeselectCell(x, y, z)
@@ -4816,28 +4816,28 @@ function DeselectCell(x, y, z)
     SetSelection(x+mid, y+mid, z+mid, false)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function SetMessage(msg)
     message = msg
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function PasteExists()
     return pastecount > 0
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function SelectionExists()
     return selcount > 0
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function DoPaste(x, y, z, mode)
@@ -4859,7 +4859,7 @@ function DoPaste(x, y, z, mode)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function FlipPaste(coordinates)
@@ -4871,7 +4871,7 @@ function FlipPaste(coordinates)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function RotatePaste(axis)
@@ -4883,7 +4883,7 @@ function RotatePaste(axis)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function FlipSelection(coordinates)
@@ -4895,7 +4895,7 @@ function FlipSelection(coordinates)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function RotateSelection(axis)
@@ -4907,14 +4907,14 @@ function RotateSelection(axis)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- for user scripts
 function Update()
     Refresh(true)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ShowHelp()
     local htmldata = [[
@@ -6144,14 +6144,14 @@ function CycleCursor()
 end
 
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetCellTypeOnly(newtype)
     celltype = newtype
     ovt{"setcelltype3d", newtype}
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CycleCellType()
     if celltype == "cube" then
@@ -6166,7 +6166,7 @@ function CycleCellType()
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetCellType(newtype)
     SetCellTypeOnly(newtype)
@@ -6174,21 +6174,21 @@ function SetCellType(newtype)
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ToggleAxes()
     showaxes = not showaxes
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ToggleLines()
     showlines = not showlines
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ToggleDepthShading()
     depthshading = not depthshading
@@ -6197,14 +6197,14 @@ function ToggleDepthShading()
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function UpdateHistory()
     ovt{"sethistory3d", showhistory, fadehistory}
     ViewChanged(false)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ToggleShowHistory()
     if showhistory == HISTORYOFF then
@@ -6216,7 +6216,7 @@ function ToggleShowHistory()
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ToggleFadeHistory()
     fadehistory = not fadehistory
@@ -6224,7 +6224,7 @@ function ToggleFadeHistory()
     RefreshIfNotGenerating()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ToggleToolBar()
     if toolbarht > 0 then
@@ -6251,7 +6251,7 @@ function ToggleToolBar()
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ExitScript()
     if dirty and scriptlevel == 0 then
@@ -6272,7 +6272,7 @@ function ExitScript()
     g.exit()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 --[[ no longer used, but might come in handy
 
@@ -6300,7 +6300,7 @@ end
 
 --]]
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function PointInTriangle(x, y, A, B, C)
     -- return true if x,y is inside the given triangle
@@ -6316,14 +6316,14 @@ local function PointInTriangle(x, y, A, B, C)
     return true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function PointInFace(x, y, P, Q, R, S)
     -- return true if x,y is inside the given face (a parallelogram)
     return PointInTriangle(x, y, P, Q, R) or PointInTriangle(x, y, R, S, P)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function IntersectionPoint(x1,y1, x2,y2, x3,y3, x4,y4)
     -- return the intersection point of 2 line segments
@@ -6341,7 +6341,7 @@ local function IntersectionPoint(x1,y1, x2,y2, x3,y3, x4,y4)
     return x1 + mua * (x2 - x1), y1 + mua * (y2 - y1)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function FindActiveCell(x, y, face)
     -- return cell coordinates of the active cell containing x,y
@@ -6495,7 +6495,7 @@ local function FindActiveCell(x, y, face)
     return cx, cy, cz
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function FindFace(mousex, mousey, box)
     -- create given box's rotated and projected vertices
@@ -6538,7 +6538,7 @@ function FindFace(mousex, mousey, box)
     return face     -- empty/F/B/R/L/T/U
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function InsideActiveCell(mousex, mousey)
     -- if the given mouse position is inside the active plane then
@@ -6575,7 +6575,7 @@ local function InsideActiveCell(mousex, mousey)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StartDrawing(mousex, mousey)
     local oldcell = activecell
@@ -6610,7 +6610,7 @@ function StartDrawing(mousex, mousey)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StartSelecting(mousex, mousey)
     local oldcell = activecell
@@ -6645,7 +6645,7 @@ function StartSelecting(mousex, mousey)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SetLine(x1, y1, z1, x2, y2, z2, setfunction, state)
     -- draw/erase/select/deselect a line of cells from x1,y1,z1 to x2,y2,z2
@@ -6719,7 +6719,7 @@ function SetLine(x1, y1, z1, x2, y2, z2, setfunction, state)
     setfunction(x1, y1, z1, state)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DrawCells(mousex, mousey)
     -- draw/erase cells in active plane
@@ -6745,7 +6745,7 @@ function DrawCells(mousex, mousey)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SelectCells(mousex, mousey)
     -- select/deselect cells in active plane
@@ -6771,7 +6771,7 @@ function SelectCells(mousex, mousey)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StartDraggingPaste(mousex, mousey)
     -- test if mouse click is in a paste cell
@@ -6804,7 +6804,7 @@ function StartDraggingPaste(mousex, mousey)
     return ""
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MovePastePattern(deltax, deltay, deltaz)
     -- move the paste pattern by the given amounts, if possible
@@ -6837,7 +6837,7 @@ function MovePastePattern(deltax, deltay, deltaz)
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DragPaste(mousex, mousey, prevx, prevy, face)
     -- create a large temporary active plane parallel to given face
@@ -6879,7 +6879,7 @@ function DragPaste(mousex, mousey, prevx, prevy, face)
     MovePastePattern(deltax, deltay, deltaz)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local save_cells    -- for restoring live cells under a moving selection
 local selxyz        -- store x,y,z positions of selected cells
@@ -6935,7 +6935,7 @@ function StartDraggingSelection(mousex, mousey)
     return ""
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MoveSelection(deltax, deltay, deltaz)
     -- move all selected cells by the given amounts, if possible
@@ -7054,7 +7054,7 @@ function MoveSelection(deltax, deltay, deltaz)
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DragSelection(mousex, mousey, prevx, prevy, face)
     -- create a large temporary active plane parallel to given face
@@ -7096,7 +7096,7 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
     MoveSelection(deltax, deltay, deltaz)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StopDraggingSelection()
     save_cells = {}
@@ -7104,7 +7104,7 @@ function StopDraggingSelection()
     livexyz = {}
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function StartDraggingPlane(mousex, mousey)
     local oldcell = activecell
@@ -7118,7 +7118,7 @@ function StartDraggingPlane(mousex, mousey)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function DragActivePlane(mousex, mousey, prevx, prevy)
     -- create a box enclosing all active cells using same vertex order as CreateCube
@@ -7212,7 +7212,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MiddlePaste()
     -- move paste pattern to middle of grid
@@ -7250,7 +7250,7 @@ function MiddlePaste()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MiddleSelection()
     -- move selection to middle of grid
@@ -7321,7 +7321,7 @@ function MiddleSelection()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MiddlePattern()
     -- move pattern to middle of grid
@@ -7362,7 +7362,7 @@ function MiddlePattern()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- use this flag in EraseLiveCells and SelectLiveCells to call
 -- RememberCurrentState just before the first change (if any)
@@ -7397,7 +7397,7 @@ function EraseLiveCells(mousex, mousey, firstcall)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function SelectLiveCells(mousex, mousey, firstcall)
     -- select all live cells whose projected mid points are close to mousex,mousey
@@ -7429,7 +7429,7 @@ function SelectLiveCells(mousex, mousey, firstcall)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateOverlay()
     -- overlay covers entire viewport (more if viewport is too small)
@@ -7458,7 +7458,7 @@ function CreateOverlay()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateMenuBar()
     -- create the menu bar and add some menus
@@ -7527,7 +7527,7 @@ function CreateMenuBar()
     mbar.additem(4, "Help", ShowHelp)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreateToolBar()
     -- create tool bar buttons
@@ -7552,7 +7552,7 @@ function CreateToolBar()
     stepslider = op.slider("", op.black, 100, 1, 100, StepChange)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CreatePopUpMenus()
     -- text in pop-up menus is shadowed
@@ -7592,7 +7592,7 @@ function CreatePopUpMenus()
     selmenu.additem("Cancel Selection", CancelSelection)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local showtoolbar = false   -- restore tool bar?
 
@@ -7623,7 +7623,7 @@ function CheckWindowSize()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CheckCursor(xy)
     local editing = currcursor ~= movecursor
@@ -7660,7 +7660,7 @@ function CheckCursor(xy)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function ViewChanged(rotate)
     -- cube needs recreating on rotate or depth shade toggle
@@ -7676,7 +7676,7 @@ function ViewChanged(rotate)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Rotate(xangle, yangle, zangle, display)
     if display == nil then display = true end
@@ -7735,7 +7735,7 @@ function Rotate(xangle, yangle, zangle, display)
     if display then Refresh() end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function InitialView(display, clearhistory)
     if display == nil then display = true end
@@ -7756,7 +7756,7 @@ function InitialView(display, clearhistory)
     FitGrid(display)    -- calls Refresh if display is true
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function InitDepthShading()
     -- initialize each depth shading layer
@@ -7766,7 +7766,7 @@ function InitDepthShading()
     ovt{"setdepthshading3d", depthshading, depthlayers, mindepth, maxdepth}
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function Initialize()
     CreateOverlay()
@@ -7828,7 +7828,7 @@ function Initialize()
     Refresh()
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function HandleKey(event)
     local CMDCTRL = "cmd"
@@ -7899,7 +7899,7 @@ function HandleKey(event)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MouseDown(x, y, mods, mouseinfo)
     -- mouse button has been pressed
@@ -7943,7 +7943,7 @@ function MouseDown(x, y, mods, mouseinfo)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function MouseUp(mouseinfo)
     -- mouse button has been released
@@ -7973,7 +7973,7 @@ function MouseUp(mouseinfo)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function CheckMousePosition(mousepos, mouseinfo)
     if #mousepos > 0 then
@@ -8011,7 +8011,7 @@ function CheckMousePosition(mousepos, mouseinfo)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function EventLoop()
     -- best to call Initialize here so any error is caught by xpcall
@@ -8089,7 +8089,7 @@ function EventLoop()
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 ReadSettings()
 oldstate = SaveGollyState()

@@ -1356,7 +1356,7 @@ local function click_in_menubar(x, y)
     return false
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function DrawPopUpMenu(p, chosenitem)
     -- draw pop-up window showing all items
@@ -1444,7 +1444,7 @@ local function DrawPopUpMenu(p, chosenitem)
     ov("rgba "..oldrgba)
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function GetPopUpItem(x, y, p)
     -- return index of item at given mouse location
@@ -1460,7 +1460,7 @@ local function GetPopUpItem(x, y, p)
     return itemindex
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function choose_popup_item(p)
     -- return a chosen item from the given pop-up menu

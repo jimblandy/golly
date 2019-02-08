@@ -9,7 +9,7 @@ local g = golly()
 local gp = require "gplus"
 local validint = gp.validint
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function intbase(n, b)
     -- convert integer n >= 0 to a base b digit array (thanks to PM 2Ring)
@@ -22,7 +22,7 @@ local function intbase(n, b)
     return digits
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function go_to(gen)
     local currgen = tonumber(g.getgen())
@@ -99,7 +99,7 @@ local function go_to(gen)
     g.show("")
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function savegen(filename, gen)
     local f = io.open(filename, "w")
@@ -111,7 +111,7 @@ local function savegen(filename, gen)
     end
 end
 
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- use same file name as in goto.py
 local GotoINIFileName = g.getdir("data").."goto.ini"
