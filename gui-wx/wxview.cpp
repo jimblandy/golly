@@ -2400,10 +2400,15 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
     wxToolTip::RemoveToolTips();
 #endif
     
-    statusptr->ClearMessage();
-    
     realkey = event.GetKeyCode();
     int mods = event.GetModifiers();
+    
+    #ifdef __WXMSW__
+        // avoid selection size message being cleared
+        if (selectingcells && realkey == WXK_SHIFT) return;
+    #endif
+
+    statusptr->ClearMessage();
     
     // wxGTK 2.8.12 does not set modifier flag if shift key pressed by itself
     // so best to play safe and test wxMOD_SHIFT or wxMOD_NONE
