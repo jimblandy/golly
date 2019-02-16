@@ -2434,8 +2434,8 @@ end
 
 --------------------------------------------------------------------------------
 
-function NewPattern()
-    pattname = "untitled"
+function NewPattern(title)
+    pattname = title or "untitled"
     SetCursor(drawcursor)
     gencount = 0
     startcount = 0
@@ -2941,6 +2941,11 @@ function CallScript(func, fromclip)
     if scriptlevel == 0 then
         EnableControls(true)    -- enable menu items and buttons that were disabled above
         CheckIfGenerating()
+        
+        -- note that Refresh calls setpattern3d only if dirty is true, so we need
+        -- to call it here if dirty is false (eg. if script called NewPattern)
+        if not dirty then ovt{"setpattern3d", grid1, false} end
+        
         Refresh()               -- calls DrawToolBar
     end
 end
@@ -5334,7 +5339,7 @@ that creates a small random pattern in the middle of the grid:
 
 <dd><table border=0><pre>
 -- for 3D.lua (make sure you copy this line)
-NewPattern()
+NewPattern("random pattern")
 local perc = GetPercentage()
 local quarter = GetGridSize()//4
 for z = -quarter, quarter do
@@ -5645,10 +5650,12 @@ Call <a href="#Update">Update</a> to see the result.
 Switch to the hand cursor.
 </dd>
 
-<a name="NewPattern"></a><p><dt><b>NewPattern()</b></dt>
+<a name="NewPattern"></a><p><dt><b>NewPattern(<i>title</i>)</b></dt>
 <dd>
 Create a new, empty pattern.
 All undo/redo history is deleted and the step size is reset to 1.
+The given title string will appear in the title bar of the Golly window.
+If not supplied it is set to "untitled".
 </dd>
 
 <a name="OpenPattern"></a><p><dt><b>OpenPattern(<i>filepath</i>)</b></dt>
@@ -5869,7 +5876,8 @@ The Corner neighborhood consists of the 8 cells adjacent to the corners of a cub
 <li>
 The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
 <li>
-The Hexahedral neighborhood simulates 12 spheres packed around a central sphere.
+The Hexahedral neighborhood simulates 12 spheres packed around a central sphere
+(also known as the face-centred cubic lattice, or the rhombic dodecahedral honeycomb).
 Because it is simulating a hexahedral tessellation in a cubic grid, this neighborhood
 is not orthogonally symmetric, so flipping or rotating a pattern can change the way it evolves.
 <li>
