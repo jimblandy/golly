@@ -4755,6 +4755,10 @@ end
 -- for user scripts
 function Step(n)
     n = n or 1
+    
+    -- script commands might have changed the pattern
+    ovt{"setpattern3d", grid1, false}
+
     while popcount > 0 and n > 0 do
         NextGeneration()
         n = n - 1

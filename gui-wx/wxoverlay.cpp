@@ -7309,16 +7309,12 @@ const char *Overlay::Do3DSetCellType(lua_State *L, const int n, int *nresults) {
     if ((error = ReadLuaString(L, n, idx++, &type, "type")) != NULL) return error;
     if (strcmp(type, "cube") == 0) {
         celltype = cube;
+    } else if (strcmp(type, "sphere") == 0) {
+        celltype = sphere;
+    } else if (strcmp(type, "point") == 0) {
+        celltype = point;
     } else {
-        if (strcmp(type, "sphere") == 0) {
-            celltype = sphere;
-        } else {
-            if (strcmp(type, "point") == 0) {
-                celltype = point;
-            } else {
-                return OverlayError("illegal cell type");
-            }
-        }
+        return OverlayError("illegal cell type");
     }
 
     return error;
@@ -8281,32 +8277,20 @@ const char *Overlay::Do3DSetRule(lua_State *L, const int n, int *nresults) {
     if ((error = ReadLuaString(L, n, idx++, &rulestring, "type")) != NULL) return error;
     if (strcmp(rulestring, "") == 0) {
         ruletype = moore;
+    } else if (strcmp(rulestring, "F") == 0) {
+        ruletype = face;
+    } else if (strcmp(rulestring, "C") == 0) {
+        ruletype = corner;
+    } else if (strcmp(rulestring, "E") == 0) {
+        ruletype = edge;
+    } else if (strcmp(rulestring, "H") == 0) {
+        ruletype = hexahedral;
+    } else if (strcmp(rulestring, "BB") == 0) {
+        ruletype = bb;
+    } else if (strcmp(rulestring, "BBW") == 0) {
+        ruletype = bbw;
     } else {
-        if (strcmp(rulestring, "F") == 0) {
-            ruletype = face;
-        } else {
-            if (strcmp(rulestring, "C") == 0) {
-                ruletype = corner;
-            } else {
-                if (strcmp(rulestring, "E") == 0) {
-                    ruletype = edge;
-                } else {
-                    if (strcmp(rulestring, "H") == 0) {
-                        ruletype = hexahedral;
-                    } else {
-                        if (strcmp(rulestring, "BB") == 0) {
-                            ruletype = bb;
-                        } else {
-                            if (strcmp(rulestring, "BBW") == 0) {
-                                ruletype = bbw;
-                            } else {
-                                return OverlayError("type argument is invalid");
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        return OverlayError("type argument is invalid");
     }
 
     // don't need survivals and births for BusyBoxes rules
@@ -9691,7 +9675,7 @@ const char *Overlay::DoOverlayTable(const char *cmd, lua_State *L, int n, int *n
     if ((strcmp(cmd, "lines")) == 0)             return DoLine(L, n, false, nresults);
     if ((strcmp(cmd, "fill")) == 0)              return DoFill(L, n, nresults);
 
-    // 3D
+    // customized commands to speed up 3D.lua
     if ((strcmp(cmd, "nextgen3d")) == 0)         return Do3DNextGen(L, n, nresults);
     if ((strcmp(cmd, "setrule3d")) == 0)         return Do3DSetRule(L, n, nresults);
     if ((strcmp(cmd, "setsize3d")) == 0)         return Do3DSetGridSize(L, n, nresults);
