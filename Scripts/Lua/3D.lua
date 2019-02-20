@@ -114,6 +114,7 @@ local xaxes = {}                    -- four X axes
 local yaxes = {}                    -- four Y axes
 local zaxes = {}                    -- four Z axes
 
+local update_grid = false           -- need to call setpattern3d?
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- pattern name
@@ -1677,7 +1678,10 @@ function Refresh(update)
     g.check(false)
 
     -- if the pattern has been modified then update
-    if dirty then ovt{"setpattern3d", grid1, false} end
+    if update_grid then
+        ovt{"setpattern3d", grid1, false}
+        update_grid = false
+    end
 
     -- fill overlay with background color
     ov(BACK_COLOR)
@@ -2036,7 +2040,8 @@ function RestoreState(state)
     maxpastey = state.savemaxpastey
     maxpastez = state.savemaxpastez
 
-    ovt{"setpattern3d", grid1, true}
+    ovt{"setpattern3d", grid1, false}   -- nicer not to clear history???
+    update_grid = false
 end
 
 --------------------------------------------------------------------------------
@@ -2297,6 +2302,7 @@ local function SetCellState(x, y, z, state)
             grid1[pos] = state
             popcount = popcount + 1
             dirty = true
+            update_grid = true
             -- boundary might expand
             if x < minx then minx = x end
             if y < miny then miny = y end
@@ -2312,6 +2318,7 @@ local function SetCellState(x, y, z, state)
             grid1[pos] = nil
             popcount = popcount - 1
             dirty = true
+            update_grid = true
             -- tell MinimizeLiveBoundary that it needs to update the live boundary
             minimal_live_bounds = false
         end
@@ -2325,6 +2332,7 @@ local function SetLiveCell(x, y, z)
     grid1[ x + N * (y + N * z) ] = 1
     popcount = popcount + 1
     dirty = true
+    update_grid = true
     -- boundary might expand
     if x < minx then minx = x end
     if y < miny then miny = y end
@@ -2443,6 +2451,10 @@ function NewPattern(title)
     StopGenerating()
     ClearCells()
     ClearUndoRedo()
+    
+    ovt{"setpattern3d", grid1, true}    -- clear history
+    update_grid = false
+
     -- avoid unnecessary work if user script calls NewPattern
     if scriptlevel == 0 then
         SetActivePlane()        -- restore default active plane
@@ -2635,6 +2647,10 @@ function UpdateCurrentGrid(newpattern)
     StopGenerating()
     SetCursor(movecursor)
     ClearUndoRedo()         -- dirty = false
+    
+    ovt{"setpattern3d", grid1, true}    -- clear history
+    update_grid = false
+
     if scriptlevel == 0 then
         SetActivePlane()
         InitialView()       -- calls Refresh
@@ -2941,11 +2957,6 @@ function CallScript(func, fromclip)
     if scriptlevel == 0 then
         EnableControls(true)    -- enable menu items and buttons that were disabled above
         CheckIfGenerating()
-        
-        -- note that Refresh calls setpattern3d only if dirty is true, so we need
-        -- to call it here if dirty is false (eg. if script called NewPattern)
-        if not dirty then ovt{"setpattern3d", grid1, false} end
-        
         Refresh()               -- calls DrawToolBar
     end
 end
@@ -3110,6 +3121,10 @@ function RandomPattern(percentage, fill, sphere)
     end
 
     ClearUndoRedo()
+    
+    ovt{"setpattern3d", grid1, true}    -- clear history
+    update_grid = false
+
     if scriptlevel == 0 then
         SetActivePlane()
         InitialView()       -- calls Refresh
@@ -3255,6 +3270,7 @@ function SetGridSize(newsize)
     local clipcount = RestoreCells(livecells)
     if clipcount > 0 then
         dirty = true
+        update_grid = true
     else
         -- RestoreCells sets dirty true if there are live cells,
         -- but pattern hasn't really changed if no cells were clipped
@@ -3319,7 +3335,8 @@ function SetGridSize(newsize)
     end
 
     -- reload the grid since it will have changed after resize
-    ovt{"setpattern3d", grid1, true}
+    ovt{"setpattern3d", grid1, true}    -- also clear history
+    update_grid = false
 
     CheckIfGenerating()
     FitGrid()   -- calls Refresh
@@ -3510,6 +3527,7 @@ function ClearSelection()
                 grid1[k] = nil
                 popcount = popcount - 1
                 dirty = true
+                update_grid = true
                 minimal_live_bounds = false
             end
         end
@@ -3530,6 +3548,7 @@ function ClearOutside()
                 grid1[k] = nil
                 popcount = popcount - 1
                 dirty = true
+                update_grid = true
                 minimal_live_bounds = false
             end
         end
@@ -4142,6 +4161,7 @@ function PasteXOR()
                 grid1[k] = nil
                 popcount = popcount - 1
                 dirty = true
+                update_grid = true
                 minimal_live_bounds = false
             else
                 SetLiveCell(k % N, (k // N) % N, k // NN)
@@ -4757,7 +4777,10 @@ function Step(n)
     n = n or 1
     
     -- script commands might have changed the pattern
-    ovt{"setpattern3d", grid1, false}
+    if update_grid then
+        ovt{"setpattern3d", grid1, false}
+        update_grid = false
+    end
 
     while popcount > 0 and n > 0 do
         NextGeneration()
@@ -6606,6 +6629,7 @@ function StartDrawing(mousex, mousey)
             grid1[pos] = nil
             popcount = popcount - 1
             dirty = true
+            update_grid = true
             minimal_live_bounds = false
             drawstate = 0
         else
@@ -6977,6 +7001,7 @@ function MoveSelection(deltax, deltay, deltaz)
             grid1[k] = nil
             popcount = popcount - 1
             dirty = true
+            update_grid = true
             minimal_live_bounds = false
         end
     end
@@ -7014,6 +7039,7 @@ function MoveSelection(deltax, deltay, deltaz)
                 grid1[k] = 1
                 popcount = popcount + 1
                 dirty = true
+                update_grid = true
                 -- boundary might expand
                 local x = k % N
                 local y = (k // N) % N
@@ -7051,6 +7077,7 @@ function MoveSelection(deltax, deltay, deltaz)
                 grid1[k] = 1
                 popcount = popcount + 1
                 dirty = true
+                update_grid = true
                 -- boundary might expand
                 if x < minx then minx = x end
                 if y < miny then miny = y end
@@ -7288,6 +7315,7 @@ function MiddleSelection()
                 grid1[k] = nil
                 popcount = popcount - 1
                 dirty = true
+                update_grid = true
                 minimal_live_bounds = false
                 livecells[#livecells+1] = {x, y, z}
             end
@@ -7347,6 +7375,7 @@ function MiddlePattern()
 
         RememberCurrentState()
         dirty = true
+        update_grid = true
         local livecells = {}
         local NN = N*N
         for k,_ in pairs(grid1) do
@@ -7396,11 +7425,12 @@ function EraseLiveCells(mousex, mousey, firstcall)
                abs(py - mousey) < HALFCELL then
                 if not firstchange then
                     RememberCurrentState()
-                    dirty = true
                     firstchange = true
                 end
                 grid1[k] = nil
                 popcount = popcount - 1
+                dirty = true
+                update_grid = true
                 minimal_live_bounds = false
                 changes = changes + 1
             end
@@ -7749,16 +7779,14 @@ end
 
 --------------------------------------------------------------------------------
 
-function InitialView(display, clearhistory)
+function InitialView(display)
     if display == nil then display = true end
-    if clearhistory == nil then clearhistory = true end
 
     -- initialize the transformation matrix
     xixo = 1.0; yixo = 0.0; zixo = 0.0
     xiyo = 0.0; yiyo = 1.0; ziyo = 0.0
     xizo = 0.0; yizo = 0.0; zizo = 1.0
     ovt{"settrans3d", xixo, xiyo, xizo, yixo, yiyo, yizo, zixo, ziyo, zizo}
-    ovt{"setpattern3d", grid1, clearhistory}
 
     -- rotate to a nice view but don't call Refresh
     Rotate(160, 20, 0, false)
@@ -7822,7 +7850,7 @@ function Initialize()
     end
 
     SetActivePlane()
-    InitialView(false)      -- don't call Refresh
+    InitialView(false)      -- don't call Refresh now (we'll do it below)
 
     -- run the user's startup script if it exists
     local f = io.open(startup, "r")
@@ -7836,6 +7864,9 @@ function Initialize()
     ov("textoption background "..BACK_COLOR:sub(6))
     ssbutton.customcolor = START_COLOR
     ssbutton.darkcustomcolor = SELSTART_COLOR
+    
+    ovt{"setpattern3d", grid1, false}
+    update_grid = false
 
     Refresh()
 end
@@ -7886,7 +7917,7 @@ function HandleKey(event)
     elseif key == "]" and mods == "none" then ZoomIn()
     elseif key == "{" and mods == "none" then ZoomHalf()
     elseif key == "}" and mods == "none" then ZoomDouble()
-    elseif key == "i" and mods == "none" then InitialView(true, false)  -- don't clear history
+    elseif key == "i" and mods == "none" then InitialView()
     elseif key == "f" and mods == "none" then FitGrid()
     elseif key == "p" and mods == "none" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()
