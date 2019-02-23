@@ -7354,6 +7354,7 @@ const char *Overlay::Do3DSetDepthShading(lua_State *L, const int n, int *nresult
 
 const char *Overlay::Do3DSetTransform(lua_State *L, const int n, int *nresults) {
     const char *error = NULL;
+    const double digits = 100000000.0;   // for rounding values from Lua
 
     // get transformation matrix
     int idx = 2;
@@ -7366,6 +7367,19 @@ const char *Overlay::Do3DSetTransform(lua_State *L, const int n, int *nresults) 
     if ((error = ReadLuaNumber(L, n, idx++, &zixo, "zixo")) != NULL) return error;
     if ((error = ReadLuaNumber(L, n, idx++, &ziyo, "ziyo")) != NULL) return error;
     if ((error = ReadLuaNumber(L, n, idx++, &zizo, "zizo")) != NULL) return error;
+
+    // round values to prevent rendering glitches
+    xixo = round(digits * xixo) / digits;
+    xiyo = round(digits * xiyo) / digits;
+    xizo = round(digits * xizo) / digits;
+
+    yixo = round(digits * yixo) / digits;
+    yiyo = round(digits * yiyo) / digits;
+    yizo = round(digits * yizo) / digits;
+
+    zixo = round(digits * zixo) / digits;
+    ziyo = round(digits * ziyo) / digits;
+    zizo = round(digits * zizo) / digits;
 
     return error;
 }
@@ -7622,9 +7636,9 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
                         for (x = fromx; x != tox; x += stepx) {
                             if (grid3values[i + x]) {
                                 // use orthographic projection
-                                double xc = x * cellsize + midcell;
-                                double yc = y * cellsize + midcell;
-                                double zc = z * cellsize + midcell;
+                                int xc = x * cellsize + midcell;
+                                int yc = y * cellsize + midcell;
+                                int zc = z * cellsize + midcell;
                                 double zval = xc * zixo + yc * ziyo + zc * zizo;
                                 int layer = depthlayers * (zval + zdepth) / zdepth2 - mindepth;
                                 drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
@@ -7661,9 +7675,9 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
                             for (x = fromx; x != tox; x += stepx) {
                                 if (grid3values[i + x]) {
                                     // use orthographic projection
-                                    double xc = x * cellsize + midcell;
-                                    double yc = y * cellsize + midcell;
-                                    double zc = z * cellsize + midcell;
+                                    int xc = x * cellsize + midcell;
+                                    int yc = y * cellsize + midcell;
+                                    int zc = z * cellsize + midcell;
                                     drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
                                     drawy = my + xc * yixo + yc * yiyo + zc * yizo;
                                     if (PixelInTarget(drawx, drawy)) *(lpixmap + drawy*wd + drawx) = rgba;
@@ -7684,9 +7698,9 @@ void Overlay::Display3DNormal(const int midx, const int midy, const int stepi, c
                             for (x = fromx; x != tox; x += stepx) {
                                 if (grid3values[i + x]) {
                                     // use orthographic projection
-                                    double xc = x * cellsize + midcell;
-                                    double yc = y * cellsize + midcell;
-                                    double zc = z * cellsize + midcell;
+                                    int xc = x * cellsize + midcell;
+                                    int yc = y * cellsize + midcell;
+                                    int zc = z * cellsize + midcell;
                                     drawx = mx + xc * xixo + yc * xiyo + zc * xizo;
                                     drawy = my + xc * yixo + yc * yiyo + zc * yizo;
                                     Draw3DCell(drawx, drawy, liveclip);
@@ -7793,9 +7807,9 @@ void Overlay::Display3DNormalEditing(const int midx, const int midy, const int s
                 hv = history3values[ix];
                 if (gv || sv || pv || av || hv) {
                     // use orthographic projection
-                    double xc = x * cellsize + midcell;
-                    double yc = y * cellsize + midcell;
-                    double zc = z * cellsize + midcell;
+                    int xc = x * cellsize + midcell;
+                    int yc = y * cellsize + midcell;
+                    int zc = z * cellsize + midcell;
                     if (usedepth) {
                         double zval = xc * zixo + yc * ziyo + zc * zizo;
                         int layer = depthlayers * (zval + zdepth) / zdepth2 - mindepth;
@@ -7938,9 +7952,9 @@ void Overlay::Display3DBusyBoxes(const int midx, const int midy, const int stepi
                         for (x = fromx; x != tox; x += stepx) {
                             if (grid3values[i + x]) {
                                 // use orthographic projection
-                                double xc = x * cellsize + midcell;
-                                double yc = y * cellsize + midcell;
-                                double zc = z * cellsize + midcell;
+                                int xc = x * cellsize + midcell;
+                                int yc = y * cellsize + midcell;
+                                int zc = z * cellsize + midcell;
                                 drawx = midx + xc * xixo + yc * xiyo + zc * xizo;
                                 drawy = midy + xc * yixo + yc * yiyo + zc * yizo;
                                 if (evencell) {
@@ -7968,9 +7982,9 @@ void Overlay::Display3DBusyBoxes(const int midx, const int midy, const int stepi
                         for (x = fromx; x != tox; x += stepx) {
                             if (grid3values[i + x]) {
                                 // use orthographic projection
-                                double xc = x * cellsize + midcell;
-                                double yc = y * cellsize + midcell;
-                                double zc = z * cellsize + midcell;
+                                int xc = x * cellsize + midcell;
+                                int yc = y * cellsize + midcell;
+                                int zc = z * cellsize + midcell;
                                 drawx = midx + xc * xixo + yc * xiyo + zc * xizo;
                                 drawy = midy + xc * yixo + yc * yiyo + zc * yizo;
                                 if (usedepth) {
@@ -8108,9 +8122,9 @@ void Overlay::Display3DBusyBoxesEditing(const int midx, const int midy, const in
                 hv = history3values[ix];
                 if (gv || sv || pv || av || hv) {
                     // use orthographic projection
-                    double xc = x * cellsize + midcell;
-                    double yc = y * cellsize + midcell;
-                    double zc = z * cellsize + midcell;
+                    int xc = x * cellsize + midcell;
+                    int yc = y * cellsize + midcell;
+                    int zc = z * cellsize + midcell;
                     if (usedepth) {
                         double zval = xc * zixo + yc * ziyo + zc * zizo;
                         int layer = depthlayers * (zval + zdepth) / zdepth2 - mindepth;
