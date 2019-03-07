@@ -652,7 +652,7 @@ const char *loadpattern(lifealgo &imp) {
    const char *err = imp.setrule("B3/S23") ;
    if (err) {
       // try "Life" in case given algo is RuleLoader and a
-      // Life.table/tree file exists (nicer for loading lexicon patterns)
+      // Life.rule file exists (nicer for loading lexicon patterns)
       err = imp.setrule("Life");
       if (err) {
          // if given algo doesn't support B3/S23 or Life then the only sensible

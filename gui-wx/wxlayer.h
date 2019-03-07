@@ -198,8 +198,8 @@ bool RestoreRule(const wxString& rule);
 // Try to set the current layer's rule to a previously known rule.
 // If this succeeds return true, but if it fails then warn the user,
 // switch to the current algorithm's default rule, and return false.
-// The latter can happen if the given rule's table/tree file was
-// deleted or was edited and some sort of error introduced.
+// The latter can happen if a .rule file was deleted or was edited
+// and some sort of error introduced.
 
 Layer* CreateTemporaryLayer();
 // Create a temporary layer with the same algo type as currlayer.

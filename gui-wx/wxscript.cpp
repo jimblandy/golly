@@ -319,7 +319,7 @@ const char* GSF_setrule(const char* rulestring)
     }
     
     // check if the rule string changed, or the number of states changed
-    // (the latter might happen if user edited a table/tree file)
+    // (the latter might happen if user edited a .rule file)
     wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     int newmaxstate = currlayer->algo->NumCellStates() - 1;
     if (oldrule != newrule || oldmaxstate != newmaxstate) {
@@ -350,7 +350,7 @@ const char* GSF_setrule(const char* rulestring)
     }
     
     // switch to default colors and icons for new rule (we need to do this even if
-    // oldrule == newrule in case there's a new/changed .colors or .icons file)
+    // oldrule == newrule in case there's a new/changed .rule file)
     UpdateLayerColors();
     
     // pattern or colors or icons might have changed

@@ -1029,7 +1029,7 @@ bool RestoreRule(const wxString& rule)
 {
     const char* err = currlayer->algo->setrule( rule.mb_str(wxConvLocal) );
     if (err) {
-        // this can happen if the given rule's table/tree file was deleted
+        // this can happen if a .rule file was deleted
         // or it was edited and some sort of error introduced, so best to
         // use algo's default rule (which should never fail)
         currlayer->algo->setrule( currlayer->algo->DefaultRule() );
@@ -2756,7 +2756,7 @@ Layer::Layer()
         // set rule using initrule stored in prefs file
         const char* err = algo->setrule(initrule);
         if (err) {
-            // user might have edited rule in prefs file, or deleted table/tree file
+            // user might have edited rule in prefs file, or deleted .rule file
             algo->setrule( algo->DefaultRule() );
         }
         
@@ -2818,7 +2818,7 @@ Layer::Layer()
             // use current rule
             const char* err = algo->setrule(currlayer->algo->getrule());
             if (err) {
-                // table/tree file might have been deleted
+                // .rule file might have been deleted
                 algo->setrule( algo->DefaultRule() );
             }
             

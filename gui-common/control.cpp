@@ -780,7 +780,7 @@ void ChangeRule(const std::string& rulestring)
             ClearOutsideGrid();
         }
 
-		// new table/tree might have changed the number of cell states;
+		// new rule might have changed the number of cell states;
 		// if there are fewer states then pattern might change
 		if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
 			ReduceCellStates(newmaxstate);
