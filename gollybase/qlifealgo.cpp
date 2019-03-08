@@ -635,9 +635,13 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
 /**
  *   Mark a node and its subnodes as changed.  We really
  *   only mark those nodes that have any cells set at all.
+ *   And we remove all empty nodes, to prevent quadratic
+ *   expansion if setrule() or something similar is called
+ *   too frequently.
  */
-int qlifealgo::markglobalchange(supertile *p, int lev) {
+supertile *qlifealgo::markglobalchange(supertile *p, int lev, int &bits) {
    int i ;
+   bits = 0 ;
    if (lev == 0) {
       tile *pp = (tile *)p ;
       if (pp != emptytile) {
@@ -648,27 +652,56 @@ int qlifealgo::markglobalchange(supertile *p, int lev) {
         if (s) {
           pp->c[0] = pp->c[5] = 0x1ff ;
           pp->c[1] = pp->c[2] = pp->c[3] = pp->c[4] = 0x3ff ;
-          return 0x603 ;
+          bits = 0x603 ;
+          return p ;
         }
+        bits = 0 ;
+        for (int i=0; i<4; i++)
+           if (pp->b[i] != emptybrick) {
+               STAT(bricks--) ;
+               ((linkedmem *)(pp->b[i]))->next = bricklist ;
+               bricklist = (linkedmem *)(pp->b[i]) ;
+           }
+        STAT(tiles--) ;
+        memset(pp, 0, sizeof(tile)) ;
+        ((linkedmem *)pp)->next = tilelist ;
+        tilelist = (linkedmem *)pp ;
+        return (supertile *)emptytile ;
       }
-      return 0 ;
+      return p ;
    } else {
       if (p != nullroots[lev]) {
          int nchanging = 0 ;
-         if (generation.odd())
-           for (i=0; i<8; i++)
-              nchanging |= (markglobalchange(p->d[i], lev-1)) << i ;
-         else
-           for (i=0; i<8; i++)
-             nchanging |= (markglobalchange(p->d[i], lev-1)) << (7 - i) ;
-         p->flags |= nchanging | 0xf0000000 ;
-         return upchanging(nchanging) ;
+         int nbits ;
+         if (generation.odd()) {
+           for (i=0; i<8; i++) {
+              p->d[i] = markglobalchange(p->d[i], lev-1, nbits) ;
+              nchanging |= nbits << i ;
+           }
+         } else {
+           for (i=0; i<8; i++) {
+             p->d[i] = markglobalchange(p->d[i], lev-1, nbits) ;
+             nchanging |= nbits << (7-i) ;
+           }
+         }
+         if (nchanging != 0 || p == root) {
+            p->flags |= nchanging | 0xf0000000 ;
+            bits = upchanging(nchanging) ;
+            return p ;
+         } else {
+            STAT(supertiles--) ;
+            memset(p, 0, sizeof(supertile)) ;
+            ((linkedmem *)p)->next = supertilelist ;
+            supertilelist = (linkedmem *)p ;
+            return nullroots[lev] ;
+         }
       }
-      return 0 ;
+      return p ;
    }
 }
 void qlifealgo::markglobalchange() {
-   markglobalchange(root, rootlev) ;
+   int bits = 0 ;
+   markglobalchange(root, rootlev, bits) ;
    deltaforward = 0xffffffff ;
 }
 /*
