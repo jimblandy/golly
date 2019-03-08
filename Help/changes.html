@@ -9,14 +9,18 @@
 <ul>
 <li> Major speed improvements to 3D.lua via custom-purpose ovtable commands.
 <li> 3D.lua now natively supports cell history with fading.
-<li> Fixed a bug caused by simultaneous clicks of different mouse buttons.
 <li> Updated Lua to version 5.3.5.
-<li> Updated irrKlang to version 1.6 (for builds of Golly including audio)
-<li> The <a href="overlay.html#optimize">optimize</a> overlay command now returns the minimum non-zero alpha bounding box of the clip.
-<li> The <a href="overlay.html#blend">blend</a> overlay command now has a faster blend mode ("blend 2") which should be used when the destination is opaque.
-<li> Some fixes and improvements to the <a href="overlay.html#replace">replace</a> overlay command.</li>
-<li> Performance improvements to the <a href="overlay.html#drawcells">drawcells</a> overlay command.</li>
-<li> Fixed a bug where the canonical form of Generations rules in MAP format was incorrect.</li>
+<li> The <a href="overlay.html#optimize">optimize</a> overlay command now returns the minimum non-zero
+     alpha bounding box of the clip.
+<li> The <a href="overlay.html#blend">blend</a> overlay command now has a faster blend mode ("blend 2")
+     which should be used when the destination is opaque.
+<li> Some fixes and improvements to the <a href="overlay.html#replace">replace</a> overlay command.
+<li> Performance improvements to the <a href="overlay.html#drawcells">drawcells</a> overlay command.
+<li> Fixed a bug where the canonical form of Generations rules in MAP format was incorrect.
+<li> Fixed a bug caused by simultaneous clicks of different mouse buttons.
+<li> Fixed flickering selection size message when extending the selection on Windows.
+<li> Fixed a performance bug in QuickLife where changing the rule each generation caused
+     a significant slowdown.
 </ul>
 
 <p>
