@@ -668,7 +668,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
     int rowcount = 0;
 
     // compute 4 cell offset
-    int offset = (4 - ((uintptr_t)cellptr & 3)) & 3;
+    int offset = (4 - ((g_uintptr_t)cellptr & 3)) & 3;
     if (offset > width) offset = width;
 
     // process in 4 cell chunks
@@ -720,7 +720,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
         rowcount = 0;
 
         // compute 4 cell offset
-        offset = (4 - ((uintptr_t)cellptr & 3)) & 3;
+        offset = (4 - ((g_uintptr_t)cellptr & 3)) & 3;
         if (offset > width) offset = width;
 
         // process in 4 cell chunks
@@ -1110,7 +1110,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
     int rowcount = 0;
 
     // compute 4 cell offset
-    int offset = (4 - ((uintptr_t)cellptr & 3)) & 3;
+    int offset = (4 - ((g_uintptr_t)cellptr & 3)) & 3;
     if (offset > width) offset = width;
 
     // process in 4 cell chunks
@@ -1162,7 +1162,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
         rowcount = 0;
 
         // compute 4 cell offset
-        offset = (4 - ((uintptr_t)cellptr & 3)) & 3;
+        offset = (4 - ((g_uintptr_t)cellptr & 3)) & 3;
         if (offset > width) offset = width;
 
         // process in 4 cell chunks
