@@ -90,7 +90,7 @@ struct brick { /* 64 bytes */
 struct tile { /* 32 bytes */
    struct brick *b[4] ;
    short c[6] ;
-   long flags ;
+   int flags ;
 } ;
 /*
  *   Supertiles hold pointers to eight subtiles, which can either be 
