@@ -102,7 +102,7 @@ local function pastetext(x, y, transform)
     -- text background is transparent so paste needs to use alpha blending
     ov("blend 1")
     ov(transform)
-    ovt{"paste", (x+originx), (y+originy), "textclip"}
+    ovt{"paste", x+originx, y+originy, "textclip"}
     ov(op.identity)
     ov("blend 0")
 end
@@ -118,7 +118,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawline(x1, y1, x2, y2)
-    ovt{"line", (x1+originx), (y1+originy), (x2+originx), (y2+originy)}
+    ovt{"line", x1+originx, y1+originy, x2+originx, y2+originy}
 end
 
 --------------------------------------------------------------------------------
@@ -225,7 +225,7 @@ local function draw_plot()
         if lines then
             drawline(x, -y, newx, -newy)
         else
-            drawdot(newx, -newy, newx, -newy)
+            drawdot(newx, -newy)
         end
         x = newx
         y = newy
