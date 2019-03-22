@@ -642,14 +642,9 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_CMODE,           active);
         
         if (inscript) {
-            // don't use DO_STARTSTOP key to abort a running script
-#ifdef __WXMAC__
-            // on Mac we need to clear the accelerator first because "\tEscape" doesn't really
-            // change the accelerator (it just looks like it does!) -- this is because escape
-            // (key code 27) is used by SetItemCmd to indicate the item has a submenu;
-            // see UMASetMenuItemShortcut in wx/src/mac/carbon/uma.cpp
-            mbar->SetLabel(ID_START, _("x"));
-#endif
+            // WARNING: next line is no longer needed on wxMac and actually caused a bad memory leak!
+            // mbar->SetLabel(ID_START, _("x"));
+            // escape key can be used to abort a running script
             mbar->SetLabel(ID_START, _("Stop Script\tEscape"));
         } else if (generating) {
             mbar->SetLabel(ID_START, _("Stop Generating") + GetAccelerator(DO_STARTSTOP));
