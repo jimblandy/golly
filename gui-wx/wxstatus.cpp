@@ -59,7 +59,7 @@ void StatusBar::ClearMessage()
     if (statusmsg.IsEmpty()) return;          // no need to clear message
     
     statusmsg.Clear();
-    if (statusht > 0) {
+    if (statusht > 0 && !mainptr->IsIconized()) {
         int wd, ht;
         GetClientSize(&wd, &ht);
         if (wd > 0 && ht > 0) {
@@ -79,15 +79,15 @@ void StatusBar::DisplayMessage(const wxString& s)
 {
     if (inscript) return;                     // let script control messages
     statusmsg = s;
-    if (statusht > 0) {
+    if (statusht > 0 && !mainptr->IsIconized()) {
         int wd, ht;
         GetClientSize(&wd, &ht);
         if (wd > 0 && ht > 0) {
             // update bottom line
-            wxRect r = wxRect( wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
-                              wxPoint(wd-1,ht-1) );
+            wxRect r = wxRect(wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
+                              wxPoint(wd-1,ht-1));
             Refresh(false, &r);
-            // no need to show message immediately???
+            // no need to show message immediately
             // Update();
         }
     }
@@ -116,6 +116,7 @@ void StatusBar::SetMessage(const wxString& s)
 
 void StatusBar::UpdateXYLocation()
 {
+    if (statusht == 0 || mainptr->IsIconized()) return;
     int wd, ht;
     GetClientSize(&wd, &ht);
     if (ht > 0 && (wd > h_xy || showexact)) {
@@ -137,7 +138,7 @@ void StatusBar::CheckMouseLocation(bool active)
     if ( !active ) {
         // main window is not in front so clear XY location
         showxy = false;
-        if (statusht > 0) UpdateXYLocation();
+        UpdateXYLocation();
         if (inscript) mousepos = wxEmptyString;
         return;
     }
@@ -150,10 +151,10 @@ void StatusBar::CheckMouseLocation(bool active)
             currx = xpos;
             curry = ypos;
             showxy = true;
-            if (statusht > 0) UpdateXYLocation();
+            UpdateXYLocation();
         } else if (!showxy) {
             showxy = true;
-            if (statusht > 0) UpdateXYLocation();
+            UpdateXYLocation();
         }
         if (inscript) {
             mousepos = wxString(xpos.tostring('\0'), wxConvLocal);
@@ -163,7 +164,7 @@ void StatusBar::CheckMouseLocation(bool active)
     } else {
         // outside viewport so clear XY location
         showxy = false;
-        if (statusht > 0) UpdateXYLocation();
+        UpdateXYLocation();
         if (inscript) mousepos = wxEmptyString;
     }
 }
@@ -172,7 +173,7 @@ void StatusBar::CheckMouseLocation(bool active)
 
 void StatusBar::SetStatusFont(wxDC& dc)
 {
-    dc.SetFont(*statusfont);
+    dc.SetFont(statusfont);
     dc.SetTextForeground(*wxBLACK);
     dc.SetBrush(*wxBLACK_BRUSH);
     dc.SetBackgroundMode(wxTRANSPARENT);
@@ -568,8 +569,7 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
     // create font for text in status bar and set textascent for use in DisplayText
 #ifdef __WXMSW__
     // use smaller, narrower font on Windows
-    statusfont = wxFont::New(8, wxDEFAULT, wxNORMAL, wxNORMAL);
-    
+    statusfont = wxFont(8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     int major, minor;
     wxGetOsVersion(&major, &minor);
     if ( major > 5 || (major == 5 && minor >= 1) ) {
@@ -580,17 +580,17 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
     }
 #elif defined(__WXGTK__)
     // use smaller font on GTK
-    statusfont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
+    statusfont = wxFont(8, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     textascent = 11;
-#elif defined(__WXOSX_COCOA__)
+#elif defined(__WXMAC__)
     // we need to specify facename to get Monaco instead of Courier
-    statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
+    statusfont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Monaco"));
     textascent = 10;
+    statusfont.SetPointSize(10); // avoid assert error
 #else
-    statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
+    statusfont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     textascent = 10;
 #endif
-    if (statusfont == NULL) Fatal(_("Failed to create status bar font!"));
     
     // determine horizontal offsets for info in status bar
     wxClientDC dc(this);
@@ -627,6 +627,5 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
 
 StatusBar::~StatusBar()
 {
-    delete statusfont;
     delete statbitmap;
 }
