@@ -860,7 +860,7 @@ void ResizeEditBar(int wd)
 
 void UpdateEditBar()
 {
-    if (editbarptr && showedit) {
+    if (editbarptr && showedit && !mainptr->IsIconized()) {
         bool active = !viewptr->waitingforclick;
         bool timeline = TimelineExists();
         
@@ -961,7 +961,7 @@ void CycleDrawingState(bool higher)
             currlayer->drawingstate--;
     }
     
-    if (showedit) {
+    if (showedit && !mainptr->IsIconized()) {
         editbarptr->Refresh(false);
         editbarptr->UpdateScrollBar();
         #ifdef __WXGTK__

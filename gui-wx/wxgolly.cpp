@@ -146,7 +146,7 @@ int wx_poll::checkevents()
 
 void wx_poll::updatePop()
 {
-    if (showstatus) {
+    if (showstatus && !mainptr->IsIconized()) {
         statusptr->Refresh(false);
     }
 }
