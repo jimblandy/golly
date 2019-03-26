@@ -1,11 +1,11 @@
 # Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.0 on Mac OS 10.12+)
+# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.0 on Mac OS 10.9+)
 # mkdir build-osx
 # cd build-osx
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa
-# If on Mac OS 10.12+ use this:
+# If on Mac OS 10.9+ use this:
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa --with-macosx-version-min=10.9 --disable-mediactrl
 # make
 
@@ -17,8 +17,8 @@
 OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
 osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-WX_RELEASE = $(call osx_ge,12,"3.1","3.0")
-WX_DIR = $(call osx_ge,12,"/HD/wxWidgets/wxWidgets-3.1.0","/HD/wxWidgets/wxWidgets-3.0.2")
+WX_RELEASE = $(call osx_ge,9,"3.1","3.0")
+WX_DIR = $(call osx_ge,9,"/HD/wxWidgets/wxWidgets-3.1.0","/HD/wxWidgets/wxWidgets-3.0.2")
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -84,6 +84,9 @@ CXXFLAGS = -arch x86_64 \
    -fno-strict-aliasing -fno-common
 
 CXXFLAGS += $(call osx_ge,11,"-Wno-potentially-evaluated-expression","")
+
+# some script functions need to call @autoreleasepool to avoid memory leaks
+AUTO_RELEASE = $(call osx_ge,9,"-x objective-c++ -DAUTORELEASE","")
 
 ifdef ENABLE_PERL
     CXXFLAGS += -DENABLE_PERL
@@ -307,13 +310,13 @@ $(OBJDIR)/wxrender.o: wxrender.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxlua.cpp
+	$(CXXC) $(CXXFLAGS) $(AUTO_RELEASE) -c -o $@ wxlua.cpp
 
 $(OBJDIR)/wxperl.o: wxperl.cpp
 	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
 
 $(OBJDIR)/wxpython.o: wxpython.cpp
-	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
+	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) $(AUTO_RELEASE) -c -o $@ wxpython.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
