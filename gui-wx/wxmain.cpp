@@ -1611,9 +1611,9 @@ void MainFrame::OnIdle(wxIdleEvent& event)
     // process any pending script/pattern files
     if (pendingfiles.GetCount() > 0) {
         size_t count = pendingfiles.GetCount();
-        if (count == 2 && pendingfiles[0] == pendingfiles[1]) {
-            // avoid opening same file twice (only seems to happen in wxMSW)
-            count = 1;
+        if (count >= 2 && pendingfiles[count-2] == pendingfiles[count-1]) {
+            // avoid opening same file twice (can happen in wxMSW and wxMac)
+            count--;
         }
         inidle = true;
         for (size_t n = 0; n < count; n++) {
