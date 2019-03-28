@@ -3262,7 +3262,7 @@ bool InitPython()
     if (!pyinited) {
         #ifdef USE_PYTHON_DYNAMIC
             // try to load Python library
-            if ( !LoadPythonLib() ) return false;
+            if (!LoadPythonLib()) return false;
         #endif
         
         // only initialize the Python interpreter once, mainly because multiple
@@ -3277,22 +3277,22 @@ bool InitPython()
         Py_InitModule((char*)"golly", py_methods);
         
         // catch Python messages sent to stderr and pass them to py_stderr
-        if ( PyRun_SimpleString(
-                                "import golly\n"
-                                "import sys\n"
-                                "class StderrCatcher:\n"
-                                "   def __init__(self):\n"
-                                "      self.data = ''\n"
-                                "   def write(self, stuff):\n"
-                                "      self.data += stuff\n"
-                                "      golly.stderr(self.data)\n"
-                                "sys.stderr = StderrCatcher()\n"
-                                
-                                // also create dummy sys.argv so scripts can import Tkinter
-                                "sys.argv = ['golly-app']\n"
-                                // works, but Golly's menus get permanently changed on Mac
-                                ) < 0
-            ) Warning(_("StderrCatcher code failed!"));
+        if (PyRun_SimpleString(
+                "import golly\n"
+                "import sys\n"
+                "class StderrCatcherForGolly:\n"
+                "   def __init__(self):\n"
+                "      self.data = ''\n"
+                "   def write(self, stuff):\n"
+                "      self.data += stuff\n"
+                "      golly.stderr(self.data)\n"
+                "sys.stderr = StderrCatcherForGolly()\n"
+                
+                // also create dummy sys.argv so scripts can import Tkinter
+                "sys.argv = ['golly-app']\n"
+                // works, but Golly's menus get permanently changed on Mac
+                ) < 0
+            ) Warning(_("StderrCatcherForGolly code failed!"));
         
         // build absolute path to Scripts/Python folder and add to Python's
         // import search list so scripts can import glife from anywhere
@@ -3311,14 +3311,14 @@ bool InitPython()
         // also insert script's current directory at start of sys.path
         // since that's what most Python interpreters do (thanks to Joel Snyder)
         command += wxT(" ; sys.path.insert(0,'')");
-        if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
+        if (PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0)
             Warning(_("Failed to append Scripts path!"));
         
         pyinited = true;
     } else {
         // Py_Initialize has already been successfully called;
         // Py_Finalize is not used to close stderr so reset it here
-        if ( PyRun_SimpleString("import sys ; sys.stderr.data = ''\n") < 0 )
+        if (PyRun_SimpleString("import sys ; sys.stderr = StderrCatcherForGolly()\n") < 0)
             Warning(_("PyRun_SimpleString failed!"));
     }
     
