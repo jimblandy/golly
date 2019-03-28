@@ -18,12 +18,13 @@
 <font size=+1><b>Installing Python</b></font>
 
 <p>
-Before you can run a .py script, Python needs to be installed on your system.
-Mac OS X users don't need to do anything because Python is already installed.
-Windows and Linux users can download a Python installer from
+Before you can run a .py script, Python 2.x needs to be installed on your system
+(Python 3.x is NOT supported).
+Mac OS X users don't need to do anything because Python 2.7 is already installed.
+Windows and Linux users can download a Python 2.7 installer from
 <a href="http://www.python.org/download/">www.python.org/download</a>.
-Note that a 32-bit version of Golly requires a 32-bit version of Python,
-and a 64-bit Golly requires a 64-bit Python.
+WARNING: The 32-bit version of Golly requires a 32-bit version of Python,
+and 64-bit Golly requires a 64-bit Python.
 
 <p>
 On Windows and Linux, the Python library is loaded at runtime (the first time
@@ -31,7 +32,7 @@ you try to run a script).  Golly initially attempts to load a particular
 version of the Python library: python27.dll on Windows or libpython2.7.so
 on Linux.  The numbers correspond to Python version 2.7.
 If that library can't be found then you'll be
-prompted to enter a different library name matching the version of Python
+prompted to enter a different library name matching the version of Python 2.x
 installed on your system.  A successfully loaded library is remembered
 (in your GollyPrefs file) so you won't get the prompt again unless you
 remove Python or install a new version.  If Python isn't installed then

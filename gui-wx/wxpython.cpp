@@ -266,8 +266,9 @@ static bool LoadPythonLib()
         wxString str = _("If Python isn't installed then you'll have to Cancel,");
         str +=         _("\notherwise change the version numbers to match the");
         str +=         _("\nversion installed on your system and try again.");
+        str +=         _("\nNote that Python 3.x is NOT supported.");
 #ifdef __WXMSW__
-        str +=      _("\n\nIf that fails, search your system for a python*.dll");
+        str +=      _("\n\nIf that fails, search your system for a python2*.dll");
         str +=      _("\nfile and enter the full path to that file.");
 #endif
         wxTextEntryDialog dialog( wxGetActiveWindow(), str,
