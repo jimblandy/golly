@@ -27,7 +27,7 @@
 #C  (1,0)c/4  |   10    | 44* (Stephen Silver, 2 Mar 1999)
 #C  (1,1)c/4  |    3    |  4* ("glider", Richard Guy, 1970)
 #C  (2,0)c/4  |    5    |  6* ("LWSS", John Conway, 1970)
-#C  (1,0)c/5  |   11    | 89  (Paul Tooke, 12 Mar 2001)
+#C  (1,0)c/5  |   11    | 89* (Paul Tooke, 12 Mar 2001)
 #C  (1,1)c/5  |   13    | 26  (Tim Coe, Dec 2015)
 #C  (2,0)c/5  |   10    | 31* (Stephen Silver, 2 Mar 1999)
 #C  (1,0)c/6  |  >11    |
@@ -74,7 +74,7 @@
 #C  (3,0)c/7  |  > 7    |
 #C
 #C Patterns and comments from Stephen Silver's 12 Jan 2004 'ships.zip'
-#C Updated on 5 Apr 2018.
+#C Updated on 8 Apr 2019.
 x = 376, y = 114, rule = B3/S23
 351bo17bo$26b3o34bo25b2ob2o24bo33b2o26b2o27bo28bo29bo3bo77b3o15b3o$b2o
 22bo36bobo23bo3bobo22b3o29b2ob2o22b2obo2bob2o22bobo26b3o27b3ob3o74b2ob
