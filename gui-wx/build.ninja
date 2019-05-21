@@ -22,16 +22,16 @@ gollydir =
 
 # uncomment the lines in the "sound section" below to enable Golly sound support
 # sound section START
-irrklangdir = /home/chris/irrKlang-64bit-1.6.0
-irrklang_cxxflags = -I$irrklangdir/include -DENABLE_SOUND
-irrklang_libdir = $irrklangdir/bin/linux-gcc-64/
-irrklang_libname = IrrKlang
-irrklang_fullname = lib$irrklang_libname.so
-irrklang_ldflags = -L$irrklang_libdir -Wl,-rpath='$$ORIGIN' -l$irrklang_libname
-rule installsound
-   command = cp $irrklang_libdir/$irrklang_fullname $out
-   description = COPY $irrklang_libname
-build $exedir/$irrklang_fullname: installsound
+#irrklangdir = /home/chris/irrKlang-64bit-1.6.0
+#irrklang_cxxflags = -I$irrklangdir/include -DENABLE_SOUND
+#irrklang_libdir = $irrklangdir/bin/linux-gcc-64/
+#irrklang_libname = IrrKlang
+#irrklang_fullname = lib$irrklang_libname.so
+#irrklang_ldflags = -L$irrklang_libdir -Wl,-rpath='$$ORIGIN' -l$irrklang_libname
+#rule installsound
+   #command = cp $irrklang_libdir/$irrklang_fullname $out
+   #description = COPY $irrklang_libname
+#build $exedir/$irrklang_fullname: installsound
 # sound section END
 
 # lua cflags
@@ -99,7 +99,7 @@ build $lua_lib: link_lua $luadir/lapi.o $luadir/lauxlib.o $luadir/lbaselib.o $
 # standard cxx flags
 cxxflags = -DVERSION=$app_version -DGOLLYDIR="$gollydir" $
    -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$basedir $
-   -g -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
+   -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
 extra_cxxflags =
 
 # additional cxx flags for wx

@@ -86,7 +86,7 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) \
 	/D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS \
 	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR) $(EXTRACXXFLAGS) \
-	/wd4459 /wd4458 /wd4457 /wd4456 /Qvec-report:1 /Qpar /Qpar-report:1
+	/wd4459 /wd4458 /wd4457 /wd4456
 
 OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
@@ -385,7 +385,7 @@ $(WXO): $(BASEH) $(WXH) icons\*.ico bitmaps\*.xpm
 
 $(LUAO):
 	cd "$(LUADIR)"
-	cl /MP8 /MT /O2 /c /nologo /Qvec-report:1 $(LUA_DEFS) *.c
+	cl /MP8 /MT /O2 /c /nologo $(LUA_DEFS) *.c
 	cd "$(MAKEDIR)"
 
 $(OBJDIR):
