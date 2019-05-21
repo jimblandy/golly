@@ -260,7 +260,7 @@ For example, B0124-k/S1c25 becomes B34k5678/S01-c34678 (even) and B367c/S4-k678 
 
 <p>
 For a MAP rule B0 is equivalent to the first bit being 1. Smax is equivalent to the 511th
-bit being 1. For B0 with Smax the rule is converted to NOT(REVERSE(bits)). For B0 with Smax
+bit being 1. For B0 with Smax the rule is converted to NOT(REVERSE(bits)). For B0 without Smax
 the even rule is NOT(bits) and the odd rule is REVERSE(bits).
 
 <p>
@@ -294,7 +294,7 @@ its left and right neighbors, where 1 is a live cell and 0 is a dead cell.
 Here are the state transitions for W30:
 <pre>
    111  110  101  100  011  010  001  000
-    |    |    |    |    |    |    |    | 
+    |    |    |    |    |    |    |    |
     0    0    0    1    1    1    1    0  = 30 (2^4 + 2^3 + 2^2 + 2^1)
 </pre>
 Note that odd-numbered rules have the same problem as B0 rules.  Golly
