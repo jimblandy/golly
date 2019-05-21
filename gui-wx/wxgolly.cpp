@@ -146,7 +146,7 @@ int wx_poll::checkevents()
 
 void wx_poll::updatePop()
 {
-    if (showstatus) {
+    if (showstatus && !mainptr->IsIconized()) {
         statusptr->Refresh(false);
     }
 }
@@ -230,14 +230,20 @@ void GollyApp::SetFrameIcon(wxFrame* frame)
 
 // -----------------------------------------------------------------------------
 
+static wxString initdir;    // set to current working directory when app starts
+
 #ifdef __WXMAC__
 
 // open file double-clicked or dropped onto Golly icon
 
-void GollyApp::MacOpenFile(const wxString& fullPath)
+void GollyApp::MacOpenFile(const wxString& path)
 {
     mainptr->Raise();
-    mainptr->pendingfiles.Add(fullPath);
+    wxFileName filename(path);
+    // convert given path to a full path if not one already
+    if (!filename.IsAbsolute()) filename = initdir + path;
+    mainptr->pendingfiles.Add(filename.GetFullPath());
+
     // next OnIdle will call OpenFile (if we call OpenFile here with a script
     // that opens a modal dialog then dialog can't be closed!)
 }
@@ -267,7 +273,7 @@ bool GollyApp::OnInit()
 #endif
     
     // get current working directory before calling SetAppDirectory
-    wxString initdir = wxFileName::GetCwd();
+    initdir = wxFileName::GetCwd();
     if (initdir.Last() != wxFILE_SEP_PATH) initdir += wxFILE_SEP_PATH;
     
     // make sure current working directory contains application otherwise

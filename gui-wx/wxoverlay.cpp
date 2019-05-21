@@ -7175,6 +7175,15 @@ const char *Overlay::DoUpdate()
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
+    #ifdef ENABLE_SOUND
+    // update sound engine (in case threading not supported)
+    if (engine) {
+        engine->update();
+    }
+    #endif
+    
+    if (mainptr->IsIconized()) return NULL;
+
     only_draw_overlay = true;
     viewptr->Refresh(false);
     viewptr->Update();
@@ -7185,13 +7194,6 @@ const char *Overlay::DoUpdate()
         insideYield = true;
         wxGetApp().Yield(true);
         insideYield = false;
-    #endif
-
-    #ifdef ENABLE_SOUND
-    // update sound engine (in case threading not supported)
-    if (engine) {
-        engine->update();
-    }
     #endif
 
     return NULL;

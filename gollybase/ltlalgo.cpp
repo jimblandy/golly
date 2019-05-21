@@ -359,15 +359,28 @@ int ltlalgo::getcell(int x, int y)
 
 int ltlalgo::nextcell(int x, int y, int& v)
 {
-    // check if x,y is outside grid
-    if (x < gleft || x > gright) return -1;
+    if (population == 0) return -1;
+
+    // check if y is outside grid
     if (y < gtop || y > gbottom) return -1;
+    
+    // check if x is outside right edge
+    if (x > gright) return -1;
+
+    // init distance
+    int d = 0;
+    
+    // if x is outside left edge then set it to gleft and increase d
+    // (this is necessary in case the user makes a selection outside
+    // gleft when the universe is unbounded)
+    if (x < gleft) {
+        d = gleft - x;
+        x = gleft;
+    }
     
     // get x,y cell in currgrid
     unsigned char* cellptr = currgrid + (y - gtop) * outerwd + (x - gleft);
     
-    // init distance
-    int d = 0;
     do {
         v = *cellptr;
         if (v > 0) return d;    // found a non-zero cell
@@ -2263,14 +2276,16 @@ const char *ltlalgo::setrule(const char *s)
     maxB = b2;
     ntype = n;
     topology = t;
+    
     if (shape)
-       free(shape) ;
+        free(shape) ;
     shape = (int *)calloc(sizeof(int), 2*r+1) ;
-    for (int i=0; i<2*r+1; i++)
-       shape[i] = tshape[i] ;
+    for (int i=0; i<2*r+1; i++) {
+        shape[i] = tshape[i] ;
+    }
     // set the grid_type so the GUI code can display circles or diamonds in icon mode
-// no circular grid, so adopt a square grid for now
-#define CIRC_GRID SQUARE_GRID
+    // (no circular grid, so adopt a square grid for now)
+    #define CIRC_GRID SQUARE_GRID
     grid_type = ntype == 'M' ? SQUARE_GRID : (ntype == 'N' ? VN_GRID : CIRC_GRID) ;
     
     if (suffix) {

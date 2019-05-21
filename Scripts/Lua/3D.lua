@@ -2227,7 +2227,7 @@ function ClearCells()
     -- remove paste pattern
     pastecount = 0
     pastepatt = {}
-    collectgarbage()    -- might help avoid long delay when script exits (only on Mac OS 10.13???)
+    collectgarbage()    -- good place to force a gc
 end
 
 --------------------------------------------------------------------------------

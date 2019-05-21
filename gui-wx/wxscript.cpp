@@ -64,7 +64,7 @@ const int maxcomments = 128 * 1024; // maximum comment size
 
 void DoAutoUpdate()
 {
-    if (autoupdate) {
+    if (autoupdate && !mainptr->IsIconized()) {
         inscript = false;
         mainptr->UpdatePatternAndStatus(true);  // call Update()
         if (showtitle) {
@@ -1339,6 +1339,8 @@ void GSF_dokey(const char* ascii)
 
 void GSF_update()
 {
+    if (mainptr->IsIconized()) return;
+
     // update viewport, status bar, and possibly other bars
     inscript = false;
     

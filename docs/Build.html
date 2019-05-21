@@ -44,7 +44,7 @@ and grab the appropriate source archive for your platform:
 <p>
 Golly should compile with wxWidgets 2.8.0 or later, but it's best to
 use the latest stable version (3.0.2 at time of writing).
-Mac users should definitely get 3.0 or later (3.1 or later if you have Mac OS 10.12+).
+Mac users should definitely get 3.1 or later if you have Mac OS 10.9+.
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
@@ -145,7 +145,7 @@ void wxOSXScrollBarCocoaImpl::mouseEvent(WX_NSEvent event, WXWidget slf, void *_
 </ol>
 
 <p>
-Now you're ready to build wxWidgets.  If you're using Mac OS 10.12 or later
+Now you're ready to build wxWidgets.  If you're using Mac OS 10.9 or later
 then start up Terminal and type these commands (using the correct path and version number):
 
 <pre>
@@ -158,20 +158,16 @@ then start up Terminal and type these commands (using the correct path and versi
 </pre>
 
 <p>
-If your Mac OS is older than 10.12 then these commands should work
+If your Mac OS is older than 10.9 then these commands should work
 (again, use the correct path and version number):
 
 <pre>
    cd /path/to/wxWidgets-3.0.2
    mkdir build-osx
    cd build-osx
-   ../configure --with-osx_cocoa --disable-shared --enable-unicode --with-macosx-version-min=10.9
+   ../configure --with-osx_cocoa --disable-shared --enable-unicode
    make
 </pre>
-
-<p>
-If your Mac OS is older than 10.9 then remove <tt>--with-macosx-version-min=10.9</tt> from
-the configure command.
 
 
 <a name="wxlin"></a>
@@ -210,9 +206,10 @@ to set the appropriate compile and link options for building Golly.
 <h2>How to install Python</h2>
 
 <p>
-Golly uses Python for scripting, so you'll need to make sure Python is installed.
-Mac OS X users don't have to do anything because Python is already installed.
-Windows and Linux users can download a Python installer from
+Golly uses Python 2.x for scripting, so you'll need to make sure a suitable
+version of Python is installed (note that Python 3.x is NOT supported).
+Mac OS X users don't have to do anything because Python 2.7 is already installed.
+Windows and Linux users can download a Python 2.7 installer from
 <a href="http://www.python.org/download">http://www.python.org/download</a>.
 
 
@@ -360,6 +357,7 @@ separate build directory and call the configure script from there:
 
 To clean up the build artifacts after installation, simply remove the build
 directory (e.g., with <code>rm -R golly-build</code>).
+
 
 <a name="sound"></a>
 <h2>How to install optional sound with irrKlang</h2>

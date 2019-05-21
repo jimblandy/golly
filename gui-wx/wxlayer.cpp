@@ -683,7 +683,7 @@ void ResizeLayerBar(int wd)
 
 void UpdateLayerBar()
 {
-    if (layerbarptr && showlayer) {
+    if (layerbarptr && showlayer && !mainptr->IsIconized()) {
         bool active = !viewptr->waitingforclick;
         
         layerbarptr->EnableButton(ADD_LAYER,         active && !inscript && numlayers < MAX_LAYERS);
@@ -713,11 +713,13 @@ void UpdateLayerButton(int index, const wxString& name)
 
 void RedrawLayerBar()
 {
-    layerbarptr->Refresh(false);
-    #ifdef __WXGTK__
-        // avoid bug that can cause buttons to lose their bitmaps
-        layerbarptr->Update();
-    #endif
+    if (layerbarptr && showlayer && !mainptr->IsIconized()) {
+        layerbarptr->Refresh(false);
+        #ifdef __WXGTK__
+            // avoid bug that can cause buttons to lose their bitmaps
+            layerbarptr->Update();
+        #endif
+    }
 }
 
 // -----------------------------------------------------------------------------

@@ -1,0 +1,13 @@
+#N one-cell-thick-quadratic-growth-2596x1.rle
+#O Chris Cain, October 2015
+#C quadratic growth in 2596x1
+#C http://conwaylife.com/forums/viewtopic.php?p=51585#p51585
+#C See also the previous 7242x1 quadratic-growth pattern:
+#C http://conwaylife.com/forums/viewtopic.php?p=14226#p14226
+x = 2596, y = 1, rule = B3/S23
+6ob4o2b4o30b4ob9ob3ob3o112b4o3b12o3b3o139b3ob5ob4o5b5o71b3o2b5ob5o11b
+4o6b7ob4o134b3o3b8o5b3ob4o19b5o2b3ob5ob7o58b4ob5ob3ob3o2b6o11b4o2b4ob
+6ob3o61b3ob3o4b3ob7o181b4o4b3o3b9o19b3ob3o3b7o3b3o57b5ob5o2b3o112b3ob
+4o2b3ob3ob9o62b4o4b4ob7o48b7o6b9o13b13ob3o2b4o90b3o6b5ob4ob6o3b6ob5o5b
+5o53b11ob3o5b5o47b3ob3ob9ob4o277b3o3b8o5b3ob4o19b5o2b3ob5ob7o319b4o2b
+4ob6ob3o61b3ob3o4b3ob7o!

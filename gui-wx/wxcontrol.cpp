@@ -523,6 +523,8 @@ void MainFrame::DisplayPattern()
     // exist it only updates the current tile if possible; ie. it's not a clone
     // and tile views aren't synchronized
     
+    if (IsIconized()) return;
+    
     if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
         // only update the current tile
         viewptr->Refresh(false);
@@ -1133,7 +1135,7 @@ void MainFrame::ToggleShowPopulation()
 {
     showpopulation = !showpopulation;
     
-    if (generating && showstatus) statusptr->Refresh(false);
+    if (generating && showstatus && !IsIconized()) statusptr->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------

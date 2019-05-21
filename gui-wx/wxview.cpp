@@ -97,7 +97,7 @@ static void RefreshView()
 {
     // refresh main viewport window, including all tile windows if they exist
     // (tile windows are children of bigview)
-    bigview->Refresh(false);
+    if (!mainptr->IsIconized()) bigview->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -1334,6 +1334,8 @@ bool PatternView::PointInView(int x, int y)
 void PatternView::CheckCursor(bool active)
 {
     if (!active) return;    // main window is not active so don't change cursor
+    
+    if (mainptr->IsIconized()) return;
     
     // make sure cursor is up to date
     wxPoint pt = ScreenToClient( wxGetMousePosition() );

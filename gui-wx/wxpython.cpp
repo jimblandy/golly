@@ -266,8 +266,9 @@ static bool LoadPythonLib()
         wxString str = _("If Python isn't installed then you'll have to Cancel,");
         str +=         _("\notherwise change the version numbers to match the");
         str +=         _("\nversion installed on your system and try again.");
+        str +=         _("\nNote that Python 3.x is NOT supported.");
 #ifdef __WXMSW__
-        str +=      _("\n\nIf that fails, search your system for a python*.dll");
+        str +=      _("\n\nIf that fails, search your system for a python2*.dll");
         str +=      _("\nfile and enter the full path to that file.");
 #endif
         wxTextEntryDialog dialog( wxGetActiveWindow(), str,
@@ -331,6 +332,16 @@ static bool LoadPythonLib()
 
 // use UTF8 for the encoding conversion from Python string to wxString
 #define PY_ENC wxConvUTF8
+
+#ifdef AUTORELEASE
+    // these macros are used to avoid memory leaks on recent Mac OS versions
+    // (probably 10.9+) if a script command calls Refresh
+    #define BEGIN_AUTORELEASE @autoreleasepool {
+    #define END_AUTORELEASE }
+#else
+    #define BEGIN_AUTORELEASE
+    #define END_AUTORELEASE
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -464,10 +475,16 @@ static PyObject* py_open(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* filename;
     int remember = 0;
+    const char* err;
     
     if (!PyArg_ParseTuple(args, (char*)"s|i", &filename, &remember)) return NULL;
     
-    const char* err = GSF_open(wxString(filename,PY_ENC), remember);
+    BEGIN_AUTORELEASE
+    
+    err = GSF_open(wxString(filename,PY_ENC), remember);
+    
+    END_AUTORELEASE
+
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -703,10 +720,16 @@ static PyObject* py_setdir(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* dirname;
     const char* newdir;
+    const char* err;
     
     if (!PyArg_ParseTuple(args, (char*)"ss", &dirname, &newdir)) return NULL;
     
-    const char* err = GSF_setdir(dirname, wxString(newdir,PY_ENC));
+    BEGIN_AUTORELEASE
+    
+    err = GSF_setdir(dirname, wxString(newdir,PY_ENC));
+    
+    END_AUTORELEASE
+
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -738,8 +761,12 @@ static PyObject* py_new(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &title)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     mainptr->NewPattern(wxString(title,PY_ENC));
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -754,8 +781,12 @@ static PyObject* py_cut(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         viewptr->CutSelection();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("cut error: no selection.");
     }
@@ -773,8 +804,12 @@ static PyObject* py_copy(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         viewptr->CopySelection();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("copy error: no selection.");
     }
@@ -793,11 +828,15 @@ static PyObject* py_clear(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"i", &where)) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         if (where == 0)
             viewptr->ClearSelection();
         else
             viewptr->ClearOutsideSelection();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("clear error: no selection.");
     }
@@ -813,10 +852,16 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int x, y;
     const char* mode;
+    const char* err;
     
     if (!PyArg_ParseTuple(args, (char*)"iis", &x, &y, &mode)) return NULL;
     
-    const char* err = GSF_paste(x, y, mode);
+    BEGIN_AUTORELEASE
+    
+    err = GSF_paste(x, y, mode);
+    
+    END_AUTORELEASE
+
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -833,9 +878,13 @@ static PyObject* py_shrink(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"|i", &remove_if_empty)) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         currlayer->currsel.Shrink(false, remove_if_empty != 0);
                                // false == don't fit in viewport
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("shrink error: no selection.");
     }
@@ -858,11 +907,15 @@ static PyObject* py_randfill(PyObject* self, PyObject* args)
     }
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         int oldperc = randomfill;
         randomfill = perc;
         viewptr->RandomFill();
         randomfill = oldperc;
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("randfill error: no selection.");
     }
@@ -881,8 +934,12 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"i", &direction)) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("flip error: no selection.");
     }
@@ -901,8 +958,12 @@ static PyObject* py_rotate(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"i", &direction)) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         viewptr->RotateSelection(direction == 0);    // 0 = clockwise
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("rotate error: no selection.");
     }
@@ -1311,9 +1372,13 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
     }
     
     if (pattchanged) {
+        BEGIN_AUTORELEASE
+        
         curralgo->endofpattern();
         MarkLayerDirty();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     if (err) PYTHON_ERROR(err);
@@ -1569,6 +1634,8 @@ static PyObject* py_select(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &rect_list)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     int numitems = PyList_Size(rect_list);
     if (numitems == 0) {
         // remove any existing selection
@@ -1587,6 +1654,8 @@ static PyObject* py_select(PyObject* self, PyObject* args)
     }
     
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -1654,10 +1723,16 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     int x, y, state;
+    const char* err;
     
     if (!PyArg_ParseTuple(args, (char*)"iii", &x, &y, &state)) return NULL;
     
-    const char* err = GSF_setcell(x, y, state);
+    BEGIN_AUTORELEASE
+    
+    err = GSF_setcell(x, y, state);
+    
+    END_AUTORELEASE
+    
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -1693,9 +1768,13 @@ static PyObject* py_setcursor(PyObject* self, PyObject* args)
     const char* oldcursor = CursorToString(currlayer->curs);
     wxCursor* cursptr = StringToCursor(newcursor);
     if (cursptr) {
+        BEGIN_AUTORELEASE
+        
         viewptr->SetCursorMode(cursptr);
         // see the cursor change, including button in edit bar
         mainptr->UpdateUserInterface();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("setcursor error: unknown cursor string.");
     }
@@ -1739,6 +1818,8 @@ static PyObject* py_run(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"i", &ngens)) return NULL;
     
     if (ngens > 0 && !currlayer->algo->isEmpty()) {
+        BEGIN_AUTORELEASE
+        
         if (ngens > 1) {
             bigint saveinc = currlayer->algo->getIncrement();
             currlayer->algo->setIncrement(ngens);
@@ -1748,6 +1829,8 @@ static PyObject* py_run(PyObject* self, PyObject* args)
             mainptr->NextGeneration(false);           // step 1 gen
         }
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     RETURN_NONE;
@@ -1763,8 +1846,12 @@ static PyObject* py_step(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (!currlayer->algo->isEmpty()) {
+        BEGIN_AUTORELEASE
+        
         mainptr->NextGeneration(true);      // step by current increment
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     RETURN_NONE;
@@ -1780,8 +1867,12 @@ static PyObject* py_setstep(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"i", &exp)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     mainptr->SetStepExponent(exp);
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -1811,8 +1902,13 @@ static PyObject* py_setbase(PyObject* self, PyObject* args)
     if (base < 2) base = 2;
     if (base > MAX_BASESTEP) base = MAX_BASESTEP;
     currlayer->currbase = base;
+    
+    BEGIN_AUTORELEASE
+    
     mainptr->SetGenIncrement();
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -1841,6 +1937,8 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
     
     if (ngens > 0) {
         if (viewptr->SelectionExists()) {
+            BEGIN_AUTORELEASE
+            
             while (ngens > 0) {
                 ngens--;
                 if (where == 0)
@@ -1849,6 +1947,8 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
                     currlayer->currsel.AdvanceOutside();
             }
             DoAutoUpdate();
+            
+            END_AUTORELEASE
         } else {
             PYTHON_ERROR("advance error: no selection.");
         }
@@ -1867,8 +1967,12 @@ static PyObject* py_reset(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
+        BEGIN_AUTORELEASE
+        
         mainptr->ResetPattern();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     RETURN_NONE;
@@ -1881,10 +1985,16 @@ static PyObject* py_setgen(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     const char* genstring = NULL;
+    const char* err;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &genstring)) return NULL;
     
-    const char* err = GSF_setgen(genstring);
+    BEGIN_AUTORELEASE
+    
+    err = GSF_setgen(genstring);
+    
+    END_AUTORELEASE
+
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -1926,8 +2036,12 @@ static PyObject* py_setalgo(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &algostring)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     const char* err = GSF_setalgo(algostring);
     if (err) PYTHON_ERROR(err);
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -1961,8 +2075,12 @@ static PyObject* py_setrule(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &rulestring)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     const char* err = GSF_setrule(rulestring);
     if (err) PYTHON_ERROR(err);
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2038,8 +2156,12 @@ static PyObject* py_setpos(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"ss", &x, &y)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     const char* err = GSF_setpos(x, y);
     if (err) PYTHON_ERROR(err);
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2074,8 +2196,12 @@ static PyObject* py_setmag(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"i", &mag)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     viewptr->SetMag(mag);
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2101,8 +2227,12 @@ static PyObject* py_fit(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     viewptr->FitPattern();
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2117,8 +2247,12 @@ static PyObject* py_fitsel(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (viewptr->SelectionExists()) {
+        BEGIN_AUTORELEASE
+        
         viewptr->FitSelection();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     } else {
         PYTHON_ERROR("fitsel error: no selection.");
     }
@@ -2175,9 +2309,13 @@ static PyObject* py_setview(PyObject* self, PyObject* args)
     if (currwd < 0) currwd = 0;
     if (currht < 0) currht = 0;
     
+    BEGIN_AUTORELEASE
+    
     int mainwd, mainht;
     mainptr->GetSize(&mainwd, &mainht);
     mainptr->SetSize(mainwd + (wd - currwd), mainht + (ht - currht));
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2212,7 +2350,11 @@ static PyObject* py_update(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     GSF_update();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2244,8 +2386,12 @@ static PyObject* py_addlayer(PyObject* self, PyObject* args)
     if (numlayers >= MAX_LAYERS) {
         PYTHON_ERROR("addlayer error: no more layers can be added.");
     } else {
+        BEGIN_AUTORELEASE
+        
         AddLayer();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     // return index of new layer
@@ -2264,8 +2410,12 @@ static PyObject* py_clone(PyObject* self, PyObject* args)
     if (numlayers >= MAX_LAYERS) {
         PYTHON_ERROR("clone error: no more layers can be added.");
     } else {
+        BEGIN_AUTORELEASE
+        
         CloneLayer();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     // return index of new layer
@@ -2284,8 +2434,12 @@ static PyObject* py_duplicate(PyObject* self, PyObject* args)
     if (numlayers >= MAX_LAYERS) {
         PYTHON_ERROR("duplicate error: no more layers can be added.");
     } else {
+        BEGIN_AUTORELEASE
+        
         DuplicateLayer();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     // return index of new layer
@@ -2304,8 +2458,12 @@ static PyObject* py_dellayer(PyObject* self, PyObject* args)
     if (numlayers <= 1) {
         PYTHON_ERROR("dellayer error: there is only one layer.");
     } else {
+        BEGIN_AUTORELEASE
+        
         DeleteLayer();
         DoAutoUpdate();
+        
+        END_AUTORELEASE
     }
     
     RETURN_NONE;
@@ -2332,8 +2490,12 @@ static PyObject* py_movelayer(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
+    BEGIN_AUTORELEASE
+    
     MoveLayer(fromindex, toindex);
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2354,8 +2516,12 @@ static PyObject* py_setlayer(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
+    BEGIN_AUTORELEASE
+    
     SetLayer(index);
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2413,7 +2579,11 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
+    BEGIN_AUTORELEASE
+    
     GSF_setname(wxString(name,PY_ENC), index);
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2446,6 +2616,8 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
     PyObject* color_list;
     
     if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &color_list)) return NULL;
+    
+    BEGIN_AUTORELEASE
     
     int len = PyList_Size(color_list);
     if (len == 0) {
@@ -2500,6 +2672,8 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
     }
     
     DoAutoUpdate();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2559,9 +2733,13 @@ static PyObject* py_setoption(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"si", &optname, &newval)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     if (!GSF_setoption(optname, newval, &oldval)) {
         PYTHON_ERROR("setoption error: unknown option.");
     }
+    
+    END_AUTORELEASE
     
     // return old value (simplifies saving and restoring settings)
     return Py_BuildValue((char*)"i", oldval);
@@ -2599,9 +2777,13 @@ static PyObject* py_setcolor(PyObject* self, PyObject* args)
     wxColor newcol(r, g, b);
     wxColor oldcol;
     
+    BEGIN_AUTORELEASE
+    
     if (!GSF_setcolor(colname, newcol, oldcol)) {
         PYTHON_ERROR("setcolor error: unknown color.");
     }
+    
+    END_AUTORELEASE
     
     // return old r,g,b values (simplifies saving and restoring colors)
     PyObject* rgbtuple = PyTuple_New(3);
@@ -2701,7 +2883,12 @@ static PyObject* py_getxy(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
+    
+    END_AUTORELEASE
+    
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
     return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(PY_ENC));
@@ -2733,10 +2920,14 @@ static PyObject* py_doevent(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     if (event[0]) {
         const char* err = GSF_doevent(wxString(event,PY_ENC));
         if (err) PYTHON_ERROR(err);
     }
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2767,7 +2958,11 @@ static PyObject* py_dokey(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &ascii)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     GSF_dokey(ascii);
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2782,11 +2977,15 @@ static PyObject* py_show(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     inscript = false;
     statusptr->DisplayMessage(wxString(s,PY_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -2801,11 +3000,15 @@ static PyObject* py_error(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
+    BEGIN_AUTORELEASE
+    
     inscript = false;
     statusptr->ErrorMessage(wxString(s,PY_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
+    
+    END_AUTORELEASE
     
     RETURN_NONE;
 }
@@ -3060,7 +3263,7 @@ bool InitPython()
     if (!pyinited) {
         #ifdef USE_PYTHON_DYNAMIC
             // try to load Python library
-            if ( !LoadPythonLib() ) return false;
+            if (!LoadPythonLib()) return false;
         #endif
         
         // only initialize the Python interpreter once, mainly because multiple
@@ -3075,22 +3278,22 @@ bool InitPython()
         Py_InitModule((char*)"golly", py_methods);
         
         // catch Python messages sent to stderr and pass them to py_stderr
-        if ( PyRun_SimpleString(
-                                "import golly\n"
-                                "import sys\n"
-                                "class StderrCatcher:\n"
-                                "   def __init__(self):\n"
-                                "      self.data = ''\n"
-                                "   def write(self, stuff):\n"
-                                "      self.data += stuff\n"
-                                "      golly.stderr(self.data)\n"
-                                "sys.stderr = StderrCatcher()\n"
-                                
-                                // also create dummy sys.argv so scripts can import Tkinter
-                                "sys.argv = ['golly-app']\n"
-                                // works, but Golly's menus get permanently changed on Mac
-                                ) < 0
-            ) Warning(_("StderrCatcher code failed!"));
+        if (PyRun_SimpleString(
+                "import golly\n"
+                "import sys\n"
+                "class StderrCatcherForGolly:\n"
+                "   def __init__(self):\n"
+                "      self.data = ''\n"
+                "   def write(self, stuff):\n"
+                "      self.data += stuff\n"
+                "      golly.stderr(self.data)\n"
+                "sys.stderr = StderrCatcherForGolly()\n"
+                
+                // also create dummy sys.argv so scripts can import Tkinter
+                "sys.argv = ['golly-app']\n"
+                // works, but Golly's menus get permanently changed on Mac
+                ) < 0
+            ) Warning(_("StderrCatcherForGolly code failed!"));
         
         // build absolute path to Scripts/Python folder and add to Python's
         // import search list so scripts can import glife from anywhere
@@ -3109,14 +3312,14 @@ bool InitPython()
         // also insert script's current directory at start of sys.path
         // since that's what most Python interpreters do (thanks to Joel Snyder)
         command += wxT(" ; sys.path.insert(0,'')");
-        if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
+        if (PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0)
             Warning(_("Failed to append Scripts path!"));
         
         pyinited = true;
     } else {
         // Py_Initialize has already been successfully called;
         // Py_Finalize is not used to close stderr so reset it here
-        if ( PyRun_SimpleString("import sys ; sys.stderr.data = ''\n") < 0 )
+        if (PyRun_SimpleString("import sys ; sys.stderr = StderrCatcherForGolly()\n") < 0)
             Warning(_("PyRun_SimpleString failed!"));
     }
     

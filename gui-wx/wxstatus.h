@@ -38,11 +38,10 @@ public:
     int GetCurrentDelay();
     // return current delay (in millisecs)
     
-    wxFont* GetStatusFont() { return statusfont; }
+    wxFont* GetStatusFont() { return &statusfont; }
     int GetTextAscent() { return textascent; }
     
-    int statusht;
-    // status bar height (0 if not visible, else STATUS_HT or STATUS_EXHT)
+    int statusht;   // status bar height (0 if not visible, else STATUS_HT or STATUS_EXHT)
     
 private:
     // any class wishing to process wxWidgets events must use this macro
@@ -61,23 +60,23 @@ private:
     void DisplayText(wxDC& dc, const wxString& s, wxCoord x, wxCoord y);
     void DrawStatusBar(wxDC& dc, wxRect& updaterect);
     
-    wxBitmap* statbitmap;         // status bar bitmap
-    int statbitmapwd;             // width of status bar bitmap
-    int statbitmapht;             // height of status bar bitmap
+    wxBitmap* statbitmap;       // status bar bitmap
+    int statbitmapwd;           // width of status bar bitmap
+    int statbitmapht;           // height of status bar bitmap
     
-    int h_gen;                    // horizontal position of "Generation"
-    int h_pop;                    // horizontal position of "Population"
-    int h_scale;                  // horizontal position of "Scale"
-    int h_step;                   // horizontal position of "Step"
-    int h_xy;                     // horizontal position of "XY"
-    int textascent;               // vertical adjustment used in DrawText calls
-    wxString statusmsg;           // for messages on bottom line
-    bigint currx, curry;          // cursor location in cell coords
-    bool showxy;                  // show cursor's XY location?
-    wxFont* statusfont;           // status bar font
+    int h_gen;                  // horizontal position of "Generation"
+    int h_pop;                  // horizontal position of "Population"
+    int h_scale;                // horizontal position of "Scale"
+    int h_step;                 // horizontal position of "Step"
+    int h_xy;                   // horizontal position of "XY"
+    int textascent;             // vertical adjustment used in DrawText calls
+    wxString statusmsg;         // for messages on bottom line
+    bigint currx, curry;        // cursor location in cell coords
+    bool showxy;                // show cursor's XY location?
+    wxFont statusfont;          // status bar font
 };
 
-extern const int STATUS_HT;      // normal status bar height
-extern const int STATUS_EXHT;    // height when showing exact numbers
+extern const int STATUS_HT;     // normal status bar height
+extern const int STATUS_EXHT;   // height when showing exact numbers
 
 #endif
