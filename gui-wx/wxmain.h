@@ -136,8 +136,7 @@ public:
     void OnTreeClick(wxMouseEvent& event);
     void EditFile(const wxString& filepath);
     void QuitApp();
-    
-    wxTimer* gentimer;          // timer for generating patterns
+
     bool generating;            // currently generating a pattern?
     bool fullscreen;            // in full screen mode?
     bool showbanner;            // showing banner message?
@@ -146,6 +145,9 @@ public:
     bool draw_pending;          // user wants to draw while generating?
     wxCommandEvent cmdevent;    // the pending command
     wxMouseEvent mouseevent;    // the pending draw
+    
+    wxTimer* gentimer;          // timer for generating patterns
+    wxTimer* opentimer;         // timer for calling OpenFile from OnIdle
     
     // temporary files
     wxString clipfile;          // name of temporary file for storing clipboard data
@@ -176,6 +178,7 @@ private:
     void OnDirTreeSelection(wxTreeEvent& event);
     void OnSashDblClick(wxSplitterEvent& event);
     void OnGenTimer(wxTimerEvent& event);
+    void OnOpenTimer(wxTimerEvent& event);
     void OnClose(wxCloseEvent& event);
     void OnScroll(wxScrollEvent& event);
     
@@ -387,6 +390,7 @@ enum {
     // these ids aren't associated with any menu item
     ID_LOAD_LEXICON,    // for loading a lexicon pattern
     ID_HELP_BUTT,       // for help button in tool bar
+    ID_OPENTIMER,       // for opentimer
     ID_GENTIMER         // for gentimer
 };
 

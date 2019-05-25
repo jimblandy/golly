@@ -51,8 +51,8 @@
     static wxString editpath = wxEmptyString;   // OnIdle calls EditFile if this isn't empty
 #endif
 
-static bool call_close = false;           // OnIdle needs to call Close?
-static bool edit_file = false;            // edit the clicked file?
+static bool call_close = false;     // OnIdle needs to call Close?
+static bool edit_file = false;      // edit the clicked file?
 
 // -----------------------------------------------------------------------------
 
@@ -1310,6 +1310,7 @@ EVT_SIZE                (               MainFrame::OnSize)
 EVT_TREE_SEL_CHANGED    (wxID_TREECTRL, MainFrame::OnDirTreeSelection)
 EVT_SPLITTER_DCLICK     (wxID_ANY,      MainFrame::OnSashDblClick)
 EVT_TIMER               (ID_GENTIMER,   MainFrame::OnGenTimer)
+EVT_TIMER               (ID_OPENTIMER,  MainFrame::OnOpenTimer)
 EVT_CLOSE               (               MainFrame::OnClose)
 EVT_COMMAND_SCROLL      (wxID_ANY,      MainFrame::OnScroll)
 END_EVENT_TABLE()
@@ -1581,15 +1582,49 @@ void MainFrame::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
-// avoid recursive call of OpenFile in OnIdle;
-// this can happen if user clicks a script which then opens some sort of dialog
-// (idle events are sent to the main window while the dialog is open)
-static bool inidle = false;
+// avoid recursive call of OpenFile
+static bool inopen = false;
+
+void MainFrame::OnOpenTimer(wxTimerEvent& WXUNUSED(event))
+{
+    if (inopen) {
+        if (inscript && pass_file_events && pendingfiles.GetCount() > 0) {
+            // OpenFile has called RunScript so pass a pending file
+            // to the script after updating pendingfiles
+            wxString filepath = pendingfiles[0];
+            if (pendingfiles.GetCount() == 1) {
+                pendingfiles.Clear();
+            } else {
+                pendingfiles.RemoveAt(0);
+            }
+            PassFileToScript(filepath);
+        }
+        return;
+    }
+    if (pendingfiles.GetCount() > 0) {
+        size_t count = pendingfiles.GetCount();
+        if (count >= 2 && pendingfiles[count-2] == pendingfiles[count-1]) {
+            // avoid opening same file twice (can happen in wxMSW and wxMac)
+            pendingfiles.RemoveAt(count-1);
+        }
+        wxString filepath = pendingfiles[0];
+        // update pendingfiles before calling OpenFile
+        if (pendingfiles.GetCount() == 1) {
+            pendingfiles.Clear();
+        } else {
+            pendingfiles.RemoveAt(0);
+        }
+        // note that OnIdle will be called from OpenFile if it calls RunScript
+        inopen = true;
+        OpenFile(filepath);
+        inopen = false;
+    }
+}
+
+// -----------------------------------------------------------------------------
 
 void MainFrame::OnIdle(wxIdleEvent& event)
 {
-    if (inidle) return;
-    
 #ifdef __WXMSW__
     if (set_focus) {
         set_focus = false;
@@ -1608,24 +1643,18 @@ void MainFrame::OnIdle(wxIdleEvent& event)
     if (infront && viewptr) viewptr->SetFocus();
 #endif
     
-    // process any pending script/pattern files
-    if (pendingfiles.GetCount() > 0) {
-        size_t count = pendingfiles.GetCount();
-        if (count >= 2 && pendingfiles[count-2] == pendingfiles[count-1]) {
-            // avoid opening same file twice (can happen in wxMSW and wxMac)
-            count--;
-        }
-        inidle = true;
-        for (size_t n = 0; n < count; n++) {
-            OpenFile(pendingfiles[n]);
-        }
-        inidle = false;
-        pendingfiles.Clear();
-    }
-    
     if (call_close) {
         call_close = false;
         Close(false);        // false allows OnClose handler to veto close
+    } else {
+        // process any pending script/pattern files
+        if (pendingfiles.GetCount() > 0) {
+            // there are problems with calling OpenFile in OnIdle, at least on Mac OS
+            // (if it runs an interactive script then scroll bars don't immediately
+            // update the viewport, and in some cases modal dialogs can't be closed),
+            // so we call OpenFile from OnOpenTimer after a short delay
+            opentimer->Start(10, wxTIMER_ONE_SHOT);
+        }
     }
     
     event.Skip();
@@ -1765,8 +1794,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
                 }
                 Stop();
             } else {
-                // load pattern or run script
-                // OpenFile(filepath);
+                // load pattern or run script;
                 // call OpenFile in later OnIdle -- this prevents the main window
                 // moving in front of the help window if a script calls help(...)
                 pendingfiles.Add(filepath);
@@ -2012,7 +2040,8 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
     
     size_t numfiles = filenames.GetCount();
     for ( size_t n = 0; n < numfiles; n++ ) {
-        mainptr->OpenFile(filenames[n]);
+        // safer to call OpenFile via OnIdle
+        mainptr->pendingfiles.Add(filenames[n]);
     }
     
     return true;
@@ -2531,6 +2560,9 @@ MainFrame::MainFrame()
     // create timer for generating patterns (see OnGenTimer in wxcontrol.cpp)
     gentimer = new wxTimer(this, ID_GENTIMER);
     
+    // create timer for calling OpenFile via OnIdle
+    opentimer = new wxTimer(this, ID_OPENTIMER);
+    
     // create a scriptable graphics layer
     curroverlay = new Overlay();
     
@@ -2636,5 +2668,6 @@ MainFrame::~MainFrame()
     delete vbar;
     delete curroverlay;
     delete gentimer;
+    delete opentimer;
     DestroyDrawingData();
 }

@@ -1073,7 +1073,7 @@ void GSF_getevent(wxString& event, int get)
     if (get) {
         pass_key_events = true;     // future keyboard events will call PassKeyToScript
         pass_mouse_events = true;   // future mouse events will call PassClickToScript
-        pass_file_events = true;    // future open file evenst will call PassFileToScript
+        pass_file_events = true;    // future open file events will call PassFileToScript
         
         // rle3path is non-empty if Golly has just seen a .rle3 file and started up 3D.lua
         if (rle3path[0]) {
