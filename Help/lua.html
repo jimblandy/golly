@@ -728,7 +728,8 @@ Return the current step exponent.
 
 <a name="setbase"></a><p><dt><b>setbase(<i>base</i>)</b></dt>
 <dd>
-Temporarily set the current base step to an integer from 2 to 10000.
+Temporarily set the current base step to an integer from 2 to 2,000,000,000.
+The current exponent may be reduced if necessary.
 Golly will restore the default base step
 (set in <a href="prefs:control">Preferences > Control</a>) upon creating
 a new pattern, loading a pattern file, or switching to a different algorithm.

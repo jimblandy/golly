@@ -389,10 +389,32 @@ void MainFrame::SetGenIncrement()
 {
     if (currlayer->currexpo > 0) {
         bigint inc = 1;
+        int maxexpo = 1 ;
+        if (currlayer->currbase <= 10000) {
+           int mantissa = currlayer->currbase ;
+           int himantissa = 0x7fffffff ;
+           while (mantissa > 1 && 0 == (mantissa & 1))
+              mantissa >>= 1 ;
+           if (mantissa == 1) {
+              maxexpo = 0x7fffffff ;
+           } else {
+              int p = mantissa ;
+              while (p <= himantissa / mantissa) {
+                 p *= mantissa ;
+                 maxexpo++ ;
+              }
+           }
+        }
+        if (currlayer->currexpo > maxexpo)
+           currlayer->currexpo = maxexpo ;
         // set increment to currbase^currexpo
         int i = currlayer->currexpo;
         while (i > 0) {
-            inc.mul_smallint(currlayer->currbase);
+            if (currlayer->currbase > 10000) {
+               inc = currlayer->currbase ;
+            } else {
+               inc.mul_smallint(currlayer->currbase);
+            }
             i--;
         }
         currlayer->algo->setIncrement(inc);
