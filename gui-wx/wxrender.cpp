@@ -1645,27 +1645,23 @@ void DrawOverlay()
 
 // -----------------------------------------------------------------------------
 
-static bool firstview = true;
-
 void DrawView(int tileindex)
 {
+    if (curroverlay->OnlyDrawOverlay()) {
+        DrawOverlay();
+        return;
+    }
+
     wxRect r;
     Layer* savelayer = NULL;
     viewport* saveview0 = NULL;
     int colorindex;
     int currmag = currlayer->view->getmag();
 
-    if (firstview) {
-        firstview = false;
+    if (viewptr->GridVisible()) {
         // draw a tiny pixmap before calling DrawGridLines to avoid crash in NVIDIA driver
-        // (this probably only happens on Windows but safer to do it on all platforms)
         unsigned char data[] = "RGBARGBARGBARGBA";
         DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
-    }
-
-    if (curroverlay->OnlyDrawOverlay()) {
-        DrawOverlay();
-        return;
     }
 
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
