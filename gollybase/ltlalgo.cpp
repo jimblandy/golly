@@ -2199,7 +2199,7 @@ const char *ltlalgo::setrule(const char *s)
     if (r < 1) return "R value is too small";
     int r2 = r*r+r ;
     if (r > MAXRANGE) return "R value is too big";
-    if (c < 0 || c > 255) return "C value must be from 0 to 255";
+    if (c < 0 || c > 256) return "C value must be from 0 to 256";
     if (m < 0 || m > 1) return "M value must be 0 or 1";
     if (s1 > s2) return "S minimum must be <= S maximum";
     if (b1 > b2) return "B minimum must be <= B maximum";
@@ -2266,9 +2266,9 @@ const char *ltlalgo::setrule(const char *s)
     // the given rule is valid
     int oldrange = range;
     char oldtype = ntype;
+    int scount = c;
     range = r;
     rangec = r2;
-    scount = c;
     totalistic = m;
     minS = s1;
     maxS = s2;

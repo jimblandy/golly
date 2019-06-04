@@ -77,7 +77,6 @@ private:
     // rule parameters (set by setrule)
     int range;                          // neighborhood radius
     int rangec;                         // squared radius of circle
-    int scount;                         // count of states (0..255; values > 2 activate history)
     int totalistic;                     // include middle cell in neighborhood count? (1 or 0)
     int minS, maxS;                     // limits for survival
     int minB, maxB;                     // limits for birth
