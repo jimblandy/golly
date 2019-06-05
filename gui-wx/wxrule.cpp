@@ -186,6 +186,20 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
             }
         }
         
+    } else if ( url.StartsWith(wxT("edit:")) ) {
+        // open clicked file in user's preferred text editor
+        wxString path = url.AfterFirst(':');
+#ifdef __WXMSW__
+        path.Replace(wxT("/"), wxT("\\"));
+#endif
+        wxFileName fname(path);
+        if (!fname.IsAbsolute()) path = gollydir + path;
+        mainptr->EditFile(path);
+        
+    } else if ( url.StartsWith(wxT("prefs:")) ) {
+        // user clicked on link to Preferences dialog
+        mainptr->ShowPrefsDialog( url.AfterFirst(':') );
+        
     } else {
         // assume it's a link to a local target or another help file
         DisplayFile(url);
