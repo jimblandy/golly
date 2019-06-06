@@ -3025,6 +3025,9 @@ static PyObject* py_warn(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
     Warning(wxString(s,PY_ENC), showCancel != 0);
+
+    // if user hit Cancel then best to abort *now*
+    if (showCancel != 0 && PythonScriptAborted()) return NULL;
     
     RETURN_NONE;
 }
@@ -3041,6 +3044,9 @@ static PyObject* py_note(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
     Note(wxString(s,PY_ENC), showCancel != 0);
+
+    // if user hit Cancel then best to abort *now*
+    if (showCancel != 0 && PythonScriptAborted()) return NULL;
     
     RETURN_NONE;
 }
