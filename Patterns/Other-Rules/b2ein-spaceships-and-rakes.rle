@@ -1,0 +1,58 @@
+#N b2ein-spaceships-and-rakes.rle
+#C
+#C Left: small fast Orthogonoid by AforAmpere, 17 April 2019
+#C   Speed is 48c/3066, or slightly faster than  C/64 (~C/63.87).
+#C http://www.conwaylife.com/forums/viewtopic.php?p=75164#p75164
+#C
+#C Right, top to bottom: small spaceships and rakes by Luka Okanishi;
+#C   see http://www.conwaylife.com/forums/viewtopic.php?p=75667#p75667
+#C     Individual 4-rep (3,0)c/20 p80 G-loop spaceship
+#C     3-rep (3,0)c/20 p80 spaceship:
+#C     2 different 2-rep (3,0)c/20 p80 G/L trans-backrakes
+#C     2-rep (3,0)c/20 p80 trans-backG-sideA-rake
+#C     2-rep (3,0)c/20 p160 cis_double-barreled G backrake
+#C     2-rep (3,0)c/20 p80 G backrake
+#C 
+x = 159, y = 862, rule = B2ein3cijn4cnrwy5cnq6e/S1c2-ai3acny4anqy5c6ek8
+85b2o$85b2o5$84bo$83bobo5$84bo$83bobo10$133b2o$133b2o3$84bo$83bobo4$
+145b2o$145b2o$122bo$119bobo$119b2o$2o46b2o46b2o$2o46b2o46b2o$12b2o22b
+2o22b2o19b5o22b2o20b2o$12b2o22b2o22b2o20bob2o22b2o20b2o$81b2o$108bo$
+107bobo5$108bo$60bo46bobo$59bobo21bobo$83b3o8$59b3o$59bobo5$83bobo$83b
+3o$59b3o$59bobo3$83bobo$83b3o$59b3o46bo$59bobo45bobo7$107b3o$107bobo2$
+83bobo$83b3o$59b3o$59bobo4$107b3o$59b3o45bobo$59bobo$83bobo$83b3o4$
+107b3o$107bobo2$60bo$59bobo4$107b3o$107bobo$59b3o21bobo$59bobo22bo3$
+107b3o$107bobo$59b3o$59bobo6$60bo22bobo22bo$59bobo21b3o21bobo6$83bobo$
+83b3o21b3o$107bobo5$60bo22bobo$59bobo22bo5$83bobo21b3o$84bo22bobo5$60b
+o22bobo$59bobo21b3o21b3o$107bobo4$60bo22bobo$59bobo21b3o$108bo$107bobo
+5$83bobo22bo$84bo22bobo6$60bo$59bobo5$83bobo$84bo$107b3o$107bobo3$59b
+3o$59bobo21bobo$83b3o$108bo$107bobo3$83bobo$83b3o3$107b3o$107bobo8$60b
+o$59bobo3$83bobo$83b3o21b3o$107bobo3$59b3o$59bobo21bobo$83b3o21b3o$
+107bobo3$59b3o$59bobo3$83bobo$83b3o5$83bobo$83b3o2$108bo$107bobo2$83bo
+bo$60bo22b3o$59bobo7$107b3o$107bobo2$83bobo$59b3o22bo$59bobo$107b3o$
+107bobo3$59b3o$59bobo5$59b3o$59bobo3$83bobo$83b3o3$108bo$60bo46bobo$
+59bobo2$83bobo$84bo$108bo$107bobo4$60bo$59bobo3$83bobo$83b3o$60bo$59bo
+bo3$108bo$107bobo2$60bo22bobo$59bobo22bo6$60bo$59bobo$107b3o$83bobo21b
+obo$84bo5$83bobo$84bo4$107b3o$83bobo21bobo$83b3o3$60bo$59bobo$83bobo$
+83b3o8$60bo$59bobo2$83bobo22bo$84bo22bobo5$108bo$107bobo$59b3o$59bobo
+3$108bo$107bobo4$60bo22bobo$59bobo21b3o5$83bobo$83b3o3$107b3o$107bobo
+4$83bobo$83b3o$108bo$107bobo4$83bobo$84bo2$107b3o$107bobo5$83bobo$84bo
+7$107b3o$107bobo11$83bobo$84bo5$83bobo$84bo7$108bo$107bobo5$108bo$107b
+obo$83bobo$84bo7$108bo$107bobo5$83bobo$83b3o22bo$107bobo5$83bobo$83b3o
+2$107b3o$107bobo20$83bobo$83b3o5$83bobo$83b3o4$108bo$83bobo21bobo$83b
+3o4$108bo$107bobo3$83bobo$83b3o$108bo$107bobo4$83bobo$83b3o7$83bobo$
+84bo3$108bo$107bobo$83bobo$84bo6$83bobo$83b3o22bo$107bobo5$108bo$107bo
+bo10$83bobo$84bo8$83bobo22bo$84bo22bobo7$83bobo$83b3o6$107b3o$83bobo
+21bobo$84bo5$83bobo$84bo7$107b3o$107bobo2$83bobo$83b3o7$108bo$107bobo
+9$83bobo$84bo$108bo$107bobo10$83bobo$83b3o6$83bobo$83b3o$107b3o$107bob
+o5$107b3o$107bobo$83bobo$84bo3$107b3o$107bobo$83bobo$84bo5$83bobo$84bo
+5$108bo$107bobo4$83bobo$83b3o2$107b3o$107bobo6$108bo$107bobo7$83bobo$
+84bo5$83bobo22bo$84bo22bobo5$108bo$107bobo5$83bobo22bo$84bo22bobo13$
+83bobo$84bo6$83bobo$83b3o3$108bo$107bobo$83bobo$83b3o5$107b3o$107bobo
+3$83bobo$83b3o5$107b3o$107bobo3$83bobo$84bo3$107b3o$107bobo$83bobo$84b
+o5$107b3o$107bobo5$83bobo22bo$83b3o21bobo7$83bobo$83b3o22bo$107bobo9$
+107b3o$107bobo2$83bobo$83b3o2$107b3o$107bobo12$83bobo$84bo2$104b2o$36b
+2o22b2o22b2o19bo2b2o22b2o$36b2o22b2o22b2o18b2o2b2o22b2o14b2o$24b2o46b
+2o46b2o26b2o$24b2o46b2o46b2o10$157b2o$157b2o4$107bobo$108bo5$107bobo$
+108bo8$107bobo30b2o$107b3o30bobo8$107bobo$107b3o6$107bobo$108bo7$107bo
+bo$108bo2$107b2o$107b2o$108b2o$104b2ob3o$104b2obobo3$108b2o$108b2o$
+103b3o$102b2obo$102bo2b3o$102b3obob2o$106bo2bo$108b2o!
