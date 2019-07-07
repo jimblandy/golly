@@ -13,6 +13,7 @@ in lots of interesting ways.
 <dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
 <dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd>
 <dd><a href="#gplus"><b>Using the gplus package</b></a></dd>
+<dd><a href="#newca"><b>NewCA.lua</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
 <dd><a href="#copyright"><b>Lua copyright notice</b></a></dd>
 </p>
@@ -26,6 +27,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0 width=520>
+<tr>
+   <td><b>1D.lua</b></td><td width=10> </td>
+   <td> &mdash; for exploring one-dimensional cellular automata</td>
+</tr>
 <tr>
    <td><b>3D.lua</b></td><td width=10> </td>
    <td> &mdash; for exploring three-dimensional cellular automata</td>
@@ -90,6 +95,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
 <tr>
    <td><b>make-torus.lua</b></td><td width=10> </td>
    <td> &mdash; makes a toroidal universe from the selection</td>
+</tr>
+<tr>
+   <td><b>Margolus.lua</b></td><td width=10> </td>
+   <td> &mdash; for exploring rules using the Margolus neighborhood</td>
 </tr>
 <tr>
    <td><b>metafier.lua</b></td><td width=10> </td>
@@ -1701,6 +1710,167 @@ If a script calls <b>require "foo.bar"</b> then Golly looks for foo/bar.lua.
 (If none of those files exist in the script's directory then Golly will
 look in the supplied Scripts/Lua directory, so scripts can always use the
 <b>gplus</b> package no matter where they are located.)
+
+
+<p><a name="newca"></a>&nbsp;<br>
+<font size=+1><b>NewCA.lua</b></font>
+
+<p>
+NewCA.lua is a gplus module that can be used by other Lua scripts to
+explore new cellular automata rules.  To implement a new CA you need
+to create a .lua file that looks something like this:
+
+<dd><table border=0><pre>
+local g = golly()
+require "gplus.NewCA"
+ 
+SCRIPT_NAME = "MyCA"    -- must match the name of your .lua file
+DEFAULT_RULE = "XXX"    -- must be a valid rule in your CA
+RULE_HELP = "HTML code describing the rules allowed by your CA."
+ 
+function ParseRule(newrule)
+    -- Parse the given rule string.
+    -- If valid then return nil, the canonical rule string,
+    -- the width and height of the grid, and the number of states.
+    -- If not valid then just return an appropriate error message.
+    
+    ... parsing code for your rule syntax ...
+    
+    return nil, canonrule, wd, ht, numstates
+    -- Note that wd and ht must be from 4 to 4000,
+    -- and numstates must be from 2 to 256.
+end
+ 
+function NextPattern(currcells, minx, miny, maxx, maxy)
+    -- Create the next pattern using the given parameters:
+    -- currcells is a non-empty cell array containing the current pattern.
+    -- minx, miny, maxx, maxy are the cell coordinates of the grid edges.
+    -- This function must return the new pattern as a cell array.
+    
+    local newcells = {}
+    
+    ... code to create the next pattern in newcells ...
+    
+    -- delete the current pattern and add the new pattern
+    g.putcells(currcells, 0, 0, 1, 0, 0, 1, "xor")
+    g.putcells(newcells)
+    
+    return newcells
+    -- Note that currcells and newcells are one-state cell arrays if
+    -- g.numstates() == 2, otherwise they are both multi-state.
+end
+ 
+StartNewCA()</pre></table></dd>
+
+<p>
+It should be possible to implement almost any CA that uses square cells
+with up to 256 states.  NewCA.lua provides a lot of useful functionality:
+
+<p>
+<ul>
+<li>
+The interface is essentially the same as Golly. The only really new feature is a
+combined menu+tool bar that appears under the edit bar. It has some menus
+(File, Edit, View) on the left side and various buttons (Start, Reset, etc)
+on the right side, along with a slider for controlling the step size.
+<li>
+Full Golly-like editing (cut/copy/paste/select/etc) including unlimited undo/redo.
+All of Golly's usual cursor modes are supported.
+<li>
+Patterns can be saved as .rle files. These files can be opened via the File menu's
+Open Pattern command. You can also open a pattern stored in the clipboard via the
+Open Clipboard command (or by typing shift-O).
+<li>
+Users can get help in various ways (type H or click the "?" button) and see documentation
+about the required rule syntax, the menu commands, a list of all the keyboard shortcuts, etc.
+<li>
+Your script can run other Lua scripts to do searches, build patterns, etc.
+In particular, users can specify a script to be run whenever your script starts up.
+A startup script can do lots of customizations (add/modify keyboard shortcuts,
+change the color scheme, specify a different DEFAULT_RULE, add aliases for specific rules, etc).
+</ul>
+
+<p>
+There is of course a price to pay for all this flexibility, and that's speed.
+Don't expect your CA to run at Golly-like speeds! It won't really be practical
+to write a CA that supports very large neighborhoods (7x7 is about the limit).
+
+<p>
+To implement a new CA you'll typically need to write a couple of hundred lines
+of Lua code to parse the rule strings allowed by your CA and to calculate the next pattern.
+To help with this task, a couple of example scripts are supplied with Golly:
+
+<p>
+<a href="open:Scripts/Lua/1D.lua">1D.lua</a>
+lets you explore some one-dimensional rules. It supports all of Stephen Wolfram's
+256 elementary rules (including the odd numbers), as well as totalistic rules with
+up to 4 states and a maximum range of 4.
+
+<p>
+The syntax for elementary rules is Wn where n is from 0 to 255.
+Totalistic rules are strings of the form CcKkRr where c is a code number from
+0 to k^((2r+1)k-2r)-1, k is the number of states (2 to 4), and r is the range (1 to 4).
+
+<p>
+The ParseRule code sets NextPattern to either NextElementary or NextTotalistic,
+depending on the given rule. This is a useful technique that avoids the code in
+NextPattern becoming way too big and complicated.
+
+<p>
+1D.lua always generates from the bottom row of the current pattern.
+When it reaches the bottom row of the grid, it clears the grid, copies the bottom row
+to the top of the grid, and continues.
+
+<p>
+SetColors is redefined to use the same color scheme as in Wolfram's "A New Kind of Science".
+Note that the SetColors function uses g.setcolor commands to change the grid border and
+the status bar background to light blue.
+
+<p>
+1D.lua also redefines the RandomPattern function to create a single row of random cells
+at the top of the grid.
+
+<p>
+<a href="open:Scripts/Lua/Margolus.lua">Margolus.lua</a>
+lets you explore rules using the Margolus neighborhood.
+Rule strings are of the form Mn,n,n,... where there must be 16 comma-separated numbers
+with values from 0 to 15. MCell's syntax (MS,Dn;n;n;...) is also allowed, as are these aliases:
+
+<p>
+<dd>bbm = M0,8,4,3,2,5,9,7,1,6,10,11,12,13,14,15 (the default rule)</dd>
+<dd>critters = M15,14,13,3,11,5,6,1,7,9,10,2,12,4,8,0</dd>
+<dd>tron = M15,1,2,3,4,5,6,7,8,9,10,11,12,13,14,0</dd>
+
+<p>
+The ParseRule code sets NextPattern to either FastPattern or SlowPattern, depending on the given rule.
+FastPattern is used if the rule starts with M0, or if it starts with M15 and ends with 0.
+To avoid ugly strobing effects in the latter case, two alternating rules will be used:
+one rule for even-numbered generations and another rule for odd-numbered generations
+(similar to how Golly handles B0 rules).
+
+<p>
+The above two scripts have a number of features in common:
+
+<p>
+<ul>
+<li>
+Users can hit alt-R (option-R on a Mac) to create a random pattern with a random rule.
+This makes it easy to search for rules with interesting behavior.
+<li>
+Both scripts use a toroidal grid with a default size of 500 x 500. For consistency with Golly,
+all rule strings can have an optional suffix like ":T400,300" or ":T400" to specify a desired grid size.
+(It's perfectly possible to support other topologies but you'd have to write a lot of messy code.)
+<li>
+The ParseRule code allows entering an empty string as a quick way to switch to the default rule.
+<li>
+Letters in a given rule can be entered in lower case, but the canonical version always uses upper case.
+<li>
+Both scripts define a global aliases table so you can assign mnemonic names to specific rule strings.
+</ul>
+
+<p>
+It's probably a good idea to support these features in any new CA you might write,
+but it's not compulsory.
 
 
 <p><a name="problems"></a>&nbsp;<br>

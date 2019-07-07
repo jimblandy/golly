@@ -9,6 +9,14 @@
 <ul>
 <li> Major speed improvements to 3D.lua via custom-purpose ovtable commands.
 <li> 3D.lua now natively supports cell history with fading.
+<li> Added a new gplus module called <a href="lua.html#newca">NewCA.lua</a> which makes
+     it easy to write scripts that implement new types of cellular automata.
+<li> Two new scripts show how to use NewCA.lua:
+     <a href="open:Scripts/Lua/1D.lua">1D.lua</a> supports one-dimensional CA rules,
+     including all of Wolfram's 256 elementary rules, as well as totalistic rules
+     with up to 4 states and a maximum range of 4.
+     <a href="open:Scripts/Lua/Margolus.lua">Margolus.lua</a> lets you explore rules
+     using the Margolus neighborhood.
 <li> Updated Lua to version 5.3.5.
 <li> The <a href="overlay.html#optimize">optimize</a> overlay command now returns the minimum non-zero
      alpha bounding box of the clip.
