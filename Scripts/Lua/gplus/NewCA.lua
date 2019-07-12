@@ -521,8 +521,9 @@ g.setcursor("Move") -- sets the hand cursor</pre></table></dd>
 
 <p>
 Note that SCRIPT_NAME.lua will only run a script if the clipboard or the file
-has "SCRIPT_NAME.lua" somewhere in the first line.  This avoids nasty problems
-that can occur if you run a script not written for SCRIPT_NAME.lua.
+contains "SCRIPT_NAME.lua" or "NewCA.lua" somewhere in the first line.
+This avoids nasty problems that can occur if you run a script not written
+for SCRIPT_NAME.lua or NewCA.lua.
 
 <p>
 Any syntax or runtime errors in a script won't abort SCRIPT_NAME.lua.
@@ -570,31 +571,32 @@ want to call from your own scripts:
 <td valign=top>
 <a href="#CheckCursor"><b>CheckCursor</b></a><br>
 <a href="#CheckWindowSize"><b>CheckWindowSize</b></a><br>
+<a href="#Exit"><b>Exit</b></a><br>
 <a href="#FitGrid"><b>FitGrid</b></a><br>
 <a href="#FitPattern"><b>FitPattern</b></a><br>
-<a href="#FitSelection"><b>FitSelection</b></a><br>
-<a href="#GetBarHeight"><b>GetBarHeight</b></a>
+<a href="#FitSelection"><b>FitSelection</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#GetBarHeight"><b>GetBarHeight</b></a><br>
 <a href="#GetRule"><b>GetRule</b></a><br>
 <a href="#HandleKey"><b>HandleKey</b></a><br>
 <a href="#HandlePasteKey"><b>HandlePasteKey</b></a><br>
 <a href="#NewPattern"><b>NewPattern</b><br>
-<a href="#OpenPattern"><b>OpenPattern</b></a><br>
-<a href="#RandomPattern"><b>RandomPattern</b></a>
+<a href="#OpenPattern"><b>OpenPattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#RandomPattern"><b>RandomPattern</b></a><br>
 <a href="#Reset"><b>Reset</b></a><br>
 <a href="#RestoreState"><b>RestoreState</b></a><br>
 <a href="#RunScript"><b>RunScript</b></a><br>
 <a href="#SavePattern"><b>SavePattern</b></a><br>
-<a href="#SaveState"><b>SaveState</b></a><br>
-<a href="#SetColors"><b>SetColors</b></a>
+<a href="#SaveState"><b>SaveState</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#SetColors"><b>SetColors</b></a><br>
 <a href="#SetRule"><b>SetRule</b></a><br>
 <a href="#Step"><b>Step</b></a><br>
 <a href="#Update"><b>Update</b></a>
@@ -614,6 +616,13 @@ Useful in scripts that allow user interaction.
 <dd>
 If the Golly window size has changed then this function resizes the overlay.
 Useful in scripts that allow user interaction.
+</dd>
+
+<a name="Exit"></a><p><dt><b>Exit(<i>message</i>)</b></dt>
+<dd>
+Display the given message in the status bar and exit the script.
+(Calling g.exit will also exit the script but its message will be overwritten
+by "Script aborted".)
 </dd>
 
 <a name="FitGrid"></a><p><dt><b>FitGrid()</b></dt>
@@ -690,8 +699,8 @@ Restore the state saved earlier by <a href="#SaveState">SaveState</a>.
 
 <a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
 <dd>
-Run the specified .lua file, but only if the string "SCRIPT_NAME.lua" occurs
-somewhere in a comment on the first line of the file.
+Run the specified .lua file, but only if "SCRIPT_NAME.lua" or "NewCA.lua"
+occurs somewhere in a comment on the first line of the file.
 If the <i>filepath</i> is not supplied then the user will be prompted
 to select a .lua file.
 </dd>
@@ -1572,6 +1581,16 @@ end
 
 --------------------------------------------------------------------------------
 
+local Exit_called = false
+
+function Exit(message)
+    -- user scripts should call this function rather than g.exit
+    Exit_called = true
+    g.exit(message)
+end
+
+--------------------------------------------------------------------------------
+
 function CallScript(func, fromclip)
     -- avoid infinite recursion
     if scriptlevel == 100 then
@@ -1582,6 +1601,7 @@ function CallScript(func, fromclip)
     if scriptlevel == 0 then
         RememberCurrentState()  -- #undostack is > 0
         EnableControls(false)   -- disable most menu items and buttons
+        Exit_called = false
     end
 
     scriptlevel = scriptlevel + 1
@@ -1591,8 +1611,11 @@ function CallScript(func, fromclip)
     if err then
         g.continue("")
         if err == "GOLLY: ABORT SCRIPT" then
-            -- user hit escape
-            ShowMessage("Script aborted.")
+            -- user hit escape or script called Exit(message);
+            -- if the latter then don't clobber the message in the status bar
+            if not Exit_called then
+                ShowMessage("Script aborted.")
+            end
         else
             if fromclip then
                 g.warn("Runtime error in clipboard script:\n\n"..err, false)
@@ -1607,7 +1630,7 @@ function CallScript(func, fromclip)
         -- or any other function that called ClearUndoRedo then the undostack
         -- is empty and dirty should be false
         if #undostack == 0 then
-            -- a later SetCell call might have set dirty to true, so reset it
+            -- some call might have set dirty to true, so reset it
             dirty = false
             if gencount > startcount then
                 -- script called Step after NewPattern/RandomPattern/OpenPattern
@@ -1641,8 +1664,9 @@ function RunScript(filepath)
             local nextline = all:gmatch("(.-)\n")
             local line1 = nextline()
             f:close()
-            if not (line1 and line1:find(SCRIPT_NAME..".lua")) then
-                g.warn(SCRIPT_NAME..".lua was not found on first line of script.", false)
+            if not (line1 and (line1:find(SCRIPT_NAME..".lua") or
+                               line1:find("NewCA.lua"))) then
+                g.warn("First line of script must contain "..SCRIPT_NAME..".lua or NewCA.lua.", false)
                 return
             end
         else
@@ -1677,8 +1701,9 @@ function RunClipboard()
     end
     local cliptext = g.getclipstr()
     local eol = cliptext:find("[\n\r]")
-    if not (eol and cliptext:sub(1,eol):find(SCRIPT_NAME..".lua")) then
-        g.warn(SCRIPT_NAME..".lua was not found on first line of clipboard.", false)
+    if not (eol and (cliptext:sub(1,eol):find(SCRIPT_NAME..".lua") or
+                     cliptext:sub(1,eol):find("NewCA.lua"))) then
+        g.warn("First line of clipboard must contain "..SCRIPT_NAME..".lua or NewCA.lua.", false)
         return
     end
     local func, msg = load(cliptext)
