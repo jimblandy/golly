@@ -1534,7 +1534,7 @@ ghnode *ghashbase::runpattern() {
       n->res = 0 ;
       halvesdone = 0 ;
    }
-   if (poller->isInterrupted())
+   if (poller->isInterrupted() || softinterrupt)
       return 0 ; // indicate it was interrupted
    n = popzeros(n2) ;
    generation += pow2step ;
