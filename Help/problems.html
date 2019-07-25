@@ -48,9 +48,17 @@ Scroll bars are not updated correctly while resizing the window.
 <li>
 Golly has serious problems with Ubuntu's Unity interface.  For example,
 selecting a modal dialog like Control > Set Rule can freeze Golly.
-Most (all?) of the problems can be avoided by disabling the global menu bar.
+There are also problems with overlay scrollbars.
+Most (all?) of the problems can be solved by disabling both the global menu bar
+and the overlay scrollbars.  This can be done just for the golly binary by using
+the following alias:
+
+<table border=0><pre>
+alias golly="UBUNTU_MENUPROXY=0 LIBOVERLAY_SCROLLBAR=0 ./golly"</pre></table>
+
+<p>
 For more details, see this
-<a href="http://www.conwaylife.com/forums/viewtopic.php?f=7&t=1704&p=41077#p41077">forum post</a>.
+<a href="http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3936&p=80011#p80011">forum post</a>.
 </ul>
 
 </body>
