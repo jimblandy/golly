@@ -891,8 +891,8 @@ function SaveGollyState()
     oldstate.buttons = g.setoption("showbuttons", 0)    -- hide translucent buttons
     oldstate.tile = g.setoption("tilelayers", 0)        -- don't tile layers
     oldstate.stack = g.setoption("stacklayers", 0)      -- don't stack layers
-    oldstate.filesdir = g.getdir("files")               -- save file directory
     oldstate.files = g.setoption("showfiles", 0)        -- hide file panel
+    oldstate.filesdir = g.getdir("files")               -- save file directory
     -- save colors of grid border and status bar
     oldstate.br, oldstate.bg, oldstate.bb = g.getcolor("border")
     oldstate.sr, oldstate.sg, oldstate.sb = g.getcolor(g.getalgo())
@@ -911,8 +911,8 @@ function RestoreGollyState(oldstate)
     g.setoption("showbuttons", oldstate.buttons)
     g.setoption("tilelayers", oldstate.tile)
     g.setoption("stacklayers", oldstate.stack)
-    g.setdir("files", oldstate.filesdir)
     g.setoption("showfiles", oldstate.files)
+    g.setdir("files", oldstate.filesdir)
     g.setcolor("border", oldstate.br, oldstate.bg, oldstate.bb)
     g.setcolor(g.getalgo(), oldstate.sr, oldstate.sg, oldstate.sb)
     

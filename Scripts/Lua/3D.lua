@@ -539,8 +539,8 @@ function RestoreGollyState(oldstate)
     g.setoption("showeditbar", oldstate.edit)
     g.setoption("tilelayers", oldstate.tile)
     g.setoption("stacklayers", oldstate.stack)
-    g.setdir("files", oldstate.filesdir)
     g.setoption("showfiles", oldstate.files)
+    g.setdir("files", oldstate.filesdir)
 end
 
 --------------------------------------------------------------------------------
