@@ -2905,6 +2905,15 @@ void PatternView::OnMouseUp(wxMouseEvent& event)
 
 // -----------------------------------------------------------------------------
 
+void PatternView::ResetMouseDown()
+{
+    // mouseisdown needs to be reset if a right-click causes a modal dialog
+    // to appear which then fails to send a mouse-up event (bug only in wxMac???)
+    mouseisdown = false;
+}
+
+// -----------------------------------------------------------------------------
+
 // mouse capture can be lost on Windows before mouse-up event
 void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 {

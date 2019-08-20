@@ -4898,10 +4898,11 @@ bool ChangePrefs(const wxString& page)
     // save the default base step for the current layer's algo so we can detect a change
     int old_defbase = algoinfo[currlayer->algtype]->defbase;
     
-    PrefsDialog dialog(mainptr, page);
-    
     bool result;
-    if (dialog.ShowModal() == wxID_OK) {
+    PrefsDialog dialog(mainptr, page);
+    int button = dialog.ShowModal();
+    viewptr->ResetMouseDown();
+    if (button == wxID_OK) {
         // TransferDataFromWindow has validated and updated all global prefs;
         // if a keyboard shortcut changed then update menu item accelerators
         for (int key = 0; key < MAX_KEYCODES; key++)

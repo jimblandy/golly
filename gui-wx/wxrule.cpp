@@ -12,6 +12,7 @@
 
 #include "wxgolly.h"       // for wxGetApp, mainptr
 #include "wxmain.h"        // for mainptr->...
+#include "wxview.h"        // for viewptr->...
 #include "wxprefs.h"       // for namedrules, gollydir, showalgohelp, etc
 #include "wxutils.h"       // for Warning, Fatal, Beep
 #include "wxlayer.h"       // for currlayer
@@ -1071,7 +1072,9 @@ bool ChangeRule()
     wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     
     RuleDialog dialog( wxGetApp().GetTopWindow() );
-    if ( dialog.ShowModal() == wxID_OK ) {
+    int button = dialog.ShowModal();
+    viewptr->ResetMouseDown();
+    if (button == wxID_OK) {
         // TransferDataFromWindow has changed the current rule,
         // and possibly the current algorithm as well
         return true;

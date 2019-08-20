@@ -993,8 +993,9 @@ void MainFrame::OpenPattern()
     wxFileDialog opendlg(this, _("Choose a pattern"),
                          opensavedir, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    
-    if ( opendlg.ShowModal() == wxID_OK ) {
+    int button = opendlg.ShowModal();
+    viewptr->ResetMouseDown();
+    if (button == wxID_OK) {
         wxFileName fullpath( opendlg.GetPath() );
         opensavedir = fullpath.GetPath();
         OpenFile( opendlg.GetPath() );
@@ -1022,8 +1023,9 @@ void MainFrame::OpenScript()
     wxFileDialog opendlg(this, _("Choose a script"),
                          rundir, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    
-    if ( opendlg.ShowModal() == wxID_OK ) {
+    int button = opendlg.ShowModal();
+    viewptr->ResetMouseDown();
+    if (button == wxID_OK) {
         wxFileName fullpath( opendlg.GetPath() );
         rundir = fullpath.GetPath();
         AddRecentScript( opendlg.GetPath() );
@@ -1642,8 +1644,9 @@ bool MainFrame::SavePattern()
     wxFileDialog savedlg( this, _("Save pattern"),
                          opensavedir, currlayer->currname, filetypes,
                          wxFD_SAVE | wxFD_OVERWRITE_PROMPT );
-    
-    if ( savedlg.ShowModal() == wxID_OK ) {
+    int button = savedlg.ShowModal();
+    viewptr->ResetMouseDown();
+    if (button == wxID_OK) {
         wxFileName fullpath( savedlg.GetPath() );
         opensavedir = fullpath.GetPath();
         wxString ext = fullpath.GetExt();
@@ -1768,8 +1771,9 @@ void MainFrame::SaveOverlay()
         wxFileDialog savedlg(this, _("Save overlay as PNG file"),
                              overlaydir, _("overlay.png"), _("PNG (*.png)|*.png"),
                              wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-        
-        if (savedlg.ShowModal() == wxID_OK) {
+        int button = savedlg.ShowModal();
+        viewptr->ResetMouseDown();
+        if (button == wxID_OK) {
             wxString pngpath = savedlg.GetPath();
             wxFileName fullpath(pngpath);
             overlaydir = fullpath.GetPath();
@@ -1805,7 +1809,9 @@ void MainFrame::ToggleShowFiles()
 void MainFrame::ChangeFileDir()
 {
     wxDirDialog dirdlg(this, _("Choose a new file folder"), filedir, wxDD_NEW_DIR_BUTTON);
-    if (dirdlg.ShowModal() == wxID_OK) {
+    int button = dirdlg.ShowModal();
+    viewptr->ResetMouseDown();
+    if (button == wxID_OK) {
         SetFileDir(dirdlg.GetPath());
     }
 }

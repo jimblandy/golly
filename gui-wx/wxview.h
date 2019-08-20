@@ -95,6 +95,9 @@ public:
     void ProcessClick(int x, int y, int button, int modifiers);
     void ProcessClickedControl();
     
+    void ResetMouseDown();
+    // modal dialogs need to reset mouseisdown to false
+    
     // data
     bool waitingforclick;         // waiting for paste click?
     bool drawingcells;            // drawing cells due to dragging mouse?

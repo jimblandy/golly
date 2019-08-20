@@ -1335,4 +1335,5 @@ void ShowAboutBox()
     topsizer->Fit(&dlg);
     dlg.Centre();
     dlg.ShowModal();
+    viewptr->ResetMouseDown();
 }

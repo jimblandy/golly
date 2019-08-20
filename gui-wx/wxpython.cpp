@@ -274,7 +274,9 @@ static bool LoadPythonLib()
         wxTextEntryDialog dialog( wxGetActiveWindow(), str,
                                  _("Could not load the Python library"),
                                  pythonlib, wxOK | wxCANCEL );
-        if (dialog.ShowModal() == wxID_OK) {
+        int button = dialog.ShowModal();
+        viewptr->ResetMouseDown();
+        if (button == wxID_OK) {
             pythonlib = dialog.GetValue();
         } else {
             return false;
@@ -544,6 +546,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
                              wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
+    viewptr->ResetMouseDown();
     
     return Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(PY_ENC));
 }
@@ -575,6 +578,7 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
     
     wxString wxs_savefname = wxEmptyString;
     if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
+    viewptr->ResetMouseDown();
     
     return Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(PY_ENC));
 }
