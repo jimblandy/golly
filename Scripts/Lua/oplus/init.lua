@@ -804,8 +804,9 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
         local barpos = int(s.barwidth * (s.pos - s.minval) / (s.maxval - s.minval))
         draw_slider(s, barpos)
 
-        -- store this table using the slider button's rectangle as key
-        s.rect = rect({s.startbar+barpos-int(m.sliderwd/2), s.y, m.sliderwd, s.ht})
+        -- store this table using the slider bar's rectangle as key, including
+        -- overlap of half button width at left and right edges of bar
+        s.rect = rect({s.startbar-int(m.sliderwd/2), s.y, s.barwidth+m.sliderwd, s.ht})
         slider_tables[s.rect] = s
         s.shown = true
     end
@@ -915,15 +916,21 @@ local function click_in_slider(x, y)
             darken_slider = true
             slider.show(slider.x, slider.y, slider.pos)
             g.update()
-
+        
             local prevx = x
             local range = slider.maxval - slider.minval + 1
             local maxx = slider.startbar + slider.barwidth
 
+            -- check if click is outside slider button
+            local barpos = int(slider.barwidth * (slider.pos - slider.minval) / (slider.maxval - slider.minval))
+            local buttrect = rect({slider.startbar+barpos-int(m.sliderwd/2), slider.y, m.sliderwd, slider.ht})
+            if not (x >= buttrect.left and x <= buttrect.right and y >= buttrect.top and y <= buttrect.bottom) then
+                -- move button to clicked position immediately
+                prevx = math.maxinteger
+            end
+
             -- track horizontal movement of mouse until button is released
-            while true do
-                local event = g.getevent()
-                if event == "mup left" then break end
+            repeat
                 local xy = ov("xy")
                 if #xy > 0 then
                     local x, _ = split(xy)
@@ -955,7 +962,7 @@ local function click_in_slider(x, y)
                         prevx = x
                     end
                 end
-            end
+            until g.getevent() == "mup left"
 
             -- undarken slider button
             darken_slider = false

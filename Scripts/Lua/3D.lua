@@ -4570,7 +4570,7 @@ end
 function StepChange(newval)
     -- called if stepslider position has changed
     SetStepSize(newval)
-    RefreshIfNotGenerating()
+    Refresh()
 end
 
 --------------------------------------------------------------------------------
