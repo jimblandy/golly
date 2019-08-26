@@ -277,7 +277,7 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
 #ifdef __WXMAC__
     if (wxmods & wxMOD_CONTROL)   ourmods |= mk_CTRL;
 #endif
-    
+
     // now convert given wx key code to corresponding IK_* code
     int ourkey;
     if (wxkey >= 'A' && wxkey <= 'Z') {
@@ -285,15 +285,15 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
         // for our internal function keys (IK_F1 to IK_F24)
         ourkey = wxkey + 32;
         ourmods |= mk_SHIFT;
-        
+
     } else if (wxkey >= WXK_F1 && wxkey <= WXK_F24) {
         // convert wx function key code to IK_F1..IK_F24
         ourkey = IK_F1 + (wxkey - WXK_F1);
-        
+
     } else if (wxkey >= WXK_NUMPAD0 && wxkey <= WXK_NUMPAD9) {
         // treat numpad digits like ordinary digits
         ourkey = '0' + (wxkey - WXK_NUMPAD0);
-        
+
     } else {
         switch (wxkey) {
             case WXK_HOME:          ourkey = IK_HOME; break;
@@ -318,9 +318,9 @@ bool ConvertKeyAndModifiers(int wxkey, int wxmods, int* newkey, int* newmods)
             default:                ourkey = wxkey;
         }
     }
-    
+
     if (ourkey < 0 || ourkey >= MAX_KEYCODES) return false;
-    
+
     *newkey = ourkey;
     *newmods = ourmods;
     return true;
@@ -345,13 +345,15 @@ action_info FindAction(int wxkey, int wxmods)
 void AddDefaultKeyActions()
 {
     // these default shortcuts are similar to the hard-wired shortcuts in v1.2
-    
+
     // include some examples of DO_OPENFILE
 #ifdef __WXMSW__
     keyaction[(int)'h'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'h'][mk_ALT].file =     wxT("Rules\\LifeHistory.rule");
     keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts\\Lua\\toLife.lua");
+    keyaction[(int)'k'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'k'][mk_ALT].file =     wxT("Scripts\\Lua\\toChangeState.lua");
     keyaction[(int)'l'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'l'][mk_ALT].file =     wxT("Help\\Lexicon\\lex.htm");
     keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
@@ -361,6 +363,8 @@ void AddDefaultKeyActions()
     keyaction[(int)'h'][mk_ALT].file =     wxT("Rules/LifeHistory.rule");
     keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts/Lua/toLife.lua");
+    keyaction[(int)'k'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'k'][mk_ALT].file =     wxT("Scripts/Lua/toChangeState.lua");
     keyaction[(int)'l'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'l'][mk_ALT].file =     wxT("Help/Lexicon/lex.htm");
     keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
@@ -379,7 +383,7 @@ void AddDefaultKeyActions()
 #endif
     keyaction[(int)','][0].id =         DO_PREFS;
     keyaction[(int)'q'][mk_CMD].id =    DO_QUIT;
-    
+
     // Edit menu
     keyaction[(int)'z'][0].id =         DO_UNDO;
     keyaction[(int)'z'][mk_CMD].id =    DO_UNDO;
@@ -410,7 +414,7 @@ void AddDefaultKeyActions()
     keyaction[IK_F1+5][0].id =          DO_CURSIN;
     keyaction[IK_F1+6][0].id =          DO_CURSOUT;
     keyaction[(int)'c'][0].id =         DO_CURSCYCLE;
-    
+
     // Control menu
     keyaction[IK_RETURN][0].id =        DO_STARTSTOP;
     keyaction[(int)' '][0].id =         DO_NEXTGEN;
@@ -433,7 +437,7 @@ void AddDefaultKeyActions()
 #endif
     keyaction[(int)' '][mk_SHIFT].id =  DO_ADVANCEOUT;
     keyaction[(int)'t'][mk_SHIFT].id =  DO_TIMING;
-    
+
     // View menu
     keyaction[IK_LEFT][0].id =          DO_LEFT;
     keyaction[IK_RIGHT][0].id =         DO_RIGHT;
@@ -485,10 +489,10 @@ void AddDefaultKeyActions()
     keyaction[(int)'b'][mk_CMD].id =    DO_INVERT;
     keyaction[(int)'i'][0].id =         DO_INFO;
     keyaction[(int)'i'][mk_CMD].id =    DO_INFO;
-    
+
     // Layer menu
     // none
-    
+
     // Help menu
     keyaction[(int)'h'][0].id =         DO_HELP;
     keyaction[(int)'?'][0].id =         DO_HELP;
@@ -652,7 +656,7 @@ void GetKeyAction(char* value)
     char* p = start;
     int modset = 0;
     int key = -1;
-    
+
     // extract key, skipping first char in case it's '+'
     if (*p > 0) p++;
     while (1) {
@@ -714,7 +718,7 @@ void GetKeyAction(char* value)
         }
         p++;
     }
-    
+
     // *p is ' ' or '+' so extract zero or more modifiers
     while (*p != ' ') {
         p++;
@@ -743,11 +747,11 @@ void GetKeyAction(char* value)
             start++;
         }
     }
-    
+
     // *p is ' ' so skip and check the action string
     p++;
     action_info action = nullaction;
-    
+
     // first look for "Open:" followed by file path
     if (strncmp(p, "Open:", 5) == 0) {
         action.id = DO_OPENFILE;
@@ -761,12 +765,12 @@ void GetKeyAction(char* value)
             }
         }
     }
-    
+
     // test for some deprecated actions
     if (action.id == DO_NOTHING) {
         if (strcmp(p, "Swap Cell Colors") == 0) action.id = DO_INVERT;
     }
-    
+
     keyaction[key][modset] = action;
 }
 
@@ -776,7 +780,7 @@ wxString GetKeyCombo(int key, int modset)
 {
     // build a key combo string for display in prefs dialog and help window
     wxString result = wxEmptyString;
-    
+
 #ifdef __WXMAC__
     if (mk_ALT & modset)    result += wxT("Option-");
     if (mk_SHIFT & modset)  result += wxT("Shift-");
@@ -787,19 +791,19 @@ wxString GetKeyCombo(int key, int modset)
     if (mk_SHIFT & modset)  result += wxT("Shift+");
     if (mk_CMD & modset)    result += wxT("Control+");
 #endif
-    
+
     if (key >= IK_F1 && key <= IK_F24) {
         // function key
         result += wxString::Format(wxT("F%d"), key - IK_F1 + 1);
-        
+
     } else if (key >= 'a' && key <= 'z') {
         // display A..Z rather than a..z
         result += wxChar(key - 32);
-        
+
     } else if (key > ' ' && key <= '~') {
         // displayable char, but excluding space (that's handled below)
         result += wxChar(key);
-        
+
     } else {
         // non-displayable char
         switch (key) {
@@ -825,7 +829,7 @@ wxString GetKeyCombo(int key, int modset)
             default:          result = wxEmptyString;
         }
     }
-    
+
     return result;
 }
 
@@ -843,9 +847,9 @@ wxString GetShortcutTable()
     result += _("<p><center>");
     result += _("<table cellspacing=1 border=2 cols=2 width=\"90%\">");
     result += _("<tr><td align=center>Key Combination</td><td align=center>Action</td></tr>");
-    
+
     bool assigned[MAX_ACTIONS] = {false};
-    
+
     for (int key = 0; key < MAX_KEYCODES; key++) {
         for (int modset = 0; modset < MAX_MODS; modset++) {
             action_info action = keyaction[key][modset];
@@ -867,9 +871,9 @@ wxString GetShortcutTable()
             }
         }
     }
-    
+
     result += _("</table></center>");
-    
+
     // also list unassigned actions
     result += _("<p>The following actions currently have no keyboard shortcuts:<p>");
     for (int i = 1; i < MAX_ACTIONS; i++) {
@@ -878,7 +882,7 @@ wxString GetShortcutTable()
             result += wxString::Format(_("<dd>%s</dd>"), name.c_str());
         }
     }
-    
+
     result += _("</body></html>");
     return result;
 }
@@ -906,15 +910,15 @@ wxString GetModifiers(int modset)
 wxString GetKeyName(int key)
 {
     wxString result;
-    
+
     if (key >= IK_F1 && key <= IK_F24) {
         // function key
         result.Printf(wxT("F%d"), key - IK_F1 + 1);
-        
+
     } else if (key > ' ' && key <= '~') {
         // displayable char, but excluding space (that's handled below)
         result = wxChar(key);
-        
+
     } else {
         // non-displayable char
         switch (key) {
@@ -935,7 +939,7 @@ wxString GetKeyName(int key)
             default:          result = wxEmptyString;
         }
     }
-    
+
     return result;
 }
 
@@ -944,7 +948,7 @@ wxString GetKeyName(int key)
 void SaveKeyActions(FILE* f)
 {
     bool assigned[MAX_ACTIONS] = {false};
-    
+
     fputs("\n", f);
     for (int key = 0; key < MAX_KEYCODES; key++) {
         for (int modset = 0; modset < MAX_MODS; modset++) {
@@ -959,7 +963,7 @@ void SaveKeyActions(FILE* f)
             }
         }
     }
-    
+
     // list all unassigned actions in comment lines
     fputs("# unassigned actions:\n", f);
     for (int i = 1; i < MAX_ACTIONS; i++) {
@@ -1002,7 +1006,7 @@ void UpdateAcceleratorStrings()
 {
     for (int i = 0; i < MAX_ACTIONS; i++)
         accelerator[i] = wxEmptyString;
-    
+
     // go thru keyaction table looking for key combos that are valid menu item
     // accelerators and construct suitable strings like "\tCtrl+Alt+Shift+K"
     // or "\tF12" or "\tReturn" etc
@@ -1027,7 +1031,7 @@ void UpdateAcceleratorStrings()
             }
         }
     }
-    
+
     // go thru keyaction table again looking only for key combos containing Ctrl;
     // we do this so that the Paste menu item will have the standard Ctrl+V
     // shortcut rather than a plain V if both those shortcuts are assigned
@@ -1069,7 +1073,7 @@ void RemoveAccelerator(wxMenuBar* mbar, int item, action_id action)
 void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
     wxString accel = accelerator[action];
-    
+
     if (inscript) {
         // RunScript has called mainptr->UpdateMenuAccelerators()
         // so remove accelerator from menu item to allow keyboard shortcuts
@@ -1087,7 +1091,7 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
         if (accel.IsEmpty()) return;
         accel = wxEmptyString;
     }
-    
+
     // we need to remove old accelerator string from GetLabel text
     mbar->SetLabel(item, wxMenuItem::GetLabelFromText(mbar->GetLabel(item)) + accel);
 }
@@ -1098,14 +1102,14 @@ void CreateCursors()
 {
     curs_pencil = new wxCursor(wxCURSOR_PENCIL);
     if (curs_pencil == NULL) Fatal(_("Failed to create pencil cursor!"));
-    
+
     wxBitmap bitmap_pick = XPM_BITMAP(pick_curs);
     wxImage image_pick = bitmap_pick.ConvertToImage();
     image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 0);
     image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 15);
     curs_pick = new wxCursor(image_pick);
     if (curs_pick == NULL) Fatal(_("Failed to create pick cursor!"));
-    
+
 #ifdef __WXMSW__
     // don't use wxCURSOR_CROSS because it disappears on black background
     wxBitmap bitmap_cross = XPM_BITMAP(cross_curs);
@@ -1117,21 +1121,21 @@ void CreateCursors()
     curs_cross = new wxCursor(wxCURSOR_CROSS);
 #endif
     if (curs_cross == NULL) Fatal(_("Failed to create cross cursor!"));
-    
+
     wxBitmap bitmap_hand = XPM_BITMAP(hand_curs);
     wxImage image_hand = bitmap_hand.ConvertToImage();
     image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
     image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
     curs_hand = new wxCursor(image_hand);
     if (curs_hand == NULL) Fatal(_("Failed to create hand cursor!"));
-    
+
     wxBitmap bitmap_zoomin = XPM_BITMAP(zoomin_curs);
     wxImage image_zoomin = bitmap_zoomin.ConvertToImage();
     image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
     image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
     curs_zoomin = new wxCursor(image_zoomin);
     if (curs_zoomin == NULL) Fatal(_("Failed to create zoomin cursor!"));
-    
+
     wxBitmap bitmap_zoomout = XPM_BITMAP(zoomout_curs);
     wxImage image_zoomout = bitmap_zoomout.ConvertToImage();
     image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
@@ -1144,7 +1148,7 @@ void CreateCursors()
 
     curs_hidden = new wxCursor(wxCURSOR_BLANK);
     if (curs_hidden == NULL) Fatal(_("Failed to create hidden cursor!"));
-    
+
     // default cursors for new pattern or after opening pattern
     newcurs = curs_pencil;
     opencurs = curs_zoomin;
@@ -1294,7 +1298,7 @@ void CreateDefaultColors()
     borderrgb  = new wxColor(128, 128, 128);  // 50% gray
     selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
     pastergb   = new wxColor(255,   0,   0);  // red
-    
+
     // set default status brushes (in case prefs file doesn't exist)
     UpdateStatusBrushes();
 }
@@ -1332,7 +1336,7 @@ void GetRelPath(const char* value, wxString& path,
 {
     path = wxString(value, wxConvLocal);
     wxFileName fname(path);
-    
+
     if (currversion < 4 && fname.IsAbsolute() && defdir.length() > 0) {
         // if old version's absolute path ends with defdir then update
         // path so new version will see correct dir
@@ -1344,13 +1348,13 @@ void GetRelPath(const char* value, wxString& path,
             return;
         }
     }
-    
+
     // if path isn't absolute then prepend Golly directory
     if (!fname.IsAbsolute()) path = gollydir + path;
-    
+
     // if path doesn't exist then reset to default directory
     if (!wxFileName::DirExists(path)) path = gollydir + defdir;
-    
+
     // nicer if directory path ends with separator
     if (isdir && path.Last() != wxFILE_SEP_PATH) path += wxFILE_SEP_PATH;
 }
@@ -1371,7 +1375,7 @@ void SaveRelPath(FILE* f, const char* name, wxString path)
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
-const char* GOLLY_VERSION = STRINGIFY(VERSION); 
+const char* GOLLY_VERSION = STRINGIFY(VERSION);
 
 void SavePrefs()
 {
@@ -1379,7 +1383,7 @@ void SavePrefs()
         // should never happen but play safe
         return;
     }
-    
+
 #ifdef __WXMAC__
     // we need to convert prefspath to decomposed UTF8 so fopen will work
     FILE* f = fopen(prefspath.fn_str(), "w");
@@ -1390,7 +1394,7 @@ void SavePrefs()
         Warning(_("Could not save preferences file!"));
         return;
     }
-    
+
     fprintf(f, "# NOTE: If you edit this file then do so when Golly isn't running\n");
     fprintf(f, "# otherwise all your changes will be clobbered when Golly quits.\n\n");
     fprintf(f, "prefs_version=%d\n", PREFS_VERSION);
@@ -1408,9 +1412,9 @@ void SavePrefs()
     fprintf(f, "platform=unknown\n");
 #endif
     fprintf(f, "debug_level=%d\n", debuglevel);
-    
+
     SaveKeyActions(f);
-    
+
     // save main window's location and size
 #ifdef __WXMSW__
     if (mainptr->fullscreen || mainptr->IsIconized()) {
@@ -1432,7 +1436,7 @@ void SavePrefs()
     }
     fprintf(f, "main_window=%d,%d,%d,%d\n", mainx, mainy, mainwd, mainht);
     fprintf(f, "maximize=%d\n", mainptr->IsMaximized() ? 1 : 0);
-    
+
 #ifdef __WXMSW__
     if (GetHelpFrame() && !GetHelpFrame()->IsIconized())
 #else
@@ -1447,7 +1451,7 @@ void SavePrefs()
     }
     fprintf(f, "help_window=%d,%d,%d,%d\n", helpx, helpy, helpwd, helpht);
     fprintf(f, "help_font_size=%d (%d..%d)\n", helpfontsize, minfontsize, maxfontsize);
-    
+
 #ifdef __WXMSW__
     if (GetInfoFrame() && !GetInfoFrame()->IsIconized())
 #else
@@ -1463,7 +1467,7 @@ void SavePrefs()
     fprintf(f, "info_window=%d,%d,%d,%d\n", infox, infoy, infowd, infoht);
     fprintf(f, "rule_dialog=%d,%d,%d,%d\n", rulex, ruley, ruleexwd, ruleexht);
     fprintf(f, "show_algo_help=%d\n", showalgohelp ? 1 : 0);
-    
+
     fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
     fprintf(f, "allow_beep=%d\n", allowbeep ? 1 : 0);
     fprintf(f, "restore_view=%d\n", restoreview ? 1 : 0);
@@ -1481,9 +1485,9 @@ void SavePrefs()
     fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
     fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
     fprintf(f, "show_population=%d\n", showpopulation ? 1 : 0);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "init_algo=%s\n", GetAlgoName(currlayer->algtype));
     for (int i = 0; i < NumAlgos(); i++) {
         fputs("\n", f);
@@ -1507,18 +1511,18 @@ void SavePrefs()
         }
         fputs("\n", f);
     }
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "rule=%s\n", currlayer->algo->getrule());
     if (namedrules.GetCount() > 1) {
         size_t i;
         for (i=1; i<namedrules.GetCount(); i++)
             fprintf(f, "named_rule=%s\n", (const char*)namedrules[i].mb_str(wxConvLocal));
     }
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "show_tips=%d\n", showtips ? 1 : 0);
     fprintf(f, "show_tool=%d\n", showtool ? 1 : 0);
     fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
@@ -1535,9 +1539,9 @@ void SavePrefs()
     fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
     fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
     fprintf(f, "cell_borders=%d\n", cellborders ? 1 : 0);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "sync_views=%d\n", syncviews ? 1 : 0);
     fprintf(f, "sync_cursors=%d\n", synccursors ? 1 : 0);
     fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
@@ -1548,9 +1552,9 @@ void SavePrefs()
     fprintf(f, "ask_on_delete=%d\n", askondelete ? 1 : 0);
     fprintf(f, "ask_on_quit=%d\n", askonquit ? 1 : 0);
     fprintf(f, "warn_on_save=%d\n", warn_on_save ? 1 : 0);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
     fprintf(f, "smart_scale=%d\n", smartscale ? 1 : 0);
     fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
@@ -1558,9 +1562,9 @@ void SavePrefs()
     SaveColor(f, "border_rgb", borderrgb);
     SaveColor(f, "select_rgb", selectrgb);
     SaveColor(f, "paste_rgb", pastergb);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
     fprintf(f, "wheel_sensitivity=%d (1..%d)\n", wheelsens, MAX_SENSITIVITY);
     fprintf(f, "thumb_range=%d (2..%d)\n", thumbrange, MAX_THUMBRANGE);
@@ -1570,9 +1574,9 @@ void SavePrefs()
     fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
     fprintf(f, "open_cursor=%s\n", CursorToString(opencurs));
     fprintf(f, "save_xrle=%d\n", savexrle ? 1 : 0);
-    
+
     fputs("\n", f);
-    
+
     SaveRelPath(f, "open_save_dir", opensavedir);
     SaveRelPath(f, "overlay_dir", overlaydir);
     SaveRelPath(f, "run_dir", rundir);
@@ -1580,9 +1584,9 @@ void SavePrefs()
     SaveRelPath(f, "file_dir", filedir);
     SaveRelPath(f, "user_rules", userrules);
     SaveRelPath(f, "download_dir", downloaddir);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "text_editor=%s\n", (const char*)texteditor.mb_str(wxConvLocal));
     fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
     fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
@@ -1590,7 +1594,7 @@ void SavePrefs()
     fprintf(f, "show_files=%d\n", showfiles ? 1 : 0);
     fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
     fprintf(f, "max_scripts=%d (1..%d)\n", maxscripts, MAX_RECENT);
-    
+
     if (numpatterns > 0) {
         fputs("\n", f);
         int i;
@@ -1612,7 +1616,7 @@ void SavePrefs()
             }
         }
     }
-    
+
     if (numscripts > 0) {
         fputs("\n", f);
         int i;
@@ -1634,7 +1638,7 @@ void SavePrefs()
             }
         }
     }
-    
+
     fclose(f);
 }
 
@@ -1724,7 +1728,7 @@ void InitPaths()
     // on Linux we want datadir to be "~/.golly" rather than "~/.Golly"
     wxGetApp().SetAppName(_("golly"));
 #endif
-    
+
     // init datadir and create the directory if it doesn't exist;
     // the directory will probably be:
     // Win: C:\Documents and Settings\username\Application Data\Golly
@@ -1738,7 +1742,7 @@ void InitPaths()
         }
     }
     if (datadir.Last() != wxFILE_SEP_PATH) datadir += wxFILE_SEP_PATH;
-    
+
     // init tempdir to a temporary directory unique to this process
     tempdir = wxFileName::CreateTempFileName(wxT("golly_"));
     // on Linux the file is in /tmp;
@@ -1757,12 +1761,12 @@ void InitPaths()
         }
     }
     if (tempdir.Last() != wxFILE_SEP_PATH) tempdir += wxFILE_SEP_PATH;
-    
+
 #ifdef __WXGTK__
     // "Golly" is nicer for warning dialogs etc
     wxGetApp().SetAppName(_("Golly"));
 #endif
-    
+
     // init prefspath -- look in gollydir first, then in datadir
     prefspath = gollydir + PREFS_NAME;
     if ( !wxFileExists(prefspath) ) {
@@ -1793,29 +1797,29 @@ void GetPrefs()
 {
     int algoindex = -1;                 // unknown algorithm
     bool sawkeyaction = false;          // saw at least one key_action entry?
-    
+
     MAX_MAG = 5;                        // maximum cell size = 32x32
     // this might be better for high-res screens???!!!
     // MAX_MAG = 6;                        // maximum cell size = 64x64
-    
+
     InitPaths();                        // init datadir, tempdir and prefspath
     InitAlgorithms();                   // init algoinfo data
-    
+
     rulesdir = gollydir + wxT("Rules");
     rulesdir += wxFILE_SEP_PATH;
-    
+
     userrules = datadir + wxT("Rules");
     userrules += wxFILE_SEP_PATH;
-    
+
     downloaddir = datadir + wxT("Downloads");
     downloaddir += wxFILE_SEP_PATH;
-    
+
     rundir = gollydir + SCRIPT_DIR;
     opensavedir = gollydir;
     choosedir = gollydir;
     filedir = gollydir;
     overlaydir = datadir;
-    
+
     // init the text editor to something reasonable
 #ifdef __WXMSW__
     texteditor = wxT("Notepad");
@@ -1827,7 +1831,7 @@ void GetPrefs()
     // preferred editor the first time texteditor is used
     texteditor = wxEmptyString;
 #endif
-    
+
     // init names of Perl and Python libraries
 #ifdef __WXMSW__
     perllib = wxT("perl510.dll");
@@ -1840,26 +1844,26 @@ void GetPrefs()
     perllib = wxT(STRINGIFY(PERL_SHLIB));
     pythonlib = wxT(STRINGIFY(PYTHON_SHLIB));
 #endif
-    
+
     // create curs_* and initialize newcurs and opencurs
     CreateCursors();
-    
+
     CreateDefaultColors();
-    
+
     // initialize Open Recent submenu
     patternSubMenu = new wxMenu();
     patternSubMenu->AppendSeparator();
     patternSubMenu->Append(ID_CLEAR_MISSING_PATTERNS, _("Clear Missing Files"));
     patternSubMenu->Append(ID_CLEAR_ALL_PATTERNS, _("Clear All Files"));
-    
+
     // initialize Run Recent submenu
     scriptSubMenu = new wxMenu();
     scriptSubMenu->AppendSeparator();
     scriptSubMenu->Append(ID_CLEAR_MISSING_SCRIPTS, _("Clear Missing Files"));
     scriptSubMenu->Append(ID_CLEAR_ALL_SCRIPTS, _("Clear All Files"));
-    
+
     namedrules.Add(wxT("Life|B3/S23"));      // must be 1st entry
-    
+
     if ( !wxFileExists(prefspath) ) {
         AddDefaultRules();
         AddDefaultKeyActions();
@@ -1867,7 +1871,7 @@ void GetPrefs()
         CreateMissingFolders();
         return;
     }
-    
+
 #ifdef __WXMAC__
     // we need to convert prefspath to decomposed UTF8 so fopen will work
     FILE* f = fopen(prefspath.fn_str(), "r");
@@ -1878,112 +1882,112 @@ void GetPrefs()
         Warning(_("Could not read preferences file!"));
         return;
     }
-    
+
     linereader reader(f);
     char line[PREF_LINE_SIZE];
     char* keyword;
     char* value;
     while ( GetKeywordAndValue(reader, line, &keyword, &value) ) {
-        
+
         if (strcmp(keyword, "prefs_version") == 0) {
             sscanf(value, "%d", &currversion);
-            
+
         } else if (strcmp(keyword, "debug_level") == 0) {
             sscanf(value, "%d", &debuglevel);
-            
+
         } else if (strcmp(keyword, "key_action") == 0) {
             GetKeyAction(value);
             sawkeyaction = true;
-            
+
         } else if (strcmp(keyword, "main_window") == 0) {
             sscanf(value, "%d,%d,%d,%d", &mainx, &mainy, &mainwd, &mainht);
             // avoid very small window
             if (mainwd < minmainwd) mainwd = minmainwd;
             if (mainht < minmainht) mainht = minmainht;
             CheckVisibility(&mainx, &mainy, &mainwd, &mainht);
-            
+
         } else if (strcmp(keyword, "maximize") == 0) {
             maximize = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "help_window") == 0) {
             sscanf(value, "%d,%d,%d,%d", &helpx, &helpy, &helpwd, &helpht);
             if (helpwd < minhelpwd) helpwd = minhelpwd;
             if (helpht < minhelpht) helpht = minhelpht;
             CheckVisibility(&helpx, &helpy, &helpwd, &helpht);
-            
+
         } else if (strcmp(keyword, "help_font_size") == 0) {
             sscanf(value, "%d", &helpfontsize);
             if (helpfontsize < minfontsize) helpfontsize = minfontsize;
             if (helpfontsize > maxfontsize) helpfontsize = maxfontsize;
-            
+
         } else if (strcmp(keyword, "info_window") == 0) {
             sscanf(value, "%d,%d,%d,%d", &infox, &infoy, &infowd, &infoht);
             if (infowd < mininfowd) infowd = mininfowd;
             if (infoht < mininfoht) infoht = mininfoht;
             CheckVisibility(&infox, &infoy, &infowd, &infoht);
-            
+
         } else if (strcmp(keyword, "rule_dialog") == 0) {
             sscanf(value, "%d,%d,%d,%d", &rulex, &ruley, &ruleexwd, &ruleexht);
             if (ruleexwd < 100) ruleexwd = 100;
             if (ruleexht < 0) ruleexht = 0;
             CheckVisibility(&rulex, &ruley, &ruleexwd, &ruleexht);
-            
+
         } else if (strcmp(keyword, "show_algo_help") == 0) {
             showalgohelp = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "allow_undo") == 0) {
             allowundo = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "allow_beep") == 0) {
             allowbeep = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "restore_view") == 0) {
             restoreview = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "paste_location") == 0) {
             SetPasteLocation(value);
-            
+
         } else if (strcmp(keyword, "paste_mode") == 0) {
             SetPasteMode(value);
-            
+
         } else if (strcmp(keyword, "scroll_pencil") == 0) {
             scrollpencil = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "scroll_cross") == 0) {
             scrollcross = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "scroll_hand") == 0) {
             scrollhand = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "controls_pos") == 0) {
             sscanf(value, "%d", &controlspos);
             if (controlspos < 0) controlspos = 0;
             if (controlspos > 4) controlspos = 4;
-            
+
         } else if (strcmp(keyword, "can_change_rule") == 0) {
             sscanf(value, "%d", &canchangerule);
             if (canchangerule < 0) canchangerule = 0;
             if (canchangerule > 2) canchangerule = 2;
-            
+
         } else if (strcmp(keyword, "random_fill") == 0) {
             sscanf(value, "%d", &randomfill);
             if (randomfill < 1) randomfill = 1;
             if (randomfill > 100) randomfill = 100;
-            
+
         } else if (strcmp(keyword, "q_base_step") == 0) {     // deprecated
             int base;
             sscanf(value, "%d", &base);
             if (base < 2) base = 2;
             if (base > MAX_BASESTEP) base = MAX_BASESTEP;
             algoinfo[QLIFE_ALGO]->defbase = base;
-            
+
         } else if (strcmp(keyword, "h_base_step") == 0) {     // deprecated
             int base;
             sscanf(value, "%d", &base);
             if (base < 2) base = 2;
             if (base > MAX_BASESTEP) base = MAX_BASESTEP;
             algoinfo[HLIFE_ALGO]->defbase = base;
-            
+
         } else if (strcmp(keyword, "algorithm") == 0) {
             if (strcmp(value, "RuleTable") == 0) {
                 // use deprecated RuleTable settings for RuleLoader
@@ -1997,7 +2001,7 @@ void GetPrefs()
                     break;
                 }
             }
-            
+
         } else if (strcmp(keyword, "max_mem") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos()) {
                 int maxmem;
@@ -2006,7 +2010,7 @@ void GetPrefs()
                 if (maxmem > MAX_MEM_MB) maxmem = MAX_MEM_MB;
                 algoinfo[algoindex]->algomem = maxmem;
             }
-            
+
         } else if (strcmp(keyword, "base_step") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos()) {
                 int base;
@@ -2015,23 +2019,23 @@ void GetPrefs()
                 if (base > MAX_BASESTEP) base = MAX_BASESTEP;
                 algoinfo[algoindex]->defbase = base;
             }
-            
+
         } else if (strcmp(keyword, "status_rgb") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 GetColor(value, &algoinfo[algoindex]->statusrgb);
-            
+
         } else if (strcmp(keyword, "from_rgb") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 GetColor(value, &algoinfo[algoindex]->fromrgb);
-            
+
         } else if (strcmp(keyword, "to_rgb") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 GetColor(value, &algoinfo[algoindex]->torgb);
-            
+
         } else if (strcmp(keyword, "use_gradient") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 algoinfo[algoindex]->gradient = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "colors") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos()) {
                 int state, r, g, b;
@@ -2051,38 +2055,38 @@ void GetPrefs()
                     value++;
                 }
             }
-            
+
         } else if (strcmp(keyword, "min_delay") == 0) {
             sscanf(value, "%d", &mindelay);
             if (mindelay < 0) mindelay = 0;
             if (mindelay > MAX_DELAY) mindelay = MAX_DELAY;
-            
+
         } else if (strcmp(keyword, "max_delay") == 0) {
             sscanf(value, "%d", &maxdelay);
             if (maxdelay < 0) maxdelay = 0;
             if (maxdelay > MAX_DELAY) maxdelay = MAX_DELAY;
-            
+
         } else if (strcmp(keyword, "auto_fit") == 0) {
             initautofit = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "hashing") == 0) {            // deprecated
             initalgo = value[0] == '1' ? HLIFE_ALGO : QLIFE_ALGO;
-            
+
         } else if (strcmp(keyword, "init_algo") == 0) {
             value = ReplaceDeprecatedAlgo(value);
             int i = staticAlgoInfo::nameToIndex(value);
             if (i >= 0 && i < NumAlgos())
                 initalgo = i;
-            
+
         } else if (strcmp(keyword, "hyperspeed") == 0) {
             inithyperspeed = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "hash_info") == 0) {
             initshowhashinfo = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_population") == 0) {
             showpopulation = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "max_hash_mem") == 0) {       // deprecated
             int maxmem;
             sscanf(value, "%d", &maxmem);
@@ -2091,10 +2095,10 @@ void GetPrefs()
             // change all except QLIFE_ALGO
             for (int i = 0; i < NumAlgos(); i++)
                 if (i != QLIFE_ALGO) algoinfo[i]->algomem = maxmem;
-            
+
         } else if (strcmp(keyword, "rule") == 0) {
             strncpy(initrule, value, sizeof(initrule));
-            
+
         } else if (strcmp(keyword, "named_rule") == 0) {
             // value must have format "name|rule" with name and rule non-empty
             wxString str(value,wxConvLocal);
@@ -2114,100 +2118,100 @@ void GetPrefs()
                     namedrules.Add(str);
                 }
             }
-            
+
         } else if (strcmp(keyword, "show_tips") == 0) {
             showtips = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_tool") == 0) {
             showtool = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_layer") == 0) {
             showlayer = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_edit") == 0) {
             showedit = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_states") == 0) {
             showallstates = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_status") == 0) {
             showstatus = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_exact") == 0) {
             showexact = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_scrollbars") == 0) {
             showscrollbars = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_timeline") == 0) {
             showtimeline = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "grid_lines") == 0) {
             showgridlines = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "overlay") == 0) {
             showoverlay = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "min_grid_mag") == 0) {
             sscanf(value, "%d", &mingridmag);
             if (mingridmag < 2) mingridmag = 2;
             if (mingridmag > MAX_MAG) mingridmag = MAX_MAG;
-            
+
         } else if (strcmp(keyword, "bold_spacing") == 0) {
             sscanf(value, "%d", &boldspacing);
             if (boldspacing < 2) boldspacing = 2;
             if (boldspacing > MAX_SPACING) boldspacing = MAX_SPACING;
-            
+
         } else if (strcmp(keyword, "show_bold_lines") == 0) {
             showboldlines = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "math_coords") == 0) {
             mathcoords = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "cell_borders") == 0) {
             cellborders = value[0] == '1';
 
         } else if (strcmp(keyword, "sync_views") == 0) {
             syncviews = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "sync_cursors") == 0) {
             synccursors = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "stack_layers") == 0) {
             stacklayers = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "tile_layers") == 0) {
             tilelayers = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "tile_border") == 0) {
             sscanf(value, "%d", &tileborder);
             if (tileborder < 1) tileborder = 1;
             if (tileborder > 10) tileborder = 10;
-            
+
         } else if (strcmp(keyword, "ask_on_new") == 0)    { askonnew = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_load") == 0)   { askonload = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_delete") == 0) { askondelete = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_quit") == 0)   { askonquit = value[0] == '1';
         } else if (strcmp(keyword, "warn_on_save") == 0)  { warn_on_save = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_icons") == 0) {
             showicons = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "smart_scale") == 0) {
             smartscale = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "swap_colors") == 0) {
             swapcolors = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "opacity") == 0) {
             sscanf(value, "%d", &opacity);
             if (opacity < 1) opacity = 1;
             if (opacity > 100) opacity = 100;
-            
+
         } else if (strcmp(keyword, "border_rgb") == 0) { GetColor(value, borderrgb);
         } else if (strcmp(keyword, "select_rgb") == 0) { GetColor(value, selectrgb);
         } else if (strcmp(keyword, "paste_rgb") == 0)  { GetColor(value, pastergb);
-            
+
         } else if (strcmp(keyword, "dead_rgb") == 0) {
             // use deprecated value to set color of state 0 in all algos
             // (only done once because dead_rgb is no longer saved in prefs file)
@@ -2218,48 +2222,48 @@ void GetPrefs()
                 algoinfo[i]->algog[0] = color.Green();
                 algoinfo[i]->algob[0] = color.Blue();
             }
-            
+
         } else if (strcmp(keyword, "qlife_rgb") == 0) {       // deprecated
             GetColor(value, &algoinfo[QLIFE_ALGO]->statusrgb);
-            
+
         } else if (strcmp(keyword, "hlife_rgb") == 0) {       // deprecated
             GetColor(value, &algoinfo[HLIFE_ALGO]->statusrgb);
-            
+
         } else if (strcmp(keyword, "mouse_wheel_mode") == 0) {
             sscanf(value, "%d", &mousewheelmode);
             if (mousewheelmode < 0) mousewheelmode = 0;
             if (mousewheelmode > 2) mousewheelmode = 2;
-            
+
         } else if (strcmp(keyword, "wheel_sensitivity") == 0) {
             sscanf(value, "%d", &wheelsens);
             if (wheelsens < 1) wheelsens = 1;
             if (wheelsens > MAX_SENSITIVITY) wheelsens = MAX_SENSITIVITY;
-            
+
         } else if (strcmp(keyword, "thumb_range") == 0) {
             sscanf(value, "%d", &thumbrange);
             if (thumbrange < 2) thumbrange = 2;
             if (thumbrange > MAX_THUMBRANGE) thumbrange = MAX_THUMBRANGE;
-            
+
         } else if (strcmp(keyword, "new_mag") == 0) {
             sscanf(value, "%d", &newmag);
             if (newmag < 0) newmag = 0;
             if (newmag > MAX_MAG) newmag = MAX_MAG;
-            
+
         } else if (strcmp(keyword, "new_remove_sel") == 0) {
             newremovesel = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "new_cursor") == 0) {
             newcurs = StringToCursor(value);
-            
+
         } else if (strcmp(keyword, "open_remove_sel") == 0) {
             openremovesel = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "open_cursor") == 0) {
             opencurs = StringToCursor(value);
-            
+
         } else if (strcmp(keyword, "save_xrle") == 0) {
             savexrle = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "open_save_dir") == 0) { GetRelPath(value, opensavedir);
         } else if (strcmp(keyword, "overlay_dir") == 0)   { GetRelPath(value, overlaydir);
         } else if (strcmp(keyword, "run_dir") == 0)       { GetRelPath(value, rundir, SCRIPT_DIR);
@@ -2268,37 +2272,37 @@ void GetPrefs()
         } else if (strcmp(keyword, "pattern_dir") == 0)   { GetRelPath(value, filedir);     // deprecated
         } else if (strcmp(keyword, "user_rules") == 0)    { GetRelPath(value, userrules);
         } else if (strcmp(keyword, "download_dir") == 0)  { GetRelPath(value, downloaddir);
-            
+
         } else if (strcmp(keyword, "text_editor") == 0) {
             texteditor = wxString(value,wxConvLocal);
-            
+
         } else if (strcmp(keyword, "perl_lib") == 0) {
             perllib = wxString(value,wxConvLocal);
-            
+
         } else if (strcmp(keyword, "python_lib") == 0) {
             pythonlib = wxString(value,wxConvLocal);
-            
+
         } else if (strcmp(keyword, "dir_width") == 0) {
             sscanf(value, "%d", &dirwinwd);
             if (dirwinwd < MIN_DIRWD) dirwinwd = MIN_DIRWD;
-            
+
         } else if (strcmp(keyword, "show_files") == 0 ||
                    strcmp(keyword, "show_patterns") == 0) {     // deprecated
             showfiles = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_scripts") == 0) {
             // deprecated
-            
+
         } else if (strcmp(keyword, "max_patterns") == 0) {
             sscanf(value, "%d", &maxpatterns);
             if (maxpatterns < 1) maxpatterns = 1;
             if (maxpatterns > MAX_RECENT) maxpatterns = MAX_RECENT;
-            
+
         } else if (strcmp(keyword, "max_scripts") == 0) {
             sscanf(value, "%d", &maxscripts);
             if (maxscripts < 1) maxscripts = 1;
             if (maxscripts > MAX_RECENT) maxscripts = MAX_RECENT;
-            
+
         } else if (strcmp(keyword, "recent_pattern") == 0) {
             // append path to Open Recent submenu
             if (numpatterns < maxpatterns && value[0]) {
@@ -2312,7 +2316,7 @@ void GetPrefs()
                 path.Replace(wxT("&"), wxT("&&"));
                 patternSubMenu->Insert(numpatterns - 1, ID_OPEN_RECENT + numpatterns, path);
             }
-            
+
         } else if (strcmp(keyword, "recent_script") == 0) {
             // append path to Run Recent submenu
             if (numscripts < maxscripts && value[0]) {
@@ -2328,24 +2332,24 @@ void GetPrefs()
             }
         }
     }
-    
+
     reader.close();
-    
+
     // colors for status brushes may have changed
     UpdateStatusBrushes();
-    
+
     // stacklayers and tilelayers must not both be true
     if (stacklayers && tilelayers) tilelayers = false;
-    
+
     // if no named_rule entries then add default names
     if (namedrules.GetCount() == 1) AddDefaultRules();
-    
+
     // if no key_action entries then use default shortcuts
     if (!sawkeyaction) AddDefaultKeyActions();
-    
+
     // initialize accelerator array
     UpdateAcceleratorStrings();
-    
+
     // create some important directories if they don't exist
     CreateMissingFolders();
 }
@@ -2370,21 +2374,21 @@ class CellBoxes : public wxPanel
 public:
     CellBoxes(wxWindow* parent, wxWindowID id, const wxPoint& pos,
               const wxSize& size) : wxPanel(parent, id, pos, size) { }
-    
+
     wxStaticText* statebox;    // for showing state of cell under cursor
     wxStaticText* rgbbox;      // for showing color of cell under cursor
-    
+
 private:
     void GetGradientColor(int state, unsigned char* r,
                           unsigned char* g,
                           unsigned char* b);
-    
+
     void OnEraseBackground(wxEraseEvent& event);
     void OnPaint(wxPaintEvent& event);
     void OnMouseDown(wxMouseEvent& event);
     void OnMouseMotion(wxMouseEvent& event);
     void OnMouseExit(wxMouseEvent& event);
-    
+
     DECLARE_EVENT_TABLE()
 };
 
@@ -2443,16 +2447,16 @@ void CellBoxes::GetGradientColor(int state, unsigned char* r,
 void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
     wxPaintDC dc(this);
-    
+
     dc.SetPen(*wxBLACK_PEN);
-    
+
 #ifdef __WXMSW__
     // we have to use theme background color on Windows
     wxBrush bgbrush(GetBackgroundColour());
 #else
     wxBrush bgbrush(*wxTRANSPARENT_BRUSH);
 #endif
-    
+
     // draw cell boxes
     wxRect r = wxRect(0, 0, CELLSIZE+1, CELLSIZE+1);
     int col = 0;
@@ -2522,14 +2526,14 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                 dc.DrawRectangle(r);
                 dc.SetBrush(wxNullBrush);
             }
-            
+
         } else {
             // state >= maxstates
             dc.SetBrush(bgbrush);
             dc.DrawRectangle(r);
             dc.SetBrush(wxNullBrush);
         }
-        
+
         col++;
         if (col < NUMCOLS) {
             r.x += CELLSIZE;
@@ -2539,7 +2543,7 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
             col = 0;
         }
     }
-    
+
     dc.SetPen(wxNullPen);
 }
 
@@ -2561,7 +2565,7 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
             wxColourData data;
             data.SetChooseFull(true);    // for Windows
             data.SetColour(rgb);
-            
+
             wxColourDialog dialog(this, &data);
             if ( dialog.ShowModal() == wxID_OK ) {
                 wxColourData retData = dialog.GetColourData();
@@ -2575,8 +2579,8 @@ void CellBoxes::OnMouseDown(wxMouseEvent& event)
                 }
             }
         }
-    } 
-    
+    }
+
     event.Skip();
 }
 
@@ -2734,7 +2738,7 @@ class PrefsDialog : public wxPropertySheetDialog
 public:
     PrefsDialog(wxWindow* parent, const wxString& page);
     ~PrefsDialog() { delete onetimer; }
-    
+
     wxPanel* CreateFilePrefs(wxWindow* parent);
     wxPanel* CreateEditPrefs(wxWindow* parent);
     wxPanel* CreateControlPrefs(wxWindow* parent);
@@ -2742,15 +2746,15 @@ public:
     wxPanel* CreateLayerPrefs(wxWindow* parent);
     wxPanel* CreateColorPrefs(wxWindow* parent);
     wxPanel* CreateKeyboardPrefs(wxWindow* parent);
-    
+
     virtual bool TransferDataFromWindow();    // called when user hits OK
-    
+
 #ifdef __WXMAC__
     void OnSpinCtrlChar(wxKeyEvent& event);
 #endif
-    
+
     static void UpdateChosenFile();
-    
+
 private:
     bool GetCheckVal(long id);
     int GetChoiceVal(long id);
@@ -2763,7 +2767,7 @@ private:
     void ChangeButtonColor(int id, wxColor& rgb);
     void UpdateButtonColor(int id, wxColor& rgb);
     void UpdateScrollBar();
-    
+
     void OnCheckBoxClicked(wxCommandEvent& event);
     void OnColorButton(wxCommandEvent& event);
     void OnPageChanging(wxNotebookEvent& event);
@@ -2772,26 +2776,26 @@ private:
     void OnButton(wxCommandEvent& event);
     void OnScroll(wxScrollEvent& event);
     void OnOneTimer(wxTimerEvent& event);
-    
+
     bool ignore_page_event;             // used to prevent currpage being changed
     int algopos1;                       // selected algorithm in PREF_ALGO_MENU1
-    
+
     int new_algomem[MAX_ALGOS];         // new max mem values for each algorithm
     int new_defbase[MAX_ALGOS];         // new default base step values for each algorithm
-    
+
     CellBoxes* cellboxes;               // for displaying cell colors/icons
     wxCheckBox* gradcheck;              // use gradient?
     wxCheckBox* iconcheck;              // show icons?
     wxBitmapButton* frombutt;           // button to set gradient's start color
     wxBitmapButton* tobutt;             // button to set gradient's end color
     wxScrollBar* scrollbar;             // for changing number of gradient states
-    
+
     wxString neweditor;                 // new text editor
     wxString newdownloaddir;            // new directory for downloaded files
     wxString newuserrules;              // new directory for user's rules
-    
+
     wxTimer* onetimer;                  // one shot timer (see OnOneTimer)
-    
+
     DECLARE_EVENT_TABLE()
 };
 
@@ -2817,15 +2821,15 @@ public:
                  const wxPoint& pos, const wxSize& size, int style = 0)
     : wxTextCtrl(parent, id, value, pos, size, style) {}
     ~KeyComboCtrl() {}
-    
+
     // handlers to intercept keyboard events
     void OnKeyDown(wxKeyEvent& event);
     void OnChar(wxKeyEvent& event);
-    
+
 private:
     int realkey;            // key code set by OnKeyDown
     wxString debugkey;      // display debug info for OnKeyDown and OnChar
-    
+
     DECLARE_EVENT_TABLE()
 };
 
@@ -2840,19 +2844,19 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
 {
     realkey = event.GetKeyCode();
     int mods = event.GetModifiers();
-    
+
     if (debuglevel == 1) {
         // set debugkey now but don't show it until OnChar
         debugkey = wxString::Format(_("OnKeyDown: key=%d (%c) mods=%d"),
                                     realkey, realkey < 128 ? wxChar(realkey) : wxChar('?'), mods);
     }
-    
+
     if (realkey == WXK_ESCAPE) {
         // escape key is reserved for other uses
         Beep();
         return;
     }
-    
+
 #ifdef __WXOSX__
     // pass arrow key or function key or delete key directly to OnChar
     if ( (realkey >=  WXK_LEFT && realkey <= WXK_DOWN) ||
@@ -2861,13 +2865,13 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
         return;
     }
 #endif
-    
+
     // WARNING: logic must match that in PatternView::OnKeyDown
     if (mods == wxMOD_NONE || realkey > 127) {
         // tell OnChar handler to ignore realkey
         realkey = 0;
     }
-    
+
 #ifdef __WXOSX__
     // pass ctrl/cmd-key combos directly to OnChar
     if (realkey > 0 && ((mods & wxMOD_CONTROL) || (mods & wxMOD_CMD))) {
@@ -2875,7 +2879,7 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
         return;
     }
 #endif
-    
+
 #ifdef __WXMAC__
     // prevent ctrl-[ cancelling dialog (it translates to escape)
     if (realkey == '[' && (mods & wxMOD_CONTROL)) {
@@ -2889,7 +2893,7 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
         return;
     }
 #endif
-    
+
 #ifdef __WXMSW__
     // on Windows, OnChar is NOT called for some ctrl-key combos like
     // ctrl-0..9 or ctrl-alt-key, so we call OnChar ourselves
@@ -2898,7 +2902,7 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
         return;
     }
 #endif
-    
+
 /* this didn't work!!! -- OnKeyDown is not getting called
 #ifdef __WXGTK__
     // on Linux we need to avoid alt-C/O selecting Cancel/OK button
@@ -2908,7 +2912,7 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
     }
 #endif
 */
-    
+
     event.Skip();
 }
 
@@ -2921,16 +2925,16 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
     // avoid infinite recursion due to ChangeValue call below
     if (inonchar) { event.Skip(); return; }
     inonchar = true;
-    
+
     int key = event.GetKeyCode();
     int mods = event.GetModifiers();
-    
+
     if (debuglevel == 1) {
         debugkey += wxString::Format(_("\nOnChar: key=%d (%c) mods=%d"),
                                      key, key < 128 ? wxChar(key) : wxChar('?'), mods);
         Warning(debugkey);
     }
-    
+
     // WARNING: logic must match that in PatternView::OnChar
     if (realkey > 0 && mods != wxMOD_NONE) {
 #ifdef __WXGTK__
@@ -2955,7 +2959,7 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
             if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z
         }
     }
-    
+
     // convert wx key and mods to our internal key code and modifiers
     // and, if they are valid, display the key combo and update the action
     if ( ConvertKeyAndModifiers(key, mods, &currkey, &currmods) ) {
@@ -2980,10 +2984,10 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
         // unsupported key combo
         Beep();
     }
-    
+
     // do NOT pass event on to next handler
     // event.Skip();
-    
+
     inonchar = false;
 }
 
@@ -3012,11 +3016,11 @@ public:
 void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
 {
     int key = event.GetKeyCode();
-    
+
     if (event.CmdDown()) {
         // allow handling of cmd-x/v/etc
         event.Skip();
-        
+
     } else if ( key == WXK_TAB ) {
         // note that FindFocus() returns pointer to wxTextCtrl window in wxSpinCtrl
         if ( currpage == FILE_PAGE ) {
@@ -3079,7 +3083,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
         } else if ( currpage == KEYBOARD_PAGE ) {
             // no spin ctrls on this page
         }
-        
+
     } else if ( key >= ' ' && key <= '~' ) {
         if ( key >= '0' && key <= '9' ) {
             // allow digits
@@ -3088,7 +3092,7 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
             // disallow any other displayable ascii char
             Beep();
         }
-        
+
     } else {
         event.Skip();
     }
@@ -3106,12 +3110,12 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
 {
     // not using validators so no need for this:
     // SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    
+
     Create(parent, wxID_ANY, _("Preferences"));
     CreateButtons(wxOK | wxCANCEL);
-    
+
     wxBookCtrlBase* notebook = GetBookCtrl();
-    
+
     wxPanel* filePrefs = CreateFilePrefs(notebook);
     wxPanel* editPrefs = CreateEditPrefs(notebook);
     wxPanel* ctrlPrefs = CreateControlPrefs(notebook);
@@ -3119,11 +3123,11 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
     wxPanel* layerPrefs = CreateLayerPrefs(notebook);
     wxPanel* colorPrefs = CreateColorPrefs(notebook);
     wxPanel* keyboardPrefs = CreateKeyboardPrefs(notebook);
-    
+
     // AddPage and SetSelection cause OnPageChanging and OnPageChanged to be called
     // so we use a flag to prevent currpage being changed (and unnecessary validation)
     ignore_page_event = true;
-    
+
     notebook->AddPage(filePrefs, _("File"));
     notebook->AddPage(editPrefs, _("Edit"));
     notebook->AddPage(ctrlPrefs, _("Control"));
@@ -3131,7 +3135,7 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
     notebook->AddPage(layerPrefs, _("Layer"));
     notebook->AddPage(colorPrefs, _("Color"));
     notebook->AddPage(keyboardPrefs, _("Keyboard"));
-    
+
     if (!page.IsEmpty()) {
         if (page == wxT("file"))            currpage = FILE_PAGE;
         else if (page == wxT("edit"))       currpage = EDIT_PAGE;
@@ -3141,14 +3145,14 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
         else if (page == wxT("color"))      currpage = COLOR_PAGE;
         else if (page == wxT("keyboard"))   currpage = KEYBOARD_PAGE;
     }
-    
+
     // show the desired page
     notebook->SetSelection(currpage);
-    
+
     ignore_page_event = false;
-    
+
     LayoutDialog();
-    
+
     // ensure top text box has focus and text is selected by creating
     // a one-shot timer which will call OnOneTimer after short delay
     onetimer = new wxTimer(this, wxID_ANY);
@@ -3160,26 +3164,26 @@ PrefsDialog::PrefsDialog(wxWindow* parent, const wxString& page)
 void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
 {
     MySpinCtrl* s1 = NULL;
-    
+
     if (currpage == FILE_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_PATTERNS);
-        
+
     } else if (currpage == EDIT_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_RANDOM_FILL);
-        
+
     } else if (currpage == CONTROL_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_MEM);
-        
+
     } else if (currpage == VIEW_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_BOLD_SPACING : PREF_SENSITIVITY);
-        
+
     } else if (currpage == LAYER_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_OPACITY);
-        
+
     } else if (currpage == COLOR_PAGE) {
         // no spin ctrls on this page
         return;
-        
+
     } else if (currpage == KEYBOARD_PAGE) {
         KeyComboCtrl* k = (KeyComboCtrl*) FindWindowById(PREF_KEYCOMBO);
         if (k) {
@@ -3188,7 +3192,7 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
         }
         return;
     }
-    
+
     if (s1) {
         s1->SetFocus();
         s1->SetSelection(ALL_TEXT);
@@ -3247,7 +3251,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     wxArrayString newcursorChoices;
     newcursorChoices.Add(wxT("Draw"));
     newcursorChoices.Add(wxT("Pick"));
@@ -3256,9 +3260,9 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     newcursorChoices.Add(wxT("Zoom In"));
     newcursorChoices.Add(wxT("Zoom Out"));
     newcursorChoices.Add(wxT("No Change"));
-    
+
     wxArrayString opencursorChoices = newcursorChoices;
-    
+
     wxArrayString newscaleChoices;
     newscaleChoices.Add(wxT("1:1"));
     newscaleChoices.Add(wxT("1:2"));
@@ -3266,117 +3270,117 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     newscaleChoices.Add(wxT("1:8"));
     newscaleChoices.Add(wxT("1:16"));
     newscaleChoices.Add(wxT("1:32"));
-    
+
     // on new pattern
-    
+
     wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("On creating a new pattern:"));
     wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
-    
+
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL, _("Remove selection"));
     wxBoxSizer* check1box = new wxBoxSizer(wxHORIZONTAL);
     check1box->Add(check1, 0, wxALL, 0);
-    
+
     wxBoxSizer* setcurs1 = new wxBoxSizer(wxHORIZONTAL);
     setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
-    
+
     wxBoxSizer* setscalebox = new wxBoxSizer(wxHORIZONTAL);
     setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
-    
+
     wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
                                      wxDefaultPosition, wxDefaultSize,
                                      newcursorChoices);
-    
+
     wxChoice* choice1 = new wxChoice(panel, PREF_NEW_SCALE,
                                      wxDefaultPosition, wxDefaultSize,
                                      newscaleChoices);
-    
+
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
     hbox1->Add(check1box, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox1->AddStretchSpacer(20);
     hbox1->Add(setcurs1, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox1->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
     hbox1->AddStretchSpacer(20);
-    
+
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
     hbox2->Add(setscalebox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox2->Add(choice1, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-    
+
     ssizer1->AddSpacer(SBTOPGAP);
     ssizer1->Add(hbox1, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     ssizer1->AddSpacer(CVGAP);
     ssizer1->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
     ssizer1->AddSpacer(SBBOTGAP);
-    
+
     // on opening pattern
-    
+
     wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY, _("On opening a pattern file or the clipboard:"));
     wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
-    
+
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL, _("Remove selection"));
     wxBoxSizer* check2box = new wxBoxSizer(wxHORIZONTAL);
     check2box->Add(check2, 0, wxALL, 0);
-    
+
     wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
                                      wxDefaultPosition, wxDefaultSize,
                                      opencursorChoices);
-    
+
     wxBoxSizer* setcurs2 = new wxBoxSizer(wxHORIZONTAL);
     setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
-    
+
     wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
     hbox4->Add(check2box, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox4->AddStretchSpacer(20);
     hbox4->Add(setcurs2, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
     hbox4->AddStretchSpacer(20);
-    
+
     ssizer2->AddSpacer(SBTOPGAP);
     ssizer2->Add(hbox4, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     ssizer2->AddSpacer(SBBOTGAP);
-    
+
     // max_patterns and max_scripts
-    
+
     wxBoxSizer* maxbox = new wxBoxSizer(wxHORIZONTAL);
     maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent patterns:")),
                 0, wxALL, 0);
-    
+
     wxBoxSizer* minbox = new wxBoxSizer(wxHORIZONTAL);
     minbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum number of recent scripts:")),
                 0, wxALL, 0);
-    
+
     // align spin controls by setting minbox same width as maxbox
     minbox->SetMinSize( maxbox->GetMinSize() );
-    
+
     wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_MAX_PATTERNS, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
-    
+
     wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_MAX_SCRIPTS, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
-    
+
     wxBoxSizer* hpbox = new wxBoxSizer(wxHORIZONTAL);
     hpbox->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hpbox->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     wxBoxSizer* hsbox = new wxBoxSizer(wxHORIZONTAL);
     hsbox->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hsbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     wxButton* editorbutt = new wxButton(panel, PREF_EDITOR_BUTT, _("Text Editor..."));
     wxStaticText* editorbox = new wxStaticText(panel, PREF_EDITOR_BOX, texteditor);
     neweditor = texteditor;
-    
+
     wxButton* downloadbutt = new wxButton(panel, PREF_DOWNLOAD_BUTT, _("Downloads..."));
     wxStaticText* downloadbox = new wxStaticText(panel, PREF_DOWNLOAD_BOX, downloaddir);
     newdownloaddir = downloaddir;
-    
+
     wxBoxSizer* hebox = new wxBoxSizer(wxHORIZONTAL);
     hebox->Add(editorbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
     hebox->Add(editorbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
-    
+
     wxBoxSizer* hdbox = new wxBoxSizer(wxHORIZONTAL);
     hdbox->Add(downloadbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
     hdbox->Add(downloadbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
-    
+
     vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
     vbox->AddSpacer(10);
     vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
@@ -3389,7 +3393,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     vbox->AddSpacer(10);
     vbox->Add(hdbox, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(5);
-    
+
     // init control values
     check1->SetValue(newremovesel);
     check2->SetValue(openremovesel);
@@ -3402,7 +3406,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     spin2->SetRange(1, MAX_RECENT); spin2->SetValue(maxscripts);
     spin1->SetFocus();
     spin1->SetSelection(ALL_TEXT);
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -3416,28 +3420,28 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     // random_fill
-    
+
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
     hbox1->Add(new wxStaticText(panel, wxID_STATIC, _("Random fill percentage:")),
                0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_RANDOM_FILL, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
     hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     // can_change_rule
-    
+
     wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("When pasting a clipboard pattern:"));
     wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
-    
+
     wxRadioButton* radio0 = new wxRadioButton(panel, PREF_PASTE_0, _("Never change rule"),
                                               wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
     wxRadioButton* radio1 = new wxRadioButton(panel, PREF_PASTE_1,
                                               _("Only change rule if one is specified and the universe is empty"));
     wxRadioButton* radio2 = new wxRadioButton(panel, PREF_PASTE_2,
                                               _("Always change rule if one is specified"));
-    
+
     ssizer1->AddSpacer(SBTOPGAP);
     ssizer1->Add(radio0, 0, wxLEFT | wxRIGHT, LRGAP);
     ssizer1->AddSpacer(CH2VGAP);
@@ -3445,20 +3449,20 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     ssizer1->AddSpacer(CH2VGAP);
     ssizer1->Add(radio2, 0, wxLEFT | wxRIGHT, LRGAP);
     ssizer1->AddSpacer(SBBOTGAP);
-    
+
     // scroll_pencil, scroll_cross, scroll_hand
-    
+
     wxStaticBox* sbox2 = new wxStaticBox(panel, wxID_ANY,
                                          _("If the cursor is dragged outside the viewport:"));
     wxBoxSizer* ssizer2 = new wxStaticBoxSizer(sbox2, wxVERTICAL);
-    
+
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_SCROLL_PENCIL,
                                         _("Scroll when drawing cells (using the pencil cursor)"));
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_SCROLL_CROSS,
                                         _("Scroll when selecting cells (using the cross cursor)"));
     wxCheckBox* check3 = new wxCheckBox(panel, PREF_SCROLL_HAND,
                                         _("Scroll when moving view (using the hand cursor)"));
-    
+
     ssizer2->AddSpacer(SBTOPGAP);
     ssizer2->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
     ssizer2->AddSpacer(CH2VGAP);
@@ -3466,11 +3470,11 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     ssizer2->AddSpacer(CH2VGAP);
     ssizer2->Add(check3, 0, wxLEFT | wxRIGHT, LRGAP);
     ssizer2->AddSpacer(SBBOTGAP);
-    
+
     // allow_beep
-    
+
     wxCheckBox* check4 = new wxCheckBox(panel, PREF_BEEP, _("Allow beep sound"));
-    
+
     vbox->AddSpacer(SVGAP);
     vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(GROUPGAP);
@@ -3479,7 +3483,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(check4, 0, wxLEFT | wxRIGHT, LRGAP);
-    
+
     // init control values
     spin1->SetRange(1, 100);
     spin1->SetValue(randomfill);
@@ -3492,7 +3496,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     check2->SetValue(scrollcross);
     check3->SetValue(scrollhand);
     check4->SetValue(allowbeep);
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -3506,9 +3510,9 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     // create a choice menu to select algo
-    
+
     wxArrayString algoChoices;
     for (int i = 0; i < NumAlgos(); i++) {
         algoChoices.Add( wxString(GetAlgoName(i), wxConvLocal) );
@@ -3516,58 +3520,58 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     wxChoice* algomenu = new wxChoice(panel, PREF_ALGO_MENU1,
                                       wxDefaultPosition, wxDefaultSize, algoChoices);
     algopos1 = currlayer->algtype;
-    
+
     wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
     longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Settings for this algorithm:")),
                  0, wxALL, 0);
-    
+
     wxBoxSizer* menubox = new wxBoxSizer(wxHORIZONTAL);
     menubox->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     menubox->Add(algomenu, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-    
+
     // maximum memory and base step
-    
+
     wxBoxSizer* membox = new wxBoxSizer(wxHORIZONTAL);
     membox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum memory:")), 0, wxALL, 0);
-    
+
     wxBoxSizer* basebox = new wxBoxSizer(wxHORIZONTAL);
     basebox->Add(new wxStaticText(panel, wxID_STATIC, _("Default base step:")), 0, wxALL, 0);
-    
+
     // align spin controls
     membox->SetMinSize( longbox->GetMinSize() );
     basebox->SetMinSize( longbox->GetMinSize() );
-    
+
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
     hbox1->Add(membox, 0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_MAX_MEM, wxEmptyString,
                                        wxDefaultPosition, wxSize(80, wxDefaultCoord));
     hbox1->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     wxString memnote = algoinfo[algopos1]->canhash ? HASH_MEM_NOTE : NONHASH_MEM_NOTE;
     hbox1->Add(new wxStaticText(panel, PREF_MEM_NOTE, memnote),
                0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
     hbox2->Add(basebox, 0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_BASE_STEP, wxEmptyString,
                                        wxDefaultPosition, wxSize(80, wxDefaultCoord));
     hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     wxString stepnote = algoinfo[algopos1]->canhash ? HASH_STEP_NOTE : NONHASH_STEP_NOTE;
     hbox2->Add(new wxStaticText(panel, PREF_STEP_NOTE, stepnote),
                0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     // min_delay and max_delay
-    
+
     wxBoxSizer* minbox = new wxBoxSizer(wxHORIZONTAL);
     minbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum delay:")), 0, wxALL, 0);
-    
+
     wxBoxSizer* maxbox = new wxBoxSizer(wxHORIZONTAL);
     maxbox->Add(new wxStaticText(panel, wxID_STATIC, _("Maximum delay:")), 0, wxALL, 0);
-    
+
     // align spin controls
     minbox->SetMinSize( maxbox->GetMinSize() );
-    
+
     wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
     hbox3->Add(minbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin3 = new MySpinCtrl(panel, PREF_MIN_DELAY, wxEmptyString,
@@ -3575,7 +3579,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     hbox3->Add(spin3, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
     hbox3->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
                0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
     hbox4->Add(maxbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin4 = new MySpinCtrl(panel, PREF_MAX_DELAY, wxEmptyString,
@@ -3583,21 +3587,21 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     hbox4->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
     hbox4->Add(new wxStaticText(panel, wxID_STATIC, _("millisecs")),
                0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     // user_rules
-    
+
     wxButton* rulesbutt = new wxButton(panel, PREF_RULES_BUTT, _("Your Rules..."));
     wxStaticText* rulesbox = new wxStaticText(panel, PREF_RULES_BOX, userrules);
     newuserrules = userrules;
-    
+
     wxBoxSizer* hrbox = new wxBoxSizer(wxHORIZONTAL);
     hrbox->Add(rulesbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
     hrbox->Add(rulesbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
-    
+
     wxString note = _("Golly looks for .rule files in the above folder before looking in the Rules folder.");
     wxBoxSizer* notebox = new wxBoxSizer(wxHORIZONTAL);
     notebox->Add(new wxStaticText(panel, wxID_STATIC, note));
-    
+
     // position things
     vbox->AddSpacer(5);
     vbox->Add(menubox, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -3605,19 +3609,19 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(S2VGAP);
     vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
-    
+
     vbox->AddSpacer(5);
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(hbox3, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(S2VGAP);
     vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
-    
+
     vbox->AddSpacer(15);
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(hrbox, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(15);
     vbox->Add(notebox, 0, wxLEFT, LRGAP);
-    
+
     // init control values;
     // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying
     // the min,max,init values in the wxSpinCtrl constructor
@@ -3630,12 +3634,12 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     spin1->SetFocus();
     spin1->SetSelection(ALL_TEXT);
     algomenu->SetSelection(algopos1);
-    
+
     for (int i = 0; i < NumAlgos(); i++) {
         new_algomem[i] = algoinfo[i]->algomem;
         new_defbase[i] = algoinfo[i]->defbase;
     }
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -3649,42 +3653,42 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     // show_tips
-    
+
 #if wxUSE_TOOLTIPS
     wxCheckBox* check3 = new wxCheckBox(panel, PREF_SHOW_TIPS, _("Show button tips"));
 #endif
-    
+
     // restore_view
-    
+
     wxCheckBox* check4 = new wxCheckBox(panel, PREF_RESTORE, _("Reset/Undo will restore view"));
-    
+
     // math_coords
-    
+
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP, _("Y coordinates increase upwards"));
-    
+
     // zoomed cell borders
 
     wxCheckBox* check5 = new wxCheckBox(panel, PREF_CELL_BORDERS, _("Zoomed cells have borders"));
 
     // show_bold_lines and bold_spacing
-    
+
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_SHOW_BOLD, _("Show bold grid lines every"));
-    
+
     wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_BOLD_SPACING, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
-    
+
     hbox2->Add(check2, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox2->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
     hbox2->Add(new wxStaticText(panel, wxID_STATIC, _("cells")),
                0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     // min_grid_mag (2..MAX_MAG)
-    
+
     wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
-    
+
     wxArrayString mingridChoices;
     mingridChoices.Add(wxT("1:4"));
     mingridChoices.Add(wxT("1:8"));
@@ -3693,55 +3697,55 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     wxChoice* choice3 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
                                      wxDefaultPosition, wxDefaultSize,
                                      mingridChoices);
-    
+
     wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
     longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum scale for grid:")),
                  0, wxALL, 0);
-    
+
     hbox3->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-    
+
     // mouse_wheel_mode
-    
+
     wxBoxSizer* wheelbox = new wxBoxSizer(wxHORIZONTAL);
     wheelbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")), 0, wxALL, 0);
-    
+
     // align by setting wheelbox same width as longbox
     wheelbox->SetMinSize( longbox->GetMinSize() );
-    
+
     wxArrayString mousewheelChoices;
     mousewheelChoices.Add(_("Disabled"));
     mousewheelChoices.Add(_("Forward zooms out"));
     mousewheelChoices.Add(_("Forward zooms in"));
     wxChoice* choice4 = new wxChoice(panel, PREF_MOUSE_WHEEL, wxDefaultPosition, wxDefaultSize,
                                      mousewheelChoices);
-    
+
     wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
     hbox4->Add(wheelbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-    
+
     // wheel_sensitivity
-    
+
     wxBoxSizer* senslabel = new wxBoxSizer(wxHORIZONTAL);
     senslabel->Add(new wxStaticText(panel, wxID_STATIC, _("Wheel sensitivity:")),
                    0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     senslabel->SetMinSize( longbox->GetMinSize() );
-    
+
     wxBoxSizer* hbox7 = new wxBoxSizer(wxHORIZONTAL);
     hbox7->Add(senslabel, 0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin4 = new MySpinCtrl(panel, PREF_SENSITIVITY, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
     hbox7->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     // thumb_range
-    
+
     wxBoxSizer* thumblabel = new wxBoxSizer(wxHORIZONTAL);
     thumblabel->Add(new wxStaticText(panel, wxID_STATIC, _("Thumb scroll range:")),
                     0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     thumblabel->SetMinSize( longbox->GetMinSize() );
-    
+
     wxBoxSizer* hbox5 = new wxBoxSizer(wxHORIZONTAL);
     hbox5->Add(thumblabel, 0, wxALIGN_CENTER_VERTICAL, 0);
     wxSpinCtrl* spin5 = new MySpinCtrl(panel, PREF_THUMB_RANGE, wxEmptyString,
@@ -3749,15 +3753,15 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     hbox5->Add(spin5, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
     hbox5->Add(new wxStaticText(panel, wxID_STATIC, _("times view size")),
                0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     // controls_pos
-    
+
     wxBoxSizer* posbox = new wxBoxSizer(wxHORIZONTAL);
     posbox->Add(new wxStaticText(panel, wxID_STATIC, _("Translucent buttons:")), 0, wxALL, 0);
-    
+
     // align by setting posbox same width as longbox
     posbox->SetMinSize( longbox->GetMinSize() );
-    
+
     wxArrayString posChoices;
     posChoices.Add(_("Disabled"));
     posChoices.Add(_("Top left corner"));
@@ -3766,11 +3770,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     posChoices.Add(_("Bottom left corner"));
     wxChoice* choice5 = new wxChoice(panel, PREF_CONTROLS, wxDefaultPosition, wxDefaultSize,
                                      posChoices);
-    
+
     wxBoxSizer* hbox6 = new wxBoxSizer(wxHORIZONTAL);
     hbox6->Add(posbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox6->Add(choice5, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
-    
+
     // position things
     vbox->AddSpacer(5);
 #if wxUSE_TOOLTIPS
@@ -3797,7 +3801,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(SVGAP);
     vbox->Add(hbox6, 0, wxLEFT | wxRIGHT, LRGAP);
-    
+
     // init control values
 #if wxUSE_TOOLTIPS
     check3->SetValue(showtips);
@@ -3821,7 +3825,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     choice3->SetSelection(mingridindex);
     choice4->SetSelection(mousewheelmode);
     choice5->SetSelection(controlspos);
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -3835,9 +3839,9 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     // opacity
-    
+
     wxBoxSizer* opacitybox = new wxBoxSizer(wxHORIZONTAL);
     opacitybox->Add(new wxStaticText(panel, wxID_STATIC,
                                      _("Opacity percentage when drawing stacked layers:")),
@@ -3845,9 +3849,9 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     wxSpinCtrl* spin1 = new MySpinCtrl(panel, PREF_OPACITY, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
     opacitybox->Add(spin1, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     // tile_border
-    
+
     wxBoxSizer* borderbox = new wxBoxSizer(wxHORIZONTAL);
     borderbox->Add(new wxStaticText(panel, wxID_STATIC,
                                     _("Border thickness for tiled layers:")),
@@ -3855,18 +3859,18 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     wxSpinCtrl* spin2 = new MySpinCtrl(panel, PREF_TILE_BORDER, wxEmptyString,
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
     borderbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
-    
+
     // ask_on_new, ask_on_load, ask_on_delete, ask_on_quit, warn_on_save
-    
+
     wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Ask to save changes to layer before:"));
     wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
-    
+
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_ASK_NEW, _("Creating a new pattern"));
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_ASK_LOAD, _("Opening a pattern file"));
     wxCheckBox* check3 = new wxCheckBox(panel, PREF_ASK_DELETE, _("Deleting layer"));
     wxCheckBox* check4 = new wxCheckBox(panel, PREF_ASK_QUIT, _("Quitting application"));
     wxCheckBox* check5 = new wxCheckBox(panel, PREF_WARN_SAVE, _("Warn if saving non-starting generation"));
-    
+
     wxBoxSizer* b1 = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* b2 = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* b3 = new wxBoxSizer(wxHORIZONTAL);
@@ -3887,25 +3891,25 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
         b4->SetMinSize(wd3);
     else
         b3->SetMinSize(wd4);
-    
+
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
     hbox1->Add(b1, 0, wxLEFT | wxRIGHT, LRGAP);
     hbox1->AddStretchSpacer(20);
     hbox1->Add(b3, 0, wxLEFT | wxRIGHT, LRGAP);
     hbox1->AddStretchSpacer(20);
-    
+
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
     hbox2->Add(b2, 0, wxLEFT | wxRIGHT, LRGAP);
     hbox2->AddStretchSpacer(20);
     hbox2->Add(b4, 0, wxLEFT | wxRIGHT, LRGAP);
     hbox2->AddStretchSpacer(20);
-    
+
     ssizer1->AddSpacer(SBTOPGAP);
     ssizer1->Add(hbox1, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     ssizer1->AddSpacer(CH2VGAP);
     ssizer1->Add(hbox2, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     ssizer1->AddSpacer(SBBOTGAP);
-    
+
     // position things
     vbox->AddSpacer(SVGAP);
     vbox->Add(opacitybox, 0, wxLEFT | wxRIGHT, LRGAP);
@@ -3915,23 +3919,23 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(check5, 0, wxLEFT | wxRIGHT, LRGAP);
-    
+
     // init control values
     spin1->SetRange(1, 100);
     spin1->SetValue(opacity);
-    
+
     spin2->SetRange(1, 10);
     spin2->SetValue(tileborder);
-    
+
     spin1->SetFocus();
     spin1->SetSelection(ALL_TEXT);
-    
+
     check1->SetValue(askonnew);
     check2->SetValue(askonload);
     check3->SetValue(askondelete);
     check4->SetValue(askonquit);
     check5->SetValue(warn_on_save);
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -3950,7 +3954,7 @@ wxBitmapButton* PrefsDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox,
     wxBrush brush(*rgb);
     FillRect(dc, rect, brush);
     dc.SelectObject(wxNullBitmap);
-    
+
     wxBitmapButton* bb = new wxBitmapButton(parent, id, bitmap, wxPoint(0,0),
 #if defined(__WXOSX_COCOA__)
                                             wxSize(BITMAP_WD + 12, BITMAP_HT + 12));
@@ -3971,7 +3975,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     // create a choice menu to select algo
     wxArrayString algoChoices;
     for (int i = 0; i < NumAlgos(); i++) {
@@ -3981,7 +3985,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
                                       wxDefaultPosition, wxDefaultSize, algoChoices);
     coloralgo = currlayer->algtype;
     algomenu->SetSelection(coloralgo);
-    
+
     // create bitmap buttons
     wxBoxSizer* statusbox = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* frombox = new wxBoxSizer(wxHORIZONTAL);
@@ -4000,7 +4004,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     colorbox->AddSpacer(10);
     colorbox->AddSpacer(10);
     AddColorButton(panel, colorbox, PREF_BORDER_BUTT, borderrgb, _("Grid border: "));
-    
+
     wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
     algolabel->Add(new wxStaticText(panel, wxID_STATIC, _("Default colors for:")), 0, wxALL, 0);
@@ -4009,16 +4013,16 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     algobox->AddStretchSpacer();
     algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
     algobox->AddStretchSpacer();
-    
+
     gradcheck = new wxCheckBox(panel, PREF_GRADIENT_CHECK, _("Use gradient from "));
     gradcheck->SetValue(algoinfo[coloralgo]->gradient);
-    
+
     wxBoxSizer* gradbox = new wxBoxSizer(wxHORIZONTAL);
     gradbox->Add(gradcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
     gradbox->Add(frombox, 0, wxALIGN_CENTER_VERTICAL, 0);
     gradbox->Add(tobox, 0, wxALIGN_CENTER_VERTICAL, 0);
     gradbox->AddSpacer(10);
-    
+
     // create scroll bar filling right part of gradbox
     wxSize minsize = gradbox->GetMinSize();
     int scrollbarwd = NUMCOLS*CELLSIZE+1 - minsize.GetWidth();
@@ -4031,35 +4035,35 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
                                 wxSize(scrollbarwd, scrollbarht), wxSB_HORIZONTAL);
     if (scrollbar == NULL) Fatal(_("Failed to create scroll bar!"));
     gradbox->Add(scrollbar, 0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     gradstates = algoinfo[coloralgo]->maxstates;
     UpdateScrollBar();
     scrollbar->Enable(algoinfo[coloralgo]->gradient);
     frombutt->Enable(algoinfo[coloralgo]->gradient);
     tobutt->Enable(algoinfo[coloralgo]->gradient);
-    
+
     // create child window for displaying cell colors/icons
     cellboxes = new CellBoxes(panel, PREF_CELL_PANEL, wxPoint(0,0),
                               wxSize(NUMCOLS*CELLSIZE+1,NUMROWS*CELLSIZE+1));
-    
+
     iconcheck = new wxCheckBox(panel, PREF_ICON_CHECK, _("Show icons"));
     iconcheck->SetValue(showicons);
-        
+
     wxStaticText* statebox = new wxStaticText(panel, PREF_STATE_BOX, _("999"));
     cellboxes->statebox = statebox;
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
     hbox1->Add(statebox, 0, 0, 0);
     hbox1->SetMinSize( hbox1->GetMinSize() );
-    
+
     wxStaticText* rgbbox = new wxStaticText(panel, PREF_RGB_BOX, _("999,999,999"));
     cellboxes->rgbbox = rgbbox;
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
     hbox2->Add(rgbbox, 0, 0, 0);
     hbox2->SetMinSize( hbox2->GetMinSize() );
-    
+
     statebox->SetLabel(_(" "));
     rgbbox->SetLabel(_(" "));
-    
+
     wxBoxSizer* botbox = new wxBoxSizer(wxHORIZONTAL);
     botbox->Add(new wxStaticText(panel, wxID_STATIC, _("State: ")), 0, wxALIGN_CENTER_VERTICAL, 0);
     botbox->Add(hbox1, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -4068,12 +4072,12 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     botbox->Add(hbox2, 0, wxALIGN_CENTER_VERTICAL, 0);
     botbox->AddStretchSpacer();
     botbox->Add(iconcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
-    
+
     //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
     //!!! wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Cell colors:"));
     //!!! wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
     wxBoxSizer* ssizer1 = new wxBoxSizer(wxVERTICAL);
-    
+
     ssizer1->AddSpacer(10);
     ssizer1->Add(gradbox, 0, wxLEFT | wxRIGHT, 0);
     ssizer1->AddSpacer(8);
@@ -4081,21 +4085,21 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     ssizer1->AddSpacer(8);
     ssizer1->Add(botbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
     ssizer1->AddSpacer(SBBOTGAP);
-    
+
     wxStaticText* sbox2 = new wxStaticText(panel, wxID_STATIC, _("Global colors used by all algorithms:"));
     wxBoxSizer* ssizer2 = new wxBoxSizer(wxVERTICAL);
-    
+
     ssizer2->Add(sbox2, 0, 0, 0);
     ssizer2->AddSpacer(10);
     ssizer2->Add(colorbox, 1, wxGROW | wxLEFT | wxRIGHT, 0);
-    
+
     vbox->AddSpacer(5);
     vbox->Add(algobox, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     vbox->Add(ssizer1, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(15);
     vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(2);
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -4109,7 +4113,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-    
+
     // make sure this is the first control added so it gets focus on a page change
     KeyComboCtrl* keycombo =
     new KeyComboCtrl(panel, PREF_KEYCOMBO, wxEmptyString,
@@ -4123,7 +4127,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
 #else
                      | wxTE_RICH2 );        // better for Windows
 #endif
-    
+
     wxArrayString actionChoices;
     for (int i = 0; i < MAX_ACTIONS; i++) {
         actionChoices.Add( wxString(GetActionName((action_id) i), wxConvLocal) );
@@ -4131,58 +4135,58 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     actionChoices[DO_OPENFILE] = _("Open Chosen File");
     wxChoice* actionmenu = new wxChoice(panel, PREF_ACTION,
                                         wxDefaultPosition, wxDefaultSize, actionChoices);
-    
+
     wxBoxSizer* hbox0 = new wxBoxSizer(wxHORIZONTAL);
     hbox0->Add(new wxStaticText(panel, wxID_STATIC,
                                 _("Type a key combination, then select the desired action:")));
-    
+
     wxBoxSizer* keybox = new wxBoxSizer(wxVERTICAL);
     keybox->Add(new wxStaticText(panel, wxID_STATIC, _("Key Combination")), 0, wxALIGN_CENTER, 0);
     keybox->AddSpacer(5);
     keybox->Add(keycombo, 0, wxALIGN_CENTER, 0);
-    
+
     wxBoxSizer* actbox = new wxBoxSizer(wxVERTICAL);
     actbox->Add(new wxStaticText(panel, wxID_STATIC, _("Action")), 0, wxALIGN_CENTER, 0);
     actbox->AddSpacer(5);
     actbox->Add(actionmenu, 0, wxALIGN_CENTER, 0);
-    
+
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
     hbox1->Add(keybox, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
     hbox1->AddSpacer(15);
     hbox1->Add(actbox, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
-    
+
     wxButton* choose = new wxButton(panel, PREF_CHOOSE, _("Choose File..."));
     wxStaticText* filebox = new wxStaticText(panel, PREF_FILE_BOX, wxEmptyString);
-    
+
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
     hbox2->Add(choose, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, LRGAP);
     hbox2->Add(filebox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
-    
+
     wxBoxSizer* midbox = new wxBoxSizer(wxVERTICAL);
     midbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
     midbox->AddSpacer(15);
     midbox->Add(hbox2, 0, wxLEFT, LRGAP);
-    
+
     wxString notes = _("Note:");
     notes += _("\n- Different key combinations can be assigned to the same action.");
     notes += _("\n- The Escape key is reserved for hard-wired actions.");
     wxBoxSizer* hbox3 = new wxBoxSizer(wxHORIZONTAL);
     hbox3->Add(new wxStaticText(panel, wxID_STATIC, notes));
-    
+
     vbox->AddSpacer(5);
     vbox->Add(hbox0, 0, wxLEFT, LRGAP);
     vbox->AddSpacer(15);
     vbox->Add(midbox, 0, wxALIGN_CENTER, 0);
     vbox->AddSpacer(30);
     vbox->Add(hbox3, 0, wxLEFT, LRGAP);
-    
+
     // initialize controls
     keycombo->ChangeValue( GetKeyCombo(currkey, currmods) );
     actionmenu->SetSelection( keyaction[currkey][currmods].id );
     UpdateChosenFile();
     keycombo->SetFocus();
     keycombo->SetSelection(ALL_TEXT);
-    
+
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
@@ -4213,13 +4217,13 @@ void PrefsDialog::UpdateChosenFile()
 void PrefsDialog::OnChoice(wxCommandEvent& event)
 {
     int id = event.GetId();
-    
+
     if ( id == PREF_ACTION ) {
         int i = event.GetSelection();
         if (i >= 0 && i < MAX_ACTIONS) {
             action_id action = (action_id) i;
             keyaction[currkey][currmods].id = action;
-            
+
             if ( action == DO_OPENFILE && keyaction[currkey][currmods].file.IsEmpty() ) {
                 // call OnButton (which will call UpdateChosenFile)
                 wxCommandEvent buttevt(wxEVT_COMMAND_BUTTON_CLICKED, PREF_CHOOSE);
@@ -4229,7 +4233,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
             }
         }
     }
-    
+
     else if ( id == PREF_ALGO_MENU1 ) {
         int i = event.GetSelection();
         if (i >= 0 && i < NumAlgos() && i != algopos1) {
@@ -4237,7 +4241,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
             new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
             new_defbase[algopos1] = GetSpinVal(PREF_BASE_STEP);
             algopos1 = i;
-            
+
             // show values for new selection
             wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_MAX_MEM);
             wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_BASE_STEP);
@@ -4257,7 +4261,7 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
                 if (focus == s2) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
 #endif
             }
-            
+
             // change comments depending on whether or not algo uses hashing
             wxStaticText* membox = (wxStaticText*) FindWindowById(PREF_MEM_NOTE);
             wxStaticText* stepbox = (wxStaticText*) FindWindowById(PREF_STEP_NOTE);
@@ -4272,27 +4276,27 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
             }
         }
     }
-    
+
     else if ( id == PREF_ALGO_MENU2 ) {
         int i = event.GetSelection();
         if (i >= 0 && i < NumAlgos() && i != coloralgo) {
             coloralgo = i;
-            
+
             AlgoData* ad = algoinfo[coloralgo];
-            
+
             // update colors in some bitmap buttons
             UpdateButtonColor(PREF_STATUS_BUTT, ad->statusrgb);
             UpdateButtonColor(PREF_FROM_BUTT, ad->fromrgb);
             UpdateButtonColor(PREF_TO_BUTT, ad->torgb);
-            
+
             gradstates = ad->maxstates;
             UpdateScrollBar();
-            
+
             gradcheck->SetValue(ad->gradient);
             scrollbar->Enable(ad->gradient);
             frombutt->Enable(ad->gradient);
             tobutt->Enable(ad->gradient);
-            
+
             cellboxes->Refresh(false);
         }
     }
@@ -4309,11 +4313,11 @@ void ChooseTextEditor(wxWindow* parent, wxString& result)
     #else // assume Linux
         wxString filetypes = _("All files (*)|*");
     #endif
-    
+
     wxFileDialog opendlg(parent, _("Choose a text editor"),
                          wxEmptyString, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    
+
     #ifdef __WXMSW__
         opendlg.SetDirectory(_("C:\\Program Files"));
     #elif defined(__WXMAC__)
@@ -4321,7 +4325,7 @@ void ChooseTextEditor(wxWindow* parent, wxString& result)
     #else // assume Linux
         opendlg.SetDirectory(_("/usr/bin"));
     #endif
-    
+
     if ( opendlg.ShowModal() == wxID_OK ) {
         result = opendlg.GetPath();
     } else {
@@ -4334,7 +4338,7 @@ void ChooseTextEditor(wxWindow* parent, wxString& result)
 void PrefsDialog::OnButton(wxCommandEvent& event)
 {
     int id = event.GetId();
-    
+
     if ( id == PREF_CHOOSE ) {
         // ask user to choose an appropriate file
         wxString filetypes = _("All files (*)|*");
@@ -4346,7 +4350,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
 #endif
         filetypes +=         _("|Rule (*.rule)|*.rule");
         filetypes +=         _("|HTML (*.html;*.htm)|*.html;*.htm");
-        
+
         wxFileDialog opendlg(this, _("Choose a pattern/script/rule/HTML file"),
                              choosedir, wxEmptyString, filetypes,
                              wxFD_OPEN | wxFD_FILE_MUST_EXIST);
@@ -4366,9 +4370,9 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
                 actionmenu->SetSelection(DO_OPENFILE);
             }
         }
-        
+
         UpdateChosenFile();
-        
+
     } else if ( id == PREF_EDITOR_BUTT ) {
         // ask user to choose a text editor
         wxString result;
@@ -4380,7 +4384,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
                 editorbox->SetLabel(neweditor);
             }
         }
-        
+
     } else if ( id == PREF_DOWNLOAD_BUTT ) {
         // ask user to choose folder for downloaded files
         wxDirDialog dirdlg(this, _("Choose a folder for downloaded files"),
@@ -4396,7 +4400,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
                 }
             }
         }
-        
+
     } else if ( id == PREF_RULES_BUTT ) {
         // ask user to choose folder for their rules
         wxDirDialog dirdlg(this, _("Choose a folder for your rules"),
@@ -4413,7 +4417,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
             }
         }
     }
-    
+
     event.Skip();  // need this so other buttons work correctly
 }
 
@@ -4422,7 +4426,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
 void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
 {
     int id = event.GetId();
-    
+
     if ( id == PREF_SHOW_BOLD ) {
         // enable/disable PREF_BOLD_SPACING spin control
         wxCheckBox* checkbox = (wxCheckBox*) FindWindow(PREF_SHOW_BOLD);
@@ -4432,7 +4436,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
             spinctrl->Enable(ticked);
             if (ticked) spinctrl->SetFocus();
         }
-        
+
     } else if ( id == PREF_GRADIENT_CHECK ) {
         AlgoData* ad = algoinfo[coloralgo];
         ad->gradient = gradcheck->GetValue() == 1;
@@ -4440,7 +4444,7 @@ void PrefsDialog::OnCheckBoxClicked(wxCommandEvent& event)
         frombutt->Enable(ad->gradient);
         tobutt->Enable(ad->gradient);
         cellboxes->Refresh(false);
-        
+
     } else if ( id == PREF_ICON_CHECK ) {
         showicons = iconcheck->GetValue() == 1;
         cellboxes->Refresh(false);
@@ -4472,19 +4476,19 @@ void PrefsDialog::ChangeButtonColor(int id, wxColor& rgb)
     wxColourData data;
     data.SetChooseFull(true);    // for Windows
     data.SetColour(rgb);
-    
+
     wxColourDialog dialog(this, &data);
     if ( dialog.ShowModal() == wxID_OK ) {
         wxColourData retData = dialog.GetColourData();
         wxColour c = retData.GetColour();
-        
+
         if (rgb != c) {
             // change given color
             rgb.Set(c.Red(), c.Green(), c.Blue());
-            
+
             // also change color of bitmap in corresponding button
             UpdateButtonColor(id, rgb);
-            
+
             if (id == PREF_FROM_BUTT || id == PREF_TO_BUTT) {
                 cellboxes->Refresh(false);
             }
@@ -4497,25 +4501,25 @@ void PrefsDialog::ChangeButtonColor(int id, wxColor& rgb)
 void PrefsDialog::OnColorButton(wxCommandEvent& event)
 {
     int id = event.GetId();
-    
+
     if ( id == PREF_STATUS_BUTT ) {
         ChangeButtonColor(id, algoinfo[coloralgo]->statusrgb);
-        
+
     } else if ( id == PREF_FROM_BUTT ) {
         ChangeButtonColor(id, algoinfo[coloralgo]->fromrgb);
-        
+
     } else if ( id == PREF_TO_BUTT ) {
         ChangeButtonColor(id, algoinfo[coloralgo]->torgb);
-        
+
     } else if ( id == PREF_SELECT_BUTT ) {
         ChangeButtonColor(id, *selectrgb);
-        
+
     } else if ( id == PREF_PASTE_BUTT ) {
         ChangeButtonColor(id, *pastergb);
-        
+
     } else if ( id == PREF_BORDER_BUTT ) {
         ChangeButtonColor(id, *borderrgb);
-        
+
     } else {
         // process other buttons like Cancel and OK
         event.Skip();
@@ -4537,31 +4541,31 @@ void PrefsDialog::UpdateScrollBar()
 void PrefsDialog::OnScroll(wxScrollEvent& event)
 {
     WXTYPE type = event.GetEventType();
-    
+
     if (type == wxEVT_SCROLL_LINEUP) {
         gradstates--;
         if (gradstates < algoinfo[coloralgo]->minstates)
             gradstates = algoinfo[coloralgo]->minstates;
         cellboxes->Refresh(false);
-        
+
     } else if (type == wxEVT_SCROLL_LINEDOWN) {
         gradstates++;
         if (gradstates > algoinfo[coloralgo]->maxstates)
             gradstates = algoinfo[coloralgo]->maxstates;
         cellboxes->Refresh(false);
-        
+
     } else if (type == wxEVT_SCROLL_PAGEUP) {
         gradstates -= PAGESIZE;
         if (gradstates < algoinfo[coloralgo]->minstates)
             gradstates = algoinfo[coloralgo]->minstates;
         cellboxes->Refresh(false);
-        
+
     } else if (type == wxEVT_SCROLL_PAGEDOWN) {
         gradstates += PAGESIZE;
         if (gradstates > algoinfo[coloralgo]->maxstates)
             gradstates = algoinfo[coloralgo]->maxstates;
         cellboxes->Refresh(false);
-        
+
     } else if (type == wxEVT_SCROLL_THUMBTRACK) {
         gradstates = algoinfo[coloralgo]->minstates + event.GetPosition();
         if (gradstates < algoinfo[coloralgo]->minstates)
@@ -4569,7 +4573,7 @@ void PrefsDialog::OnScroll(wxScrollEvent& event)
         if (gradstates > algoinfo[coloralgo]->maxstates)
             gradstates = algoinfo[coloralgo]->maxstates;
         cellboxes->Refresh(false);
-        
+
     } else if (type == wxEVT_SCROLL_THUMBRELEASE) {
         UpdateScrollBar();
     }
@@ -4656,11 +4660,11 @@ bool PrefsDialog::ValidatePage()
             return false;
         if ( BadSpinVal(PREF_MAX_SCRIPTS, 1, MAX_RECENT, _("Maximum number of recent scripts")) )
             return false;
-        
+
     } else if (currpage == EDIT_PAGE) {
         if ( BadSpinVal(PREF_RANDOM_FILL, 1, 100, _("Random fill percentage")) )
             return false;
-        
+
     } else if (currpage == CONTROL_PAGE) {
         if ( BadSpinVal(PREF_MAX_MEM, MIN_MEM_MB, MAX_MEM_MB, _("Maximum memory")) )
             return false;
@@ -4670,7 +4674,7 @@ bool PrefsDialog::ValidatePage()
             return false;
         if ( BadSpinVal(PREF_MAX_DELAY, 0, MAX_DELAY, _("Maximum delay")) )
             return false;
-        
+
     } else if (currpage == VIEW_PAGE) {
         if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, _("Spacing of bold grid lines")) )
             return false;
@@ -4678,24 +4682,24 @@ bool PrefsDialog::ValidatePage()
             return false;
         if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, _("Thumb scrolling range")) )
             return false;
-        
+
     } else if (currpage == LAYER_PAGE) {
         if ( BadSpinVal(PREF_OPACITY, 1, 100, _("Percentage opacity")) )
             return false;
         if ( BadSpinVal(PREF_TILE_BORDER, 1, 10, _("Tile border thickness")) )
             return false;
-        
+
     } else if (currpage == COLOR_PAGE) {
         // no spin ctrls on this page
-        
+
     } else if (currpage == KEYBOARD_PAGE) {
         // no spin ctrls on this page
-        
+
     } else {
         Warning(_("Bug in ValidatePage!"));
         return false;
     }
-    
+
     return true;
 }
 
@@ -4714,7 +4718,7 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 {
     if (ignore_page_event) return;
     currpage = event.GetSelection();
-    
+
 #ifdef __WXMSW__
     // ensure key combo box has focus
     if (currpage == KEYBOARD_PAGE) {
@@ -4732,9 +4736,9 @@ void PrefsDialog::OnPageChanged(wxNotebookEvent& event)
 bool PrefsDialog::TransferDataFromWindow()
 {
     if (!ValidatePage()) return false;
-    
+
     // set global prefs to current control values
-    
+
     // FILE_PAGE
     newremovesel  = GetCheckVal(PREF_NEW_REM_SEL);
     newcursindex  = GetChoiceVal(PREF_NEW_CURSOR);
@@ -4745,7 +4749,7 @@ bool PrefsDialog::TransferDataFromWindow()
     maxscripts    = GetSpinVal(PREF_MAX_SCRIPTS);
     texteditor    = neweditor;
     downloaddir   = newdownloaddir;
-    
+
     // EDIT_PAGE
     randomfill    = GetSpinVal(PREF_RANDOM_FILL);
     canchangerule = GetRadioVal(PREF_PASTE_0, 3);
@@ -4753,7 +4757,7 @@ bool PrefsDialog::TransferDataFromWindow()
     scrollcross   = GetCheckVal(PREF_SCROLL_CROSS);
     scrollhand    = GetCheckVal(PREF_SCROLL_HAND);
     allowbeep     = GetCheckVal(PREF_BEEP);
-    
+
     // CONTROL_PAGE
     new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);
     new_defbase[algopos1] = GetSpinVal(PREF_BASE_STEP);
@@ -4764,7 +4768,7 @@ bool PrefsDialog::TransferDataFromWindow()
     mindelay = GetSpinVal(PREF_MIN_DELAY);
     maxdelay = GetSpinVal(PREF_MAX_DELAY);
     userrules = newuserrules;
-    
+
     // VIEW_PAGE
 #if wxUSE_TOOLTIPS
     showtips       = GetCheckVal(PREF_SHOW_TIPS);
@@ -4780,7 +4784,7 @@ bool PrefsDialog::TransferDataFromWindow()
     wheelsens      = GetSpinVal(PREF_SENSITIVITY);
     thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
     controlspos    = GetChoiceVal(PREF_CONTROLS);
-    
+
     // LAYER_PAGE
     opacity         = GetSpinVal(PREF_OPACITY);
     tileborder      = GetSpinVal(PREF_TILE_BORDER);
@@ -4789,10 +4793,10 @@ bool PrefsDialog::TransferDataFromWindow()
     askondelete     = GetCheckVal(PREF_ASK_DELETE);
     askonquit       = GetCheckVal(PREF_ASK_QUIT);
     warn_on_save    = GetCheckVal(PREF_WARN_SAVE);
-    
+
     // COLOR_PAGE
     // no need to validate anything
-    
+
     // KEYBOARD_PAGE
     // go thru keyaction table and make sure the file field is empty
     // if the action isn't DO_OPENFILE
@@ -4801,12 +4805,12 @@ bool PrefsDialog::TransferDataFromWindow()
             if ( keyaction[key][modset].id != DO_OPENFILE &&
                 !keyaction[key][modset].file.IsEmpty() )
                 keyaction[key][modset].file = wxEmptyString;
-    
+
     // update globals corresponding to some wxChoice menu selections
     mingridmag = mingridindex + 2;
     newcurs = IndexToCursor(newcursindex);
     opencurs = IndexToCursor(opencursindex);
-    
+
     return true;
 }
 
@@ -4827,7 +4831,7 @@ public:
             algob[i] = ad->algob[i];
         }
     }
-    
+
     void RestoreColorInfo(int algo) {
         AlgoData* ad = algoinfo[algo];
         ad->statusrgb = statusrgb;
@@ -4840,7 +4844,7 @@ public:
             ad->algob[i] = algob[i];
         }
     }
-    
+
     bool ColorInfoChanged(int algo) {
         AlgoData* ad = algoinfo[algo];
         // ignore ad->statusrgb
@@ -4855,7 +4859,7 @@ public:
         // get here if there was no change
         return false;
     }
-    
+
     // this must match color info in AlgoData
     wxColor statusrgb;
     bool gradient;
@@ -4875,14 +4879,14 @@ bool ChangePrefs(const wxString& page)
     for (int key = 0; key < MAX_KEYCODES; key++)
         for (int modset = 0; modset < MAX_MODS; modset++)
             savekeyaction[key][modset] = keyaction[key][modset];
-    
+
     bool wasswapped = swapcolors;
     if (swapcolors) {
         swapcolors = false;
         InvertCellColors();
         mainptr->UpdateEverything();
     }
-    
+
     // save current color info so we can restore it if user cancels changes
     wxColor save_selectrgb = *selectrgb;
     wxColor save_pastergb = *pastergb;
@@ -4891,13 +4895,13 @@ bool ChangePrefs(const wxString& page)
     for (int i = 0; i < NumAlgos(); i++) {
         save_info[i] = new SaveColorInfo(i);
     }
-    
+
     // save showicons option in case user cancels dialog
     bool saveshowicons = showicons;
-    
+
     // save the default base step for the current layer's algo so we can detect a change
     int old_defbase = algoinfo[currlayer->algtype]->defbase;
-    
+
     bool result;
     PrefsDialog dialog(mainptr, page);
     int button = dialog.ShowModal();
@@ -4914,27 +4918,27 @@ bool ChangePrefs(const wxString& page)
                     goto done;
                 }
         done:
-        
+
         // if the default base step for the current layer's algo changed
         // then reset the current base step (this should result in less confusion)
         if (old_defbase != algoinfo[currlayer->algtype]->defbase) {
             currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
             mainptr->SetGenIncrement();
         }
-        
+
         // if the default colors/icons for the current layer's algo changed
         // then reset the current layer's colors (and any clones)
         if (save_info[currlayer->algtype]->ColorInfoChanged(currlayer->algtype)) {
             UpdateLayerColors();
         }
-        
+
         result = true;
     } else {
         // user hit Cancel, so restore keyaction array in case it was changed
         for (int key = 0; key < MAX_KEYCODES; key++)
             for (int modset = 0; modset < MAX_MODS; modset++)
                 keyaction[key][modset] = savekeyaction[key][modset];
-        
+
         // restore color info saved above
         *selectrgb = save_selectrgb;
         *pastergb = save_pastergb;
@@ -4942,25 +4946,25 @@ bool ChangePrefs(const wxString& page)
         for (int i = 0; i < NumAlgos(); i++) {
             save_info[i]->RestoreColorInfo(i);
         }
-        
+
         // restore showicons option
         showicons = saveshowicons;
-        
+
         result = false;
     }
-    
+
     UpdateStatusBrushes();
-    
+
     for (int i = 0; i < NumAlgos(); i++) {
         delete save_info[i];
     }
-    
+
     if (wasswapped) {
         swapcolors = true;
         InvertCellColors();
         // let caller do this
         // mainptr->UpdateEverything();
     }
-    
+
     return result;
 }
