@@ -110,7 +110,7 @@ OBJECTS = main.o webcalls.o \
 CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-declaration -O2
 
 CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip \
-    -DVERSION=3.3b2 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -O2
+    -DVERSION=3.3 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -O2
 
 # NOTE 1: -O2 results in a much smaller golly.js and no .map file
 # NOTE 2: replace -O2 with the following settings to catch errors:
