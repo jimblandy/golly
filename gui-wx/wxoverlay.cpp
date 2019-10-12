@@ -7189,8 +7189,8 @@ const char *Overlay::DoUpdate()
     viewptr->Update();
     // DrawView in wxrender.cpp will call OnlyDrawOverlay (see above)
 
-    #ifdef __WXGTK__
-        // needed on Linux to see update immediately
+    #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
+        // need to see update immediately
         insideYield = true;
         wxGetApp().Yield(true);
         insideYield = false;

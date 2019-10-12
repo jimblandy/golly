@@ -443,6 +443,9 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     wxRect r = wxRect(0, 0, wd, ht);
     
 #ifdef __WXMAC__
+    // fix DrawRectangle problem on retina screens
+    if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
+
     wxBrush brush(wxColor(202,202,202));
     FillRect(dc, r, brush);
 #endif

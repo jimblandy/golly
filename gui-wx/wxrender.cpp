@@ -79,7 +79,7 @@ hlifealgo::draw() in hlifedraw.cpp.
 // local data used in golly_render routines
 
 int currwd, currht;                     // current width and height of viewport, in pixels
-int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
+int currscale;                          // current scale factor (1, 2, 4, 8 or 16)
 unsigned char dead_alpha = 255;         // alpha value for dead pixels
 unsigned char live_alpha = 255;         // alpha value for live pixels
 GLuint rgbatexture = 0;                 // texture name for drawing RGBA bitmaps
@@ -239,20 +239,18 @@ void CreateTranslucentControls()
         pmode = (paste_mode) i;
         wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);   // uses pmode
 
+        wxMemoryDC dc;        
         wxBitmap modemap(modewd, modeht, 32);
-        wxMemoryDC dc;
         dc.SelectObject(modemap);
 
         wxRect r(0, 0, modewd, modeht);
         wxBrush brush(*wxWHITE);
         FillRect(dc, r, brush);
-
         dc.SetFont(*statusptr->GetStatusFont());
         dc.SetBackgroundMode(wxSOLID);
         dc.SetTextBackground(*wxWHITE);
         dc.SetTextForeground(*wxBLACK);
         dc.SetPen(*wxBLACK);
-
         int textwd, textht;
         dc.GetTextExtent(pmodestr, &textwd, &textht);
         textwd += 4;
@@ -1091,21 +1089,21 @@ void DrawPasteImage()
         LoadCellAtlas(1 << pastemag, currlayer->numicons, 255);
     }
 
-    if (scalefactor > 1) {
-        // change scale to 1:1 and increase its size by scalefactor
+    if (currscale > 1) {
+        // change scale to 1:1 and increase its size by currscale
         pastelayer->view->setmag(0);
-        currwd = currwd * scalefactor;
-        currht = currht * scalefactor;
+        currwd = currwd * currscale;
+        currht = currht * currscale;
         pastelayer->view->resize(currwd, currht);
 
         glPushMatrix();
-        glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
+        glScalef(1.0/currscale, 1.0/currscale, 1.0);
 
         pastelayer->algo->draw(*pastelayer->view, renderer);
 
         // restore viewport settings
-        currwd = currwd / scalefactor;
-        currht = currht / scalefactor;
+        currwd = currwd / currscale;
+        currht = currht / currscale;
 
         // restore OpenGL scale
         glPopMatrix();
@@ -1489,21 +1487,21 @@ void DrawOneLayer()
         LoadCellAtlas(1 << currmag, currlayer->numicons, live_alpha);
     }
 
-    if (scalefactor > 1) {
-        // temporarily change viewport scale to 1:1 and increase its size by scalefactor
+    if (currscale > 1) {
+        // temporarily change viewport scale to 1:1 and increase its size by currscale
         currlayer->view->setmag(0);
-        currwd = currwd * scalefactor;
-        currht = currht * scalefactor;
+        currwd = currwd * currscale;
+        currht = currht * currscale;
         currlayer->view->resize(currwd, currht);
 
         glPushMatrix();
-        glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
+        glScalef(1.0/currscale, 1.0/currscale, 1.0);
 
         currlayer->algo->draw(*currlayer->view, renderer);
 
         // restore viewport settings
-        currwd = currwd / scalefactor;
-        currht = currht / scalefactor;
+        currwd = currwd / currscale;
+        currht = currht / currscale;
         currlayer->view->resize(currwd, currht);
         currlayer->view->setmag(currmag);
 
@@ -1772,22 +1770,22 @@ void DrawView(int tileindex)
     // draw pattern using a sequence of pixblit calls
     if (smartscale && currmag <= -1 && currmag >= -4) {
         // current scale is from 2^1:1 to 2^4:1
-        scalefactor = 1 << (-currmag);
+        currscale = 1 << (-currmag);
 
-        // temporarily change viewport scale to 1:1 and increase its size by scalefactor
+        // temporarily change viewport scale to 1:1 and increase its size by currscale
         currlayer->view->setmag(0);
-        currwd = currwd * scalefactor;
-        currht = currht * scalefactor;
+        currwd = currwd * currscale;
+        currht = currht * currscale;
         currlayer->view->resize(currwd, currht);
 
         glPushMatrix();
-        glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
+        glScalef(1.0/currscale, 1.0/currscale, 1.0);
 
         currlayer->algo->draw(*currlayer->view, renderer);
 
         // restore viewport settings
-        currwd = currwd / scalefactor;
-        currht = currht / scalefactor;
+        currwd = currwd / currscale;
+        currht = currht / currscale;
         currlayer->view->resize(currwd, currht);
         currlayer->view->setmag(currmag);
 
@@ -1796,7 +1794,7 @@ void DrawView(int tileindex)
 
     } else {
         // no scaling
-        scalefactor = 1;
+        currscale = 1;
         currlayer->algo->draw(*currlayer->view, renderer);
     }
 

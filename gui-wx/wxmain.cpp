@@ -2539,6 +2539,7 @@ void MainFrame::CreateDirControl()
 MainFrame::MainFrame()
 : wxFrame(NULL, wxID_ANY, wxEmptyString, wxPoint(mainx,mainy), wxSize(mainwd,mainht))
 {
+    scalefactor = GetContentScaleFactor();
     wxGetApp().SetFrameIcon(this);
     
     pendingfiles.Clear();      // no pending script/pattern files

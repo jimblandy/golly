@@ -1,7 +1,7 @@
 # Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.0 on Mac OS 10.9+)
+# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.3 on Mac OS 10.9+)
 # mkdir build-osx
 # cd build-osx
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa
@@ -18,7 +18,7 @@ OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
 osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
 WX_RELEASE = $(call osx_ge,9,"3.1","3.0")
-WX_DIR = $(call osx_ge,9,"/HD/wxWidgets/wxWidgets-3.1.0","/HD/wxWidgets/wxWidgets-3.0.2")
+WX_DIR = $(call osx_ge,9,"/HD/wxWidgets/wxWidgets-3.1.3","/HD/wxWidgets/wxWidgets-3.0.2")
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)

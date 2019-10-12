@@ -493,14 +493,8 @@ void LayerBar::AddButton(int id, const wxString& tip)
     if (id < MAX_LAYERS) {
         // create toggle button
         int y = (layerbarht - TOGGLE_HT) / 2;
-        togglebutt[id] = new wxToggleButton(this, id, wxT("?"),
-                                            wxPoint(xpos, y),
-#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
-                                            wxSize(MIN_TOGGLE_WD, TOGGLE_HT), wxBORDER_SIMPLE
-#else
-                                            wxSize(MIN_TOGGLE_WD, TOGGLE_HT)
-#endif
-                                            );
+        togglebutt[id] = new wxToggleButton(this, id, wxT("?"), wxPoint(xpos, y),
+                                            wxSize(MIN_TOGGLE_WD, TOGGLE_HT) );
         if (togglebutt[id] == NULL) {
             Fatal(_("Failed to create layer bar bitmap button!"));
         } else {
@@ -3012,6 +3006,11 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
     
     dc.SetPen(*wxBLACK_PEN);
     
+#ifdef __WXMAC__
+    // fix DrawRectangle problem on retina screens
+    if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
+#endif
+
 #ifdef __WXMSW__
     // we have to use theme background color on Windows
     wxBrush bgbrush(GetBackgroundColour());

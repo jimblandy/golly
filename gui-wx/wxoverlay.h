@@ -794,7 +794,6 @@ private:
     Table select3d;                 // grid of selected cells
     Table active3d;                 // grid of active cells
     Table history3d;                // history grid
-    int numcoords;                  // size of coordinate list
     char survivals[27];             // survival flags
     char births[27];                // birth flags
     int gridsize;                   // grid edge length

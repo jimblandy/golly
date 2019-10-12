@@ -2947,7 +2947,8 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
 
     if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
         if (event.Dragging()) {
-            wxTimerEvent unused;
+            wxTimer timer;
+            wxTimerEvent unused(timer);
             OnDragTimer(unused);
         } else {
             // no mouse buttons are being pressed so ensure ReleaseMouse gets called
@@ -3277,7 +3278,7 @@ static int attributes[5] = {
 // create the viewport canvas
 
 PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style)
-: wxGLCanvas(parent, wxID_ANY, NULL /* attributes */, wxPoint(x,y), wxSize(wd,ht), style)
+: wxGLCanvas(parent, wxID_ANY, NULL /*attributes*/, wxPoint(x,y), wxSize(wd,ht), style)
 {
     // create a new rendering context instance for this canvas
     glcontext = new wxGLContext(this);

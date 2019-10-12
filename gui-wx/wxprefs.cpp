@@ -2450,6 +2450,11 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
 
     dc.SetPen(*wxBLACK_PEN);
 
+#ifdef __WXMAC__
+    // fix DrawRectangle problem on retina screens
+    if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
+#endif
+
 #ifdef __WXMSW__
     // we have to use theme background color on Windows
     wxBrush bgbrush(GetBackgroundColour());
