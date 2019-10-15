@@ -49,7 +49,7 @@ something like this:
     
     StartNewCA()
 
-Author: Andrew Trevorrow (andrew@trevorrow.com), May 2019.
+Author: Andrew Trevorrow (andrew@trevorrow.com), October 2019.
 --]]
 
 local g = golly()
@@ -62,77 +62,82 @@ local ov = g.overlay
 local ovt = g.ovtable
 local rand = math.random
 
+-- scripts must set these globals:
+
 SCRIPT_NAME = nil       -- must match the name of the new .lua file
 DEFAULT_RULE = nil      -- default rule string (must be valid)
 RULE_HELP = nil         -- HTML data for ShowHelp
 ParseRule = nil         -- function to validate given rule string
 NextPattern = nil       -- function to calculate the next pattern
 
-local current_rule = ""             -- the current rule (set by CheckRule)
-local real_rule = ""                -- the real rule used by the new layer's algo (set by CheckRule)
-local minx, miny, maxx, maxy        -- cell coordinates of grid edges (set by CheckRule)
-local gridwd, gridht                -- current dimensions of grid (set by CheckRule)
-local pattname = "untitled"         -- initial pattern name
-local currtitle = ""                -- current window title (set by UpdateWindowTitle)
-local currpattern = nil             -- cell array with current pattern
-local generating = false            -- generate pattern?
-local gencount = 0                  -- current generation count
-local stopgen = 0                   -- when to stop generating (if > 0)
-local stepsize = 1                  -- current step size
-local perc = 50                     -- initial percentage density for RandomPattern
-local drawstate = 1                 -- for drawing/erasing cells
-local viewwd, viewht                -- current size of viewport
-local ovwd, ovht                    -- current size of overlay
-local minwd, minht = 920, 500       -- minimum size of overlay
-local mbar                          -- the menu bar
-local mbarwd = 165                  -- width of menu bar
-local mbarht = 32                   -- height of menu bar (and tool bar)
-local buttonht = 20                 -- height of buttons in tool bar
-local hgap = 10                     -- horizontal space between buttons
-local vgap = 6                      -- vertical space above buttons
-local currbarht = mbarht            -- 0 if menu/tool bar is not shown (eg. fullscreen mode)
-local arrow_cursor = false          -- true if cursor is in menu/tool bar
-local pastemenu                     -- pop-up menu for choosing a paste action
-local pasteclip = "pasteclip"       -- clip with translucent paste pattern
-local pastecells = {}               -- cell array with paste pattern
-local pastewd, pasteht              -- dimensions of paste pattern (in cells)
-local pastemode = "or"              -- initial paste mode
-local pastepos = "topleft"          -- initial position of mouse in paste pattern
-local updatepaste = false           -- paste pattern needs to be updated?
-local modeclip = "modeclip"         -- clip with translucent paste mode
-local modeht                        -- height of modeclip (in pixels)
-local alpha1 = "rgba 0 0 0 1"       -- area below tool bar will be mostly transparent
+-- scripts might also want to access the following globals (eg. if redefining
+-- functions like FlipPaste, RotatePaste, RandomFill, etc):
 
--- tool bar controls
-local ssbutton                      -- Start/Stop
-local s1button                      -- +1
-local stepbutton                    -- Step
-local resetbutton                   -- Reset
-local undobutton                    -- Undo
-local redobutton                    -- Redo
-local rulebutton                    -- Rule...
-local helpbutton                    -- ?
-local exitbutton                    -- X
-local stepslider                    -- slider for adjusting stepsize
+current_rule = ""               -- the current rule (set by CheckRule)
+real_rule = ""                  -- the real rule used by the new layer's algo (set by CheckRule)
+minx, miny, maxx, maxy = 0,0,0,0    -- cell coordinates of grid edges (set by CheckRule)
+gridwd, gridht = 0, 0           -- current dimensions of grid (set by CheckRule)
+pattname = "untitled"           -- initial pattern name
+currtitle = ""                  -- current window title (set by UpdateWindowTitle)
+currpattern = nil               -- cell array with current pattern
+generating = false              -- generate pattern?
+gencount = 0                    -- current generation count
+stopgen = 0                     -- when to stop generating (if > 0)
+stepsize = 1                    -- current step size
+perc = 50                       -- initial percentage density for RandomPattern
+drawstate = 1                   -- for drawing/erasing cells
+viewwd, viewht = 0, 0           -- current size of viewport
+ovwd, ovht = 0, 0               -- current size of overlay
+minwd, minht = 920, 500         -- minimum size of overlay
+mbar = nil                      -- the menu bar
+mbarwd = 165                    -- width of menu bar
+mbarht = 32                     -- height of menu bar (and tool bar)
+buttonht = 20                   -- height of buttons in tool bar
+hgap = 10                       -- horizontal space between buttons
+vgap = 6                        -- vertical space above buttons
+currbarht = mbarht              -- 0 if menu/tool bar is not shown (eg. fullscreen mode)
+arrow_cursor = false            -- true if cursor is in menu/tool bar
+pastecells = {}                 -- cell array with paste pattern
+pastewd, pasteht = 0, 0         -- dimensions of paste pattern (in cells)
+updatepaste = false             -- paste pattern needs to be updated?
+pastemenu = nil                 -- pop-up menu for choosing a paste action
+pastemode = "or"                -- initial paste mode
+pastepos = "topleft"            -- initial position of mouse in paste pattern
+pasteclip = "pasteclip"         -- clip with translucent paste pattern
+modeclip = "modeclip"           -- clip with translucent paste mode
+modeht = 0                      -- height of modeclip (in pixels)
+alpha1 = "rgba 0 0 0 1"         -- area below tool bar will be mostly transparent
+
+-- tool bar controls (set by CreateToolBar)
+ssbutton = nil                  -- Start/Stop
+s1button = nil                  -- +1
+stepbutton = nil                -- Step
+resetbutton = nil               -- Reset
+undobutton = nil                -- Undo
+redobutton = nil                -- Redo
+rulebutton = nil                -- Rule...
+helpbutton = nil                -- ?
+exitbutton = nil                -- X
+stepslider = nil                -- slider for adjusting stepsize
 
 -- for undo/redo
-local undostack = {}                -- stack of states that can be undone
-local redostack = {}                -- stack of states that can be redone
-local startcount = 0                -- starting gencount (can be > 0)
-local startstate = {}               -- starting state (used by Reset)
-local dirty = false                 -- pattern has been modified?
+undostack = {}                  -- stack of states that can be undone
+redostack = {}                  -- stack of states that can be redone
+startcount = 0                  -- starting gencount (can be > 0)
+startstate = {}                 -- starting state (used by Reset)
+dirty = false                   -- pattern has been modified?
 
-local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
-local scriptdir = g.getdir("app")   -- initial directory for RunScript
-local scriptlevel = 0               -- greater than 0 if a user script is running
+pattdir = g.getdir("data")      -- initial directory for OpenPattern/SavePattern
+scriptdir = g.getdir("app")     -- initial directory for RunScript
+scriptlevel = 0                 -- greater than 0 if a user script is running
 
-local pathsep = g.getdir("app"):sub(-1)     -- "/" on Mac and Linux, "\" on Windows
+pathsep = g.getdir("app"):sub(-1)   -- "/" on Mac and Linux, "\" on Windows
 
 -- the following paths depend on SCRIPT_NAME and so are initialized in SanityChecks
-local startup = ""                  -- path to the startup script
-local settingsfile = ""             -- path to the settings file
+startup = ""                    -- path to the startup script
+settingsfile = ""               -- path to the settings file
 
-math.randomseed(os.time())          -- init seed for math.random
+math.randomseed(os.time())      -- init seed for math.random
 
 --------------------------------------------------------------------------------
 
@@ -153,6 +158,11 @@ function CheckRule(newrule)
     if err then
         return err
     end
+    
+    -- wd, ht, numstates must be integers for setting real_rule
+    wd = math.floor(wd)
+    ht = math.floor(ht)
+    numstates = math.floor(numstates)
     
     -- if any of these sanity checks fail we must exit because caller code needs to be fixed
     if #canonrule == 0 then
@@ -557,12 +567,17 @@ function HandleKey(event)
     end
 end</pre></table></dd>
 
+<p>
+Note that a startup script called SCRIPT_NAME-start.lua and stored in
+an application sub-folder called My-scripts will be run automatically
+(ie. no need to select it via File > Set Startup Script).
+
 <p><a name="functions"></a><br>
 <font size=+1><b>Script functions</b></font>
 
 <p>
-Here is an alphabetical list of the global functions in NewCA.lua you might
-want to call from your own scripts:
+Here is an alphabetical list of some of the global functions in NewCA.lua
+you might want to call from your own scripts:
 
 <p>
 <dd>
@@ -574,19 +589,22 @@ want to call from your own scripts:
 <a href="#Exit"><b>Exit</b></a><br>
 <a href="#FitGrid"><b>FitGrid</b></a><br>
 <a href="#FitPattern"><b>FitPattern</b></a><br>
-<a href="#FitSelection"><b>FitSelection</b></a>
+<a href="#FitSelection"><b>FitSelection</b></a><br>
+<a href="#GetBarHeight"><b>GetBarHeight</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#GetBarHeight"><b>GetBarHeight</b></a><br>
+<a href="#GetDensity"><b>GetDensity</b></a><br>
+<a href="#GetGenCount"><b>GetGenCount</b></a><br>
 <a href="#GetRule"><b>GetRule</b></a><br>
+<a href="#GetStepSize"><b>GetStepSize</b></a><br>
 <a href="#HandleKey"><b>HandleKey</b></a><br>
 <a href="#HandlePasteKey"><b>HandlePasteKey</b></a><br>
-<a href="#NewPattern"><b>NewPattern</b><br>
-<a href="#OpenPattern"><b>OpenPattern</b></a>
+<a href="#NewPattern"><b>NewPattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#OpenPattern"><b>OpenPattern</b></a><br>
 <a href="#RandomPattern"><b>RandomPattern</b></a><br>
 <a href="#Reset"><b>Reset</b></a><br>
 <a href="#RestoreState"><b>RestoreState</b></a><br>
@@ -597,7 +615,9 @@ want to call from your own scripts:
 <td valign=top width=30> </td>
 <td valign=top>
 <a href="#SetColors"><b>SetColors</b></a><br>
+<a href="#SetDensity"><b>SetDensity</b></a><br>
 <a href="#SetRule"><b>SetRule</b></a><br>
+<a href="#SetStepSize"><b>SetStepSize</b></a><br>
 <a href="#Step"><b>Step</b></a><br>
 <a href="#Update"><b>Update</b></a>
 </td>
@@ -647,10 +667,26 @@ The value will be 0 if the user has turned them off (by hitting the "T" key)
 or switched to full screen mode.
 </dd>
 
+<a name="GetDensity"></a><p><dt><b>GetDensity()</b></dt>
+<dd>
+Return the current density used by Random Pattern and Random Fill
+as a percentage from 1 to 100.
+</dd>
+
+<a name="GetGenCount"></a><p><dt><b>GetGenCount()</b></dt>
+<dd>
+Return the current generation count.
+</dd>
+
 <a name="GetRule"></a><p><dt><b>GetRule()</b></dt>
 <dd>
 Return the current rule.
 WARNING: Do not use g.getrule()!  It returns the rule used by the underlying layer.
+</dd>
+
+<a name="GetStepSize"></a><p><dt><b>GetStepSize()</b></dt>
+<dd>
+Return the tool bar's current step size (a number from 1 to 100).
 </dd>
 
 <a name="HandleKey"></a><p><dt><b>HandleKey(<i>event</i>)</b></dt>
@@ -725,10 +761,22 @@ Called in various places to set the colors for each state.
 A startup script can override this function to change the colors.
 </dd>
 
+<a name="SetDensity"></a><p><dt><b>SetDensity(<i>n</i>)</b></dt>
+<dd>
+Set the density used by Random Pattern and Random Fill.
+The given number is a percentage from 1 to 100.
+If not supplied then the user will be prompted to enter a value.
+</dd>
+
 <a name="SetRule"></a><p><dt><b>SetRule(<i>rule</i>)</b></dt>
 <dd>
 Switch to the given rule.  If <i>rule</i> is not supplied then the default rule is used.
 WARNING: Do not use g.setrule()!  That will set the rule for the underlying layer.
+</dd>
+
+<a name="SetStepSize"></a><p><dt><b>SetStepSize(<i>n</i>)</b></dt>
+<dd>
+Set the tool bar's step size to a number from 1 to 100.
 </dd>
 
 <a name="Step"></a><p><dt><b>Step(<i>n</i>)</b></dt>
@@ -745,6 +793,12 @@ Note that g.update() only updates the viewport and the status bar.
 Update() is automatically called when a script finishes,
 so there's no need to call it at the end of a script.
 </dd>
+
+<p>
+Note that most of the functions and variables in NewCA.lua are global,
+so it's possible to redefine these functions or use these variables
+in various ways.  This allows a lot of flexibility but requires caution
+and a good understanding of how they are used.
 
 <p><a name="extras"></a><br>
 <font size=+1><b>Extra features</b></font>
@@ -1781,10 +1835,12 @@ function RandomPattern(percentage, wd, ht)
     StopGenerating()
     ClearUndoRedo()
 
-    for y = -(ht//2), (ht//2)-1 do
-        for x = -(wd//2), (wd//2)-1 do
+    local set = g.setcell
+    local maxstate = g.numstates()-1
+    for y = -(ht//2), (ht+1)//2-1 do
+        for x = -(wd//2), (wd+1)//2-1 do
             if rand(0,99) < percentage then
-                g.setcell(x, y, rand(1,g.numstates()-1))
+                set(x, y, rand(1,maxstate))
             end
         end
     end
@@ -2530,10 +2586,21 @@ end
 --------------------------------------------------------------------------------
 
 function RandomFill()
-    if #g.getselrect() > 0 then
+    local sel = g.getselrect()
+    if #sel > 0 then
         RememberCurrentState()
         dirty = true
-        g.randfill(perc)
+        local set = g.setcell
+        local maxstate = g.numstates()-1
+        -- note that LtL's g.randfill only fills with state 1
+        g.clear(0)
+        for y = sel[2], sel[2]+sel[4]-1 do
+            for x = sel[1], sel[1]+sel[3]-1 do
+                if rand(0,99) < perc then
+                    set(x, y, rand(1,maxstate))
+                end
+            end
+        end
         Refresh()
     end
 end
