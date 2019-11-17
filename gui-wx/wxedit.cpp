@@ -152,7 +152,7 @@ private:
     int digitwd;                  // width of digit in edit bar font
     int digitht;                  // height of digit in edit bar font
     int textascent;               // vertical adjustment used in DrawText calls
-    wxFont* editfont;             // edit bar font
+    wxFont editfont;              // edit bar font
 };
 
 BEGIN_EVENT_TABLE(EditBar, wxPanel)
@@ -267,7 +267,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
     // create font for text in edit bar and set textascent for use in DisplayText
 #ifdef __WXMSW__
     // use smaller, narrower font on Windows
-    editfont = wxFont::New(8, wxDEFAULT, wxNORMAL, wxNORMAL);
+    editfont = wxFont(8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     int major, minor;
     wxGetOsVersion(&major, &minor);
     if ( major > 5 || (major == 5 && minor >= 1) ) {
@@ -278,17 +278,17 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
     }
 #elif defined(__WXGTK__)
     // use smaller font on GTK
-    editfont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
+    editfont = wxFont(8, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     textascent = 11;
-#elif defined(__WXOSX_COCOA__)
+#elif defined(__WXMAC__)
     // we need to specify facename to get Monaco instead of Courier
-    editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
+    editfont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Monaco"));
     textascent = 10;
+    editfont.SetPointSize(10); // avoid assert error
 #else
-    editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
+    editfont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     textascent = 10;
 #endif
-    if (editfont == NULL) Fatal(_("Failed to create edit bar font!"));
     
     // determine horizontal offsets for info in edit bar
     wxClientDC dc(this);
@@ -324,7 +324,6 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 
 EditBar::~EditBar()
 {
-    delete editfont;
     delete editbitmap;
     delete drawbar;
 }
@@ -333,7 +332,7 @@ EditBar::~EditBar()
 
 void EditBar::SetEditFont(wxDC& dc)
 {
-    dc.SetFont(*editfont);
+    dc.SetFont(editfont);
     dc.SetTextForeground(*wxBLACK);
     dc.SetBrush(*wxBLACK_BRUSH);
     dc.SetBackgroundMode(wxTRANSPARENT);
@@ -443,7 +442,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     wxRect r = wxRect(0, 0, wd, ht);
     
 #ifdef __WXMAC__
-    // fix DrawRectangle problem on retina screens
+    // fix DrawRectangle problem on Retina screens
     if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
 
     wxBrush brush(wxColor(202,202,202));

@@ -44,6 +44,6 @@ extern PatternView* bigview;     // big viewport window (encloses all tiles)
 extern StatusBar* statusptr;     // status bar window
 extern wxStopWatch* stopwatch;   // global stopwatch (started in OnInit)
 extern bool insideYield;         // processing an event via Yield()?
-extern double scalefactor;       // main window's scale factor (2.0 on retina displays, 1.0 otherwise)
+extern double scalefactor;       // main window's scale factor (2.0 on Retina displays, 1.0 otherwise)
 
 #endif

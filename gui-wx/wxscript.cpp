@@ -721,6 +721,8 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             controlspos = newval;
             int wd, ht;
             viewptr->GetClientSize(&wd, &ht);
+            wd = wd * int(scalefactor);
+            ht = ht * int(scalefactor);
             viewptr->SetViewSize(wd, ht);
             DoAutoUpdate();
         }
@@ -1203,6 +1205,16 @@ const char* GSF_doevent(const wxString& event)
             if (!ystr.IsNumber()) return "Bad y value.";
             int x = wxAtoi(xstr);
             int y = wxAtoi(ystr);
+            
+            // hack for scripts like NewCA.lua that use an overlay covering the viewport
+            // and convert an ozoom* event to zoom*
+            if (int(scalefactor) > 1 && showoverlay &&
+                curroverlay->GetOverlayWidth() >= currlayer->view->getwidth() &&
+                curroverlay->GetOverlayHeight() >= currlayer->view->getheight()) {
+                // convert x,y to scaled viewport coords
+                x *= int(scalefactor);
+                y *= int(scalefactor);
+            }
 
             // x,y is pixel position in viewport
             if (event.StartsWith(wxT("zoomin"))) {

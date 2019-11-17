@@ -116,8 +116,6 @@ static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 Layer* pastelayer;                      // layer containing the paste pattern
 wxRect pastebbox;                       // bounding box in cell coords (not necessarily minimal)
 unsigned char* modedata[4] = {NULL};    // RGBA data for drawing current paste mode (And, Copy, Or, Xor)
-const int modewd = 32;                  // width of each modedata
-const int modeht = 16;                  // height of each modedata
 
 // for drawing translucent controls
 unsigned char* ctrlsbitmap = NULL;      // RGBA data for controls bitmap
@@ -128,12 +126,13 @@ int controlsht;                         // height of ctrlsbitmap
 // include controls_xpm (XPM data for controls bitmap)
 #include "bitmaps/controls.xpm"
 
-// these constants must match image dimensions in bitmaps/controls.xpm
-const int buttborder = 6;               // size of outer border
-const int buttsize = 22;                // size of each button
+// these constants must match image in bitmaps/controls.xpm
 const int buttsperrow = 3;              // # of buttons in each row
 const int numbutts = 15;                // # of buttons
-const int rowgap = 4;                   // vertical gap after first 2 rows
+// following will be multiplied by scalefactor
+int buttborder = 6;                     // size of outer border
+int buttsize = 22;                      // size of each button
+int rowgap = 4;                         // vertical gap after first 2 rows
 
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
@@ -201,6 +200,12 @@ static void DisableTextures()
 void CreateTranslucentControls()
 {
     wxImage image(controls_xpm);
+    if (scalefactor > 1.0) {
+        image.Rescale(image.GetWidth() * scalefactor, image.GetHeight() * scalefactor);
+        buttborder = buttborder * scalefactor;
+        buttsize = buttsize * scalefactor;
+        rowgap = rowgap * scalefactor;
+    }
     controlswd = image.GetWidth();
     controlsht = image.GetHeight();
 
@@ -240,12 +245,15 @@ void CreateTranslucentControls()
         wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);   // uses pmode
 
         wxMemoryDC dc;        
+        int modewd = 32 * scalefactor;
+        int modeht = 16 * scalefactor;
         wxBitmap modemap(modewd, modeht, 32);
         dc.SelectObject(modemap);
 
         wxRect r(0, 0, modewd, modeht);
         wxBrush brush(*wxWHITE);
         FillRect(dc, r, brush);
+        dc.SetUserScale(scalefactor, scalefactor);
         dc.SetFont(*statusptr->GetStatusFont());
         dc.SetBackgroundMode(wxSOLID);
         dc.SetTextBackground(*wxWHITE);
@@ -253,8 +261,10 @@ void CreateTranslucentControls()
         dc.SetPen(*wxBLACK);
         int textwd, textht;
         dc.GetTextExtent(pmodestr, &textwd, &textht);
-        textwd += 4;
-        dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
+        textht = textht * scalefactor;
+        textwd = textwd * scalefactor;
+        textwd += 4 * scalefactor;
+        dc.DrawText(pmodestr, 2, modeht/scalefactor - statusptr->GetTextAscent() - 4);
 
         dc.SelectObject(wxNullBitmap);
 
@@ -1126,6 +1136,8 @@ void DrawPasteImage()
 
     // show current paste mode
     if (r.y > 0 && modedata[(int)pmode]) {
+        int modewd = 32 * scalefactor;
+        int modeht = 16 * scalefactor;
         DrawRGBAData(modedata[(int)pmode], r.x, r.y - modeht - 1, modewd, modeht);
     }
 }
@@ -1555,22 +1567,22 @@ void DrawStackedLayers()
 
 // -----------------------------------------------------------------------------
 
-void DrawTileFrame(wxRect& trect, int wd)
+void DrawTileFrame(wxRect& trect, int bordersize)
 {
-    trect.Inflate(wd);
+    trect.Inflate(bordersize);
     wxRect r = trect;
 
-    r.height = wd;
+    r.height = bordersize;
     FillRect(r.x, r.y, r.width, r.height);       // top edge
 
-    r.y += trect.height - wd;
+    r.y += trect.height - bordersize;
     FillRect(r.x, r.y, r.width, r.height);       // bottom edge
 
     r = trect;
-    r.width = wd;
+    r.width = bordersize;
     FillRect(r.x, r.y, r.width, r.height);       // left edge
 
-    r.x += trect.width - wd;
+    r.x += trect.width - bordersize;
     FillRect(r.x, r.y, r.width, r.height);       // right edge
 }
 
@@ -1583,6 +1595,7 @@ void DrawTileBorders()
     // draw tile borders in bigview window
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
+    // no need to multiply wd and ht by scalefactor because only used for next test
     if (wd < 1 || ht < 1) return;
 
     // most people will choose either a very light or very dark color for dead cells,
@@ -1593,14 +1606,14 @@ void DrawTileBorders()
     for ( int i = 0; i < numlayers; i++ ) {
         if (i != currindex) {
             trect = GetLayer(i)->tilerect;
-            DrawTileFrame(trect, tileborder);
+            DrawTileFrame(trect, tileborder * scalefactor);
         }
     }
 
     // draw green border around current tile
     trect = GetLayer(currindex)->tilerect;
     SetColor(0, 255, 0, 255);
-    DrawTileFrame(trect, tileborder);
+    DrawTileFrame(trect, tileborder * scalefactor);
 }
 
 // -----------------------------------------------------------------------------
@@ -1705,8 +1718,12 @@ void DrawView(int tileindex)
 
     if ( numlayers > 1 && tilelayers ) {
         if ( tileindex < 0 ) {
+            glClearColor(currlayer->cellr[0]/255.0,
+                         currlayer->cellg[0]/255.0,
+                         currlayer->cellb[0]/255.0,
+                         1.0);
+            glClear(GL_COLOR_BUFFER_BIT);
             DrawTileBorders();
-            // there's no need to fill bigview's background
             return;
         }
         // tileindex >= 0 so temporarily change some globals to draw this tile

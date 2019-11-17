@@ -804,19 +804,20 @@ void CalculateTileRects(int bigwd, int bight)
     
     if (tileborder > 0) {
         // make tilerects smaller to allow for equal-width tile borders
+        int border = tileborder * int(scalefactor);
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
                 int index = i * cols + j;
                 if (index == numlayers) {
                     // numlayers == 3,5,7
-                    layer[index - 1]->tilerect.width -= tileborder;
+                    layer[index - 1]->tilerect.width -= border;
                 } else {
-                    layer[index]->tilerect.x += tileborder;
-                    layer[index]->tilerect.y += tileborder;
-                    layer[index]->tilerect.width -= tileborder;
-                    layer[index]->tilerect.height -= tileborder;
-                    if (j == cols - 1) layer[index]->tilerect.width -= tileborder;
-                    if (i == rows - 1) layer[index]->tilerect.height -= tileborder;
+                    layer[index]->tilerect.x += border;
+                    layer[index]->tilerect.y += border;
+                    layer[index]->tilerect.width -= border;
+                    layer[index]->tilerect.height -= border;
+                    if (j == cols - 1) layer[index]->tilerect.width -= border;
+                    if (i == rows - 1) layer[index]->tilerect.height -= border;
                 }
             }
         }
@@ -834,7 +835,10 @@ void ResizeTiles(int bigwd, int bight)
     for ( int i = 0; i < numlayers; i++ ) {
         if (layer[i]->tilerect.width < 0) layer[i]->tilerect.width = 0;
         if (layer[i]->tilerect.height < 0) layer[i]->tilerect.height = 0;
-        layer[i]->tilewin->SetSize( layer[i]->tilerect );
+        layer[i]->tilewin->SetSize( layer[i]->tilerect.x / int(scalefactor),
+                                    layer[i]->tilerect.y / int(scalefactor),
+                                    layer[i]->tilerect.width / int(scalefactor),
+                                    layer[i]->tilerect.height / int(scalefactor) );
     }
     
     // set viewport size for each tile; this is currently the same as the
@@ -842,6 +846,8 @@ void ResizeTiles(int bigwd, int bight)
     for ( int i = 0; i < numlayers; i++ ) {
         int wd, ht;
         layer[i]->tilewin->GetClientSize(&wd, &ht);
+        wd = wd * int(scalefactor);
+        ht = ht * int(scalefactor);
         // wd or ht might be < 1 on Windows
         if (wd < 1) wd = 1;
         if (ht < 1) ht = 1;
@@ -890,6 +896,8 @@ void CreateTiles()
     // init tilerects, tile window sizes and their viewport sizes
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
+    wd = wd * int(scalefactor);
+    ht = ht * int(scalefactor);
     // wd or ht might be < 1 on Windows
     if (wd < 1) wd = 1;
     if (ht < 1) ht = 1;
@@ -916,6 +924,8 @@ void DestroyTiles()
     // resize viewport in each layer to bigview's client area
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
+    wd = wd * int(scalefactor);
+    ht = ht * int(scalefactor);
     // wd or ht might be < 1 on Windows
     if (wd < 1) wd = 1;
     if (ht < 1) ht = 1;
@@ -3007,7 +3017,7 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
     dc.SetPen(*wxBLACK_PEN);
     
 #ifdef __WXMAC__
-    // fix DrawRectangle problem on retina screens
+    // fix DrawRectangle problem on Retina screens
     if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
 #endif
 

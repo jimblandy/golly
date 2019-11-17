@@ -748,6 +748,10 @@ const int matchany = -1;            // match any component value
     static ISoundEngine *engine = NULL;
 #endif
 
+static int intscale;                // scalefactor truncated to an integer
+static int intscalem1;              // intscale - 1
+static bool autoscale = false;      // do automatic scaling?
+
 // -----------------------------------------------------------------------------
 
 Overlay::Overlay()
@@ -761,6 +765,7 @@ Overlay::Overlay()
     stary = NULL;
     starz = NULL;
     renderclip = NULL;
+
     #ifdef ENABLE_SOUND
     // initialize sound engine once (avoids "Could not add IO Proc for CoreAudio" warnings in Mac console)
     if (engine == NULL) {
@@ -768,6 +773,10 @@ Overlay::Overlay()
         if (!engine) Warning(_("Unable to initialize sound!"));
     }
     #endif
+    
+    intscale = int(scalefactor);
+    intscalem1 = intscale - 1;
+    autoscale = intscale > 1;       // true for Retina screens
 
     // 3D
     stepsize = 1;
@@ -2275,6 +2284,11 @@ const char *Overlay::DoResize(const char *args)
         isclip = true;
     }
 
+    if (autoscale) {
+        w *= intscale;
+        h *= intscale;
+    }
+
     // check whether resizing clip or overlay
     if (isclip) {
         // resize clip
@@ -2341,6 +2355,12 @@ const char *Overlay::DoResize(const char *args)
         }
     }
 
+    if (autoscale) {
+        // return unscaled dimensions
+        oldw /= intscale;
+        oldh /= intscale;
+    }
+
     // return old dimensions
     static char result[32];
     sprintf(result, "%d %d", oldw, oldh);
@@ -2362,6 +2382,11 @@ const char *Overlay::DoCreate(const char *args)
         }
     } else {
         isclip = true;
+    }
+
+    if (autoscale) {
+        w *= intscale;
+        h *= intscale;
     }
 
     // check whether creating clip or overlay
@@ -2431,10 +2456,13 @@ const char *Overlay::DoCreate(const char *args)
         currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
         fontname = "default";
         fontsize = 10;
+        if (autoscale) fontsize *= intscale;
+
         #ifdef __WXMAC__
             // need to increase Mac font size by 25% to match text size on Win/Linux
             currfont.SetPointSize(int(fontsize * 1.25 + 0.5));
             extraht = 1;
+            if (autoscale) extraht *= intscale;
         #else
             currfont.SetPointSize(fontsize);
         #endif
@@ -2447,6 +2475,7 @@ const char *Overlay::DoCreate(const char *args)
 
         // default width for lines and ellipses
         linewidth = 1;
+        if (autoscale) linewidth *= intscale;
 
         // make sure the Show Overlay option is ticked
         if (!showoverlay) {
@@ -2474,6 +2503,11 @@ bool Overlay::PointInOverlay(int vx, int vy, int *ox, int *oy)
     viewptr->GetClientSize(&viewwd, &viewht);
     if (viewwd <= 0 || viewht <= 0) return false;
 
+    if (autoscale) {
+        viewwd *= intscale;
+        viewht *= intscale;
+    }
+
     int x = 0;
     int y = 0;
     switch (pos) {
@@ -2494,6 +2528,8 @@ bool Overlay::PointInOverlay(int vx, int vy, int *ox, int *oy)
             y = (viewht - ovht) / 2;
             break;
     }
+    
+    // vx and vy have already been scaled
 
     if (vx < x) return false;
     if (vy < y) return false;
@@ -2502,6 +2538,12 @@ bool Overlay::PointInOverlay(int vx, int vy, int *ox, int *oy)
 
     *ox = vx - x;
     *oy = vy - y;
+    
+    if (autoscale) {
+        // return unscaled position
+        *ox = *ox / intscale;
+        *oy = *oy / intscale;
+    }
 
     return true;
 }
@@ -3326,8 +3368,14 @@ const char *Overlay::GetCoordinatePair(char *args, int *x, int *y)
     args--;
 
     // return coordinates
-    *x = newx;
-    *y = newy;
+    if (autoscale) {
+        // return scaled coordinates
+        *x = newx * intscale;
+        *y = newy * intscale;
+    } else {
+        *x = newx;
+        *y = newy;
+    }
     return args;
 }
 
@@ -3368,12 +3416,23 @@ const char *Overlay::DoSetPixel(lua_State *L, int n, int *nresults)
                     int y = (int)lua_tonumberx(L, -1, &valid);
                     if (!valid) break;
                     lua_pop(L, 1);
+
+                    if (autoscale) {
+                        x *= intscale;
+                        y *= intscale;
+                    }
     
                     // ignore pixel if outside pixmap edges
                     if (PixelInTarget(x, y)) {
                         unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
                         const unsigned int dest = *lp;
                         ALPHABLENDPRE(rgbadraw, sourcearb, sourceag, dest, lp, alpha, invalpha);
+                        if (autoscale) {
+                            // WARNING: this assumes intscale is 2
+                            DrawPixel(x+1, y);
+                            DrawPixel(x, y+1);
+                            DrawPixel(x+1, y+1);
+                        }
                     }
                 } while (i <= n);
             } else {
@@ -3388,12 +3447,23 @@ const char *Overlay::DoSetPixel(lua_State *L, int n, int *nresults)
                     int y = (int)lua_tonumberx(L, -1, &valid);
                     if (!valid) break;
                     lua_pop(L, 1);
+
+                    if (autoscale) {
+                        x *= intscale;
+                        y *= intscale;
+                    }
     
                     // ignore pixel if outside pixmap edges
                     if (PixelInTarget(x, y)) {
                         unsigned int *lp = ((unsigned int*)pixmap) + y * wd + x;
                         const unsigned int dest = *lp;
                         ALPHABLENDPREOPAQUEDEST(sourcearb, sourceag, dest, lp, invalpha);
+                        if (autoscale) {
+                            // WARNING: this assumes intscale is 2
+                            DrawPixel(x+1, y);
+                            DrawPixel(x, y+1);
+                            DrawPixel(x+1, y+1);
+                        }
                     }
                 } while (i <= n);
             }
@@ -3420,9 +3490,20 @@ const char *Overlay::DoSetPixel(lua_State *L, int n, int *nresults)
             if (!valid) break;
             lua_pop(L, 1);
 
+            if (autoscale) {
+                x *= intscale;
+                y *= intscale;
+            }
+
             // ignore pixel if outside pixmap edges
             if (PixelInTarget(x, y)) {
                 *(lpixmap + y*wd + x) = rgba;
+                if (autoscale) {
+                    // WARNING: this assumes intscale is 2
+                    *(lpixmap + y*wd + x+1) = rgba;
+                    *(lpixmap + (y+1)*wd + x) = rgba;
+                    *(lpixmap + (y+1)*wd + x+1) = rgba;
+                }
             }
         } while (i <= n);
 
@@ -3473,13 +3554,29 @@ const char *Overlay::DoSetPixel(const char *args)
     DisableTargetClipIndex();
 
     // ignore pixel if outside pixmap edges
-    if (PixelInTarget(x, y)) DrawPixel(x, y);
+    if (PixelInTarget(x, y)) {
+        DrawPixel(x, y);
+        if (autoscale) {
+            // WARNING: this assumes intscale is 2
+            DrawPixel(x+1, y);
+            DrawPixel(x, y+1);
+            DrawPixel(x+1, y+1);
+        }
+    }
 
     // read any further coordinates
     while (*args) {
         args = GetCoordinatePair((char*)args, &x, &y);
         if (!args) return OverlayError("set command has illegal coordinates");
-        if (PixelInTarget(x, y)) DrawPixel(x, y);
+        if (PixelInTarget(x, y)) {
+            DrawPixel(x, y);
+            if (autoscale) {
+                // WARNING: this assumes intscale is 2
+                DrawPixel(x+1, y);
+                DrawPixel(x, y+1);
+                DrawPixel(x+1, y+1);
+            }
+        }
     }
 
     return NULL;
@@ -3505,6 +3602,11 @@ const char *Overlay::DoGet(lua_State *L, int n, int *nresults)
         int y = (int)lua_tonumberx(L, -1, &valid);
         lua_pop(L,1);
         if (!valid) return OverlayError("get command has illegal y argument");
+
+        if (autoscale) {
+            x *= intscale;
+            y *= intscale;
+        }
 
         // check if x,y is outside pixmap
         if (!PixelInTarget(x, y)) {
@@ -3539,6 +3641,11 @@ const char *Overlay::DoGetPixel(const char *args)
         return OverlayError("get command requires 2 arguments");
     }
 
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+    }
+
     // check if x,y is outside pixmap
     if (!PixelInTarget(x, y)) return "";
 
@@ -3553,6 +3660,11 @@ const char *Overlay::DoGetPixel(const char *args)
 bool Overlay::TransparentPixel(int x, int y)
 {
     if (ovpixmap == NULL) return false;
+
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+    }
 
     // check if x,y is outside pixmap
     if (!PixelInOverlay(x, y)) return false;
@@ -3642,7 +3754,9 @@ const char *Overlay::DoGetXY()
     if (!mainptr->infront) return "";
 
     wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
-
+    pt.x *= intscale;
+    pt.y *= intscale;
+    
     int ox, oy;
     if (PointInOverlay(pt.x, pt.y, &ox, &oy)) {
         static char result[32];
@@ -3662,11 +3776,15 @@ const char *Overlay::LineOptionWidth(const char *args)
         return OverlayError("lineoption width command requires 1 argument");
     }
 
+    if (autoscale) w *= intscale;
+
     if (w < 1) return OverlayError("line width must be > 0");
     if (w > 10000) return OverlayError("line width must be <= 10000");
 
     oldwidth = linewidth;
     linewidth = w;
+
+    if (autoscale) oldwidth /= intscale;    // return unscaled oldwidth
 
     static char result[32];
     sprintf(result, "%d", oldwidth);
@@ -3886,6 +4004,21 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
         int tempy = y0; y0 = y1; y1 = tempy;
     }
 
+    if (autoscale) {
+        // increase end point
+        if (y0 == y1) {
+            // horizontal line
+            x1 += intscalem1;
+        } else if (x0 == x1) {
+            // vertical line
+            y1 += intscalem1;
+        } else {
+            // sloping line
+            x1 += intscalem1;
+            y1 += intscalem1;
+        }
+    }
+
     int dx = x1 - x0;
     int dy = y1 - y0;
     int xstep = 1;
@@ -4072,6 +4205,13 @@ const char *Overlay::DoLine(lua_State *L, int n, bool connected, int *nresults)
         // mark target clip as changed
         DisableTargetClipIndex();
 
+        if (autoscale) {
+            x1 *= intscale;
+            y1 *= intscale;
+            x2 *= intscale;
+            y2 *= intscale;
+        }
+
         // draw the first line
         RenderLine(x1, y1, x2, y2);
 
@@ -4091,6 +4231,11 @@ const char *Overlay::DoLine(lua_State *L, int n, bool connected, int *nresults)
                 y1 = (int)lua_tonumberx(L, -1, &valid);
                 if (!valid) break;
                 lua_pop(L, 1);
+
+                if (autoscale) {
+                    x1 *= intscale;
+                    y1 *= intscale;
+                }
             }
             // read the next end point
             lua_rawgeti(L, 1, i++);
@@ -4101,6 +4246,11 @@ const char *Overlay::DoLine(lua_State *L, int n, bool connected, int *nresults)
             y2 = (int)lua_tonumberx(L, -1, &valid);
             if (!valid) break;
             lua_pop(L, 1);
+
+            if (autoscale) {
+                x2 *= intscale;
+                y2 *= intscale;
+            }
 
             // draw the line
             RenderLine(x1, y1, x2, y2);
@@ -4212,6 +4362,7 @@ const char *Overlay::DoLine(const char *args, bool connected)
 
 void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
     if (linewidth > 1) {
+        // this is always true if autoscale
         DrawThickLine(x0, y0, x1, y1);
         return;
     }
@@ -4271,6 +4422,7 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
 {
     // based on code from http://members.chello.at/~easyfilter/bresenham.html
 
+    // note that linewidth is > 1 if autoscale
     if (linewidth == 1) {
         if (alphablend) {
             DrawAntialiasedEllipse(x0, y0, x1, y1);
@@ -4578,6 +4730,13 @@ const char *Overlay::DoEllipse(const char *args)
         return OverlayError("ellipse command requires 4 arguments");
     }
 
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+        w *= intscale;
+        h *= intscale;
+    }
+
     // treat non-positive w/h as inset from overlay's width/height
     if (w <= 0) w = wd + w;
     if (h <= 0) h = ht + h;
@@ -4693,6 +4852,13 @@ const char *Overlay::DoFill(lua_State *L, int n, int *nresults)
             int h = (int)lua_tonumberx(L, -1, &valid);
             if (!valid) break;
             lua_pop(L, 1);
+
+            if (autoscale) {
+                x *= intscale;
+                y *= intscale;
+                w *= intscale;
+                h *= intscale;
+            }
 
             // treat non-positive w/h as inset from overlay's width/height
             if (w <= 0) w = wd + w;
@@ -4854,6 +5020,13 @@ const char *Overlay::DoCopy(const char *args)
         return OverlayError("copy command requires 5 arguments");
     }
 
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+        w *= intscale;
+        h *= intscale;
+    }
+
     // treat non-positive w/h as inset from overlay's width/height
     // (makes it easy to copy entire overlay via "copy 0 0 0 0 all")
     if (w <= 0) w = wd + w;
@@ -4981,10 +5154,23 @@ const char *Overlay::DoOptimize(const char *args)
 
     // add index to the clip
     clipptr->AddIndex();
+    
+    int x = clipptr->xbb;
+    int y = clipptr->ybb;
+    int w = clipptr->wbb;
+    int h = clipptr->hbb;
+
+    if (autoscale) {
+        // return unscaled values
+        x /= intscale;
+        y /= intscale;
+        w /= intscale;
+        h /= intscale;
+    }
 
     // return the bounding box x, y, w, h of non-transparent pixels in the clip
     static char result[64];
-    sprintf(result, "%d %d %d %d", clipptr->xbb, clipptr->ybb, clipptr->wbb, clipptr->hbb);
+    sprintf(result, "%d %d %d %d", x, y, w, h);
     return result;
 }
 
@@ -5011,6 +5197,9 @@ const char *Overlay::DoPaste(lua_State *L, int n, int *nresults)
             lua_rawgeti(L, 1, i);
             // attempt to decode as a number
             lua_Number value = lua_tonumberx(L, -1, &valid);
+            
+            if (autoscale) value *= intscale;
+            
             if (valid) {
                 // store the number
                 coords[j++] = (int)value;
@@ -5286,8 +5475,18 @@ const char *Overlay::DoPaste(const int *coords, int n, const Clip *clipptr)
                 h = clipptr->cht;
                 x -= xoff;
                 y -= yoff;
-                const int x0 = x - (x * axx + y * axy);
-                const int y0 = y - (x * ayx + y * ayy);
+                int x0 = x - (x * axx + y * axy);
+                int y0 = y - (x * ayx + y * ayy);
+                
+                if (autoscale) {
+                    // not quite sure why we need to do this but it fixes problems with the
+                    // corners of rounded rectangles (see m.round_rect in oplus/init.lua)
+                    // flip   = transform -1 0 0 -1
+                    // flip_x = transform -1 0 0  1
+                    // flip_y = transform  1 0 0 -1
+                    if (axx == -1) x0 += intscalem1;
+                    if (ayy == -1) y0 += intscalem1;
+                }
 
                 // check for alpha blend
                 if (alphablend) {
@@ -5602,8 +5801,18 @@ const char *Overlay::DoPaste(const char *args)
                 h = clipptr->cht;
                 x -= xoff;
                 y -= yoff;
-                const int x0 = x - (x * axx + y * axy);
-                const int y0 = y - (x * ayx + y * ayy);
+                int x0 = x - (x * axx + y * axy);
+                int y0 = y - (x * ayx + y * ayy);
+                
+                if (autoscale) {
+                    // not quite sure why we need to do this but it fixes problems with the
+                    // corners of rounded rectangles (see m.round_rect in oplus/init.lua)
+                    // flip   = transform -1 0 0 -1
+                    // flip_x = transform -1 0 0  1
+                    // flip_y = transform  1 0 0 -1
+                    if (axx == -1) x0 += intscalem1;
+                    if (ayy == -1) y0 += intscalem1;
+                }
 
                 // check for alpha blend
                 if (alphablend) {
@@ -5653,6 +5862,8 @@ const char *Overlay::DoPaste(const char *args)
 
     return NULL;
 }
+
+// -----------------------------------------------------------------------------
 
 // assumes alpha blend, identity transformation and opaque destination pixels
 void Overlay::Draw3DCell(int x, int y, const Clip *clipptr)
@@ -5788,6 +5999,13 @@ const char *Overlay::DoScale(const char *args)
     if (sscanf(args, "%d %d %d %d %n%c", &x, &y, &w, &h, &namepos, &dummy) != 5) {
         // note that %n is not included in the count
         return OverlayError("scale command requires 5 arguments");
+    }
+
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+        w *= intscale;
+        h *= intscale;
     }
 
     // treat non-positive w/h as inset from target's width/height
@@ -6042,6 +6260,11 @@ const char *Overlay::DoLoad(const char *args)
         return OverlayError("load command requires 3 arguments");
     }
 
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+    }
+
     wxString filepath = wxString(args + filepos, wxConvLocal);
     if (!wxFileExists(filepath)) {
         return OverlayError("given file does not exist");
@@ -6054,6 +6277,13 @@ const char *Overlay::DoLoad(const char *args)
 
     int imgwd = image.GetWidth();
     int imght = image.GetHeight();
+    
+    if (autoscale) {
+        imgwd *= intscale;
+        imght *= intscale;
+        image.Rescale(imgwd, imght, wxIMAGE_QUALITY_NORMAL);
+    }
+
     if (RectOutsideTarget(x, y, imgwd, imght)) {
         // do nothing if image rect is completely outside target,
         // but we still return the image dimensions so users can do things
@@ -6113,6 +6343,12 @@ const char *Overlay::DoLoad(const char *args)
         b = saveb;
         a = savea;
     }
+    
+    if (autoscale) {
+        // return unscaled dimensions
+        imgwd /= intscale;
+        imght /= intscale;
+    }
 
     // return image dimensions
     static char result[32];
@@ -6132,6 +6368,13 @@ const char *Overlay::DoSave(const char *args)
     if (sscanf(args, " %d %d %d %d %n%c", &x, &y, &w, &h, &filepos, &dummy) != 5) {
         // note that %n is not included in the count
         return OverlayError("save command requires 5 arguments");
+    }
+
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
+        w *= intscale;
+        h *= intscale;
     }
 
     // treat non-positive w/h as inset from overlay's width/height
@@ -6238,6 +6481,11 @@ const char *Overlay::DoFlood(const char *args)
     int x, y;
     if (sscanf(args, " %d %d", &x, &y) != 2) {
         return OverlayError("flood command requires 2 arguments");
+    }
+
+    if (autoscale) {
+        x *= intscale;
+        y *= intscale;
     }
 
     // // check if x,y is outside pixmap
@@ -6361,6 +6609,8 @@ const char *Overlay::DoFont(const char *args)
         return OverlayError("font command requires 1 or 2 arguments");
     }
 
+    if (autoscale) newsize *= intscale;
+
     if (newsize <= 0 || newsize >= 1000) {
         return OverlayError("font size must be > 0 and < 1000");
     }
@@ -6376,6 +6626,7 @@ const char *Overlay::DoFont(const char *args)
             // strange but true
             extraht = 2;
         }
+        if (autoscale) extraht *= intscale;
     #else
         int ptsize = newsize;
     #endif
@@ -6431,6 +6682,8 @@ const char *Overlay::DoFont(const char *args)
 
     fontsize = newsize;
     if (!samename) fontname = newname;
+
+    if (autoscale) oldfontsize /= intscale;     // return unscaled oldfontsize
 
     // return old fontsize and fontname
     char ibuff[16];
@@ -6762,6 +7015,13 @@ const char *Overlay::DoText(const char *args)
 
     // create named clip for later use by paste, scale, etc
     clips[name] = textclip;
+
+    if (autoscale) {
+        // return unscaled values
+        bitmapwd /= intscale;
+        bitmapht /= intscale;
+        descent /= intscale;
+    }
 
     // return text info
     static char result[48];
@@ -7514,9 +7774,9 @@ const char *Overlay::Update3DClips(const bool editing) {
 // fromy        integer
 // toy          integer
 // stepy        integer
-// fromx        integer
-// tox          integer
-// stepx        integer
+// fromz        integer
+// toz          integer
+// stepz        integer
 // cellsize     integer
 // editing      boolean
 // toolbarht    integer
@@ -7549,6 +7809,11 @@ const char *Overlay::Do3DDisplayCells(lua_State *L, const int n, int *nresults) 
 
     // ensure required clips are present
     if ((error = Update3DClips(editing)) != NULL) return error;
+    
+    if (autoscale) {
+        cellsize *= intscale;
+        toolbarht *= intscale;
+    }
 
     // compute midcell
     midcell = (cellsize / 2) - ((gridsize + 1 - (gridsize % 2)) * cellsize / 2);

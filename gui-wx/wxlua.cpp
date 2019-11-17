@@ -1953,11 +1953,55 @@ static int g_getpos(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+// this function will remain undocumented until we find a case where it is necessary!!!
+
+static int g_getscale(lua_State* L)
+{
+    CheckEvents(L);
+
+    lua_pushnumber(L, (lua_Number) scalefactor);
+    
+    return 1;   // result is a floating point number
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_getmag(lua_State* L)
+{
+    CheckEvents(L);
+    
+    int mag = viewptr->GetMag();
+
+    // hack for scripts like NewCA.lua that use an overlay covering the viewport
+    // but most pixels are close to transparent
+    if (int(scalefactor) > 1 && showoverlay &&
+        curroverlay->GetOverlayWidth() >= currlayer->view->getwidth() &&
+        curroverlay->GetOverlayHeight() >= currlayer->view->getheight() &&
+        strcmp(curroverlay->DoOverlayCommand("get 50 50"), "0 0 0 1") == 0 ) {
+        mag--;
+    }
+
+    lua_pushinteger(L, mag);
+    
+    return 1;   // result is an integer
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_setmag(lua_State* L)
 {
     CheckEvents(L);
 
     int mag = luaL_checkinteger(L, 1);
+
+    // hack for scripts like NewCA.lua that use an overlay covering the viewport
+    // but most pixels are close to transparent
+    if (int(scalefactor) > 1 && showoverlay &&
+        curroverlay->GetOverlayWidth() >= currlayer->view->getwidth() &&
+        curroverlay->GetOverlayHeight() >= currlayer->view->getheight() &&
+        strcmp(curroverlay->DoOverlayCommand("get 50 50"), "0 0 0 1") == 0 ) {
+        mag++;
+    }
     
     BEGIN_AUTORELEASE
     
@@ -1967,17 +2011,6 @@ static int g_setmag(lua_State* L)
     END_AUTORELEASE
     
     return 0;   // no result
-}
-
-// -----------------------------------------------------------------------------
-
-static int g_getmag(lua_State* L)
-{
-    CheckEvents(L);
-
-    lua_pushinteger(L, viewptr->GetMag());
-    
-    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -2073,6 +2106,13 @@ static int g_setview(lua_State* L)
     mainptr->SetSize(mnwd + (wd - currwd), mnht + (ht - currht));
     
     END_AUTORELEASE
+
+    #ifdef __WXGTK__
+        // needed on Linux to see size change immediately
+        insideYield = true;
+        wxGetApp().Yield(true);
+        insideYield = false;
+    #endif
     
     return 0;   // no result
 }
@@ -2099,8 +2139,8 @@ static int g_getview(lua_State* L)
     } else {
         if (numlayers > 1 && tilelayers) {
             // tilerect values are only valid when multiple layers are tiled
-            wd = GetLayer(index)->tilerect.width;
-            ht = GetLayer(index)->tilerect.height;
+            wd = GetLayer(index)->tilerect.width / int(scalefactor);
+            ht = GetLayer(index)->tilerect.height / int(scalefactor);
         } else {
             bigview->GetClientSize(&wd, &ht);
         }
@@ -2844,11 +2884,19 @@ static int g_show(lua_State* L)
 
     BEGIN_AUTORELEASE
 
+    // make sure status bar is visible
+    if (!showstatus) mainptr->ToggleStatusBar();
+
     inscript = false;
     statusptr->DisplayMessage(wxString(msg, LUA_ENC));
     inscript = true;
-    // make sure status bar is visible
-    if (!showstatus) mainptr->ToggleStatusBar();
+
+    #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
+        // need to see update immediately
+        insideYield = true;
+        wxGetApp().Yield(true);
+        insideYield = false;
+    #endif
 
     END_AUTORELEASE
 
@@ -3034,6 +3082,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getpos",       g_getpos },       // return x,y position of cell in middle of viewport
     { "setmag",       g_setmag },       // set magnification (0=1:1, 1=1:2, -1=2:1, etc)
     { "getmag",       g_getmag },       // return current magnification
+    { "getscale",     g_getscale},      // return screen's scale factor (normally 1.0, but 2.0 for Retina screen)
     { "fit",          g_fit },          // fit entire pattern in viewport
     { "fitsel",       g_fitsel },       // fit selection in viewport
     { "visrect",      g_visrect },      // return true if given rect is completely visible

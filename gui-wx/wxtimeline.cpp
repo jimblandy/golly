@@ -113,7 +113,7 @@ private:
     int digitwd;                    // width of digit in timeline bar font
     int digitht;                    // height of digit in timeline bar font
     int textascent;                 // vertical adjustment used in DrawText calls
-    wxFont* timelinefont;           // timeline bar font
+    wxFont timelinefont;            // timeline bar font
 };
 
 BEGIN_EVENT_TABLE(TimelineBar, wxPanel)
@@ -210,7 +210,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
     // create font for text in timeline bar and set textascent for use in DisplayText
 #ifdef __WXMSW__
     // use smaller, narrower font on Windows
-    timelinefont = wxFont::New(8, wxDEFAULT, wxNORMAL, wxNORMAL);
+    timelinefont = wxFont(8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     int major, minor;
     wxGetOsVersion(&major, &minor);
     if ( major > 5 || (major == 5 && minor >= 1) ) {
@@ -221,17 +221,17 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
     }
 #elif defined(__WXGTK__)
     // use smaller font on GTK
-    timelinefont = wxFont::New(8, wxMODERN, wxNORMAL, wxNORMAL);
+    timelinefont = wxFont(8, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     textascent = 11;
-#elif defined(__WXOSX_COCOA__)
+#elif defined(__WXMAC__)
     // we need to specify facename to get Monaco instead of Courier
-    timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
+    timelinefont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Monaco"));
     textascent = 10;
+    timelinefont.SetPointSize(10); // avoid assert error
 #else
-    timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
+    timelinefont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     textascent = 10;
 #endif
-    if (timelinefont == NULL) Fatal(_("Failed to create timeline bar font!"));
     
     wxClientDC dc(this);
     SetTimelineFont(dc);
@@ -289,7 +289,6 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 
 TimelineBar::~TimelineBar()
 {
-    delete timelinefont;
     delete timelinebitmap;
     delete slider;
     delete framebar;
@@ -300,7 +299,7 @@ TimelineBar::~TimelineBar()
 
 void TimelineBar::SetTimelineFont(wxDC& dc)
 {
-    dc.SetFont(*timelinefont);
+    dc.SetFont(timelinefont);
     dc.SetTextForeground(*wxBLACK);
     dc.SetBrush(*wxBLACK_BRUSH);
     dc.SetBackgroundMode(wxTRANSPARENT);

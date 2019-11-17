@@ -1884,6 +1884,8 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
         if (tilelayers && numlayers > 1 && tileborder != oldtileborder) {
             int wd, ht;
             bigview->GetClientSize(&wd, &ht);
+            wd = wd * int(scalefactor);
+            ht = ht * int(scalefactor);
             // wd or ht might be < 1 on Windows
             if (wd < 1) wd = 1;
             if (ht < 1) ht = 1;
@@ -1897,10 +1899,14 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
                 for (int i = 0; i < numlayers; i++) {
                     Layer* layer = GetLayer(i);
                     layer->tilewin->GetClientSize(&wd, &ht);
+                    wd = wd * int(scalefactor);
+                    ht = ht * int(scalefactor);
                     layer->tilewin->SetViewSize(wd, ht);
                 }
             }
             bigview->GetClientSize(&wd, &ht);
+            wd = wd * int(scalefactor);
+            ht = ht * int(scalefactor);
             bigview->SetViewSize(wd, ht);
         }
         

@@ -894,6 +894,7 @@ local function test_cellview()
     g.dellayer()
     extra_layer = false
 
+    g.update()
     return_to_main_menu = true
 end
 
@@ -1602,9 +1603,10 @@ local function test_lines()
                 prevy = yv
                 ovt{"paste", 0, 0, "bg"}
                 if display_magnifier then
-                    -- first show position and color of x,y pixel in status bar
-                    g.show("xy: "..xv.." "..yv.."  rgba: "..ov("get "..xv.." "..yv))
+                    -- show position and color of x,y pixel in status bar
+                    local rgba = ov("get "..xv.." "..yv)
                     show_magnified_pixels(xv, yv)
+                    g.show("xy: "..xv.." "..yv.."  rgba: "..rgba)
                     g.update()
                     showing_magnifier = true
                 end
@@ -2513,9 +2515,6 @@ local function create_menu_buttons()
     op.radius = 12
     op.textgap = 15
     op.textfont = "font 10 default-bold"
-    if g.os() == "Mac" then
-        op.yoffset = -1
-    end
     if g.os() == "Linux" then
         op.textfont = "font 10 default"
     end

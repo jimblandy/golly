@@ -53,7 +53,7 @@ PatternView* bigview = NULL;    // main viewport window
 StatusBar* statusptr = NULL;    // status bar window
 wxStopWatch* stopwatch;         // global stopwatch
 bool insideYield = false;       // processing an event via Yield()?
-double scalefactor = 1.0;       // main window's scale factor (2.0 on retina displays, 1.0 otherwise)
+double scalefactor = 1.0;       // main window's scale factor (2.0 on Retina displays, 1.0 otherwise)
 
 // -----------------------------------------------------------------------------
 

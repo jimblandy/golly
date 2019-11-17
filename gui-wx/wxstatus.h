@@ -6,7 +6,7 @@
 
 #include "bigint.h"     // for bigint
 
-// Define a child window for status bar at top of main frame:
+// Define a status bar at top of main frame:
 
 class StatusBar : public wxWindow
 {

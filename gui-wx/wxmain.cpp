@@ -900,6 +900,11 @@ void MainFrame::SimplifyTree(wxString& indir, wxTreeCtrl* treectrl, wxTreeItemId
     wxTreeItemIdValue cookie;
     id = treectrl->GetFirstChild(root, cookie);
     if (id.IsOk()) treectrl->SelectItem(id);
+    
+    #if defined(__WXMAC__) && wxCHECK_VERSION(3,1,3)
+        // wxTR_HIDE_ROOT is needed to hide the "Sections" directory
+        treectrl->SetWindowStyle(wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT);
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1678,8 +1683,13 @@ void MainFrame::EditFile(const wxString& filepath)
     // on Windows, wxExecute returns 0 if cmd fails
     if (result == 0)
 #elif defined(__WXMAC__)
-    // on Mac, wxExecute returns -1 if cmd succeeds (bug, or wx docs are wrong)
-    if (result != -1)
+    #if wxCHECK_VERSION(3,1,3)
+        // in 3.1.3+ wxExecute returns -1 if cmd fails (pid if success)
+        if (result == -1)
+    #else
+        // pre 3.1.3, wxExecute returns -1 if cmd succeeds (bug, or wx docs are wrong)
+        if (result != -1)
+    #endif
 #elif defined(__WXGTK__)
     // on Linux, wxExecute always returns a +ve number (pid?) if cmd fails OR succeeds (sheesh!)
     // but if it fails an error message appears in shell window
@@ -2029,9 +2039,15 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
 {
     // bring app to front
 #ifdef __WXMAC__
-    ProcessSerialNumber process;
-    if ( GetCurrentProcess(&process) == noErr )
-        SetFrontProcess(&process);
+    #if wxCHECK_VERSION(3,1,3)
+        // use wxExecute to avoid deprecated calls
+        wxString gollyapp = gollydir + wxT("Golly.app");
+        wxString cmd = wxString::Format(wxT("\"%s\""), gollyapp.c_str());
+        wxExecute(cmd, wxEXEC_ASYNC);
+    #else
+        ProcessSerialNumber process;
+        if ( GetCurrentProcess(&process) == noErr ) SetFrontProcess(&process);
+    #endif
 #endif
 #ifdef __WXMSW__
     SetForegroundWindow( (HWND)mainptr->GetHandle() );

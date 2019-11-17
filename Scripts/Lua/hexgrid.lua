@@ -1318,9 +1318,6 @@ local function create_overlay()
     op.textfont = "font 10 default-bold"    -- font for labels
     op.textshadowx = 2
     op.textshadowy = 2
-    if g.os() == "Mac" then
-        op.yoffset = -1
-    end
     if g.os() == "Linux" then
         op.textfont = "font 10 default"
     end

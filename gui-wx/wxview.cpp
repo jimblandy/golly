@@ -404,6 +404,8 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         
         while (waitingforclick) {
             wxPoint pt = ScreenToClient( wxGetMousePosition() );
+            pt.x *= int(scalefactor);
+            pt.y *= int(scalefactor);
             pastex = pt.x;
             pastey = pt.y;
             if (PointInView(pt.x, pt.y)) {
@@ -1015,7 +1017,7 @@ bool PatternView::RotatePastePattern(bool clockwise)
         
             // better solution would be to check if pastebox is small enough for
             // pattern to be safely rotated after shifting to center of grid and only
-            // expand grid if it can't!!!??? (must also update pastesel edges)
+            // expand grid if it can't??? (must also update pastesel edges)
             
             int newwd, newht;
             if (wd > ht) {
@@ -1208,7 +1210,9 @@ void PatternView::ChangeOrigin()
     if (waitingforclick) return;
     // change cell under cursor to 0,0
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
-    if ( pt.x < 0 || pt.x > currlayer->view->getxmax() ||
+    pt.x *= int(scalefactor);
+    pt.y *= int(scalefactor);
+    if (pt.x < 0 || pt.x > currlayer->view->getxmax() ||
         pt.y < 0 || pt.y > currlayer->view->getymax() ) {
         statusptr->ErrorMessage(_("Origin not changed."));
     } else {
@@ -1297,6 +1301,8 @@ void PatternView::ToggleSmarterScaling()
 bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
 {
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
+    pt.x *= int(scalefactor);
+    pt.y *= int(scalefactor);
     if (PointInView(pt.x, pt.y)) {
         // get mouse location in cell coords
         pair<bigint, bigint> cellpos = currlayer->view->at(pt.x, pt.y);
@@ -1339,6 +1345,9 @@ void PatternView::CheckCursor(bool active)
     
     // make sure cursor is up to date
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
+    pt.x *= int(scalefactor);
+    pt.y *= int(scalefactor);
+    
     if (PointInView(pt.x, pt.y)) {
         int ox, oy;
         if (numlayers > 1 && tilelayers && tileindex != currindex) {
@@ -2302,6 +2311,9 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
     
     int wd, ht;
     GetClientSize(&wd, &ht);
+    wd = wd * int(scalefactor);     // matches intscale in wxoverlay.cpp
+    ht = ht * int(scalefactor);     // ditto
+
     // wd or ht might be < 1 on Windows
     if (wd < 1) wd = 1;
     if (ht < 1) ht = 1;
@@ -2371,6 +2383,8 @@ void PatternView::OnSize(wxSizeEvent& event)
 
     int wd, ht;
     GetClientSize(&wd, &ht);
+    wd = wd * int(scalefactor);         // matches intscale in wxoverlay.cpp
+    ht = ht * int(scalefactor);         // ditto
         
     // resize this viewport
     SetViewSize(wd, ht);
@@ -2800,8 +2814,8 @@ static int GetMouseModifiers(wxMouseEvent& event)
 
 void PatternView::OnMouseDown(wxMouseEvent& event)
 {
-    int x = event.GetX();
-    int y = event.GetY();
+    int x = event.GetX() * int(scalefactor);
+    int y = event.GetY() * int(scalefactor);
     int button = event.GetButton();
     int modifiers = GetMouseModifiers(event);
     
@@ -2932,7 +2946,8 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
     // check if translucent controls need to be shown/hidden
     // or if the cursor has moved out of or into the overlay
     if (mainptr->infront) {
-        wxPoint pt(event.GetX(), event.GetY());
+        wxPoint pt(event.GetX() * int(scalefactor),
+                   event.GetY() * int(scalefactor));
         bool active_tile = !(numlayers > 1 && tilelayers && tileindex != currindex);
         bool busy = drawingcells || selectingcells || movingview || waitingforclick;
         bool show = active_tile && !busy && (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL);
@@ -2996,8 +3011,8 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     // If wheelsens < MAX_SENSITIVITY then mouse wheel will be less sensitive.
     delta = event.GetWheelDelta() * (MAX_SENSITIVITY + 1 - wheelsens);
     rot = event.GetWheelRotation();
-    x = event.GetX();
-    y = event.GetY();
+    x = event.GetX() * int(scalefactor);
+    y = event.GetY() * int(scalefactor);
     
     if (mousewheelmode == 2)
         wheelpos -= rot;
@@ -3060,8 +3075,8 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
     in_timer = true;
 
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
-    int x = pt.x;
-    int y = pt.y;
+    int x = pt.x * int(scalefactor);
+    int y = pt.y * int(scalefactor);
     
     if (clickedcontrol > NO_CONTROL) {
         control_id oldcontrol = currcontrol;

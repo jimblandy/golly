@@ -121,20 +121,22 @@ InfoFrame::InfoFrame(char *comments)
                                       wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
     
     // use a fixed-width font
-    wxTextAttr textattr(wxNullColour, wxNullColour,
-#if defined(__WXOSX_COCOA__)
-        // we need to specify facename to get Monaco instead of Courier
-        wxFont(12, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco")));
+    wxFont textfont;
+#if defined(__WXMAC__)
+    // we need to specify facename to get Monaco instead of Courier
+    textfont = wxFont(12, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Monaco"));
+    textfont.SetPointSize(12); // avoid assert error
 #else
-        wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
+    textfont = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 #endif
+    wxTextAttr textattr(wxNullColour, wxNullColour, textfont);
     textctrl->SetDefaultStyle(textattr);
     
     if (comments[0] == 0) {
         textctrl->WriteText(_("No comments found."));
     } else {
         textctrl->WriteText(wxString(comments,wxConvLocal));
-#if defined(__WXOSX_COCOA__)
+#if defined(__WXMAC__)
         // sigh... wxOSX seems to ignore SetDefaultStyle
         textctrl->SetStyle(0, strlen(comments), textattr);
 #endif

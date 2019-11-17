@@ -112,9 +112,7 @@ m.itemgap = 2                           -- vertical space above and below item l
 
 if g.os() == "Windows" then
     m.yoffset = -1
-end
-
-if g.os() == "Linux" then
+elseif g.os() == "Linux" then
     m.textfont = "font 12 default"
     m.menufont = "font 12 default"
 end
