@@ -81,18 +81,19 @@
 #define LUA_ENC wxConvUTF8
 
 #ifdef AUTORELEASE
-    /* these macros are used to avoid memory leaks on recent Mac OS versions
-       (probably 10.9+) if a script command calls Refresh; eg:
+    /* we need to avoid memory leaks on recent Mac OS versions (probably 10.9+)
+       especially if a script command calls Refresh; eg:
     local g = golly()
     for n = 1, math.maxinteger do
         g.show(tostring(n))
     end
     */
-    #define BEGIN_AUTORELEASE @autoreleasepool {
-    #define END_AUTORELEASE }
+    #ifdef __WXMAC__
+        #include "wx/osx/private.h" // for wxMacAutoreleasePool
+    #endif
+    #define AUTORELEASE_POOL wxMacAutoreleasePool pool;
 #else
-    #define BEGIN_AUTORELEASE
-    #define END_AUTORELEASE
+    #define AUTORELEASE_POOL
 #endif
 
 // -----------------------------------------------------------------------------
@@ -137,19 +138,15 @@ static bool CheckBoolean(lua_State* L, int arg)
 
 static int g_open(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* filename = luaL_checkstring(L, 1);
     bool remember = false;
     if (lua_gettop(L) > 1) remember = CheckBoolean(L, 2);
     const char* err;
-    
-    BEGIN_AUTORELEASE
 
     err = GSF_open(wxString(filename, LUA_ENC), remember ? 1 : 0);
-    
-    END_AUTORELEASE
-
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -159,6 +156,7 @@ static int g_open(lua_State* L)
 
 static int g_save(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* filename = luaL_checkstring(L, 1);
@@ -176,6 +174,7 @@ static int g_save(lua_State* L)
 
 static int g_opendialog(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* title = "Choose a file";
@@ -222,6 +221,7 @@ static int g_opendialog(lua_State* L)
 
 static int g_savedialog(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* title = "Choose a save location and filename";
@@ -310,6 +310,7 @@ static const char* ExtractCellArray(lua_State* L, lifealgo* universe, bool shift
 
 static int g_load(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* filename = luaL_checkstring(L, 1);
@@ -350,6 +351,7 @@ static int g_load(lua_State* L)
 
 static int g_store(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     luaL_checktype(L, 1, LUA_TTABLE);   // cell array
@@ -409,18 +411,14 @@ static int g_store(lua_State* L)
 
 static int g_setdir(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* dirname = luaL_checkstring(L, 1);
     const char* newdir = luaL_checkstring(L, 2);
     const char* err;
     
-    BEGIN_AUTORELEASE
-    
     err = GSF_setdir(dirname, wxString(newdir, LUA_ENC));
-    
-    END_AUTORELEASE
-
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -430,6 +428,7 @@ static int g_setdir(lua_State* L)
 
 static int g_getdir(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* dirname = luaL_checkstring(L, 1);
@@ -446,6 +445,7 @@ static int g_getdir(lua_State* L)
 
 static int g_getfiles(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* dirname = luaL_checkstring(L, 1);
@@ -486,6 +486,7 @@ static int g_getfiles(lua_State* L)
 
 static int g_getpath(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushstring(L, GSF_getpath());
@@ -497,6 +498,7 @@ static int g_getpath(lua_State* L)
 
 static int g_getinfo(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushstring(L, GSF_getinfo());
@@ -508,14 +510,11 @@ static int g_getinfo(lua_State* L)
 
 static int g_new(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
-
-    BEGIN_AUTORELEASE
     
     mainptr->NewPattern(wxString(luaL_checkstring(L, 1), LUA_ENC));
     DoAutoUpdate();
-
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -524,15 +523,12 @@ static int g_new(lua_State* L)
 
 static int g_cut(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         viewptr->CutSelection();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "cut error: no selection.");
     }
@@ -544,15 +540,12 @@ static int g_cut(lua_State* L)
 
 static int g_copy(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         viewptr->CopySelection();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "copy error: no selection.");
     }
@@ -564,20 +557,17 @@ static int g_copy(lua_State* L)
 
 static int g_clear(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int where = luaL_checkinteger(L, 1);
 
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         if (where == 0)
             viewptr->ClearSelection();
         else
             viewptr->ClearOutsideSelection();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "clear error: no selection.");
     }
@@ -589,6 +579,7 @@ static int g_clear(lua_State* L)
 
 static int g_paste(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int x = luaL_checkinteger(L, 1);
@@ -596,12 +587,7 @@ static int g_paste(lua_State* L)
     const char* mode = luaL_checkstring(L, 3);
     const char* err;
     
-    BEGIN_AUTORELEASE
-    
-    err = GSF_paste(x, y, mode);
-    
-    END_AUTORELEASE
-    
+    err = GSF_paste(x, y, mode);    
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -611,19 +597,16 @@ static int g_paste(lua_State* L)
 
 static int g_shrink(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     bool remove_if_empty = false;
     if (lua_gettop(L) > 0) remove_if_empty = CheckBoolean(L, 1);
 
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         currlayer->currsel.Shrink(false, remove_if_empty);
                                // false == don't fit in viewport
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "shrink error: no selection.");
     }
@@ -635,6 +618,7 @@ static int g_shrink(lua_State* L)
 
 static int g_randfill(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int perc = luaL_checkinteger(L, 1);
@@ -644,15 +628,11 @@ static int g_randfill(lua_State* L)
     }
     
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         int oldperc = randomfill;
         randomfill = perc;
         viewptr->RandomFill();
         randomfill = oldperc;
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "randfill error: no selection.");
     }
@@ -664,17 +644,14 @@ static int g_randfill(lua_State* L)
 
 static int g_flip(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int direction = luaL_checkinteger(L, 1);
 
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "flip error: no selection.");
     }
@@ -686,17 +663,14 @@ static int g_flip(lua_State* L)
 
 static int g_rotate(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int direction = luaL_checkinteger(L, 1);
 
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         viewptr->RotateSelection(direction == 0);    // 0 = clockwise
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "rotate error: no selection.");
     }
@@ -708,6 +682,7 @@ static int g_rotate(lua_State* L)
 
 static int g_parse(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* s = luaL_checkstring(L, 1);
@@ -822,6 +797,7 @@ static int g_parse(lua_State* L)
 
 static int g_transform(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     luaL_checktype(L, 1, LUA_TTABLE);   // cell array
@@ -870,6 +846,7 @@ static int g_transform(lua_State* L)
 
 static int g_evolve(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     luaL_checktype(L, 1, LUA_TTABLE);   // cell array
@@ -943,6 +920,7 @@ static const char* BAD_STATE = "putcells error: state value is out of range.";
 
 static int g_putcells(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     luaL_checktype(L, 1, LUA_TTABLE);   // cell array
@@ -1096,13 +1074,9 @@ static int g_putcells(lua_State* L)
     }
     
     if (pattchanged) {
-        BEGIN_AUTORELEASE
-        
         curralgo->endofpattern();
         MarkLayerDirty();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     if (err) GollyError(L, err);
@@ -1114,6 +1088,7 @@ static int g_putcells(lua_State* L)
 
 static int g_getcells(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     luaL_checktype(L, 1, LUA_TTABLE);   // rect array with 0 or 4 ints
@@ -1177,6 +1152,7 @@ static int g_getcells(lua_State* L)
 
 static int g_getcells2(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     luaL_checktype(L, 1, LUA_TTABLE);   // rect array with 0 or 4 ints
@@ -1242,6 +1218,7 @@ static int g_getcells2(lua_State* L)
 
 static int g_join(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     luaL_checktype(L, 1, LUA_TTABLE);
@@ -1306,6 +1283,7 @@ static int g_join(lua_State* L)
 
 static int g_hash(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     // arg must be a table with 4 ints
@@ -1333,6 +1311,7 @@ static int g_hash(lua_State* L)
 
 static int g_getclip(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (!mainptr->ClipboardHasText()) {
@@ -1411,12 +1390,11 @@ static int g_getclip(lua_State* L)
 
 static int g_select(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     // arg must be a table with 0 or 4 ints
     luaL_checktype(L, 1, LUA_TTABLE);
-
-    BEGIN_AUTORELEASE
     
     int numints = luaL_len(L, 1);
     if (numints == 0) {
@@ -1440,8 +1418,6 @@ static int g_select(lua_State* L)
 
     DoAutoUpdate();
     
-    END_AUTORELEASE
-    
     return 0;   // no result
 }
 
@@ -1449,6 +1425,7 @@ static int g_select(lua_State* L)
 
 static int g_getrect(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_newtable(L);
@@ -1478,6 +1455,7 @@ static int g_getrect(lua_State* L)
 
 static int g_getselrect(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_newtable(L);
@@ -1503,6 +1481,7 @@ static int g_getselrect(lua_State* L)
 
 static int g_setcell(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int x = luaL_checkinteger(L, 1);
@@ -1510,12 +1489,7 @@ static int g_setcell(lua_State* L)
     int state = luaL_checkinteger(L, 3);
     const char* err;
     
-    BEGIN_AUTORELEASE
-    
-    err = GSF_setcell(x, y, state);
-    
-    END_AUTORELEASE
-    
+    err = GSF_setcell(x, y, state);    
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -1525,6 +1499,7 @@ static int g_setcell(lua_State* L)
 
 static int g_getcell(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int x = luaL_checkinteger(L, 1);
@@ -1543,6 +1518,7 @@ static int g_getcell(lua_State* L)
 
 static int g_setcursor(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* newcursor = luaL_checkstring(L, 1);
@@ -1550,13 +1526,9 @@ static int g_setcursor(lua_State* L)
     const char* oldcursor = CursorToString(currlayer->curs);
     wxCursor* cursptr = StringToCursor(newcursor);
     if (cursptr) {
-        BEGIN_AUTORELEASE
-        
         viewptr->SetCursorMode(cursptr);
         // see the cursor change, including button in edit bar
         mainptr->UpdateUserInterface();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "setcursor error: unknown cursor string.");
     }
@@ -1571,6 +1543,7 @@ static int g_setcursor(lua_State* L)
 
 static int g_getcursor(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushstring(L, CursorToString(currlayer->curs));
@@ -1582,6 +1555,7 @@ static int g_getcursor(lua_State* L)
 
 static int g_empty(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushboolean(L, currlayer->algo->isEmpty());
@@ -1593,13 +1567,12 @@ static int g_empty(lua_State* L)
 
 static int g_run(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int ngens = luaL_checkinteger(L, 1);
 
     if (ngens > 0 && !currlayer->algo->isEmpty()) {
-        BEGIN_AUTORELEASE
-        
         if (ngens > 1) {
             bigint saveinc = currlayer->algo->getIncrement();
             currlayer->algo->setIncrement(ngens);
@@ -1609,8 +1582,6 @@ static int g_run(lua_State* L)
             mainptr->NextGeneration(false);           // step 1 gen
         }
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     return 0;   // no result
@@ -1620,15 +1591,12 @@ static int g_run(lua_State* L)
 
 static int g_step(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (!currlayer->algo->isEmpty()) {
-        BEGIN_AUTORELEASE
-        
         mainptr->NextGeneration(true);      // step by current increment
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     return 0;   // no result
@@ -1638,16 +1606,13 @@ static int g_step(lua_State* L)
 
 static int g_setstep(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int exp = luaL_checkinteger(L, 1);
 
-    BEGIN_AUTORELEASE
-
     mainptr->SetStepExponent(exp);
     DoAutoUpdate();
-
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -1656,6 +1621,7 @@ static int g_setstep(lua_State* L)
 
 static int g_getstep(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, currlayer->currexpo);
@@ -1667,6 +1633,7 @@ static int g_getstep(lua_State* L)
 
 static int g_setbase(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int base = luaL_checkinteger(L, 1);
@@ -1675,12 +1642,8 @@ static int g_setbase(lua_State* L)
     if (base > MAX_BASESTEP) base = MAX_BASESTEP;
     currlayer->currbase = base;
 
-    BEGIN_AUTORELEASE
-
     mainptr->SetGenIncrement();
     DoAutoUpdate();
-
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -1689,6 +1652,7 @@ static int g_setbase(lua_State* L)
 
 static int g_getbase(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, currlayer->currbase);
@@ -1700,6 +1664,7 @@ static int g_getbase(lua_State* L)
 
 static int g_advance(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int where = luaL_checkinteger(L, 1);
@@ -1707,8 +1672,6 @@ static int g_advance(lua_State* L)
 
     if (ngens > 0) {
         if (viewptr->SelectionExists()) {
-            BEGIN_AUTORELEASE
-            
             while (ngens > 0) {
                 ngens--;
                 if (where == 0)
@@ -1717,8 +1680,6 @@ static int g_advance(lua_State* L)
                     currlayer->currsel.AdvanceOutside();
             }
             DoAutoUpdate();
-            
-            END_AUTORELEASE
         } else {
             GollyError(L, "advance error: no selection.");
         }
@@ -1731,15 +1692,12 @@ static int g_advance(lua_State* L)
 
 static int g_reset(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
-        BEGIN_AUTORELEASE
-        
         mainptr->ResetPattern();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     return 0;   // no result
@@ -1749,17 +1707,13 @@ static int g_reset(lua_State* L)
 
 static int g_setgen(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* genstring = luaL_checkstring(L, 1);
     const char* err;
     
-    BEGIN_AUTORELEASE
-    
-    err = GSF_setgen(genstring);
-    
-    END_AUTORELEASE
-    
+    err = GSF_setgen(genstring);    
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -1769,6 +1723,7 @@ static int g_setgen(lua_State* L)
 
 static int g_getgen(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     char sepchar = '\0';
@@ -1786,6 +1741,7 @@ static int g_getgen(lua_State* L)
 
 static int g_getpop(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     char sepchar = '\0';
@@ -1803,6 +1759,7 @@ static int g_getpop(lua_State* L)
 
 static int g_numstates(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     lua_pushinteger(L, currlayer->algo->NumCellStates());
@@ -1814,6 +1771,7 @@ static int g_numstates(lua_State* L)
 
 static int g_numalgos(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, NumAlgos());
@@ -1825,16 +1783,12 @@ static int g_numalgos(lua_State* L)
 
 static int g_setalgo(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
-    const char* algostring = luaL_checkstring(L, 1);
-    
-    BEGIN_AUTORELEASE
-    
+    const char* algostring = luaL_checkstring(L, 1);    
     const char* err = GSF_setalgo(algostring);
     if (err) GollyError(L, err);
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -1843,6 +1797,7 @@ static int g_setalgo(lua_State* L)
 
 static int g_getalgo(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int index = currlayer->algtype;
@@ -1863,16 +1818,12 @@ static int g_getalgo(lua_State* L)
 
 static int g_setrule(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
-    const char* rulestring = luaL_checkstring(L, 1);
-    
-    BEGIN_AUTORELEASE
-    
+    const char* rulestring = luaL_checkstring(L, 1);    
     const char* err = GSF_setrule(rulestring);
     if (err) GollyError(L, err);
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -1881,6 +1832,7 @@ static int g_setrule(lua_State* L)
 
 static int g_getrule(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     lua_pushstring(L, currlayer->algo->getrule());
@@ -1892,6 +1844,7 @@ static int g_getrule(lua_State* L)
 
 static int g_getwidth(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, currlayer->algo->gridwd);
@@ -1903,6 +1856,7 @@ static int g_getwidth(lua_State* L)
 
 static int g_getheight(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, currlayer->algo->gridht);
@@ -1914,17 +1868,13 @@ static int g_getheight(lua_State* L)
 
 static int g_setpos(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* x = luaL_checkstring(L, 1);
-    const char* y = luaL_checkstring(L, 2);
-    
-    BEGIN_AUTORELEASE
-    
+    const char* y = luaL_checkstring(L, 2);    
     const char* err = GSF_setpos(x, y);
     if (err) GollyError(L, err);
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -1933,6 +1883,7 @@ static int g_setpos(lua_State* L)
 
 static int g_getpos(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     char sepchar = '\0';
@@ -1957,6 +1908,7 @@ static int g_getpos(lua_State* L)
 
 static int g_getscale(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushnumber(L, (lua_Number) scalefactor);
@@ -1968,6 +1920,7 @@ static int g_getscale(lua_State* L)
 
 static int g_getmag(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int mag = viewptr->GetMag();
@@ -1990,6 +1943,7 @@ static int g_getmag(lua_State* L)
 
 static int g_setmag(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int mag = luaL_checkinteger(L, 1);
@@ -2003,12 +1957,8 @@ static int g_setmag(lua_State* L)
         mag++;
     }
     
-    BEGIN_AUTORELEASE
-    
     viewptr->SetMag(mag);
     DoAutoUpdate();
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2017,14 +1967,11 @@ static int g_setmag(lua_State* L)
 
 static int g_fit(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
-
-    BEGIN_AUTORELEASE
     
     viewptr->FitPattern();
     DoAutoUpdate();
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2033,15 +1980,12 @@ static int g_fit(lua_State* L)
 
 static int g_fitsel(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     if (viewptr->SelectionExists()) {
-        BEGIN_AUTORELEASE
-        
         viewptr->FitSelection();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     } else {
         GollyError(L, "fitsel error: no selection.");
     }
@@ -2053,6 +1997,7 @@ static int g_fitsel(lua_State* L)
 
 static int g_visrect(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     // arg must be a table with 4 ints
@@ -2087,6 +2032,7 @@ static int g_visrect(lua_State* L)
 
 static int g_setview(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int wd = luaL_checkinteger(L, 1);
@@ -2099,13 +2045,9 @@ static int g_setview(lua_State* L)
     if (currwd < 0) currwd = 0;
     if (currht < 0) currht = 0;
     
-    BEGIN_AUTORELEASE
-    
     int mnwd, mnht;
     mainptr->GetSize(&mnwd, &mnht);
     mainptr->SetSize(mnwd + (wd - currwd), mnht + (ht - currht));
-    
-    END_AUTORELEASE
 
     #ifdef __WXGTK__
         // needed on Linux to see size change immediately
@@ -2121,6 +2063,7 @@ static int g_setview(lua_State* L)
 
 static int g_getview(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int index = -1;
@@ -2158,13 +2101,10 @@ static int g_getview(lua_State* L)
 
 static int g_update(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
-    BEGIN_AUTORELEASE
-    
     GSF_update();
-
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2173,6 +2113,7 @@ static int g_update(lua_State* L)
 
 static int g_autoupdate(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     autoupdate = CheckBoolean(L, 1);
@@ -2184,17 +2125,14 @@ static int g_autoupdate(lua_State* L)
 
 static int g_addlayer(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (numlayers >= MAX_LAYERS) {
         GollyError(L, "addlayer error: no more layers can be added.");
     } else {
-        BEGIN_AUTORELEASE
-        
         AddLayer();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     // return index of new layer
@@ -2207,17 +2145,14 @@ static int g_addlayer(lua_State* L)
 
 static int g_clone(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (numlayers >= MAX_LAYERS) {
         GollyError(L, "clone error: no more layers can be added.");
     } else {
-        BEGIN_AUTORELEASE
-        
         CloneLayer();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     // return index of new layer
@@ -2230,17 +2165,14 @@ static int g_clone(lua_State* L)
 
 static int g_duplicate(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (numlayers >= MAX_LAYERS) {
         GollyError(L, "duplicate error: no more layers can be added.");
     } else {
-        BEGIN_AUTORELEASE
-        
         DuplicateLayer();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     // return index of new layer
@@ -2253,17 +2185,14 @@ static int g_duplicate(lua_State* L)
 
 static int g_dellayer(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     if (numlayers <= 1) {
         GollyError(L, "dellayer error: there is only one layer.");
     } else {
-        BEGIN_AUTORELEASE
-        
         DeleteLayer();
         DoAutoUpdate();
-        
-        END_AUTORELEASE
     }
     
     return 0;   // no result
@@ -2273,6 +2202,7 @@ static int g_dellayer(lua_State* L)
 
 static int g_movelayer(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     int fromindex = luaL_checkinteger(L, 1);
@@ -2289,12 +2219,8 @@ static int g_movelayer(lua_State* L)
         GollyError(L, msg);
     }
     
-    BEGIN_AUTORELEASE
-    
     MoveLayer(fromindex, toindex);
     DoAutoUpdate();
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2303,6 +2229,7 @@ static int g_movelayer(lua_State* L)
 
 static int g_setlayer(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int index = luaL_checkinteger(L, 1);
@@ -2313,12 +2240,8 @@ static int g_setlayer(lua_State* L)
         GollyError(L, msg);
     }
     
-    BEGIN_AUTORELEASE
-    
     SetLayer(index);
     DoAutoUpdate();
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2327,6 +2250,7 @@ static int g_setlayer(lua_State* L)
 
 static int g_getlayer(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, currindex);
@@ -2338,6 +2262,7 @@ static int g_getlayer(lua_State* L)
 
 static int g_numlayers(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, numlayers);
@@ -2349,6 +2274,7 @@ static int g_numlayers(lua_State* L)
 
 static int g_maxlayers(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushinteger(L, MAX_LAYERS);
@@ -2360,6 +2286,7 @@ static int g_maxlayers(lua_State* L)
 
 static int g_setname(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* name = luaL_checkstring(L, 1);
@@ -2372,11 +2299,7 @@ static int g_setname(lua_State* L)
         GollyError(L, msg);
     }
     
-    BEGIN_AUTORELEASE
-    
     GSF_setname(wxString(name, LUA_ENC), index);
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2385,6 +2308,7 @@ static int g_setname(lua_State* L)
 
 static int g_getname(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int index = currindex;
@@ -2405,12 +2329,10 @@ static int g_getname(lua_State* L)
 
 static int g_setcolors(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
-    luaL_checktype(L, 1, LUA_TTABLE);
-    
-    BEGIN_AUTORELEASE
-    
+    luaL_checktype(L, 1, LUA_TTABLE);    
     int len = luaL_len(L, 1);
     if (len == 0) {
         // restore default colors in current layer and its clones
@@ -2465,8 +2387,6 @@ static int g_setcolors(lua_State* L)
     
     DoAutoUpdate();
     
-    END_AUTORELEASE
-    
     return 0;   // no result
 }
 
@@ -2474,6 +2394,7 @@ static int g_setcolors(lua_State* L)
 
 static int g_getcolors(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int state = -1;
@@ -2508,6 +2429,7 @@ static int g_getcolors(lua_State* L)
 
 static int g_overlaytable(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* result = NULL;
@@ -2551,21 +2473,13 @@ static int g_overlaytable(lua_State* L)
 
 static int g_overlay(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* cmd = luaL_checkstring(L, 1);
     const char* result;
     
-    if (strcmp(cmd, "update") == 0) {
-        // this is the only overlay command that calls Refresh
-        BEGIN_AUTORELEASE
-        
-        result = curroverlay->DoOverlayCommand(cmd);
-        
-        END_AUTORELEASE
-    } else {
-        result = curroverlay->DoOverlayCommand(cmd);
-    }
+    result = curroverlay->DoOverlayCommand(cmd);
     
     if (result == NULL) return 0;   // no error and no result
     
@@ -2584,6 +2498,7 @@ static int g_overlay(lua_State* L)
 
 static int g_os(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     lua_pushstring(L, GSF_os());
@@ -2595,6 +2510,7 @@ static int g_os(lua_State* L)
 
 static int g_millisecs(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     #if wxCHECK_VERSION(2,9,3)
@@ -2612,6 +2528,7 @@ static int g_millisecs(lua_State* L)
 
 static int g_sleep(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     int ms = luaL_checkinteger(L, 1);
@@ -2624,19 +2541,16 @@ static int g_sleep(lua_State* L)
 
 static int g_setoption(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* optname = luaL_checkstring(L, 1);
     int newval = luaL_checkinteger(L, 2);
     int oldval;
     
-    BEGIN_AUTORELEASE
-    
     if (!GSF_setoption(optname, newval, &oldval)) {
         GollyError(L, "setoption error: unknown option.");
     }
-    
-    END_AUTORELEASE
     
     // return old value (simplifies saving and restoring settings)
     lua_pushinteger(L, oldval);
@@ -2648,6 +2562,7 @@ static int g_setoption(lua_State* L)
 
 static int g_getoption(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* optname = luaL_checkstring(L, 1);
@@ -2666,6 +2581,7 @@ static int g_getoption(lua_State* L)
 
 static int g_setcolor(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* colname = luaL_checkstring(L, 1);
@@ -2678,13 +2594,9 @@ static int g_setcolor(lua_State* L)
     wxColor newcol(r, g, b);
     wxColor oldcol;
     
-    BEGIN_AUTORELEASE
-    
     if (!GSF_setcolor(colname, newcol, oldcol)) {
         GollyError(L, "setcolor error: unknown color.");
     }
-    
-    END_AUTORELEASE
     
     // return old r,g,b values (simplifies saving and restoring colors)
     lua_pushinteger(L, oldcol.Red());
@@ -2698,6 +2610,7 @@ static int g_setcolor(lua_State* L)
 
 static int g_getcolor(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* colname = luaL_checkstring(L, 1);
@@ -2719,6 +2632,7 @@ static int g_getcolor(lua_State* L)
 
 static int g_savechanges(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     wxString query = wxString(luaL_checkstring(L, 1), LUA_ENC);
@@ -2749,16 +2663,12 @@ static int g_savechanges(lua_State* L)
 
 static int g_settitle(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     // set scripttitle to avoid MainFrame::SetWindowTitle changing title
     scripttitle = wxString(luaL_checkstring(L, 1), LUA_ENC);
-    
-    BEGIN_AUTORELEASE
-    
     mainptr->SetTitle(scripttitle);
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2767,6 +2677,7 @@ static int g_settitle(lua_State* L)
 
 static int g_setclipstr(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     mainptr->CopyTextToClipboard(wxString(luaL_checkstring(L, 1), LUA_ENC));
@@ -2778,6 +2689,7 @@ static int g_setclipstr(lua_State* L)
 
 static int g_getclipstr(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     wxTextDataObject data;
@@ -2795,6 +2707,7 @@ static int g_getclipstr(lua_State* L)
 
 static int g_getstring(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* prompt = luaL_checkstring(L, 1);
@@ -2820,13 +2733,10 @@ static int g_getstring(lua_State* L)
 
 static int g_getxy(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
-    
-    BEGIN_AUTORELEASE
 
     statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
-    
-    END_AUTORELEASE
 
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
@@ -2839,6 +2749,7 @@ static int g_getxy(lua_State* L)
 
 static int g_getevent(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     bool get = true;
@@ -2856,18 +2767,15 @@ static int g_getevent(lua_State* L)
 
 static int g_doevent(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
 
     const char* event = luaL_checkstring(L, 1);
-    
-    BEGIN_AUTORELEASE
     
     if (event[0]) {
         const char* err = GSF_doevent(wxString(event, LUA_ENC));
         if (err) GollyError(L, err);
     }
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2876,13 +2784,12 @@ static int g_doevent(lua_State* L)
 
 static int g_show(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     // do NOT call luaL_checkstring when inscript is false
     // (chaos will ensue if an error is detected)
     const char* msg = luaL_checkstring(L, 1);
-
-    BEGIN_AUTORELEASE
 
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
@@ -2898,8 +2805,6 @@ static int g_show(lua_State* L)
         insideYield = false;
     #endif
 
-    END_AUTORELEASE
-
     return 0;   // no result
 }
 
@@ -2907,21 +2812,18 @@ static int g_show(lua_State* L)
 
 static int g_error(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     // do NOT call luaL_checkstring when inscript is false
     // (chaos will ensue if an error is detected)
     const char* msg = luaL_checkstring(L, 1);
     
-    BEGIN_AUTORELEASE
-    
     inscript = false;
     statusptr->ErrorMessage(wxString(msg, LUA_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
-    
-    END_AUTORELEASE
     
     return 0;   // no result
 }
@@ -2930,6 +2832,7 @@ static int g_error(lua_State* L)
 
 static int g_warn(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* msg = luaL_checkstring(L, 1);
@@ -2945,6 +2848,7 @@ static int g_warn(lua_State* L)
 
 static int g_note(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     const char* msg = luaL_checkstring(L, 1);
@@ -2960,6 +2864,7 @@ static int g_note(lua_State* L)
 
 static int g_help(lua_State* L)
 {
+    AUTORELEASE_POOL
     CheckEvents(L);
     
     ShowHelp(wxString(luaL_checkstring(L, 1), LUA_ENC));
@@ -2971,7 +2876,7 @@ static int g_help(lua_State* L)
 
 static int g_check(lua_State* L)
 {
-    // CheckEvents(L);
+    // no need for AUTORELEASE_POOL here
     // don't call CheckEvents here otherwise we can't safely write code like
     //    if g.getlayer() == target then
     //       g.check(false)
@@ -2987,7 +2892,7 @@ static int g_check(lua_State* L)
 
 static int g_continue(lua_State* L)
 {
-    // do NOT call CheckEvents here
+    // do NOT call AUTORELEASE_POOL or CheckEvents here
 
 	aborted = false;	// continue executing any remaining code
 
@@ -3001,7 +2906,7 @@ static int g_continue(lua_State* L)
 
 static int g_exit(lua_State* L)
 {
-    // script will terminate so no point calling CheckEvents here
+    // script will terminate so no point calling AUTORELEASE_POOL or CheckEvents here
 
     if (lua_gettop(L) == 0) {
         GSF_exit(wxEmptyString);
