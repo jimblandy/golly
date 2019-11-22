@@ -436,7 +436,9 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
                 }
             }
             wxMilliSleep(10);             // don't hog CPU
+            insideYield++;
             wxGetApp().Yield(true);
+            insideYield--;
             // make sure viewport retains focus so we can use keyboard shortcuts
             SetFocus();
             // waitingforclick becomes false if OnMouseDown is called

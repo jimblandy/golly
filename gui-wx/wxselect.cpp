@@ -843,7 +843,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
         return;
     }
     
-    if ( insideYield ) {
+    if ( insideYield > 0 ) {
         // we've been called from checkevents() so we don't attempt to shrink a very
         // large selection because the progress dialog can't be cancelled, presumably
         // because normal event handling isn't available inside Yield()

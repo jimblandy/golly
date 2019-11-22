@@ -52,7 +52,7 @@ PatternView* viewptr = NULL;    // current viewport window (possibly a tile)
 PatternView* bigview = NULL;    // main viewport window
 StatusBar* statusptr = NULL;    // status bar window
 wxStopWatch* stopwatch;         // global stopwatch
-bool insideYield = false;       // processing an event via Yield()?
+int insideYield = 0;            // if > 0 then processing an event via Yield()
 double scalefactor = 1.0;       // main window's scale factor (2.0 on Retina displays, 1.0 otherwise)
 
 // -----------------------------------------------------------------------------
@@ -138,9 +138,9 @@ int wx_poll::checkevents()
             // make sure viewport window keeps keyboard focus
             viewptr->SetFocus();
         }
-        insideYield = true;
+        insideYield++;
         wxGetApp().Yield(true);
-        insideYield = false;
+        insideYield--;
     }
     return isInterrupted();
 }

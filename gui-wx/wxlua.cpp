@@ -107,7 +107,7 @@ static void CheckEvents(lua_State* L)
 
     if (allowcheck) wxGetApp().Poller()->checkevents();
     
-    if (insideYield) return;
+    if (insideYield > 0) return;
     
     // we're outside Yield so safe to do a longjmp from lua_error
     if (aborted) {
@@ -2051,9 +2051,9 @@ static int g_setview(lua_State* L)
 
     #ifdef __WXGTK__
         // needed on Linux to see size change immediately
-        insideYield = true;
+        insideYield++;
         wxGetApp().Yield(true);
-        insideYield = false;
+        insideYield--;
     #endif
     
     return 0;   // no result
@@ -2800,9 +2800,9 @@ static int g_show(lua_State* L)
 
     #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
         // need to see update immediately
-        insideYield = true;
+        insideYield++;
         wxGetApp().Yield(true);
-        insideYield = false;
+        insideYield--;
     #endif
 
     return 0;   // no result

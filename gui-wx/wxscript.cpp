@@ -75,9 +75,9 @@ void DoAutoUpdate()
 
         #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
             // need to see update immediately
-            insideYield = true;
+            insideYield++;
             wxGetApp().Yield(true);
-            insideYield = false;
+            insideYield--;
         #endif
     }
 }
@@ -1373,9 +1373,9 @@ void GSF_update()
 
     #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
         // need to see update immediately
-        insideYield = true;
+        insideYield++;
         wxGetApp().Yield(true);
-        insideYield = false;
+        insideYield--;
     #endif
 }
 

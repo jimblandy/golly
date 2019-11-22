@@ -1356,7 +1356,7 @@ void UndoRedo::UndoChange()
     }
     
     // prevent re-entrancy if DoChange calls checkevents
-    if (insideYield) return;
+    if (insideYield > 0) return;
     
     // get change info from head of undo list and do the change
     wxList::compatibility_iterator node = undolist.GetFirst();
@@ -1427,7 +1427,7 @@ void UndoRedo::RedoChange()
     */
     
     // prevent re-entrancy if DoChange calls checkevents
-    if (insideYield) return;
+    if (insideYield > 0) return;
     
     // get change info from head of redo list and do the change
     wxList::compatibility_iterator node = redolist.GetFirst();

@@ -1894,10 +1894,10 @@ void MainFrame::OnClose(wxCloseEvent& event)
     if (event.CanVeto()) {
         if (inscript || generating) Stop();
         
-        // if insideYield is true then we might have been called from
+        // if insideYield > 0 then we might have been called from
         // StepPattern in OnGenTimer, so we need to call OnClose again via
-        // OnIdle until insideYield is false and OnGenTimer has finished
-        if (insideYield) {
+        // OnIdle until insideYield is 0 and OnGenTimer has finished
+        if (insideYield > 0) {
             call_close = true;
             event.Veto();
             return;
@@ -2006,7 +2006,9 @@ void MainFrame::OnClose(wxCloseEvent& event)
     
     // deallocate things (usually no need) to help find any real memory leaks
     if (debuglevel == 666) {
+        insideYield++;
         wxGetApp().Yield(); // (because Destroy() doesn't act immediately)
+        insideYield--;
         if (numlayers > 1) DeleteOtherLayers();
         delete currlayer;
         delete stopwatch;

@@ -748,9 +748,9 @@ void MainFrame::DoPendingAction(bool restart)
         mouseevent.SetEventObject(viewptr);
         viewptr->GetEventHandler()->ProcessEvent(mouseevent);
         while (viewptr->drawingcells) {
-            insideYield = true;
+            insideYield++;
             wxGetApp().Yield(true);
-            insideYield = false;
+            insideYield--;
             wxMilliSleep(5);             // don't hog CPU
         }
         
@@ -789,7 +789,7 @@ void MainFrame::DisplayTimingInfo()
 
 void MainFrame::StartGenerating()
 {
-    if (insideYield || viewptr->drawingcells || viewptr->waitingforclick) {
+    if (insideYield > 0 || viewptr->drawingcells || viewptr->waitingforclick) {
         return;
     }
     
@@ -870,7 +870,7 @@ void MainFrame::StopGenerating()
     endtime = stopwatch->Time();
     endgen = currlayer->algo->getGeneration().todouble();
 
-    if (insideYield) {
+    if (insideYield > 0) {
         // we're currently in the event poller somewhere inside step(), so we must let
         // step() complete and only call FinishUp after StepPattern has finished
     } else {
@@ -894,7 +894,7 @@ void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
             // call StopGenerating() to stop gentimer
             Stop();
         } else {
-            // StopGenerating() was called while insideYield
+            // StopGenerating() was called while in Yield()
             FinishUp();
         }
         in_timer = false;
@@ -908,7 +908,7 @@ void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
                 // call StopGenerating() to stop gentimer
                 Stop();
             } else {
-                // StopGenerating() was called while insideYield
+                // StopGenerating() was called while in Yield()
                 FinishUp();
             }
             wxString msg;
@@ -926,7 +926,7 @@ void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
     }
     
     if (!generating) {
-        // StopGenerating() was called while insideYield
+        // StopGenerating() was called while in Yield()
         FinishUp();
     }
     
@@ -979,7 +979,7 @@ void MainFrame::NextGeneration(bool useinc)
         return;
     }
     
-    if (insideYield) {
+    if (insideYield > 0) {
         // avoid calling step() recursively
         inNextGen = false;
         return;
