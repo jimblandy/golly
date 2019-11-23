@@ -262,6 +262,10 @@ const char* GSF_setalgo(const char* algostring)
             ChangeWindowTitle(wxEmptyString);
             // pattern might have changed or colors might have changed
             DoAutoUpdate();
+            if (!autoupdate && showstatus) {
+                // update entire status bar to avoid seeing two background colors
+                statusptr->Refresh(false);
+            }
         }
     }
     
