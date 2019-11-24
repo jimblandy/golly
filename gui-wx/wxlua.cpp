@@ -2798,7 +2798,7 @@ static int g_show(lua_State* L)
     statusptr->DisplayMessage(wxString(msg, LUA_ENC));
     inscript = true;
 
-    #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
+    #if defined(__WXGTK__)
         // need to see update immediately
         insideYield++;
         wxGetApp().Yield(true);
