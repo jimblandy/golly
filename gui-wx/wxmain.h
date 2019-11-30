@@ -51,6 +51,8 @@ public:
     void SetWindowTitle(const wxString& filename);
     void OpenPattern();
     void OpenScript();
+    void OpenRecentPattern(int id);
+    void OpenRecentScript(int id);
     void ToggleShowFiles();
     void ChangeFileDir();
     void SetFileDir(const wxString& newdir);
@@ -187,11 +189,9 @@ private:
     wxString GetBaseName(const wxString& path);
     void SaveSucceeded(const wxString& path);
     void AddRecentPattern(const wxString& path);
-    void OpenRecentPattern(int id);
     void ClearMissingPatterns();
     void ClearAllPatterns();
     void AddRecentScript(const wxString& path);
-    void OpenRecentScript(int id);
     void ClearMissingScripts();
     void ClearAllScripts();
     wxString GetScriptFileName(const wxString& text);

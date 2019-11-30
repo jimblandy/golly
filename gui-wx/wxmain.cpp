@@ -2380,6 +2380,18 @@ void MainFrame::CreateMenus()
     menuBar->SetAutoWindowMenu(false);
 #endif
     
+    if (numpatterns > 0) {
+        // set keyboard shortcut for most recent pattern
+        int item = ID_OPEN_RECENT + 1;
+        menuBar->SetLabel(item, wxMenuItem::GetLabelText(menuBar->GetLabel(item)) + GetAccelerator(DO_OPENRECENT));
+    }
+    
+    if (numscripts > 0) {
+        // set keyboard shortcut for most recent script
+        int item = ID_RUN_RECENT + 1;
+        menuBar->SetLabel(item, wxMenuItem::GetLabelText(menuBar->GetLabel(item)) + GetAccelerator(DO_RUNRECENT));
+    }
+    
     // attach menu bar to the frame
     SetMenuBar(menuBar);
 }
@@ -2410,6 +2422,9 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_SCALE_8,         DO_SCALE8);
         SetAccelerator(mbar, ID_SCALE_16,        DO_SCALE16);
         SetAccelerator(mbar, ID_SCALE_32,        DO_SCALE32);
+        
+        if (numpatterns > 0) SetAccelerator(mbar, ID_OPEN_RECENT+1, DO_OPENRECENT);
+        if (numscripts > 0)  SetAccelerator(mbar, ID_RUN_RECENT+1,  DO_RUNRECENT);
         
         SetAccelerator(mbar, wxID_NEW,           DO_NEWPATT);
         SetAccelerator(mbar, wxID_OPEN,          DO_OPENPATT);
