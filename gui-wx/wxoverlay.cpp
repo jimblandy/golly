@@ -710,6 +710,7 @@ bool Table::AllocateMemory() {
 // -----------------------------------------------------------------------------
 
 Overlay *curroverlay = NULL;        // pointer to current overlay
+bool view_painted = false;          // viewport's OnPaint handler has been called?
 
 const char *no_overlay = "overlay has not been created";
 const char *no_cellview = "overlay does not have a cell view";
@@ -7437,23 +7438,26 @@ const char *Overlay::DoUpdate()
 
     #ifdef ENABLE_SOUND
     // update sound engine (in case threading not supported)
-    if (engine) {
-        engine->update();
-    }
+    if (engine) engine->update();
     #endif
     
     if (mainptr->IsIconized()) return NULL;
 
     only_draw_overlay = true;
+    // DrawView in wxrender.cpp will call OnlyDrawOverlay (see above)
+    
+    view_painted = false;
     viewptr->Refresh(false);
     viewptr->Update();
-    // DrawView in wxrender.cpp will call OnlyDrawOverlay (see above)
 
     #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
-        // need to see update immediately
-        insideYield++;
-        wxGetApp().Yield(true);
-        insideYield--;
+        // need to see update immediately (note that on Mac OS we might have
+        // to call Yield more than once to ensure the OnPaint handler is called)
+        do {
+            insideYield++;
+            wxGetApp().Yield(true);
+            insideYield--;
+        } while (!view_painted);
     #endif
 
     return NULL;

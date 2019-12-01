@@ -65,6 +65,7 @@ const int maxcomments = 128 * 1024; // maximum comment size
 void DoAutoUpdate()
 {
     if (autoupdate && !mainptr->IsIconized()) {
+        view_painted = false;
         inscript = false;
         mainptr->UpdatePatternAndStatus(true);  // call Update()
         if (showtitle) {
@@ -75,9 +76,11 @@ void DoAutoUpdate()
 
         #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
             // need to see update immediately
-            insideYield++;
-            wxGetApp().Yield(true);
-            insideYield--;
+            do {
+                insideYield++;
+                wxGetApp().Yield(true);
+                insideYield--;
+            } while (!view_painted);
         #endif
     }
 }
@@ -1358,6 +1361,7 @@ void GSF_update()
     if (mainptr->IsIconized()) return;
 
     // update viewport, status bar, and possibly other bars
+    view_painted = false;
     inscript = false;
     
     // pass in true so that Update() is called
@@ -1376,10 +1380,13 @@ void GSF_update()
     inscript = true;
 
     #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
-        // need to see update immediately
-        insideYield++;
-        wxGetApp().Yield(true);
-        insideYield--;
+        // need to see update immediately (note that on Mac OS we might have
+        // to call Yield more than once to ensure the OnPaint handler is called)
+        do {
+            insideYield++;
+            wxGetApp().Yield(true);
+            insideYield--;
+        } while (!view_painted);
     #endif
 }
 
@@ -1844,6 +1851,7 @@ void PassKeyToScript(int key, int modifiers)
             // interrupt a run() or step() command
             wxGetApp().PollerInterrupt();
         }
+        view_painted = true;    // ensure Yield loop terminates
         if (luascript) AbortLuaScript();
         if (plscript) AbortPerlScript();
         if (pyscript) AbortPythonScript();
@@ -1943,6 +1951,7 @@ void FinishScripting()
             // interrupt a run() or step() command
             wxGetApp().PollerInterrupt();
         }
+        view_painted = true;    // ensure Yield loop terminates
         if (luascript) AbortLuaScript();
         if (plscript) AbortPerlScript();
         if (pyscript) AbortPythonScript();

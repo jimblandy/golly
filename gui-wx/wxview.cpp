@@ -2377,6 +2377,10 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
     DrawView(tileindex);
     
     SwapBuffers();
+    
+    // this is used to ensure viewport is updated immediately on Linux and Mac OS
+    // when a script calls g.update or ov("update")
+    view_painted = true;
 }
 
 // -----------------------------------------------------------------------------
