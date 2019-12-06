@@ -897,5 +897,6 @@ private:
 };
 
 extern Overlay *curroverlay;    // pointer to current overlay (set by client)
+extern bool view_painted;       // viewport's OnPaint handler has been called?
 
 #endif

@@ -519,12 +519,14 @@ const char* GetActionName(action_id action)
         case DO_NEWPATT:        return "New Pattern";
         case DO_OPENPATT:       return "Open Pattern...";
         case DO_OPENCLIP:       return "Open Clipboard";
+        case DO_OPENRECENT:     return "Open Recent Pattern";
         case DO_SHOWFILES:      return "Show Files";
         case DO_FILEDIR:        return "Set File Folder...";
         case DO_SAVE:           return "Save Pattern...";
         case DO_SAVEXRLE:       return "Save Extended RLE";
         case DO_RUNSCRIPT:      return "Run Script...";
         case DO_RUNCLIP:        return "Run Clipboard";
+        case DO_RUNRECENT:      return "Run Recent Script";
         case DO_PREFS:          return "Preferences...";
         case DO_QUIT:           return "Quit Golly";
         // Edit menu
@@ -1055,16 +1057,11 @@ wxString GetAccelerator(action_id action)
 
 // -----------------------------------------------------------------------------
 
-// some method names have changed in wx 2.9
-#if wxCHECK_VERSION(2,9,0)
-    #define GetLabelFromText GetLabelText
-#endif
-
 void RemoveAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
     if (!accelerator[action].IsEmpty()) {
         // remove accelerator from given menu item
-        mbar->SetLabel(item, wxMenuItem::GetLabelFromText(mbar->GetLabel(item)));
+        mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)));
     }
 }
 
@@ -1093,7 +1090,7 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
     }
 
     // we need to remove old accelerator string from GetLabel text
-    mbar->SetLabel(item, wxMenuItem::GetLabelFromText(mbar->GetLabel(item)) + accel);
+    mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + accel);
 }
 
 // -----------------------------------------------------------------------------
@@ -1601,11 +1598,7 @@ void SavePrefs()
         for (i = 0; i < numpatterns; i++) {
             wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
             if (item) {
-#if wxCHECK_VERSION(2,9,0)
-                wxString path = item->GetItemLabel();
-#else
-                wxString path = item->GetText();
-#endif
+                wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
 #ifdef __WXGTK__
                 // remove duplicate underscores
                 path.Replace(wxT("__"), wxT("_"));
@@ -1623,11 +1616,7 @@ void SavePrefs()
         for (i = 0; i < numscripts; i++) {
             wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
             if (item) {
-#if wxCHECK_VERSION(2,9,0)
-                wxString path = item->GetItemLabel();
-#else
-                wxString path = item->GetText();
-#endif
+                wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
 #ifdef __WXGTK__
                 // remove duplicate underscores
                 path.Replace(wxT("__"), wxT("_"));

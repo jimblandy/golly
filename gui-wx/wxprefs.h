@@ -184,6 +184,7 @@ typedef enum {
     DO_NEXTHIGHER,                // next higher state
     DO_NEXTLOWER,                 // next lower state
     DO_OPENCLIP,                  // open clipboard
+    DO_OPENRECENT,                // open recent pattern
     DO_OPENPATT,                  // open pattern...
     DO_PASTE,                     // paste
     DO_PASTESEL,                  // paste to selection
@@ -199,6 +200,7 @@ typedef enum {
     DO_ROTATEACW,                 // rotate anticlockwise
     DO_ROTATECW,                  // rotate clockwise
     DO_RUNCLIP,                   // run clipboard
+    DO_RUNRECENT,                 // run recent script
     DO_RUNSCRIPT,                 // run script...
     DO_SAVEXRLE,                  // save extended rle
     DO_SAVEOVERLAY,               // save overlay...

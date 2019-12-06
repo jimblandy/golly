@@ -44,12 +44,6 @@
     #define FILEPATH path.mb_str(wxConvLocal)
 #endif
 
-#if wxCHECK_VERSION(2,9,0)
-    // some wxMenuItem method names have changed in wx 2.9
-    #define GetText GetItemLabel
-    #define SetText SetItemLabel
-#endif
-
 // File menu functions:
 
 // -----------------------------------------------------------------------------
@@ -855,7 +849,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
     int id = wxNOT_FOUND;
     for (int i = 0; i < numpatterns; i++) {
         wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
-        wxString temp = item->GetText();
+        wxString temp = wxMenuItem::GetLabelText(item->GetItemLabel());
         temp.Replace(wxT("__"), wxT("_"));
         temp.Replace(wxT("&"), wxT("&&"));
         if (temp == path) {
@@ -875,7 +869,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
         } else {
             // replace last item with new path
             wxMenuItem* item = patternSubMenu->FindItemByPosition(maxpatterns - 1);
-            item->SetText(path);
+            item->SetItemLabel(path);
             id = ID_OPEN_RECENT + maxpatterns;
         }
     }
@@ -885,18 +879,25 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
         wxMenuItem* item;
         while ( id > ID_OPEN_RECENT + 1 ) {
             wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
-            wxString prevpath = previtem->GetText();
+            wxString prevpath = wxMenuItem::GetLabelText(previtem->GetItemLabel());
 #ifdef __WXGTK__
             // remove duplicate underscores
             prevpath.Replace(wxT("__"), wxT("_"));
             prevpath.Replace(wxT("&"), wxT("&&"));
 #endif
             item = patternSubMenu->FindItem(id);
-            item->SetText(prevpath);
+            item->SetItemLabel(prevpath);
             id--;
         }
         item = patternSubMenu->FindItem(id);
-        item->SetText(path);
+        item->SetItemLabel(path);
+    }
+    
+    wxMenuBar* mbar = GetMenuBar();
+    if (mbar) {
+        // set keyboard shortcut for most recent pattern
+        int item = ID_OPEN_RECENT + 1;
+        mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_OPENRECENT));
     }
 }
 
@@ -920,7 +921,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
     int id = wxNOT_FOUND;
     for (int i = 0; i < numscripts; i++) {
         wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
-        wxString temp = item->GetText();
+        wxString temp = wxMenuItem::GetLabelText(item->GetItemLabel());
         temp.Replace(wxT("__"), wxT("_"));
         temp.Replace(wxT("&"), wxT("&&"));
         if (temp == path) {
@@ -940,7 +941,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
         } else {
             // replace last item with new path
             wxMenuItem* item = scriptSubMenu->FindItemByPosition(maxscripts - 1);
-            item->SetText(path);
+            item->SetItemLabel(path);
             id = ID_RUN_RECENT + maxscripts;
         }
     }
@@ -950,18 +951,25 @@ void MainFrame::AddRecentScript(const wxString& inpath)
         wxMenuItem* item;
         while ( id > ID_RUN_RECENT + 1 ) {
             wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
-            wxString prevpath = previtem->GetText();
+            wxString prevpath = wxMenuItem::GetLabelText(previtem->GetItemLabel());
 #ifdef __WXGTK__
             // remove duplicate underscores
             prevpath.Replace(wxT("__"), wxT("_"));
             prevpath.Replace(wxT("&"), wxT("&&"));
 #endif
             item = scriptSubMenu->FindItem(id);
-            item->SetText(prevpath);
+            item->SetItemLabel(prevpath);
             id--;
         }
         item = scriptSubMenu->FindItem(id);
-        item->SetText(path);
+        item->SetItemLabel(path);
+    }
+    
+    wxMenuBar* mbar = GetMenuBar();
+    if (mbar) {
+        // set keyboard shortcut for most recent script
+        int item = ID_RUN_RECENT + 1;
+        mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_RUNRECENT));
     }
 }
 
@@ -1052,12 +1060,6 @@ bool MainFrame::CopyTextToClipboard(const wxString& text)
 }
 
 // -----------------------------------------------------------------------------
-
-#if wxCHECK_VERSION(2,9,0)
-    // wxTextDataObject also has GetText and SetText methods so don't change them
-    #undef GetText
-    #undef SetText
-#endif
 
 bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 {
@@ -1365,12 +1367,6 @@ void MainFrame::RunClipboard()
     }
 }
 
-#if wxCHECK_VERSION(2,9,0)
-    // restore new wxMenuItem method names in wx 2.9
-    #define GetText GetItemLabel
-    #define SetText SetItemLabel
-#endif
-
 // -----------------------------------------------------------------------------
 
 void MainFrame::OpenRecentPattern(int id)
@@ -1384,7 +1380,7 @@ void MainFrame::OpenRecentPattern(int id)
     
     wxMenuItem* item = patternSubMenu->FindItem(id);
     if (item) {
-        wxString path = item->GetText();
+        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
 #ifdef __WXGTK__
         // remove duplicate underscores
         path.Replace(wxT("__"), wxT("_"));
@@ -1414,7 +1410,7 @@ void MainFrame::OpenRecentScript(int id)
     
     wxMenuItem* item = scriptSubMenu->FindItem(id);
     if (item) {
-        wxString path = item->GetText();
+        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
 #ifdef __WXGTK__
         // remove duplicate underscores
         path.Replace(wxT("__"), wxT("_"));
@@ -1438,7 +1434,7 @@ void MainFrame::ClearMissingPatterns()
     int pos = 0;
     while (pos < numpatterns) {
         wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
-        wxString path = item->GetText();
+        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
 #ifdef __WXGTK__
         // remove duplicate underscores
         path.Replace(wxT("__"), wxT("_"));
@@ -1460,12 +1456,12 @@ void MainFrame::ClearMissingPatterns()
                 wxMenuItem* nextitem = patternSubMenu->FindItemByPosition(nextpos);
 #ifdef __WXGTK__
                 // avoid wxGTK bug if item contains underscore
-                wxString temp = nextitem->GetText();
+                wxString temp = wxMenuItem::GetLabelText(nextitem->GetItemLabel());
                 temp.Replace(wxT("__"), wxT("_"));
                 temp.Replace(wxT("&"), wxT("&&"));
-                item->SetText( temp );
+                item->SetItemLabel( temp );
 #else
-                item->SetText( nextitem->GetText() );
+                item->SetItemLabel( wxMenuItem::GetLabelText(nextitem->GetItemLabel()) );
 #endif
                 item = nextitem;
                 nextpos++;
@@ -1475,8 +1471,16 @@ void MainFrame::ClearMissingPatterns()
             numpatterns--;
         }
     }
+    
     wxMenuBar* mbar = GetMenuBar();
-    if (mbar) mbar->Enable(ID_OPEN_RECENT, numpatterns > 0);
+    if (mbar) {
+        mbar->Enable(ID_OPEN_RECENT, numpatterns > 0);
+        if (numpatterns > 0) {
+            // set keyboard shortcut for most recent pattern
+            int item = ID_OPEN_RECENT + 1;
+            mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_OPENRECENT));
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1486,7 +1490,7 @@ void MainFrame::ClearMissingScripts()
     int pos = 0;
     while (pos < numscripts) {
         wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
-        wxString path = item->GetText();
+        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
 #ifdef __WXGTK__
         // remove duplicate underscores
         path.Replace(wxT("__"), wxT("_"));
@@ -1508,12 +1512,12 @@ void MainFrame::ClearMissingScripts()
                 wxMenuItem* nextitem = scriptSubMenu->FindItemByPosition(nextpos);
 #ifdef __WXGTK__
                 // avoid wxGTK bug if item contains underscore
-                wxString temp = nextitem->GetText();
+                wxString temp = wxMenuItem::GetLabelText(nextitem->GetItemLabel());
                 temp.Replace(wxT("__"), wxT("_"));
                 temp.Replace(wxT("&"), wxT("&&"));
-                item->SetText( temp );
+                item->SetItemLabel( temp );
 #else
-                item->SetText( nextitem->GetText() );
+                item->SetItemLabel( wxMenuItem::GetLabelText(nextitem->GetItemLabel()) );
 #endif
                 item = nextitem;
                 nextpos++;
@@ -1523,8 +1527,16 @@ void MainFrame::ClearMissingScripts()
             numscripts--;
         }
     }
+    
     wxMenuBar* mbar = GetMenuBar();
-    if (mbar) mbar->Enable(ID_RUN_RECENT, numscripts > 0);
+    if (mbar) {
+        mbar->Enable(ID_RUN_RECENT, numscripts > 0);
+        if (numscripts > 0) {
+            // set keyboard shortcut for most recent script
+            int item = ID_RUN_RECENT + 1;
+            mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_RUNRECENT));
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------

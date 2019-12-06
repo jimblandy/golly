@@ -1653,10 +1653,12 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_NEWPATT:     if (!inscript && !busy) mainptr->NewPattern(); break;
         case DO_OPENPATT:    if (!inscript && !busy) mainptr->OpenPattern(); break;
         case DO_OPENCLIP:    if (!inscript && !busy) mainptr->OpenClipboard(); break;
+        case DO_OPENRECENT:  if (!inscript && !busy) mainptr->OpenRecentPattern(ID_OPEN_RECENT+1); break;
         case DO_SAVE:        if (!inscript && !busy) mainptr->SavePattern(); break;
         case DO_SAVEXRLE:    if (!inscript) savexrle = !savexrle; break;
         case DO_RUNSCRIPT:   if (!inscript && !timeline && !busy) mainptr->OpenScript(); break;
         case DO_RUNCLIP:     if (!inscript && !timeline && !busy) mainptr->RunClipboard(); break;
+        case DO_RUNRECENT:   if (!inscript && !timeline && !busy) mainptr->OpenRecentScript(ID_RUN_RECENT+1); break;
         case DO_PREFS:       if (!busy) mainptr->ShowPrefsDialog(); break;
         case DO_FILEDIR:     if (!busy) mainptr->ChangeFileDir(); break;
         case DO_SHOWFILES:   mainptr->ToggleShowFiles(); break;
@@ -2375,6 +2377,10 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
     DrawView(tileindex);
     
     SwapBuffers();
+    
+    // this is used to ensure viewport is updated immediately on Linux and Mac OS
+    // when a script calls g.update or ov("update")
+    view_painted = true;
 }
 
 // -----------------------------------------------------------------------------
