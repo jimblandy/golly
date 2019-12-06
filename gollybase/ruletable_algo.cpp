@@ -695,43 +695,111 @@ state ruletable_algo::slowcalc(state nw, state n, state ne, state w, state c, st
 {
    TBits is_match = 0;  // AKT: explicitly initialized to avoid gcc warning
 
-   for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
-   {
-      // is there a match for any of the (e.g.) 64 rules within iRuleC?
-      // (we don't have to worry about symmetries here since they were expanded out in PackTransitions)
-      switch(this->neighborhood)
-      {
-         case vonNeumann: // c,n,e,s,w
-            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][e][iRuleC] & 
-               this->lut[3][s][iRuleC] & this->lut[4][w][iRuleC];
-            break;
-         case Moore: // c,n,ne,e,se,s,sw,w,nw
-            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][ne][iRuleC] & 
-               this->lut[3][e][iRuleC] & this->lut[4][se][iRuleC] & this->lut[5][s][iRuleC] & 
-               this->lut[6][sw][iRuleC] & this->lut[7][w][iRuleC] & this->lut[8][nw][iRuleC];
-            break;
-         case hexagonal: // c,n,e,se,s,w,nw
-            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC] & this->lut[2][e][iRuleC] & 
-               this->lut[3][se][iRuleC] & this->lut[4][s][iRuleC] & this->lut[5][w][iRuleC] & 
-               this->lut[6][nw][iRuleC];
-            break;
-         case oneDimensional: // c,w,e
-            is_match = this->lut[0][c][iRuleC] & this->lut[1][w][iRuleC] & this->lut[2][e][iRuleC];
-            break;
-      }
-      // if any of them matched, return the output of the first
-      if(is_match)
-      {
-         // find the least significant bit of is_match
-         unsigned int iBit=0;
-         TBits mask=1;
-         while(!(is_match&mask))
+   switch (this->neighborhood) {
+      case vonNeumann: // c,n,e,s,w
+         for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
          {
-            ++iBit;
-            mask <<= 1;
+            // quit early if possible
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC];
+            if (is_match) {
+               is_match &= this->lut[2][e][iRuleC] & this->lut[3][s][iRuleC] & this->lut[4][w][iRuleC];
+
+               // if any of them matched, return the output of the first
+               if(is_match)
+               {
+                  // find the least significant bit of is_match
+                  unsigned int iBit=0;
+                  TBits mask=1;
+                  while(!(is_match&mask))
+                  {
+                     ++iBit;
+                     mask <<= 1;
+                  }
+                  return this->output[ iRuleC*sizeof(TBits)*8 + iBit ]; // find the uncompressed rule index
+               }
+            }
          }
-         return this->output[ iRuleC*sizeof(TBits)*8 + iBit ]; // find the uncompressed rule index
-      }
+         break;
+
+      case Moore: // c,n,ne,e,se,s,sw,w,nw
+         for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
+         {
+            // quit early if possible
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC];
+            if (is_match) {
+               is_match &= this->lut[2][ne][iRuleC] & this->lut[3][e][iRuleC];
+               if (is_match) {
+                  is_match &= this->lut[4][se][iRuleC] & this->lut[5][s][iRuleC];
+                  if (is_match) {
+                     is_match &= this->lut[6][sw][iRuleC] & this->lut[7][w][iRuleC] & this->lut[8][nw][iRuleC];
+
+                     // if any of them matched, return the output of the first
+                     if(is_match)
+                     {
+                        // find the least significant bit of is_match
+                        unsigned int iBit=0;
+                        TBits mask=1;
+                        while(!(is_match&mask))
+                        {
+                           ++iBit;
+                           mask <<= 1;
+                        }
+                        return this->output[ iRuleC*sizeof(TBits)*8 + iBit ]; // find the uncompressed rule index
+                     }
+                  }
+               }
+            }
+         }
+         break;
+
+      case hexagonal: // c,n,e,se,s,w,nw
+         for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
+         {
+            // quit early if possible
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][n][iRuleC];
+            if (is_match) {
+               is_match &= this->lut[2][e][iRuleC] & this->lut[3][se][iRuleC];
+               if (is_match) {
+                  is_match &= this->lut[4][s][iRuleC] & this->lut[5][w][iRuleC] & this->lut[6][nw][iRuleC];
+
+                  // if any of them matched, return the output of the first
+                  if(is_match)
+                  {
+                     // find the least significant bit of is_match
+                     unsigned int iBit=0;
+                     TBits mask=1;
+                     while(!(is_match&mask))
+                     {
+                        ++iBit;
+                        mask <<= 1;
+                     }
+                     return this->output[ iRuleC*sizeof(TBits)*8 + iBit ]; // find the uncompressed rule index
+                  }
+               }
+            }
+         }
+         break;
+
+      case oneDimensional: // c,w,e
+         for(unsigned int iRuleC=0;iRuleC<this->n_compressed_rules;iRuleC++)
+         {
+            is_match = this->lut[0][c][iRuleC] & this->lut[1][w][iRuleC] & this->lut[2][e][iRuleC];
+
+            // if any of them matched, return the output of the first
+            if(is_match)
+            {
+               // find the least significant bit of is_match
+               unsigned int iBit=0;
+               TBits mask=1;
+               while(!(is_match&mask))
+               {
+                  ++iBit;
+                  mask <<= 1;
+               }
+               return this->output[ iRuleC*sizeof(TBits)*8 + iBit ]; // find the uncompressed rule index
+            }
+         }
+         break;
    }
    return c; // default: no change
 }
