@@ -1,0 +1,3 @@
+# Don't save local configurations in Git
+gui-wx/local-win.mk
+gui-wx/local-gtk.mk
