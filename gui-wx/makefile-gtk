@@ -11,7 +11,7 @@
 
 # Assuming GNU make...
 include local-gtk-template.mk
-include local-gtk.mk
+-include local-gtk.mk
 
 APP_VERSION = 3.4b1
 
