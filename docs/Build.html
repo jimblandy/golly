@@ -281,7 +281,12 @@ by opening a Terminal window and doing:
 <h3>On Linux</h3>
 
 <p>
-You will probably need to add some development packages first.
+First, locate local-gtk-template.mk in the <b>gui-wx</b> folder and copy it
+to a new file called local-gtk.mk.  This file is included by makefile-gtk.
+Edit local-gtk.mk and make any desired changes to the supplied default settings.
+
+<p>
+You will probably need to add some development packages.
 For example, from a default Ubuntu install (at the time of writing)
 you will need to install the following packages for GTK-2 and Python 2.7:
 
@@ -391,11 +396,11 @@ ENABLE_SOUND = 1
 Change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
 
 <h3>On Linux</h3>
-Edit makefile-gtk and uncomment the line:
+Edit local-gtk.mk and uncomment the line:
 <pre>
 ENABLE_SOUND = 1
 </pre>
-Change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
+Also change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
 
 <a name="bgolly"></a>
 <h2>How to build bgolly</h2>
