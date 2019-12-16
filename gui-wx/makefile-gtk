@@ -131,7 +131,6 @@ clean:
 	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
 	-rm -rf $(OBJDIR)
 	-rm -rf $(LOCALDIR)
-	-rm -rf $(EXEDIR)/
 	-(cd $(LUADIR) && $(MAKE) clean)
 
 	
