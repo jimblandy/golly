@@ -23,14 +23,12 @@ CMDDIR = ../cmdline
 LUADIR = ../lua
 OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
-# Dealing with rpath and packaging shared libraries.
+# Dealing with rpath and packaging shared libraries and licenses.
 LOCALSTR = .local
 LOCALDIR = $(EXEDIR)/$(LOCALSTR)
 LICENSEDIR = $(LOCALDIR)/share
 RPATHSTR = $(LOCALSTR)/lib
 LIBDIR = $(EXEDIR)/$(RPATHSTR)
-EXCLUDELISTURL = https://raw.githubusercontent.com/probonopd/AppImages/master/excludelist
-
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
@@ -41,7 +39,7 @@ EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
 DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
-   golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
+    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
 LUALIB = $(LUADIR)/liblua.a -ldl
@@ -54,6 +52,7 @@ LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 
 # For sound support (requires irrKlang)
 ifdef ENABLE_SOUND
+    IRRKLANG_README = $(IRRKLANGDIR)/readme.txt
     IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
     IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
     IRRKLANG_LIBNAME = IrrKlang
@@ -129,22 +128,23 @@ $(OBJDIR) $(LIBDIR) $(LICENSEDIR):
 	mkdir -p $@
 
 clean: 
-	rm -f $(OBJDIR)/*.o
-	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree $(IRRKLANG_LOCAL)
-	-rmdir -p $(OBJDIR)
-	-rmdir -p $(EXEDIR)/$(RPATHDIR)
-	-rmdir -p $(EXEDIR)/$(LICENSEDIR)
+	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
+	-rm -rf $(OBJDIR)
+	-rm -rf $(LOCALDIR)
+	-rm -rf $(EXEDIR)/
 	-(cd $(LUADIR) && $(MAKE) clean)
 
 	
 ifdef ENABLE_SOUND
-$(IRRKLANG_LOCAL): $(LIBDIR)
+$(IRRKLANG_LOCAL): $(LIBDIR) $(LICENSEDIR)
 	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $(LIBDIR)
+	mkdir -p $(LICENSEDIR)/lib$(IRRKLANG_LIBNAME)
+	cp $(IRRKLANG_README) $(LICENSEDIR)/lib$(IRRKLANG_LIBNAME)/copyright
 endif
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB) $(IRRKLANG_LOCAL)
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
-$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
+	$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
@@ -308,44 +308,36 @@ srcdist:
 	find $(RELEASENAME)-src -name '*.o' -delete
 	find $(RELEASENAME)-src -name 'makefile' -delete
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
-	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
+	tar -cf - $(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
+	rm -rf $(RELEASENAME)-src
 
-
-# Copying shared libraries to RPATH in a binary distribution.
-dependmap: golly
-	# Getting dependencies from executable...
-	@# Parsing ldd output to get the *first* => *second* fields.
-	@# The first field is the shared library name.
-	@# The second field is the shared library path.
-	ldd $(EXEDIR)/golly | grep '=>' | sed -e 's/=>//' | awk '{ print $$1 "\t" $$2 }' | sort > $@
-
+# Packaging a binary distribution.
+# We need to copy the necessary shared libraries and licenses.
+EXCLUDELISTURL = https://raw.githubusercontent.com/probonopd/AppImages/master/excludelist
 excludelist:
+	@echo
 	# Getting shared libraries to exclude from AppImage repo...
-	@# Get list from URL and remove comments and empty lines.
 	wget -O - $(EXCLUDELISTURL) | sed -e 's/[[:space:]]*#.*//' -e '/^$$/d' | sort > $@
 
-dependlist: dependmap excludelist
-	awk '{ print $$1 }' dependmap > tempfile
-	comm -2 -3 tempfile excludelist > $@
-	rm tempfile
-
-libs: $(LIBDIR) dependlist excludelist
+libs: $(LIBDIR) $(LICENSEDIR) excludelist
+	@echo
 	# Copying system files to lib directory...
-	awk ' \
-		FILENAME=="dependlist" { needed[$$1] = 1 } \
-		FILENAME == "dependmap" { \
-			if (needed[$$1]) { \
-				system("cp -T $$(readlink -f " $$2 ") $(LIBDIR)/" $$1) \
-			} \
-		} \
-	' dependlist dependmap
+	-ldd ../golly | grep '=>' | sed -e 's/=>//' | awk '{print $$1, $$2}' | \
+	grep -vFf excludelist | sort | uniq | \
+	while read -r soname sopath; do \
+		echo "Copying $${soname}..."; \
+		cp "$${sopath}" $(LIBDIR); \
+	done 
+	# Copying copyright information...
+	$(COPYLICENSECMD)
 
 bindist: all libs
 	-rm -rf $(DIRNAME)
 	mkdir $(DIRNAME)
 	install $(EXEFILES) $(DIRNAME)
-	cp -rp $(DOCFILES) $(SHAREDFILES) $(DIRNAME)
+	cp -Rp $(DOCFILES) $(SHAREDFILES) $(DIRNAME)
 	find $(DIRNAME) -name '.[^.]**' -delete
-	cp -rp $(LOCALDIR) $(DIRNAME)
 	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
-	tar -cf - ./$(DIRNAME) | gzip > $(DIRNAME).tar.gz
+	cp -Rp $(LOCALDIR) $(DIRNAME)
+	tar -cf - $(DIRNAME) | gzip > $(DIRNAME).tar.gz
+	rm -rf $(DIRNAME)

@@ -21,4 +21,27 @@ PYTHON = python2
 # Change the next line to specify where you installed IrrKLang
 IRRKLANGDIR = /home/chris/irrKlang-64bit-1.6.0
 
-# Add any extra CXX flags here
+# The following is used to deal with different license paths and
+# filenames in different distributions.
+# This one is for debian-based systems.
+# Let's just hope this is portable somehow...
+COPYLICENSECMD = \
+	for f in /usr/share/doc/*/copyright; do echo "$$f"; done \
+	| grep  "$$( \
+		for f in ../.local/lib/*; do basename $$f ; done \
+		| sed -e 's|-x11||' -e 's|gmodule|glib|' -e 's|X|x|' \
+		-e 's|-|-\\{0,1\\}|' -e 's|\.so\.|-\\{0,1\\}|' \
+		-e 's|$$|/|' \
+	)" | while read -r copyright; do \
+		dest="$$(\
+			echo $$copyright \
+			| sed -e 's|/usr/share/doc|$(LICENSEDIR)|' \
+		)"; \
+		destdir="$$(dirname $$dest)"; \
+		echo "copying $$copyright to\t$$dest..."; \
+		mkdir -p "$$destdir" && cp "$$copyright" "$$dest"; \
+	done
+
+# Add any extra CXX and LD flags here
+# CXXFLAGS =
+# LDFLAGS =
