@@ -8,8 +8,8 @@
 # (depending on your g++ version you might also need --disable-precomp-headers)
 # make
 # sudo make install
+# sudo ldconfig
 
-# Assuming GNU make...
 include local-gtk-template.mk
 -include local-gtk.mk
 
@@ -22,6 +22,15 @@ BASEDIR = ../gollybase
 CMDDIR = ../cmdline
 LUADIR = ../lua
 OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
+
+# Dealing with rpath and packaging shared libraries.
+LOCALSTR = .local
+LOCALDIR = $(EXEDIR)/$(LOCALSTR)
+LICENSEDIR = $(LOCALDIR)/share
+RPATHSTR = $(LOCALSTR)/lib
+LIBDIR = $(EXEDIR)/$(RPATHSTR)
+EXCLUDELISTURL = https://raw.githubusercontent.com/probonopd/AppImages/master/excludelist
+
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
@@ -39,9 +48,9 @@ LUALIB = $(LUADIR)/liblua.a -ldl
 
 CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
-   -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
-   -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS) $(EXTRACXXFLAGS)
-LDFLAGS := -Wl,--as-needed $(LDFLAGS) $(EXTRALDFLAGS)
+    -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
+    -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 
 # For sound support (requires irrKlang)
 ifdef ENABLE_SOUND
@@ -49,8 +58,8 @@ ifdef ENABLE_SOUND
     IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
     IRRKLANG_LIBNAME = IrrKlang
     IRRKLANG_FULLNAME = lib$(IRRKLANG_LIBNAME).so
-    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -Wl,-rpath='$$ORIGIN' -l$(IRRKLANG_LIBNAME)
-    IRRKLANG_LOCAL = $(EXEDIR)/$(IRRKLANG_FULLNAME)
+    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -Wl,-rpath,'$$ORIGIN/$(RPATHSTR)' -l$(IRRKLANG_LIBNAME)
+    IRRKLANG_LOCAL = $(LIBDIR)/$(IRRKLANG_FULLNAME)
     CXXFLAGS += -DENABLE_SOUND
 endif
 
@@ -82,7 +91,7 @@ ZLIB_CXXFLAGS = -DZLIB
 ZLIB_LDFLAGS = -lz
 
 # libs for OpenGL
-# Edited to work regardless of versions.
+# Edited to work regardless of wxGTK versions.
 EXTRALIBS_OPENGL = `$(WX_CONFIG) --libs gl` -lGL -lGLU
 
 # for wxGTK support (required for GUI)
@@ -91,43 +100,46 @@ WX_LDFLAGS = `$(WX_CONFIG) --libs`
 
 OBJDIR = ObjGTK
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
-   $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
-   $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
-   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
-   $(BASEDIR)/ruleloaderalgo.h
+    $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+    $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+    $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
+    $(BASEDIR)/ruleloaderalgo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
-   $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
-   $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
-   $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
-   $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
-   $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
-   $(OBJDIR)/generationsalgo.o
+    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
+    $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
+    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
+    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
+    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
+    $(OBJDIR)/generationsalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
-   wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
-   wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
+    wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
+    wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
-   $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o $(OBJDIR)/wxoverlay.o \
-   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
-   $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
-   $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
+    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o $(OBJDIR)/wxoverlay.o \
+    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
+    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
+    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 all: $(OBJDIR) golly bgolly
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) icons/appicon.xpm bitmaps/*.xpm
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+$(OBJDIR) $(LIBDIR) $(LICENSEDIR):
+	mkdir -p $@
 
 clean: 
 	rm -f $(OBJDIR)/*.o
 	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree $(IRRKLANG_LOCAL)
-	-(rmdir -p $(OBJDIR))
+	-rmdir -p $(OBJDIR)
+	-rmdir -p $(EXEDIR)/$(RPATHDIR)
+	-rmdir -p $(EXEDIR)/$(LICENSEDIR)
 	-(cd $(LUADIR) && $(MAKE) clean)
 
+	
 ifdef ENABLE_SOUND
-$(IRRKLANG_LOCAL):
-	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $@
+$(IRRKLANG_LOCAL): $(LIBDIR)
+	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $(LIBDIR)
 endif
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB) $(IRRKLANG_LOCAL)
@@ -298,11 +310,42 @@ srcdist:
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
-bindist: all
+
+# Copying shared libraries to RPATH in a binary distribution.
+dependmap: golly
+	# Getting dependencies from executable...
+	@# Parsing ldd output to get the *first* => *second* fields.
+	@# The first field is the shared library name.
+	@# The second field is the shared library path.
+	ldd $(EXEDIR)/golly | grep '=>' | sed -e 's/=>//' | awk '{ print $$1 "\t" $$2 }' | sort > $@
+
+excludelist:
+	# Getting shared libraries to exclude from AppImage repo...
+	@# Get list from URL and remove comments and empty lines.
+	wget -O - $(EXCLUDELISTURL) | sed -e 's/[[:space:]]*#.*//' -e '/^$$/d' | sort > $@
+
+dependlist: dependmap excludelist
+	awk '{ print $$1 }' dependmap > tempfile
+	comm -2 -3 tempfile excludelist > $@
+	rm tempfile
+
+libs: $(LIBDIR) dependlist excludelist
+	# Copying system files to lib directory...
+	awk ' \
+		FILENAME=="dependlist" { needed[$$1] = 1 } \
+		FILENAME == "dependmap" { \
+			if (needed[$$1]) { \
+				system("cp -T $$(readlink -f " $$2 ") $(LIBDIR)/" $$1) \
+			} \
+		} \
+	' dependlist dependmap
+
+bindist: all libs
 	-rm -rf $(DIRNAME)
 	mkdir $(DIRNAME)
 	install $(EXEFILES) $(DIRNAME)
 	cp -rp $(DOCFILES) $(SHAREDFILES) $(DIRNAME)
-	find $(DIRNAME) -name '.[^.]*' -delete
+	find $(DIRNAME) -name '.[^.]**' -delete
+	cp -rp $(LOCALDIR) $(DIRNAME)
 	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(DIRNAME) | gzip > $(DIRNAME).tar.gz

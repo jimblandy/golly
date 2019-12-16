@@ -11,7 +11,7 @@ LUA_DEFS = -DLUA_COMPAT_5_2
 # LUA_DEFS = -DLUA_COMPAT_5_2 -DLUA_32BITS
 
 # Change the next line depending on where you installed Python:
-PYTHON=python2
+PYTHON = python2
 
 # Uncomment the next line to enable Golly to run perl scripts.
 # ENABLE_PERL = 1
@@ -22,4 +22,3 @@ PYTHON=python2
 IRRKLANGDIR = /home/chris/irrKlang-64bit-1.6.0
 
 # Add any extra CXX flags here
-EXTRACXXFLAGS = 
