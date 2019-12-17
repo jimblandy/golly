@@ -48,7 +48,7 @@ CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
     -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
     -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
-LDFLAGS := -Wl,--as-needed $(LDFLAGS)
+LDFLAGS := -Wl,--as-needed -Wl,-rpath,'$$ORIGIN/$(RPATHSTR)' $(LDFLAGS)
 
 # For sound support (requires irrKlang)
 ifdef ENABLE_SOUND
@@ -57,7 +57,7 @@ ifdef ENABLE_SOUND
     IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
     IRRKLANG_LIBNAME = IrrKlang
     IRRKLANG_FULLNAME = lib$(IRRKLANG_LIBNAME).so
-    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -Wl,-rpath,'$$ORIGIN/$(RPATHSTR)' -l$(IRRKLANG_LIBNAME)
+    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -l$(IRRKLANG_LIBNAME)
     IRRKLANG_LOCAL = $(LIBDIR)/$(IRRKLANG_FULLNAME)
     CXXFLAGS += -DENABLE_SOUND
 endif
