@@ -17,7 +17,7 @@
 -- Patterns/Life/Rakes/c2-Cordership-rake.rle, then run lifeviewer.lua.
 
 -- build number
-local buildnumber = 30
+local buildnumber = 31
 
 local g = golly()
 local ov = g.overlay
@@ -500,7 +500,7 @@ local function updatestatus()
     end
 
     -- update status bar
-    local status = "Hit escape to close."
+    local status = "Hit escape to close.  Gen "..currentgen
     status = status.."  Zoom "..string.format("%.1f", zoom).."x  Angle "..displayangle
     status = status.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y)
     status = status.."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth)
@@ -930,6 +930,16 @@ local function advance(singlestep)
     
     -- check for single step
     local remaining = step
+    if stopgen > currentgen then
+        if stopgen - currentgen < remaining then
+            remaining = stopgen - currentgen
+        end
+    end
+    if loopgen > currentgen then
+        if loopgen - currentgen < remaining then
+            remaining = loopgen - currentgen
+        end
+    end
     if singlestep then
         remaining = 1
     end
@@ -940,9 +950,10 @@ local function advance(singlestep)
         while remaining > 0 do
             g.run(1)
             updatecells()
+            currentgen = currentgen + 1
             if g.empty() then
                 refresh()
-                g.note("Life ended at generation "..tonumber(g.getgen()))
+                g.note("Life ended at generation "..currentgen)
                 remaining = 0
                 decay = viewconstants.decaysteps
             else
@@ -952,8 +963,6 @@ local function advance(singlestep)
         timing.genstarttime = g.millisecs()
     end
     
-    currentgen = tonumber(g.getgen())
-
     if autofit then
         fitzoom(true)
     end
@@ -1830,6 +1839,7 @@ function main()
     end
 
     -- reset pattern if required
+    g.update()
     currentgen = tonumber(g.getgen())
     if currentgen ~= 0 then
         g.reset()
@@ -1896,7 +1906,7 @@ function main()
         if event == "key return none" then
             generating = not generating
             if generating then
-                timing.genstarttime = g.millisecs()
+                timing.genstarttime = g.millisecs() - 20  -- so restart works after STOP
             end
         elseif event == "key space none" then
             advance(true)
@@ -2035,15 +2045,6 @@ function main()
         -- check if playing
         if generating then
             advance(false)
-
-            -- check for stop or loop
-            if stopgen == currentgen then
-                generating = false
-                g.note("STOP reached, Play to continue")
-            end              
-            if loopgen == currentgen then
-                reset(true)
-            end
         else
             -- check if life ended but cells still decaying
             if decay > 0 then
@@ -2066,8 +2067,20 @@ function main()
         if update.dorefresh then
             refresh()
         end
-        if update.dostatus then
+        if true then --update.dostatus then
             updatestatus()
+        end
+
+        -- check for stop or loop
+        if generating then
+            if stopgen == currentgen then
+                generating = false
+                updatestatus()
+                g.note("STOP reached at "..currentgen..", Play to continue")
+            end              
+            if loopgen == currentgen then
+                reset(true)
+            end
         end
     end
 end

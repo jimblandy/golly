@@ -1,5 +1,5 @@
 <html>
-<title>Golly Help: LifeViewer</title>
+<title>Golly Help: lifeviewer.lua</title>
 <body bgcolor="#FFFFCE">
 
 <p>
@@ -18,7 +18,7 @@
 <font size=+1><b>Introduction</b></font>
 
 <p>
-LifeViewer is a <a href="#script">scriptable</a> pattern viewer featuring:
+lifeviewer.lua is a <a href="#script">scriptable</a> pattern viewer featuring:
 <ul>
 <li> Rotation and smooth non-integer zoom.
 <li> <a href="#themes">Color themes</a> with cell history and longevity.
@@ -29,7 +29,7 @@ LifeViewer is a <a href="#script">scriptable</a> pattern viewer featuring:
 <p>
 <img src="images/lifeviewer.png">
 <p>
-You may find it convenient to bind LifeViewer to a Keyboard action in Golly. This can be done as
+You may find it convenient to bind lifeviewer.lua to a Keyboard action in Golly. This can be done as
 follows:<ol>
 <li>Open Golly's Preferences dialog with <b>File->Preferences...</b>
 <li>Click on the <b>Keyboard</b> tab in the dialog
@@ -39,7 +39,7 @@ follows:<ol>
 <li>Click on <b>OK</b>
 </ol>
 <p>
-A Javascript/HTML5 version of LifeViewer is used on the conwaylife.com
+A Javascript/HTML5 version of lifeviewer.lua called LifeViewer is used on the conwaylife.com
 <a href="http://www.conwaylife.com/forums">forums</a> to display posted
 patterns and also on <a href="http://www.conwaylife.com/wiki">LifeWiki</a>.
 
@@ -52,7 +52,7 @@ patterns and also on <a href="http://www.conwaylife.com/wiki">LifeWiki</a>.
 <tr><td align="right">Return</td><td>Toggle play / pause.</td></tr>
 <tr><td align="right">Space</td><td>Pause / next generation.</td></tr>
 <tr><td align="right">Tab</td><td>Pause / next step.</td></tr>
-<tr><td align="right">Esc</td><td>Close LifeViewer.</td></tr>
+<tr><td align="right">Esc</td><td>Close lifeviewer.lua.</td></tr>
 <tr><td align="right"><a name="reset"></a>R</td><td>Reset to generation 0. Reset at generation 0 also resets camera.</td></tr>
 <tr><td align="right">Shift R</td><td>Toggle <a href="#hardreset">hard reset</a> mode.</td></tr>
 <tr><td align="right">-</td><td>Decrease generation speed.</td></tr>
@@ -123,15 +123,13 @@ The mouse wheel can be used to zoom in or out of the pattern. The zoom will be c
 <font size=+1><b>Script Commands</b></font>
 
 <p>
-LifeViewer contains a script language that allows you to control playback of a pattern and
+lifeviewer.lua contains a script language that allows you to control playback of a pattern and
 how it is viewed through a dynamic camera. You can use the script language to do things like:
 <ul>
-<li> Define how you want a pattern to be displayed when LifeViewer starts.
-<li> Specify whether the pattern should automatically start playing when LifeViewer starts.
+<li> Define how you want a pattern to be displayed when lifeviewer.lua starts.
+<li> Specify whether the pattern should automatically start playing when lifeviewer.lua starts.
 <li> Specify that playback should stop or loop back to the start on reaching a certain generation.
 <li> Have the camera track a pattern as it moves across the universe (good for spaceships).
-<li> Define a set of waypoints and have the camera follow them during playback to highlight
-interesting parts of your pattern.
 </ul>
 <p>
 Script commands must be embedded in pattern comments which means that you can add them to
@@ -139,7 +137,7 @@ any pattern file and other pattern readers will happily ignore them.
 They should be enclosed in [[ and ]]. All commands must be surrounded by whitespace. Multiple
 script sections are allowed.
 <p>
-The pattern below contains script commands that mean when LifeViewer is started the pattern will
+The pattern below contains script commands that mean when lifeviewer.lua is started the pattern will
 be displayed at zoom 9.5 with a camera angle of 30 degrees. The pattern will automatically start
 running and then stop at generation 100.
 <pre>
@@ -152,7 +150,7 @@ bo!
 </pre>
 To see this in action:
 <ol>
-<li> Stop LifeViewer if it is running (click on the Golly window and press <b>Esc</b>).
+<li> Stop lifeviewer.lua if it is running (click on the Golly window and press <b>Esc</b>).
 <li> Copy the pattern above to the clipboard.
 <li> Use <b>File->Open Clipboard</b> in Golly.
 <li> Run <b>Scripts/Lua/lifeviewer.lua</b>.
@@ -199,7 +197,7 @@ There are many script commands available and they are grouped by function in the
 <font size=+1><b>Camera Tracking</b></font>
 
 <p>
-There are several different ways you can have LifeViewer automatically move
+There are several different ways you can have lifeviewer.lua automatically move
 the camera to track patterns as they evolve.
 
 <p><table cellspacing=1 border=2 width=90% cellpadding=3>
@@ -234,11 +232,11 @@ The grid lines are turned on with GRID command.
 <p>
 The playback speed is set to 8 generations per second.
 <p>
-Finally AUTOSTART is used so the pattern begins playback as soon as LifeViewer is started.
+Finally AUTOSTART is used so the pattern begins playback as soon as lifeviewer.lua is started.
 <p>
 To see this in action:
 <ol>
-<li> Stop LifeViewer if it is running (click on the Golly window and press <b>Esc</b>).
+<li> Stop lifeviewer.lua if it is running (click on the Golly window and press <b>Esc</b>).
 <li> Copy the pattern above to the clipboard.
 <li> Use <b>File->Open Clipboard</b> in Golly.
 <li> Run <b>Scripts/Lua/lifeviewer.lua</b>.
