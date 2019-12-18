@@ -291,7 +291,7 @@ $(OBJDIR)/wxmain.o: wxmain.cpp
 $(OBJDIR)/wxgolly.o: wxgolly.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxgolly.cpp
 
-srcdist:
+srcdist: 
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src/gui-wx
@@ -303,28 +303,36 @@ srcdist:
 	find $(RELEASENAME)-src -name '*.o' -delete
 	find $(RELEASENAME)-src -name 'makefile' -delete
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
-	tar -cf - $(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
-	rm -rf $(RELEASENAME)-src
-
+	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
+	
+bindist: all
+	-rm -rf $(DIRNAME)
+	mkdir $(DIRNAME)
+	install $(EXEFILES) $(DIRNAME)
+	cp -rp $(DOCFILES) $(SHAREDFILES) $(DIRNAME)
+	find $(DIRNAME) -name '.[^.]*' -delete
+	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
+	tar -cf - ./$(DIRNAME) | gzip > $(DIRNAME).tar.gz
+                                          
 # Packaging a portable distribution.
 # We need to copy the necessary shared libraries.
 EXCLUDELISTURL = https://raw.githubusercontent.com/probonopd/AppImages/master/excludelist
-excludelist:
+portable-excludelist:
 	@echo
 	# Getting shared libraries to exclude from AppImage repo...
 	wget -O - $(EXCLUDELISTURL) | sed -e 's/[[:space:]]*#.*//' -e '/^$$/d' | sort > $@
 
-libs: $(LIBDIR) excludelist
+portable-libs: $(LIBDIR) portable-excludelist
 	@echo
 	# Copying system files to lib directory...
 	-ldd ../golly | grep '=>' | sed -e 's/=>//' | awk '{print $$1, $$2}' | \
-	grep -vFf excludelist | sort | uniq | \
+	grep -vFf portable-excludelist | sort | uniq | \
 	while read -r soname sopath; do \
 		echo "Copying $${soname}..."; \
 		cp "$${sopath}" $(LIBDIR); \
 	done
 
-portable: all libs
+portable: all portable-libs
 	-rm -rf $(DIRNAME)
 	mkdir $(DIRNAME)
 	install $(EXEFILES) $(DIRNAME)
@@ -332,5 +340,4 @@ portable: all libs
 	find $(DIRNAME) -name '.[^.]**' -delete
 	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
 	cp -Rp $(LOCALDIR) $(DIRNAME)
-	tar -cf - $(DIRNAME) | gzip > $(DIRNAME).tar.gz
-	rm -rf $(DIRNAME)
+	tar -cf - $(DIRNAME) | gzip > $(DIRNAME)-portable.tar.gz
