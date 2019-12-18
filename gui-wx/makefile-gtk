@@ -23,11 +23,10 @@ CMDDIR = ../cmdline
 LUADIR = ../lua
 OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
-# Dealing with rpath and packaging shared libraries and licenses.
+# Dealing with rpath and packaging shared libraries.
 LOCALSTR = .local
-LOCALDIR = $(EXEDIR)/$(LOCALSTR)
-LICENSEDIR = $(LOCALDIR)/share
 RPATHSTR = $(LOCALSTR)/lib
+LOCALDIR = $(EXEDIR)/$(LOCALSTR)
 LIBDIR = $(EXEDIR)/$(RPATHSTR)
 
 # for building binary and source distributions:
@@ -52,7 +51,6 @@ LDFLAGS := -Wl,--as-needed -Wl,-rpath,'$$ORIGIN/$(RPATHSTR)' $(LDFLAGS)
 
 # For sound support (requires irrKlang)
 ifdef ENABLE_SOUND
-    IRRKLANG_README = $(IRRKLANGDIR)/readme.txt
     IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
     IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
     IRRKLANG_LIBNAME = IrrKlang
@@ -124,7 +122,7 @@ all: $(OBJDIR) golly bgolly
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) icons/appicon.xpm bitmaps/*.xpm
 
-$(OBJDIR) $(LIBDIR) $(LICENSEDIR):
+$(OBJDIR) $(LIBDIR):
 	mkdir -p $@
 
 clean: 
@@ -135,10 +133,8 @@ clean:
 
 	
 ifdef ENABLE_SOUND
-$(IRRKLANG_LOCAL): $(LIBDIR) $(LICENSEDIR)
+$(IRRKLANG_LOCAL): $(LIBDIR)
 	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $(LIBDIR)
-	mkdir -p $(LICENSEDIR)/lib$(IRRKLANG_LIBNAME)
-	cp $(IRRKLANG_README) $(LICENSEDIR)/lib$(IRRKLANG_LIBNAME)/copyright
 endif
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB) $(IRRKLANG_LOCAL)
@@ -310,15 +306,15 @@ srcdist:
 	tar -cf - $(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 	rm -rf $(RELEASENAME)-src
 
-# Packaging a binary distribution.
-# We need to copy the necessary shared libraries and licenses.
+# Packaging a portable distribution.
+# We need to copy the necessary shared libraries.
 EXCLUDELISTURL = https://raw.githubusercontent.com/probonopd/AppImages/master/excludelist
 excludelist:
 	@echo
 	# Getting shared libraries to exclude from AppImage repo...
 	wget -O - $(EXCLUDELISTURL) | sed -e 's/[[:space:]]*#.*//' -e '/^$$/d' | sort > $@
 
-libs: $(LIBDIR) $(LICENSEDIR) excludelist
+libs: $(LIBDIR) excludelist
 	@echo
 	# Copying system files to lib directory...
 	-ldd ../golly | grep '=>' | sed -e 's/=>//' | awk '{print $$1, $$2}' | \
@@ -326,11 +322,9 @@ libs: $(LIBDIR) $(LICENSEDIR) excludelist
 	while read -r soname sopath; do \
 		echo "Copying $${soname}..."; \
 		cp "$${sopath}" $(LIBDIR); \
-	done 
-	# Copying copyright information...
-	$(COPYLICENSECMD)
+	done
 
-bindist: all libs
+portable: all libs
 	-rm -rf $(DIRNAME)
 	mkdir $(DIRNAME)
 	install $(EXEFILES) $(DIRNAME)
