@@ -5,13 +5,8 @@
 # This allows to switch to different versions of wxGTK.
 WX_CONFIG = wx-config
 
-# Lua
-LUA_DEFS = -DLUA_COMPAT_5_2
-# Uncomment the next line if building a 32-bit version of Golly:
-# LUA_DEFS = -DLUA_COMPAT_5_2 -DLUA_32BITS
-
 # Change the next line depending on where you installed Python:
-PYTHON=python2
+PYTHON = python2
 
 # Uncomment the next line to enable Golly to run perl scripts.
 # ENABLE_PERL = 1
@@ -21,5 +16,6 @@ PYTHON=python2
 # Change the next line to specify where you installed IrrKLang
 IRRKLANGDIR = /home/chris/irrKlang-64bit-1.6.0
 
-# Add any extra CXX flags here
-EXTRACXXFLAGS = 
+# Add any extra CXX and LD flags here
+# CXXFLAGS =
+# LDFLAGS =

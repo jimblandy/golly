@@ -8,8 +8,8 @@
 # (depending on your g++ version you might also need --disable-precomp-headers)
 # make
 # sudo make install
+# sudo ldconfig
 
-# Assuming GNU make...
 include local-gtk-template.mk
 -include local-gtk.mk
 
@@ -23,6 +23,12 @@ CMDDIR = ../cmdline
 LUADIR = ../lua
 OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
+# Dealing with rpath and packaging shared libraries.
+LOCALSTR = .local
+RPATHSTR = $(LOCALSTR)/lib
+LOCALDIR = $(EXEDIR)/$(LOCALSTR)
+LIBDIR = $(EXEDIR)/$(RPATHSTR)
+
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 BITSIZE = `getconf LONG_BIT`
@@ -32,16 +38,16 @@ EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
 DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
-   golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
+    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
 LUALIB = $(LUADIR)/liblua.a -ldl
 
 CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
-   -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
-   -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS) $(EXTRACXXFLAGS)
-LDFLAGS := -Wl,--as-needed $(LDFLAGS) $(EXTRALDFLAGS)
+    -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
+    -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+LDFLAGS := -Wl,--as-needed -Wl,-rpath,'$$ORIGIN/$(RPATHSTR)' $(LDFLAGS)
 
 # For sound support (requires irrKlang)
 ifdef ENABLE_SOUND
@@ -49,8 +55,8 @@ ifdef ENABLE_SOUND
     IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
     IRRKLANG_LIBNAME = IrrKlang
     IRRKLANG_FULLNAME = lib$(IRRKLANG_LIBNAME).so
-    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -Wl,-rpath='$$ORIGIN' -l$(IRRKLANG_LIBNAME)
-    IRRKLANG_LOCAL = $(EXEDIR)/$(IRRKLANG_FULLNAME)
+    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -l$(IRRKLANG_LIBNAME)
+    IRRKLANG_LOCAL = $(LIBDIR)/$(IRRKLANG_FULLNAME)
     CXXFLAGS += -DENABLE_SOUND
 endif
 
@@ -82,7 +88,7 @@ ZLIB_CXXFLAGS = -DZLIB
 ZLIB_LDFLAGS = -lz
 
 # libs for OpenGL
-# Edited to work regardless of versions.
+# Edited to work regardless of wxGTK versions.
 EXTRALIBS_OPENGL = `$(WX_CONFIG) --libs gl` -lGL -lGLU
 
 # for wxGTK support (required for GUI)
@@ -91,48 +97,49 @@ WX_LDFLAGS = `$(WX_CONFIG) --libs`
 
 OBJDIR = ObjGTK
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
-   $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
-   $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
-   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
-   $(BASEDIR)/ruleloaderalgo.h
+    $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+    $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+    $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
+    $(BASEDIR)/ruleloaderalgo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
-   $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
-   $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
-   $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
-   $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
-   $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
-   $(OBJDIR)/generationsalgo.o
+    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
+    $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
+    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
+    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
+    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
+    $(OBJDIR)/generationsalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
-   wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
-   wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
+    wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
+    wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
-   $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o $(OBJDIR)/wxoverlay.o \
-   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
-   $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
-   $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
+    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o $(OBJDIR)/wxoverlay.o \
+    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
+    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
+    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
 all: $(OBJDIR) golly bgolly
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) icons/appicon.xpm bitmaps/*.xpm
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+$(OBJDIR) $(LIBDIR):
+	mkdir -p $@
 
 clean: 
-	rm -f $(OBJDIR)/*.o
-	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree $(IRRKLANG_LOCAL)
-	-(rmdir -p $(OBJDIR))
+	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
+	-rm -rf $(OBJDIR)
+	-rm -rf $(LOCALDIR)
 	-(cd $(LUADIR) && $(MAKE) clean)
 
+	
 ifdef ENABLE_SOUND
-$(IRRKLANG_LOCAL):
-	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $@
+$(IRRKLANG_LOCAL): $(LIBDIR)
+	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $(LIBDIR)
 endif
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB) $(IRRKLANG_LOCAL)
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
-$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
+	$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
@@ -284,7 +291,7 @@ $(OBJDIR)/wxmain.o: wxmain.cpp
 $(OBJDIR)/wxgolly.o: wxgolly.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxgolly.cpp
 
-srcdist:
+srcdist: 
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src/gui-wx
@@ -297,7 +304,7 @@ srcdist:
 	find $(RELEASENAME)-src -name 'makefile' -delete
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
-
+	
 bindist: all
 	-rm -rf $(DIRNAME)
 	mkdir $(DIRNAME)
@@ -306,3 +313,31 @@ bindist: all
 	find $(DIRNAME) -name '.[^.]*' -delete
 	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(DIRNAME) | gzip > $(DIRNAME).tar.gz
+                                          
+# Packaging a portable distribution.
+# We need to copy the necessary shared libraries.
+EXCLUDELISTURL = https://raw.githubusercontent.com/probonopd/AppImages/master/excludelist
+portable-excludelist:
+	@echo
+	# Getting shared libraries to exclude from AppImage repo...
+	wget -O - $(EXCLUDELISTURL) | sed -e 's/[[:space:]]*#.*//' -e '/^$$/d' | sort > $@
+
+portable-libs: $(LIBDIR) portable-excludelist
+	@echo
+	# Copying system files to lib directory...
+	-ldd ../golly | grep '=>' | sed -e 's/=>//' | awk '{print $$1, $$2}' | \
+	grep -vFf portable-excludelist | sort | uniq | \
+	while read -r soname sopath; do \
+		echo "Copying $${soname}..."; \
+		cp "$${sopath}" $(LIBDIR); \
+	done
+
+portable: all portable-libs
+	-rm -rf $(DIRNAME)
+	mkdir $(DIRNAME)
+	install $(EXEFILES) $(DIRNAME)
+	cp -Rp $(DOCFILES) $(SHAREDFILES) $(DIRNAME)
+	find $(DIRNAME) -name '.[^.]**' -delete
+	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
+	cp -Rp $(LOCALDIR) $(DIRNAME)
+	tar -cf - $(DIRNAME) | gzip > $(DIRNAME)-portable.tar.gz
