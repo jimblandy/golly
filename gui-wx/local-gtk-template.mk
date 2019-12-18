@@ -5,11 +5,6 @@
 # This allows to switch to different versions of wxGTK.
 WX_CONFIG = wx-config
 
-# Lua
-LUA_DEFS = -DLUA_COMPAT_5_2
-# Uncomment the next line if building a 32-bit version of Golly:
-# LUA_DEFS = -DLUA_COMPAT_5_2 -DLUA_32BITS
-
 # Change the next line depending on where you installed Python:
 PYTHON = python2
 
