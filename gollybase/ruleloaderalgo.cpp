@@ -78,19 +78,22 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
     const int MAX_LINE_LEN = 4096;
     char line_buffer[MAX_LINE_LEN+1];
     int lineno = 0;
-    int table_lineno = 0;
 
     linereader lr(rulefile);
 
-    // find line starting with @TABLE or @TREE and if both are present then process @TREE
+    // find line starting with @TABLE or @TREE
     while (lr.fgets(line_buffer,MAX_LINE_LEN) != 0) {
         lineno++;
-        if (!table_lineno && strcmp(line_buffer, "@TABLE") == 0) {
-            // found table but continue in case there is also a tree
-            table_lineno = lineno;
+        if (strcmp(line_buffer, "@TABLE") == 0) {
+            err = LocalRuleTable->LoadTable(rulefile, lineno, '@', rule);
+            // err is the result of setrule(rule)
+            if (err == NULL) {
+                SetAlgoVariables(TABLE);
+            }
+            // LoadTable has closed rulefile so don't do lr.close()
+            return err;
         }
         if (strcmp(line_buffer, "@TREE") == 0) {
-            // found tree so process now
             err = LocalRuleTree->LoadTree(rulefile, lineno, '@', rule);
             // err is the result of setrule(rule)
             if (err == NULL) {
@@ -99,25 +102,6 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
             // LoadTree has closed rulefile so don't do lr.close()
             return err;
         }
-    }
-
-    // check if table was found
-    if (table_lineno) {
-        // need to search from the start for the @TABLE line since entire file will have been scanned for @TREE
-        fseek(rulefile, 0, SEEK_SET);
-        lineno = 0;
-        while (lineno != table_lineno) {
-            lr.fgets(line_buffer,MAX_LINE_LEN);
-            lineno++;
-        }
-
-        err = LocalRuleTable->LoadTable(rulefile, table_lineno, '@', rule);
-        // err is the result of setrule(rule)
-        if (err == NULL) {
-            SetAlgoVariables(TABLE);
-        }
-        // LoadTable has closed rulefile so don't do lr.close()
-        return err;
     }
     
     lr.close();
