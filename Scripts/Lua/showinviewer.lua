@@ -943,7 +943,7 @@ local function launchBrowser(uri)
 	elseif opersys == "Linux" then
 		os.execute("xdg-open "..uri)
 	elseif opersys == "Mac" then
-		os.execute("open "..uri)
+		os.execute("open \""..uri.."\"")
 	end
 end
 
