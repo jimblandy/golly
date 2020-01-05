@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 26   -- build number
+local build = 27   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -73,13 +73,13 @@ local showoptions  = false  -- whether options are displayed
 local refreshgui   = true   -- whether the gui needs to be refreshed
 
 -- settings
-local autostart    = 0   -- whether to autostart playback on pattern load
-local autofit      = 0   -- whether to switch on autofit on pattern load
+local autostart    = 1   -- whether to autostart playback on pattern load
+local autofit      = 1   -- whether to switch on autofit on pattern load
 local keepspeed    = 0   -- whether to maintain speed between patterns
 local subdirs      = 1   -- whether to include subdirectories
 local looping      = 1   -- whether to loop pattern list
-local advancespeed = 0   -- advance speed (0 for manual)
-local showinfo     = 0   -- show info if present
+local advancespeed = 10  -- advance speed (0 for manual)
+local showinfo     = 1   -- show info if present
 
 local currentstep     = g.getstep()  -- current step
 local patternloadtime = 0            -- pattern load time (ms)

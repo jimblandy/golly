@@ -4,6 +4,7 @@
 --   Chris Rowett (crowett@gmail.com)
 --
 -- Version history:
+-- 11 [05Jan2020] - removed duplicate Nobili32 header
 -- 10 [22Dec2019] - download prompt if LifeViewer missing
 --  9 [22Dec2019] - moved launch.html to Golly temp folder and lifeviewer/lv-plugin.js to Golly data folder
 --  8 [20Dec2019] - @TREE version of JvN29 and Nobili32 (faster)
@@ -127,11 +128,6 @@ num_nodes=67
 		]]
 	elseif rule == "Nobili32" then
 		ruletext = [[
-@RULE Nobili32
-# Transitions rules for Nobili32 / EVN - extended von Neumann CA
-#
-# Renato Nobili <renato.nobili@pd.infn.it>
-# http://www.pd.infn.it/~rnobili/au_cell/
 @RULE Nobili32
 # Transitions rules for Nobili32 / EVN - extended von Neumann CA
 #
