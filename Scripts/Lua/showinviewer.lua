@@ -4,6 +4,7 @@
 --   Chris Rowett (crowett@gmail.com)
 --
 -- Version history:
+-- 12 [07Jan2020] - automatically create lifeviewer folder
 -- 11 [05Jan2020] - removed duplicate Nobili32 header
 -- 10 [22Dec2019] - download prompt if LifeViewer missing
 --  9 [22Dec2019] - moved launch.html to Golly temp folder and lifeviewer/lv-plugin.js to Golly data folder
@@ -945,13 +946,32 @@ end
 
 --------------------------------------------------------------------------------
 
+local function createDirectory(path)
+	local opersys = g.os()
+	if opersys == "Windows" then
+		os.execute("mkdir "..path)
+	elseif opersys == "Linux" then
+		os.execute("mkdir -p "..path)
+	elseif opersys == "Mac" then
+		os.execute("mkdir -p "..path)
+	end
+end
+
+--------------------------------------------------------------------------------
+
 local function launchLifeViewer()
 	-- check LifeViewer exists in the Golly data directory
 	local lifeviewerdir = g.getdir("data")..lifeviewerfolder..pathsep
 	local lifeviewerpath = lifeviewerdir..lifeviewerfilename
 	local file, msg = io.open(lifeviewerpath, "r")
 	if file == nil then
+		-- prompt to download LifeViewer (Cancel will abort script)
 		g.note("LifeViewer is not installed!\n\n"..msg.."\n\nClick OK to go to download page or Cancel to stop.\n\n"..lifeviewerdownload)
+
+		-- attempt to create the LifeViewer folder
+		createDirectory(lifeviewerdir)
+
+		-- open the default browser at the download page
 		launchBrowser(lifeviewerdownload.."?dir="..lifeviewerpath)
 	else
 		file:close()
