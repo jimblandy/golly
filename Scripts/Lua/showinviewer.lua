@@ -4,6 +4,7 @@
 --   Chris Rowett (crowett@gmail.com)
 --
 -- Version history:
+-- 13 [08Jan2020] - prefix URI with file: for Firefox
 -- 12 [07Jan2020] - automatically create lifeviewer folder
 -- 11 [05Jan2020] - removed duplicate Nobili32 header
 -- 10 [22Dec2019] - download prompt if LifeViewer missing
@@ -990,7 +991,7 @@ local function launchLifeViewer()
 		<meta charset="UTF8">
 		<meta name="LifeViewer" content="viewer textarea 150">
 ]]
-			content = content.."\t\t<script src=\""..lifeviewerpath.."\"></script>\n"..
+			content = content.."\t\t<script src=\"file:"..pathsep..pathsep..pathsep..lifeviewerpath.."\"></script>\n"..
 [[
 		<title>LifeViewer - Golly</title>
 	</head>
