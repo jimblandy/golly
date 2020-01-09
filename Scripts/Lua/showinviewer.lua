@@ -51,9 +51,9 @@ local pathsep = g.getdir("app"):sub(-1)
 --------------------------------------------------------------------------------
 
 local function getJvNruletext(rule)
-	local ruletext = ""
-	if rule == "JvN29" then
-		ruletext = [[
+    local ruletext = ""
+    if rule == "JvN29" then
+        ruletext = [[
 @RULE JvN29
 # Transitions rules for John von Neumann's 29 state CA.
 @TREE
@@ -127,9 +127,9 @@ num_nodes=67
 3 37 37 37 37 37 37 37 37 37 37 37 42 37 37 37 27 37 37 37 37 37 37 37 32 37 37 37 37 37
 4 62 62 62 62 62 62 62 62 62 63 62 62 62 51 62 62 62 62 62 62 62 57 62 62 62 62 62 64 64
 5 39 39 39 39 39 39 39 39 39 39 39 39 44 39 39 39 53 39 39 39 39 39 39 39 58 39 39 65 65
-		]]
-	elseif rule == "Nobili32" then
-		ruletext = [[
+        ]]
+    elseif rule == "Nobili32" then
+        ruletext = [[
 @RULE Nobili32
 # Transitions rules for Nobili32 / EVN - extended von Neumann CA
 #
@@ -258,9 +258,9 @@ num_nodes=118
 3 52 52 52 52 52 52 52 52 52 72 72 82 72 72 72 40 72 72 72 52 72 72 72 45 72 52 52 52 52 52 52 52
 4 111 111 111 111 111 111 111 111 111 113 114 114 114 99 114 114 114 111 114 114 114 104 114 114 114 111 111 115 115 115 111 115
 5 54 54 54 54 54 54 54 54 54 74 74 74 84 74 74 74 100 74 74 74 54 74 74 74 105 54 54 116 116 54 116 116
-		]]
-	elseif rule == "Hutton32" then
-		ruletext = [[
+        ]]
+    elseif rule == "Hutton32" then
+        ruletext = [[
 @RULE Hutton32
 # Hutton32 -  a modified version of von Neumann's cellular automaton.
 # Tim Hutton <tim.hutton@gmail.com>
@@ -673,11 +673,11 @@ bd,16,n,j,13,31
 bd,16,15,j,i,31
 be,l,n,j,13,29
 be,l,15,j,i,29
-		]]
-	end
+        ]]
+    end
 
-	-- add colors
-	ruletext = ruletext.. [[
+    -- add colors
+    ruletext = ruletext.. [[
 @COLORS
 0   48  48  48
 1  255   0   0
@@ -708,323 +708,323 @@ be,l,15,j,i,29
 26  255 128  64
 27  255 255 128
 28   33 215 215
-	]]
+    ]]
 
-	if rule ~= "JvN29" then
-		ruletext = ruletext..[[
+    if rule ~= "JvN29" then
+        ruletext = ruletext..[[
 29   27 176 176
 30   24 156 156
 31   21 137 137
-		]]
-	end
+        ]]
+    end
 
-	return ruletext
+    return ruletext
 end
 
 --------------------------------------------------------------------------------
 
 local function getruletext(rule)
-	local ruletext = ""
-	local rulesdir = g.getdir("rules")
+    local ruletext = ""
+    local rulesdir = g.getdir("rules")
 
-	-- check for and remove bounded grid postfix
-	if rule:find(":") then
-		rule = rule:sub(1, rule:find(":") - 1)
-	end
+    -- check for and remove bounded grid postfix
+    if rule:find(":") then
+        rule = rule:sub(1, rule:find(":") - 1)
+    end
 
-	-- attempt to open the rule in the user's rule folder
-	local file = io.open(rulesdir..rule..".rule", "r")
-	if file == nil then
-		-- if not found then check in Golly's Rules folder
-		rulesdir = g.getdir("app").."Rules"..pathsep
-		file = io.open(rulesdir..rule..".rule", "r")
-	end
-	if file ~= nil then
-		-- read the rule file
-		ruletext = file:read("*all")
-		file:close()
-	end
+    -- attempt to open the rule in the user's rule folder
+    local file = io.open(rulesdir..rule..".rule", "r")
+    if file == nil then
+        -- if not found then check in Golly's Rules folder
+        rulesdir = g.getdir("app").."Rules"..pathsep
+        file = io.open(rulesdir..rule..".rule", "r")
+    end
+    if file ~= nil then
+        -- read the rule file
+        ruletext = file:read("*all")
+        file:close()
+    end
 
-	return ruletext
+    return ruletext
 end
 
 --------------------------------------------------------------------------------
 
 local function getpattern()
-	pattern = nil
+    pattern = nil
 
-	-- get bounding rectangle
-	local rect = g.getrect()
+    -- get bounding rectangle
+    local rect = g.getrect()
 
-	-- get pattern rule
-	local rule = g.getrule()
+    -- get pattern rule
+    local rule = g.getrule()
 
-	-- check if pattern is empty
-	if #rect == 0 then
-		pattern = "#C Exported from Golly by "..myname.."\nx = 0, y = 0, rule = "..rule.."\n!\n"
-	else
-		local x = rect[1]
-		local y = rect[2]
-		local wd = rect[3]
-		local ht = rect[4]
+    -- check if pattern is empty
+    if #rect == 0 then
+        pattern = "#C Exported from Golly by "..myname.."\nx = 0, y = 0, rule = "..rule.."\n!\n"
+    else
+        local x = rect[1]
+        local y = rect[2]
+        local wd = rect[3]
+        local ht = rect[4]
 
-		-- check if pattern is too big for LifeViewer
-		if wd > maxwd or ht > maxht then
-			g.note("Pattern is too big for LifeViewer")
-			return nil
-		end
+        -- check if pattern is too big for LifeViewer
+        if wd > maxwd or ht > maxht then
+            g.note("Pattern is too big for LifeViewer")
+            return nil
+        end
 
-		local state, last
-		local count, cx, cy
-		local rowcount = 0
-		local charsperrow = 69
-		local lastlength = 0
-		local rlelength = 0
-		local output = {"b", "o"}
-		local states = g.numstates()
-		local asca = string.byte("A")
-		local ascp = string.byte("p")
+        local state, last
+        local count, cx, cy
+        local rowcount = 0
+        local charsperrow = 69
+        local lastlength = 0
+        local rlelength = 0
+        local output = {"b", "o"}
+        local states = g.numstates()
+        local asca = string.byte("A")
+        local ascp = string.byte("p")
 
-		-- build the output array if multi-state
-		if states > 2 then
-			output[1] = "."
-			for i = 0, states - 1 do
-				if i >= 24 then
-					output[i + 2] = string.char(ascp + (i // 24) - 1)..string.char(asca + i % 24)
-				else
-					output[i + 2] = string.char(asca + i)
-				end
-			end
-		end
+        -- build the output array if multi-state
+        if states > 2 then
+            output[1] = "."
+            for i = 0, states - 1 do
+                if i >= 24 then
+                    output[i + 2] = string.char(ascp + (i // 24) - 1)..string.char(asca + i % 24)
+                else
+                    output[i + 2] = string.char(asca + i)
+                end
+            end
+        end
 
-		-- get cells
-		local cells = g.getcells(rect)
+        -- get cells
+        local cells = g.getcells(rect)
 
-		-- check if pattern is 2-state or multi-state
-		local inc = 2
-		if (#cells & 1) == 1 then
-			inc = 3
-		end
+        -- check if pattern is 2-state or multi-state
+        local inc = 2
+        if (#cells & 1) == 1 then
+            inc = 3
+        end
 
-		-- check if there are too many cells
-		if #cells > maxcells * inc then
-			g.note("Pattern has too many cells for LifeViewer")
-			return nil
-		end
+        -- check if there are too many cells
+        if #cells > maxcells * inc then
+            g.note("Pattern has too many cells for LifeViewer")
+            return nil
+        end
 
-		-- create header line
-		pattern = "#C Exported from Golly by "..myname.."\nx = "..wd..", y = "..ht..", rule = "..rule.."\n"
+        -- create header line
+        pattern = "#C Exported from Golly by "..myname.."\nx = "..wd..", y = "..ht..", rule = "..rule.."\n"
 
-		-- create an empty 2d array for the cells
-		g.show("Reading cells...")
-		cellarray = {}
-		for i = 1, ht do
-			cellarray[i] = {}
-			for j = 1, wd do
-				cellarray[i][j] = 0
-			end
-		end
+        -- create an empty 2d array for the cells
+        g.show("Reading cells...")
+        cellarray = {}
+        for i = 1, ht do
+            cellarray[i] = {}
+            for j = 1, wd do
+                cellarray[i][j] = 0
+            end
+        end
 
-		-- read each cell (x, y) for 2-state, (x, y, state) for multi-state
-		state = 1
-		n = 1
-		while (n < #cells) do
-			cx = cells[n]
-			cy = cells[n + 1]
-			if (inc == 3) then
-				state = cells[n + 2]
-			end
-			cellarray[cy - y + 1][cx - x + 1] = state
-			n = n + inc
-		end
+        -- read each cell (x, y) for 2-state, (x, y, state) for multi-state
+        state = 1
+        n = 1
+        while (n < #cells) do
+            cx = cells[n]
+            cy = cells[n + 1]
+            if (inc == 3) then
+                state = cells[n + 2]
+            end
+            cellarray[cy - y + 1][cx - x + 1] = state
+            n = n + inc
+        end
 
-		-- create RLE from the 2d array
-		g.show("Building RLE...")
-		local rle = {}
-		local r = 1
-		i = 1
-		local cellrow = cellarray[i]
-		while i <= ht do
-			j = 1
-			last = cellrow[j]
-			count = 1
-			j = j + 1
-			while j <= wd + 1 do
-				if j > wd then
-					state = -1
-				else
-					state = cellrow[j]
-				end
-				if state ~= last then
-					if not (state == -1 and last == 0) and rowcount > 0 then
-						if (rowcount > 1) then
-							rle[r] = rowcount
-							r = r + 1
-							rlelength = rlelength + tostring(rowcount):len()
-						end
-						rle[r] = "$"
-						r = r + 1
-						rlelength = rlelength + 1
-						if rlelength - lastlength >= charsperrow then
-							rle[r] = "\n"
-							r = r + 1
-							rlelength = rlelength + 1
-							lastlength = rlelength
-						end
-						rowcount = 0
-					end
-					if last > 0 then
-						if count > 1 then
-							rle[r] = count
-							r = r + 1
-							rlelength = rlelength + tostring(count):len()
-						end
-						rle[r] = output[last + 1]
-						r = r + 1
-						rlelength = rlelength + output[last + 1]:len()
-					else
-						if j <= wd then
-							if count > 1 then
-								rle[r] = count
-								r = r + 1
-								rlelength = rlelength + tostring(count):len()
-							end
-							rle[r] = output[last + 1]
-							r = r + 1
-							rlelength = rlelength + output[last + 1]:len()
-						end
-					end
-					if rlelength - lastlength >= charsperrow then
-						rle[r] = "\n"
-						r = r + 1
-						rlelength = rlelength + 1
-						lastlength = rlelength
-					end
-					count = 1
-					last = state
-				else
-					count = count + 1
-				end
-				j = j + 1
-			end
-			rowcount = rowcount + 1
-			i = i + 1
-			cellrow = cellarray[i]
-		end
-		rle[r] = "!\n"
-		pattern = pattern..table.concat(rle)
-		g.show("")
-	end
+        -- create RLE from the 2d array
+        g.show("Building RLE...")
+        local rle = {}
+        local r = 1
+        i = 1
+        local cellrow = cellarray[i]
+        while i <= ht do
+            j = 1
+            last = cellrow[j]
+            count = 1
+            j = j + 1
+            while j <= wd + 1 do
+                if j > wd then
+                    state = -1
+                else
+                    state = cellrow[j]
+                end
+                if state ~= last then
+                    if not (state == -1 and last == 0) and rowcount > 0 then
+                        if (rowcount > 1) then
+                            rle[r] = rowcount
+                            r = r + 1
+                            rlelength = rlelength + tostring(rowcount):len()
+                        end
+                        rle[r] = "$"
+                        r = r + 1
+                        rlelength = rlelength + 1
+                        if rlelength - lastlength >= charsperrow then
+                            rle[r] = "\n"
+                            r = r + 1
+                            rlelength = rlelength + 1
+                            lastlength = rlelength
+                        end
+                        rowcount = 0
+                    end
+                    if last > 0 then
+                        if count > 1 then
+                            rle[r] = count
+                            r = r + 1
+                            rlelength = rlelength + tostring(count):len()
+                        end
+                        rle[r] = output[last + 1]
+                        r = r + 1
+                        rlelength = rlelength + output[last + 1]:len()
+                    else
+                        if j <= wd then
+                            if count > 1 then
+                                rle[r] = count
+                                r = r + 1
+                                rlelength = rlelength + tostring(count):len()
+                            end
+                            rle[r] = output[last + 1]
+                            r = r + 1
+                            rlelength = rlelength + output[last + 1]:len()
+                        end
+                    end
+                    if rlelength - lastlength >= charsperrow then
+                        rle[r] = "\n"
+                        r = r + 1
+                        rlelength = rlelength + 1
+                        lastlength = rlelength
+                    end
+                    count = 1
+                    last = state
+                else
+                    count = count + 1
+                end
+                j = j + 1
+            end
+            rowcount = rowcount + 1
+            i = i + 1
+            cellrow = cellarray[i]
+        end
+        rle[r] = "!\n"
+        pattern = pattern..table.concat(rle)
+        g.show("")
+    end
 
-	-- add pattern comments
-	pattern = pattern.."\n"..g.getinfo()
+    -- add pattern comments
+    pattern = pattern.."\n"..g.getinfo()
 
-	-- check for RuleLoader algo
-	local algo = g.getalgo()
-	if algo == "RuleLoader" then
-		pattern = pattern.."\n"..getruletext(rule)
-	elseif algo == "JvN" then
-		pattern = pattern.."\n"..getJvNruletext(rule)
-	end
+    -- check for RuleLoader algo
+    local algo = g.getalgo()
+    if algo == "RuleLoader" then
+        pattern = pattern.."\n"..getruletext(rule)
+    elseif algo == "JvN" then
+        pattern = pattern.."\n"..getJvNruletext(rule)
+    end
 
-	-- return the RLE
-	return pattern
+    -- return the RLE
+    return pattern
 end
 
 --------------------------------------------------------------------------------
 
 local function launchBrowser(uri)
-	-- execute the file to open the browser
-	local opersys = g.os()
-	if opersys == "Windows" then
-		os.execute("start "..uri)
-	elseif opersys == "Linux" then
-		os.execute("xdg-open "..uri)
-	elseif opersys == "Mac" then
-		os.execute("open \""..uri.."\"")
-	end
+    -- execute the file to open the browser
+    local opersys = g.os()
+    if opersys == "Windows" then
+        os.execute("start "..uri)
+    elseif opersys == "Linux" then
+        os.execute("xdg-open "..uri)
+    elseif opersys == "Mac" then
+        os.execute("open \""..uri.."\"")
+    end
 end
 
 --------------------------------------------------------------------------------
 
 local function createDirectory(path)
-	local opersys = g.os()
-	if opersys == "Windows" then
-		os.execute("mkdir "..path)
-	elseif opersys == "Linux" then
-		os.execute("mkdir -p "..path)
-	elseif opersys == "Mac" then
-		os.execute("mkdir -p "..path)
-	end
+    local opersys = g.os()
+    if opersys == "Windows" then
+        os.execute("mkdir "..path)
+    elseif opersys == "Linux" then
+        os.execute("mkdir -p "..path)
+    elseif opersys == "Mac" then
+        os.execute("mkdir -p \""..path.."\"")
+    end
 end
 
 --------------------------------------------------------------------------------
 
 local function launchLifeViewer()
-	-- check LifeViewer exists in the Golly data directory
-	local lifeviewerdir = g.getdir("data")..lifeviewerfolder..pathsep
-	local lifeviewerpath = lifeviewerdir..lifeviewerfilename
-	local file, msg = io.open(lifeviewerpath, "r")
-	if file == nil then
-		-- prompt to download LifeViewer (Cancel will abort script)
-		g.note("LifeViewer is not installed!\n\n"..msg.."\n\nClick OK to go to download page or Cancel to stop.\n\n"..lifeviewerdownload)
+    -- check LifeViewer exists in the Golly data directory
+    local lifeviewerdir = g.getdir("data")..lifeviewerfolder..pathsep
+    local lifeviewerpath = lifeviewerdir..lifeviewerfilename
+    local file, msg = io.open(lifeviewerpath, "r")
+    if file == nil then
+        -- prompt to download LifeViewer (Cancel will abort script)
+        g.note("LifeViewer is not installed!\n\n"..msg.."\n\nClick OK to go to download page or Cancel to stop.\n\n"..lifeviewerdownload)
 
-		-- attempt to create the LifeViewer folder
-		createDirectory(lifeviewerdir)
+        -- attempt to create the LifeViewer folder
+        createDirectory(lifeviewerdir)
 
-		-- open the default browser at the download page
-		launchBrowser(lifeviewerdownload.."?dir="..lifeviewerpath)
-	else
-		file:close()
+        -- open the default browser at the download page
+        launchBrowser(lifeviewerdownload.."?dir="..lifeviewerpath)
+    else
+        file:close()
 
-		-- path for the launch file in the Golly temp directory so it will be deleted when Golly exits
-		local filename = g.getdir("temp")..launchfilename
+        -- path for the launch file in the Golly temp directory so it will be deleted when Golly exits
+        local filename = g.getdir("temp")..launchfilename
 
-		-- construct the pattern RLE
-		local pattern = getpattern()
-		if pattern ~= nil then
-			-- create the launch file contents
-			local content = [[
+        -- construct the pattern RLE
+        local pattern = getpattern()
+        if pattern ~= nil then
+            -- create the launch file contents
+            local content = [[
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="UTF8">
-		<meta name="LifeViewer" content="viewer textarea 150">
+    <head>
+        <meta charset="UTF8">
+        <meta name="LifeViewer" content="viewer textarea 150">
 ]]
-			content = content.."\t\t<script src=\"file:"..pathsep..pathsep..pathsep..lifeviewerpath.."\"></script>\n"..
+            content = content.."\t\t<script src=\"file:"..pathsep..pathsep..pathsep..lifeviewerpath.."\"></script>\n"..
 [[
-		<title>LifeViewer - Golly</title>
-	</head>
-	<body>
-		<div class="viewer">
+        <title>LifeViewer - Golly</title>
+    </head>
+    <body>
+        <div class="viewer">
 ]]
-			content = content.."\t\t<canvas width=\""..viewerwidth.."\" height=\""..viewerheight.."\"></canvas>\n"..
+            content = content.."\t\t<canvas width=\""..viewerwidth.."\" height=\""..viewerheight.."\"></canvas>\n"..
 [[
-			<br>
-			<br>
-			<textarea rows=6 cols=79>
+            <br>
+            <br>
+            <textarea rows=6 cols=79>
 ]]
-			content = content..pattern
-			content = content..
+            content = content..pattern
+            content = content..
 [[
-			</textarea>
-			<br>
-		</div>
-	</body>
+            </textarea>
+            <br>
+        </div>
+    </body>
 </html>
 ]]
-			-- create the launch file
-			file, msg = io.open(filename, "w")
-			if file == nil then
-				g.note("Could not create launch file!\n\n"..msg)
-			else
-				file:write(content)
-				file:close()
+            -- create the launch file
+            file, msg = io.open(filename, "w")
+            if file == nil then
+                g.note("Could not create launch file!\n\n"..msg)
+            else
+                file:write(content)
+                file:close()
 
-				launchBrowser(filename)
-			end
-		end
-	end
+                launchBrowser(filename)
+            end
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
