@@ -4,6 +4,7 @@
 --   Chris Rowett (crowett@gmail.com)
 --
 -- Version history:
+-- 14 [10Jan2020] - handle spaces in folder names
 -- 13 [08Jan2020] - prefix URI with file: for Firefox
 -- 12 [07Jan2020] - automatically create lifeviewer folder
 -- 11 [05Jan2020] - removed duplicate Nobili32 header
@@ -937,9 +938,9 @@ local function launchBrowser(uri)
     -- execute the file to open the browser
     local opersys = g.os()
     if opersys == "Windows" then
-        os.execute("start "..uri)
+        os.execute("start \"\" \""..uri.."\"")
     elseif opersys == "Linux" then
-        os.execute("xdg-open "..uri)
+        os.execute("xdg-open \""..uri.."\"")
     elseif opersys == "Mac" then
         os.execute("open \""..uri.."\"")
     end
@@ -950,9 +951,9 @@ end
 local function createDirectory(path)
     local opersys = g.os()
     if opersys == "Windows" then
-        os.execute("mkdir "..path)
+        os.execute("mkdir \""..path.."\"")
     elseif opersys == "Linux" then
-        os.execute("mkdir -p "..path)
+        os.execute("mkdir -p \""..path.."\"")
     elseif opersys == "Mac" then
         os.execute("mkdir -p \""..path.."\"")
     end
