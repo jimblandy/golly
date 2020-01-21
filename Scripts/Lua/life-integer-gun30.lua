@@ -1,18 +1,10 @@
 -- Based on text_test.py from PLife (http://plife.sourceforge.net/).
 --
--- Universal* font described by Eric Angelini on SeqFan list
--- Construction universality* demonstrated by Dean Hickerson
+-- Universal font described by Eric Angelini on SeqFan list
+-- Construction universality demonstrated by Dean Hickerson
 --
 -- Integers can be written in this font that stabilize into
--- (almost*) any Life pattern known to be glider-constructible.
---
--- * Possible caveats involve a very small percentage
--- (possibly zero percent!) of glider constructions -- in
--- particular, constructions that require large numbers
--- of very closely spaced gliders.  The existence of objects
--- whose constructions require non-integer-constructable
--- closely-packed fleets of gliders is an open question;
--- no such objects are currently known.
+--   any Life pattern known to be glider-constructible.
 
 local g = golly()
 local gpt = require "gplus.text"
