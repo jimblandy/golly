@@ -512,7 +512,7 @@ void runtestscript(const char *testscript) {
 }
 
 int main(int argc, char *argv[]) {
-   cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2005-2019 The Golly Gang."
+   cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2005-2020 The Golly Gang."
         << endl ;
    cout << "-" ;
    for (int i=0; i<argc; i++)
