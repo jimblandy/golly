@@ -136,8 +136,9 @@ void MainFrame::NewPattern(const wxString& title)
     
     if (inscript) stop_after_script = true;
     currlayer->savestart = false;
-    currlayer->currfile.Clear();
     currlayer->startgen = 0;
+    currlayer->startfile.Clear();
+    currlayer->currfile.Clear();
     
     // reset step size before CreateUniverse calls SetGenIncrement
     currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
@@ -251,6 +252,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
         
         if (inscript) stop_after_script = true;
         currlayer->savestart = false;
+        currlayer->startfile = path;
         currlayer->currfile = path;
         
         // reset step size now in case UpdateStatus is called below
@@ -1753,7 +1755,7 @@ void MainFrame::SaveSucceeded(const wxString& path)
 {
     // save old info for RememberNameChange
     wxString oldname = currlayer->currname;
-    wxString oldfile = currlayer->currfile;
+    wxString oldfile = currlayer->startfile;
     bool oldsave = currlayer->savestart;
     bool olddirty = currlayer->dirty;
     
@@ -1762,9 +1764,10 @@ void MainFrame::SaveSucceeded(const wxString& path)
     }
     
     if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
-        // no need to save starting pattern (ResetPattern can load currfile)
-        currlayer->currfile = path;
+        // no need to save starting pattern (ResetPattern can load startfile)
         currlayer->savestart = false;
+        currlayer->startfile = path;
+        currlayer->currfile = path;
     }
     
     // set dirty flag false and update currlayer->currname

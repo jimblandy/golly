@@ -982,8 +982,9 @@ void SyncClones()
                 cloneptr->startdirty = currlayer->startdirty;
                 cloneptr->startrule = currlayer->startrule;
                 cloneptr->startgen = currlayer->startgen;
-                cloneptr->currfile = currlayer->currfile;
                 cloneptr->startsel = currlayer->startsel;
+                cloneptr->startfile = currlayer->startfile;
+                cloneptr->currfile = currlayer->currfile;
                 // clone can have different starting name, pos, scale, step
                 // cloneptr->startname = currlayer->startname;
                 // cloneptr->startx = currlayer->startx;
@@ -1633,8 +1634,8 @@ void NameLayerDialog()
         mainptr->SetWindowTitle(newname);
         
         if (allowundo) {
-            // note that currfile and savestart/dirty flags don't change here
-            currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+            // note that startfile and savestart/dirty flags don't change here
+            currlayer->undoredo->RememberNameChange(oldname, currlayer->startfile,
                                                     currlayer->savestart, currlayer->dirty);
         }
     }
@@ -2717,6 +2718,7 @@ Layer::Layer()
                                   // for the duration of the script
     savestart = false;            // no need to save starting pattern
     currfile.Clear();             // no pattern file has been loaded
+    startfile.Clear();            // no starting pattern yet
     startgen = 0;                 // initial starting generation
     currname = _("untitled");     // initial window title
     originx = 0;                  // no X origin offset
@@ -2865,6 +2867,7 @@ Layer::Layer()
             
             // duplicate the stuff needed to reset pattern
             currfile = currlayer->currfile;
+            startfile = currlayer->startfile;
             savestart = currlayer->savestart;
             startalgo = currlayer->startalgo;
             startdirty = currlayer->startdirty;
@@ -2907,8 +2910,8 @@ Layer::Layer()
                     Warning(_("Could not copy tempstart file!"));
                 }
             }
-            if (currlayer->currfile == currlayer->tempstart) {
-                currfile = tempstart;
+            if (currlayer->startfile == currlayer->tempstart) {
+                startfile = tempstart;
             }
             
             if (allowundo) {

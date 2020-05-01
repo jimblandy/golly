@@ -231,7 +231,7 @@ public:
     bigint oldstartgen, newstartgen;            // old and new startgen values
     bool oldsave, newsave;                      // old and new savestart states
     std::string oldtempstart, newtempstart;     // old and new tempstart paths
-    std::string oldcurrfile, newcurrfile;       // old and new currfile paths
+    std::string oldstartfile, newstartfile;     // old and new startfile paths
     // also uses oldgen, newgen
     // and startinfo
 
@@ -239,7 +239,7 @@ public:
     std::string oldname, newname;           // old and new layer names
     Layer* whichlayer;                      // which layer was changed
     // also uses oldsave, newsave
-    // and oldcurrfile, newcurrfile
+    // and oldstartfile, newstartfile
 
     // rulechange info
     std::string oldrule, newrule;           // old and new rules
@@ -264,8 +264,8 @@ ChangeNode::ChangeNode(change_type id)
     newfile.clear();
     oldtempstart.clear();
     newtempstart.clear();
-    oldcurrfile.clear();
-    newcurrfile.clear();
+    oldstartfile.clear();
+    newstartfile.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -288,28 +288,28 @@ ChangeNode::~ChangeNode()
     }
 
     if (delete_all_temps) {
-        // we're in ClearUndoRedo so it's safe to delete oldtempstart/newtempstart/oldcurrfile/newcurrfile
+        // we're in ClearUndoRedo so it's safe to delete oldtempstart/newtempstart/oldstartfile/newstartfile
         // if they are in tempdir and not being used to store the current layer's starting pattern
         // (the latter condition allows user to Reset after disabling undo/redo)
         
         if (!oldtempstart.empty() && FileExists(oldtempstart) &&
-            oldtempstart.compare(0,tempdir.length(),tempdir) == 0 && oldtempstart != currlayer->currfile) {
+            oldtempstart.compare(0,tempdir.length(),tempdir) == 0 && oldtempstart != currlayer->startfile) {
             RemoveFile(oldtempstart);
         }
         
         if (!newtempstart.empty() && FileExists(newtempstart) &&
-            newtempstart.compare(0,tempdir.length(),tempdir) == 0 && newtempstart != currlayer->currfile) {
+            newtempstart.compare(0,tempdir.length(),tempdir) == 0 && newtempstart != currlayer->startfile) {
             RemoveFile(newtempstart);
         }
         
-        if (!oldcurrfile.empty() && FileExists(oldcurrfile) &&
-            oldcurrfile.compare(0,tempdir.length(),tempdir) == 0 && oldcurrfile != currlayer->currfile) {
-            RemoveFile(oldcurrfile);
+        if (!oldstartfile.empty() && FileExists(oldstartfile) &&
+            oldstartfile.compare(0,tempdir.length(),tempdir) == 0 && oldstartfile != currlayer->startfile) {
+            RemoveFile(oldstartfile);
         }
         
-        if (!newcurrfile.empty() && FileExists(newcurrfile) &&
-            newcurrfile.compare(0,tempdir.length(),tempdir) == 0 && newcurrfile != currlayer->currfile) {
-            RemoveFile(newcurrfile);
+        if (!newstartfile.empty() && FileExists(newstartfile) &&
+            newstartfile.compare(0,tempdir.length(),tempdir) == 0 && newstartfile != currlayer->startfile) {
+            RemoveFile(newstartfile);
         }
     }
 }
@@ -385,7 +385,7 @@ bool ChangeNode::DoChange(bool undo)
             break;
 
         case genchange:
-            currlayer->currfile = oldcurrfile;
+            currlayer->startfile = oldstartfile;
             if (undo) {
                 currlayer->currsel = oldsel;
                 RestorePattern(oldgen, oldfile.c_str(), oldx, oldy, oldmag, oldbase, oldexpo);
@@ -405,7 +405,7 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->startgen = oldstartgen;
                 currlayer->savestart = oldsave;
                 currlayer->tempstart = oldtempstart;
-                currlayer->currfile = oldcurrfile;
+                currlayer->startfile = oldstartfile;
                 if (startinfo) {
                     // restore starting info for use by ResetPattern
                     startinfo->Restore();
@@ -415,7 +415,7 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->startgen = newstartgen;
                 currlayer->savestart = newsave;
                 currlayer->tempstart = newtempstart;
-                currlayer->currfile = newcurrfile;
+                currlayer->startfile = newstartfile;
             }
             break;
 
@@ -427,11 +427,11 @@ bool ChangeNode::DoChange(bool undo)
                 // name of a non-active cloned layer
                 if (undo) {
                     whichlayer->currname = oldname;
-                    currlayer->currfile = oldcurrfile;
+                    currlayer->startfile = oldstartfile;
                     currlayer->savestart = oldsave;
                 } else {
                     whichlayer->currname = newname;
-                    currlayer->currfile = newcurrfile;
+                    currlayer->startfile = newstartfile;
                     currlayer->savestart = newsave;
                 }
                 if (whichlayer == currlayer) {
@@ -855,7 +855,7 @@ void UndoRedo::RememberGenFinish()
 
     // also remember the file containing the starting pattern
     // (in case it is changed by by RememberSetGen or RememberNameChange)
-    change->oldcurrfile = currlayer->currfile;
+    change->oldstartfile = currlayer->startfile;
 
     if (change->oldgen == currlayer->startgen) {
         // save starting info set by recent SaveStartingPattern call
@@ -948,14 +948,14 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
                               bigint& oldstartgen, bool oldsave)
 {
     std::string oldtempstart = currlayer->tempstart;
-    std::string oldcurrfile = currlayer->currfile;
+    std::string oldstartfile = currlayer->startfile;
     if (oldgen > oldstartgen && newgen <= oldstartgen) {
         // if pattern is generated then tempstart will be clobbered by
         // SaveStartingPattern, so change tempstart to a new temporary file
         currlayer->tempstart = CreateTempFileName(setgen_prefix);
 
-        // also need to update currfile (currlayer->savestart is true)
-        currlayer->currfile = currlayer->tempstart;
+        // also need to update startfile (currlayer->savestart is true)
+        currlayer->startfile = currlayer->tempstart;
     }
 
     ClearRedoHistory();
@@ -972,8 +972,8 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
     change->newsave = currlayer->savestart;
     change->oldtempstart = oldtempstart;
     change->newtempstart = currlayer->tempstart;
-    change->oldcurrfile = oldcurrfile;
-    change->newcurrfile = currlayer->currfile;
+    change->oldstartfile = oldstartfile;
+    change->newstartfile = currlayer->startfile;
 
     if (oldtempstart != currlayer->tempstart) {
         // save starting info set by most recent SaveStartingPattern call
@@ -986,10 +986,10 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
 
 // -----------------------------------------------------------------------------
 
-void UndoRedo::RememberNameChange(const char* oldname, const char* oldcurrfile,
+void UndoRedo::RememberNameChange(const char* oldname, const char* oldstartfile,
                                   bool oldsave, bool olddirty)
 {
-    if (oldname == currlayer->currname && oldcurrfile == currlayer->currfile &&
+    if (oldname == currlayer->currname && oldstartfile == currlayer->startfile &&
         oldsave == currlayer->savestart && olddirty == currlayer->dirty) return;
 
     ClearRedoHistory();
@@ -1000,8 +1000,8 @@ void UndoRedo::RememberNameChange(const char* oldname, const char* oldcurrfile,
 
     change->oldname = oldname;
     change->newname = currlayer->currname;
-    change->oldcurrfile = oldcurrfile;
-    change->newcurrfile = currlayer->currfile;
+    change->oldstartfile = oldstartfile;
+    change->newstartfile = currlayer->startfile;
     change->oldsave = oldsave;
     change->newsave = currlayer->savestart;
     change->olddirty = olddirty;
@@ -1370,27 +1370,27 @@ bool CopyTempFiles(ChangeNode* srcnode, ChangeNode* destnode, const char* tempst
             allcopied = false;
     }
     
-    if ( !srcnode->oldcurrfile.empty() && FileExists(srcnode->oldcurrfile) ) {
-        if (srcnode->oldcurrfile == currlayer->tempstart) {
+    if ( !srcnode->oldstartfile.empty() && FileExists(srcnode->oldstartfile) ) {
+        if (srcnode->oldstartfile == currlayer->tempstart) {
             // the file has already been copied to tempstart1 by Layer::Layer()
-            destnode->oldcurrfile = tempstart1;
-        } else if (srcnode->oldcurrfile.compare(0,tempdir.length(),tempdir) == 0) {
-            destnode->oldcurrfile = CreateTempFileName(dupe3_prefix);
-            if ( !CopyFile(srcnode->oldcurrfile, destnode->oldcurrfile) )
+            destnode->oldstartfile = tempstart1;
+        } else if (srcnode->oldstartfile.compare(0,tempdir.length(),tempdir) == 0) {
+            destnode->oldstartfile = CreateTempFileName(dupe3_prefix);
+            if ( !CopyFile(srcnode->oldstartfile, destnode->oldstartfile) )
                 allcopied = false;
         }
     }
     
-    if ( !srcnode->newcurrfile.empty() && FileExists(srcnode->newcurrfile) ) {
-        if (srcnode->newcurrfile == srcnode->oldcurrfile) {
-            // use destnode->oldcurrfile set above or earlier in DuplicateHistory
-            destnode->newcurrfile = destnode->oldcurrfile;
-        } else if (srcnode->newcurrfile == currlayer->tempstart) {
+    if ( !srcnode->newstartfile.empty() && FileExists(srcnode->newstartfile) ) {
+        if (srcnode->newstartfile == srcnode->oldstartfile) {
+            // use destnode->oldstartfile set above or earlier in DuplicateHistory
+            destnode->newstartfile = destnode->oldstartfile;
+        } else if (srcnode->newstartfile == currlayer->tempstart) {
             // the file has already been copied to tempstart1 by Layer::Layer()
-            destnode->newcurrfile = tempstart1;
-        } else if (srcnode->newcurrfile.compare(0,tempdir.length(),tempdir) == 0) {
-            destnode->newcurrfile = CreateTempFileName(dupe4_prefix);
-            if ( !CopyFile(srcnode->newcurrfile, destnode->newcurrfile) )
+            destnode->newstartfile = tempstart1;
+        } else if (srcnode->newstartfile.compare(0,tempdir.length(),tempdir) == 0) {
+            destnode->newstartfile = CreateTempFileName(dupe4_prefix);
+            if ( !CopyFile(srcnode->newstartfile, destnode->newstartfile) )
                 allcopied = false;
         }
     }

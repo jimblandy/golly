@@ -111,8 +111,9 @@ void NewPattern(const char* title)
     if (currlayer->dirty && asktosave && !SaveCurrentLayer()) return;
 
     currlayer->savestart = false;
-    currlayer->currfile.clear();
     currlayer->startgen = 0;
+    currlayer->startfile.clear();
+    currlayer->currfile.clear();
 
     // reset step size before CreateUniverse calls SetGenIncrement
     currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
@@ -162,6 +163,7 @@ bool LoadPattern(const char* path, const char* newtitle)
         if (currlayer->dirty && asktosave && !SaveCurrentLayer()) return false;
 
         currlayer->savestart = false;
+        currlayer->startfile = path;
         currlayer->currfile = path;
 
         // reset step size
@@ -934,16 +936,17 @@ void SaveSucceeded(const std::string& path)
 {
     // save old info for RememberNameChange
     std::string oldname = currlayer->currname;
-    std::string oldfile = currlayer->currfile;
+    std::string oldfile = currlayer->startfile;
     bool oldsave = currlayer->savestart;
     bool olddirty = currlayer->dirty;
 
     //!!! if (allowundo && !currlayer->stayclean) SavePendingChanges();
 
     if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
-        // no need to save starting pattern (ResetPattern can load currfile)
-        currlayer->currfile = path;
+        // no need to save starting pattern (ResetPattern can load startfile)
         currlayer->savestart = false;
+        currlayer->startfile = path;
+        currlayer->currfile = path;
     }
 
     // set dirty flag false and update currlayer->currname

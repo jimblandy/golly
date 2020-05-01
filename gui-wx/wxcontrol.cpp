@@ -81,13 +81,13 @@ bool MainFrame::SaveStartingPattern()
     currlayer->startsel = currlayer->currsel;
     
     if ( !currlayer->savestart ) {
-        // no need to save pattern (use currlayer->currfile as the starting pattern)
-        if (currlayer->currfile.IsEmpty())
-            Warning(_("Bug in SaveStartingPattern: currfile is empty!"));
+        // no need to save pattern (use currlayer->startfile as the starting pattern)
+        if (currlayer->startfile.IsEmpty())
+            Warning(_("Bug in SaveStartingPattern: startfile is empty!"));
         return true;
     }
 
-    currlayer->currfile = currlayer->tempstart;     // ResetPattern will load tempstart
+    currlayer->startfile = currlayer->tempstart;     // ResetPattern will load tempstart
 
     // save starting pattern in tempstart file
     if ( currlayer->algo->hyperCapable() ) {
@@ -147,8 +147,8 @@ void MainFrame::ResetPattern(bool resetundo)
         return;
     }
     
-    if (currlayer->currfile.IsEmpty()) {
-        // if this happens then savestart or currfile logic is wrong
+    if (currlayer->startfile.IsEmpty()) {
+        // if this happens then savestart or startfile logic is wrong
         Warning(_("Starting pattern cannot be restored!"));
         return;
     }
@@ -168,7 +168,7 @@ void MainFrame::ResetPattern(bool resetundo)
     currlayer->algtype = currlayer->startalgo;
     
     // restore starting pattern
-    LoadPattern(currlayer->currfile, wxEmptyString);
+    LoadPattern(currlayer->startfile, wxEmptyString);
     
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
         // LoadPattern failed to reset the gen count to startgen
@@ -176,7 +176,7 @@ void MainFrame::ResetPattern(bool resetundo)
         // so best to clear the pattern and reset the gen count
         CreateUniverse();
         currlayer->algo->setGeneration(currlayer->startgen);
-        Warning(_("Failed to reset pattern from this file:\n") + currlayer->currfile);
+        Warning(_("Failed to reset pattern from this file:\n") + currlayer->startfile);
     }
     
     // restore settings saved by SaveStartingPattern

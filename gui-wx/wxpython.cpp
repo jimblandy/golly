@@ -39,7 +39,6 @@
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Note, GetString, etc
 #include "wxprefs.h"       // for pythonlib, gollydir, etc
-#include "wxinfo.h"        // for ShowInfo
 #include "wxhelp.h"        // for ShowHelp
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for *_ALGO, CreateNewUniverse, etc

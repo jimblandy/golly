@@ -428,8 +428,8 @@ void GSF_setname(const wxString& name, int index)
         ChangeWindowTitle(name);
         
         if (allowundo && !currlayer->stayclean) {
-            // note that currfile and savestart/dirty flags don't change
-            currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+            // note that startfile and savestart/dirty flags don't change
+            currlayer->undoredo->RememberNameChange(oldname, currlayer->startfile,
                                                     currlayer->savestart, currlayer->dirty);
         }
     } else {
@@ -441,8 +441,8 @@ void GSF_setname(const wxString& name, int index)
         currlayer->currname = name;
         
         if (allowundo && !currlayer->stayclean) {
-            // note that currfile and savestart/dirty flags don't change
-            currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+            // note that startfile and savestart/dirty flags don't change
+            currlayer->undoredo->RememberNameChange(oldname, currlayer->startfile,
                                                     currlayer->savestart, currlayer->dirty);
         }
         
@@ -1433,7 +1433,7 @@ const char* GSF_getinfo()
     // buffer for receiving comment data (allocated by readcomments)
     char *commptr = NULL;
 
-    // read the comments in the pattern file
+    // read the comments in the last loaded pattern file
     const char* err = readcomments(CURRFILE, &commptr);
     if (err) {
         free(commptr);

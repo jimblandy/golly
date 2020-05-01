@@ -73,7 +73,7 @@ public:
                         bigint& oldstartgen, bool oldsave);
     // remember change of generation count
 
-    void RememberNameChange(const char* oldname, const char* oldcurrfile,
+    void RememberNameChange(const char* oldname, const char* oldstartfile,
                             bool oldsave, bool olddirty);
     // remember change to current layer's name
 

@@ -285,8 +285,9 @@ void SyncClones()
                 cloneptr->startdirty = currlayer->startdirty;
                 cloneptr->startrule = currlayer->startrule;
                 cloneptr->startgen = currlayer->startgen;
-                cloneptr->currfile = currlayer->currfile;
                 cloneptr->startsel = currlayer->startsel;
+                cloneptr->startfile = currlayer->startfile;
+                cloneptr->currfile = currlayer->currfile;
                 // clone can have different starting name, pos, scale, step
                 // cloneptr->startname = currlayer->startname;
                 // cloneptr->startx = currlayer->startx;
@@ -782,8 +783,8 @@ void NameLayerDialog()
         mainptr->SetPatternTitle(newname);
 
         if (allowundo) {
-            // note that currfile and savestart/dirty flags don't change here
-            currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
+            // note that startfile and savestart/dirty flags don't change here
+            currlayer->undoredo->RememberNameChange(oldname, currlayer->startfile,
                                                     currlayer->savestart, currlayer->dirty);
         }
     }
@@ -1761,6 +1762,7 @@ Layer::Layer()
     startgen = 0;               // initial starting generation
     currname = "untitled";      // initial window title
     currfile.clear();           // no pattern file has been loaded
+    startfile.clear();          // no starting pattern yet
     originx = 0;                // no X origin offset
     originy = 0;                // no Y origin offset
 
@@ -1906,6 +1908,7 @@ Layer::Layer()
 
             // duplicate the stuff needed to reset pattern
             currfile = currlayer->currfile;
+            startfile = currlayer->startfile;
             savestart = currlayer->savestart;
             startalgo = currlayer->startalgo;
             startdirty = currlayer->startdirty;
@@ -1949,8 +1952,8 @@ Layer::Layer()
                     Warning("Could not copy tempstart file!");
                 }
             }
-            if (currlayer->currfile == currlayer->tempstart) {
-                currfile = tempstart;
+            if (currlayer->startfile == currlayer->tempstart) {
+                startfile = tempstart;
             }
 
             if (allowundo) {

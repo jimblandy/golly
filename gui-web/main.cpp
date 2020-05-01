@@ -834,8 +834,8 @@ extern "C" {
 
 void Info()
 {
-    if (currlayer->currname != "untitled") {
-        // display comments in current pattern file
+    if (currlayer->currfile.length() > 0) {
+        // display comments in the last loaded pattern file
         char *commptr = NULL;
         // readcomments will allocate commptr
         const char *err = readcomments(currlayer->currfile.c_str(), &commptr);
@@ -1417,7 +1417,7 @@ void UpdateMenuItems(const char* id)
         }
         jsTickMenuItem("view_grid", showgridlines);
         jsTickMenuItem("view_icons", showicons);
-        if (currlayer->currname != "untitled") {
+        if (currlayer->currfile.length() > 0) {
             EM_ASM( document.getElementById('view_info').className = 'item_normal'; );
         } else {
             EM_ASM( document.getElementById('view_info').className = 'item_disabled'; );

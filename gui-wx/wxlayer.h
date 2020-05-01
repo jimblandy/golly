@@ -53,13 +53,14 @@ public:
     bigint originx;               // X origin offset
     bigint originy;               // Y origin offset
     
-    wxString currfile;            // full path of current pattern file
+    wxString currfile;            // path of last loaded pattern file
     wxString currname;            // name seen in window title and Layer menu
     
     // for saving and restoring starting pattern
     algo_type startalgo;          // starting algorithm
     bool savestart;               // need to save starting pattern?
     bool startdirty;              // starting state of dirty flag
+    wxString startfile;           // path of file with starting pattern
     wxString startname;           // starting currname
     wxString startrule;           // starting rule
     bigint startgen;              // starting generation (>= 0)
@@ -69,7 +70,7 @@ public:
     int startmag;                 // starting scale
     Selection startsel;           // starting selection
     
-    // temporary file used to restore starting pattern or to show comments;
+    // path of temporary file used to restore starting pattern;
     // each non-cloned layer uses a different temporary file
     wxString tempstart;
     

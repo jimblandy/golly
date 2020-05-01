@@ -69,7 +69,7 @@ public:
                         bigint& oldstartgen, bool oldsave);
     // remember change of generation count
     
-    void RememberNameChange(const wxString& oldname, const wxString& oldcurrfile,
+    void RememberNameChange(const wxString& oldname, const wxString& oldstartfile,
                             bool oldsave, bool olddirty);
     // remember change to current layer's name
     
