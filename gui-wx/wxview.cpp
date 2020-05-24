@@ -1302,6 +1302,8 @@ void PatternView::ToggleSmarterScaling()
 
 bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
 {
+    if (mainptr == NULL || !mainptr->IsShown()) return false;
+
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
     pt.x *= int(scalefactor);
     pt.y *= int(scalefactor);
@@ -1343,7 +1345,7 @@ void PatternView::CheckCursor(bool active)
 {
     if (!active) return;    // main window is not active so don't change cursor
     
-    if (mainptr->IsIconized()) return;
+    if (mainptr->IsIconized() || !mainptr->IsShown()) return;
     
     // make sure cursor is up to date
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
