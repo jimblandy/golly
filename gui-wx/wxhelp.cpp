@@ -1275,7 +1275,7 @@ void HtmlView::SetFontSizes(int size)
     f_sizes[4] = int(size * 1.4);
     f_sizes[5] = int(size * 1.6);
     f_sizes[6] = int(size * 1.8);
-#ifdef __WXOSX_COCOA__
+#ifdef __WXMAC__
     SetFonts(wxT("Lucida Grande"), wxT("Monaco"), f_sizes);
 #else
     SetFonts(wxEmptyString, wxEmptyString, f_sizes);
@@ -1303,17 +1303,16 @@ void ShowAboutBox()
     wxDialog dlg(mainptr, wxID_ANY, wxString(_("About Golly")));
     
     HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
-#if wxCHECK_VERSION(2,9,0)
-                                  // work around SetSize bug below!!!
-                                  wxSize(400, 320),
+#if defined(__WXMAC__)
+                                  wxSize(400, 330),
 #elif defined(__WXGTK__)
-                                  wxSize(460, 220),
+                                  wxSize(460, 240),
 #else
-                                  wxSize(386, 220),
+                                  wxSize(390, 240),
 #endif
                                   wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
     html->SetBorders(0);
-#ifdef __WXOSX_COCOA__
+#ifdef __WXMAC__
     html->SetFontSizes(helpfontsize);
 #endif
     html->CheckAndLoad(_("Help/about.html"));
@@ -1321,7 +1320,7 @@ void ShowAboutBox()
     // avoid HtmlView::OnSize calling CheckAndLoad again
     html->canreload = false;
     
-    // this call seems to be ignored in __WXOSX_COCOA__!!!
+    // this call seems to be ignored in __WXMAC__
     html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                   html->GetInternalRepresentation()->GetHeight());
     
