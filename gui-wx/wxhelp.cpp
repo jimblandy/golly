@@ -1306,9 +1306,9 @@ void ShowAboutBox()
 #if defined(__WXMAC__)
                                   wxSize(400, 330),
 #elif defined(__WXGTK__)
-                                  wxSize(460, 240),
+                                  wxSize(460, 340),
 #else
-                                  wxSize(390, 240),
+                                  wxSize(400, 350),
 #endif
                                   wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
     html->SetBorders(0);
