@@ -1306,7 +1306,7 @@ void ShowAboutBox()
 #if defined(__WXMAC__)
                                   wxSize(400, 330),
 #elif defined(__WXGTK__)
-                                  wxSize(460, 340),
+                                  wxSize(420, 370),
 #else
                                   wxSize(400, 350),
 #endif
@@ -1320,7 +1320,7 @@ void ShowAboutBox()
     // avoid HtmlView::OnSize calling CheckAndLoad again
     html->canreload = false;
     
-    // this call seems to be ignored in __WXMAC__
+    // this call seems to be ignored!!!
     html->SetSize(html->GetInternalRepresentation()->GetWidth(),
                   html->GetInternalRepresentation()->GetHeight());
     
