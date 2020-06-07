@@ -2279,7 +2279,7 @@ const char *Overlay::DoResize(const char *args)
     char dummy;
     if (sscanf(args, " %d %d %n%c", &w, &h, &namepos, &dummy) != 3) {
         if (sscanf(args, " %d %d", &w, &h) != 2) {
-            return OverlayError("create command requires 2 or 3 arguments");
+            return OverlayError("resize command requires 2 or 3 arguments");
         }
     } else {
         isclip = true;

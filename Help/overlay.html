@@ -594,7 +594,7 @@ Returns the number of pixels replaced as a string.
 <dd><i>-- replace opaque black pixels with semi-transparent blue pixels in clip named 'myclip'</i></dd>
 <dd><b>local oldtarget = ov("target myclip")</b></dd>
 <dd><b>ov("rgba 0 0 255 128")</b></dd>
-<dd><b>local replaced = ov("replace 0 0 0 255 myclip")</b></dd>
+<dd><b>local replaced = ov("replace 0 0 0 255")</b></dd>
 <dd><b>ov("target "..oldtarget)</b></dd>
 </p>
 <p>
