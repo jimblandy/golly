@@ -3,15 +3,18 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-<font size=+1><b>Changes in version 3.4b1 (!!!)</b></font>
+<font size=+1><b>Changes in version 3.4 (!!!)</b></font>
 <p>
 <ul>
 <li> Mac app now supports Retina screens (no more fuzzy text).
 <li> Keyboard shortcuts can be assigned to these new actions: Open Recent Pattern and Run Recent Script.
-<li> New script <a href=open:Scripts/Lua/showinviewer.lua>showinviewer.lua</a> opens the current pattern in LifeViewer in your default browser.</li>
+<li> New script <a href=open:Scripts/Lua/showinviewer.lua>showinviewer.lua</a> opens the current pattern
+     in LifeViewer in your default browser.
+     (Note that lifeviewer.lua is no longer needed and has been removed.)
 <li> New patterns:
-<a href="open:Patterns/Self-Rep/Devore/Mahler-rep.zip">Devore/Mahler-rep.zip</a> in <i>Self-Rep</i>.
+     <a href="open:Patterns/Self-Rep/Devore/Mahler-rep.zip">Devore/Mahler-rep.zip</a> in <i>Self-Rep</i>.
 <li> Fixed a bug that caused incorrect pattern comments to be displayed.
+<li> Fixed a bug in the Mac app that caused ctrl-O to generate two key down events.
 </ul>
 
 <p>
@@ -172,8 +175,7 @@
      hexagonal grid over a layer that uses a rule with a hexagonal
      neighborhood.
 <li> The new lifeviewer.lua script creates an overlay to display patterns
-     like <a href="lifeviewer.html">LifeViewer</a>
-     with history and smooth non-integer scaling and rotation.
+     like LifeViewer with history and smooth non-integer scaling and rotation.
 <li> The new overlay-demo.lua script demonstrates most of the overlay functions.
 <li> The new browse-patterns.lua script allows you to browse through patterns
      in a folder manually or automatically.

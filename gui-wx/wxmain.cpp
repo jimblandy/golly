@@ -558,7 +558,7 @@ bool MainFrame::ClipboardHasText()
     if (wxTheClipboard->IsOpened()) return false;
 #endif
     if (wxTheClipboard->Open()) {
-        hastext = wxTheClipboard->IsSupported(wxDF_TEXT);
+        hastext = wxTheClipboard->IsSupported(wxDF_UNICODETEXT);
         if (!hastext) {
             // we'll try to convert bitmap data to text pattern
             hastext = wxTheClipboard->IsSupported(wxDF_BITMAP);

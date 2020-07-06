@@ -1068,7 +1068,7 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
     bool gotdata = false;
     
     if ( wxTheClipboard->Open() ) {
-        if ( wxTheClipboard->IsSupported( wxDF_TEXT ) ) {
+        if ( wxTheClipboard->IsSupported( wxDF_UNICODETEXT ) ) {
             gotdata = wxTheClipboard->GetData( *textdata );
             if (!gotdata) {
                 statusptr->ErrorMessage(_("Could not get clipboard text!"));
