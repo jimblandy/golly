@@ -13,7 +13,10 @@ LUA_DEFS = -DLUA_COMPAT_5_2
 # LUA_DEFS = -DLUA_COMPAT_5_2 -DLUA_32BITS
 
 # Change the next line depending on where you installed Python:
-PYTHON_INCLUDE = -I"C:\Python27-64\include"
+PYTHON_DIR = C:\Python27-64
+# Change the next line to your python version:
+# pythonXY.lib if python X.Y
+PYTHON_LIB_NAME = python27.lib
 
 # Uncomment the next 4 lines to allow Golly to run Perl scripts:
 # PERL_INCLUDE = \

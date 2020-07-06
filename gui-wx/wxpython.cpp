@@ -111,9 +111,9 @@ extern "C"
     void(*G_PyErr_SetString)(PyObject*, const char*) = NULL;
     
     // ints
-    long(*G_PyInt_AsLong)(PyObject*) = NULL;
-    PyObject*(*G_PyInt_FromLong)(long) = NULL;
-    PyTypeObject* G_PyInt_Type = NULL;
+    long(*G_PyLong_AsLong)(PyObject*) = NULL;
+    PyObject*(*G_PyLong_FromLong)(long) = NULL;
+    PyTypeObject* G_PyLong_Type = NULL;
     
     // lists
     PyObject*(*G_PyList_New)(int size) = NULL;
@@ -150,9 +150,9 @@ extern "C"
 #define Py_Finalize           G_Py_Finalize
 #define PyErr_Occurred        G_PyErr_Occurred
 #define PyErr_SetString       G_PyErr_SetString
-#define PyInt_AsLong          G_PyInt_AsLong
-#define PyInt_FromLong        G_PyInt_FromLong
-#define PyInt_Type            (*G_PyInt_Type)
+#define PyLong_AsLong         G_PyLong_AsLong
+#define PyLong_FromLong       G_PyLong_FromLong
+#define PyLong_Type           (*G_PyLong_Type)
 #define PyList_New            G_PyList_New
 #define PyList_Append         G_PyList_Append
 #define PyList_GetItem        G_PyList_GetItem
@@ -186,7 +186,8 @@ static struct PythonFunc
 } pythonFuncs[] =
 {
     PYTHON_FUNC(Py_Initialize)
-#if defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
+#if PY_MAJOR_VERSION >= 3
+#elif defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
     PYTHON_FUNC(Py_InitModule4_64)
 #else
     PYTHON_FUNC(Py_InitModule4)
@@ -194,9 +195,9 @@ static struct PythonFunc
     PYTHON_FUNC(Py_Finalize)
     PYTHON_FUNC(PyErr_Occurred)
     PYTHON_FUNC(PyErr_SetString)
-    PYTHON_FUNC(PyInt_AsLong)
-    PYTHON_FUNC(PyInt_FromLong)
-    PYTHON_FUNC(PyInt_Type)
+    PYTHON_FUNC(PyLong_AsLong)
+    PYTHON_FUNC(PyLong_FromLong)
+    PYTHON_FUNC(PyLong_Type)
     PYTHON_FUNC(PyList_New)
     PYTHON_FUNC(PyList_Append)
     PYTHON_FUNC(PyList_GetItem)
@@ -227,7 +228,7 @@ static PyObject* imp_PyExc_KeyboardInterrupt = NULL;
 
 static void GetPythonExceptions()
 {
-    PyObject* exmod = PyImport_ImportModule("exceptions");
+    PyObject* exmod = PyImport_ImportModule("__main__");
     PyObject* exdict = PyModule_GetDict(exmod);
     PyExc_RuntimeError = PyDict_GetItemString(exdict, "RuntimeError");
     PyExc_KeyboardInterrupt = PyDict_GetItemString(exdict, "KeyboardInterrupt");
@@ -366,8 +367,8 @@ static void AddTwoInts(PyObject* list, long x, long y)
     // append two ints to the given list -- these ints can be:
     // the x,y coords of a live cell in a one-state cell list,
     // or the x,y location of a rect, or the wd,ht of a rect
-    PyObject* xo = PyInt_FromLong(x);
-    PyObject* yo = PyInt_FromLong(y);
+    PyObject* xo = PyLong_FromLong(x);
+    PyObject* yo = PyLong_FromLong(y);
     PyList_Append(list, xo);
     PyList_Append(list, yo);
     // must decrement references to avoid Python memory leak
@@ -380,7 +381,7 @@ static void AddTwoInts(PyObject* list, long x, long y)
 static void AddState(PyObject* list, long s)
 {
     // append cell state (possibly dead) to a multi-state cell list
-    PyObject* so = PyInt_FromLong(s);
+    PyObject* so = PyLong_FromLong(s);
     PyList_Append(list, so);
     Py_DECREF(so);
 }
@@ -395,7 +396,7 @@ static void AddPadding(PyObject* list)
     int len = PyList_Size(list);
     if (len == 0) return;         // always return [] rather than [0]
     if ((len & 1) == 0) {
-        PyObject* padding = PyInt_FromLong(0L);
+        PyObject* padding = PyLong_FromLong(0L);
         PyList_Append(list, padding);
         Py_DECREF(padding);
     }
@@ -406,10 +407,10 @@ static void AddPadding(PyObject* list)
 static void AddCellColor(PyObject* list, long s, long r, long g, long b)
 {
     // append state,r,g,b values to given list
-    PyObject* so = PyInt_FromLong(s);
-    PyObject* ro = PyInt_FromLong(r);
-    PyObject* go = PyInt_FromLong(g);
-    PyObject* bo = PyInt_FromLong(b);
+    PyObject* so = PyLong_FromLong(s);
+    PyObject* ro = PyLong_FromLong(r);
+    PyObject* go = PyLong_FromLong(g);
+    PyObject* bo = PyLong_FromLong(b);
     PyList_Append(list, so);
     PyList_Append(list, ro);
     PyList_Append(list, go);
@@ -654,13 +655,13 @@ static PyObject* py_store(PyObject* self, PyObject* args)
     int num_cells = PyList_Size(inlist) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
-        long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+        long x = PyLong_AsLong( PyList_GetItem(inlist, item) );
+        long y = PyLong_AsLong( PyList_GetItem(inlist, item + 1) );
         // check if x,y is outside bounded grid
         const char* err = GSF_checkpos(tempalgo, x, y);
         if (err) { delete tempalgo; PYTHON_ERROR(err); }
         if (multistate) {
-            long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
+            long state = PyLong_AsLong( PyList_GetItem(inlist, item + 2) );
             if (tempalgo->setcell(x, y, state) < 0) {
                 tempalgo->endofpattern();
                 delete tempalgo;
@@ -1077,12 +1078,12 @@ static PyObject* py_transform(PyObject* self, PyObject* args)
     int num_cells = PyList_Size(inlist) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
-        long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+        long x = PyLong_AsLong( PyList_GetItem(inlist, item) );
+        long y = PyLong_AsLong( PyList_GetItem(inlist, item + 1) );
         AddTwoInts(outlist, x0 + x * axx + y * axy,
                    y0 + x * ayx + y * ayy);
         if (multistate) {
-            long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
+            long state = PyLong_AsLong( PyList_GetItem(inlist, item + 2) );
             AddState(outlist, state);
         }
         if ((n % 4096) == 0 && PythonScriptAborted()) {
@@ -1122,13 +1123,13 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
     int num_cells = PyList_Size(inlist) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        long x = PyInt_AsLong( PyList_GetItem(inlist, item) );
-        long y = PyInt_AsLong( PyList_GetItem(inlist, item + 1) );
+        long x = PyLong_AsLong( PyList_GetItem(inlist, item) );
+        long y = PyLong_AsLong( PyList_GetItem(inlist, item + 1) );
         // check if x,y is outside bounded grid
         const char* err = GSF_checkpos(tempalgo, x, y);
         if (err) { delete tempalgo; PYTHON_ERROR(err); }
         if (multistate) {
-            long state = PyInt_AsLong( PyList_GetItem(inlist, item + 2) );
+            long state = PyLong_AsLong( PyList_GetItem(inlist, item + 2) );
             if (tempalgo->setcell(x, y, state) < 0) {
                 tempalgo->endofpattern();
                 delete tempalgo;
@@ -1239,8 +1240,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             int newstate = 1;
             for (int n = 0; n < num_cells; n++) {
                 int item = ints_per_cell * n;
-                long x = PyInt_AsLong( PyList_GetItem(list, item) );
-                long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
+                long x = PyLong_AsLong( PyList_GetItem(list, item) );
+                long y = PyLong_AsLong( PyList_GetItem(list, item + 1) );
                 int newx = x0 + x * axx + y * axy;
                 int newy = y0 + x * ayx + y * ayy;
                 // check if newx,newy is outside bounded grid
@@ -1249,7 +1250,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
                 int oldstate = curralgo->getcell(newx, newy);
                 if (multistate) {
                     // multi-state lists can contain dead cells so newstate might be 0
-                    newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
+                    newstate = PyLong_AsLong( PyList_GetItem(list, item + 2) );
                 }
                 if (newstate != oldstate && oldstate > 0) {
                     curralgo->setcell(newx, newy, 0);
@@ -1267,8 +1268,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
         int numstates = curralgo->NumCellStates();
         for (int n = 0; n < num_cells; n++) {
             int item = ints_per_cell * n;
-            long x = PyInt_AsLong( PyList_GetItem(list, item) );
-            long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
+            long x = PyLong_AsLong( PyList_GetItem(list, item) );
+            long y = PyLong_AsLong( PyList_GetItem(list, item + 1) );
             int newx = x0 + x * axx + y * axy;
             int newy = y0 + x * ayx + y * ayy;
             // check if newx,newy is outside bounded grid
@@ -1278,7 +1279,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             int newstate;
             if (multistate) {
                 // multi-state lists can contain dead cells so newstate might be 0
-                newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
+                newstate = PyLong_AsLong( PyList_GetItem(list, item + 2) );
                 if (newstate == oldstate) {
                     if (oldstate != 0) newstate = 0;
                 } else {
@@ -1320,8 +1321,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
         int maxstate = curralgo->NumCellStates() - 1;
         for (int n = 0; n < num_cells; n++) {
             int item = ints_per_cell * n;
-            long x = PyInt_AsLong( PyList_GetItem(list, item) );
-            long y = PyInt_AsLong( PyList_GetItem(list, item + 1) );
+            long x = PyLong_AsLong( PyList_GetItem(list, item) );
+            long y = PyLong_AsLong( PyList_GetItem(list, item + 1) );
             int newx = x0 + x * axx + y * axy;
             int newy = y0 + x * ayx + y * ayy;
             // check if newx,newy is outside bounded grid
@@ -1330,7 +1331,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             int oldstate = curralgo->getcell(newx, newy);
             if (multistate) {
                 // multi-state lists can contain dead cells so newstate might be 0
-                newstate = PyInt_AsLong( PyList_GetItem(list, item + 2) );
+                newstate = PyLong_AsLong( PyList_GetItem(list, item + 2) );
                 if (notmode) newstate = maxstate - newstate;
                 if (ormode && newstate == 0) newstate = oldstate;
             }
@@ -1381,10 +1382,10 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
     if (numitems == 0) {
         // return empty cell list
     } else if (numitems == 4) {
-        int ileft = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-        int itop = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-        int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-        int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+        int ileft = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
+        int itop = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
+        int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
+        int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
         const char* err = GSF_checkrect(ileft, itop, wd, ht);
         if (err) {
             Py_DECREF(outlist);
@@ -1451,10 +1452,10 @@ static PyObject* py_join(PyObject* self, PyObject* args)
     num_cells = PyList_Size(inlist1) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        x = PyInt_AsLong( PyList_GetItem(inlist1, item) );
-        y = PyInt_AsLong( PyList_GetItem(inlist1, item + 1) );
+        x = PyLong_AsLong( PyList_GetItem(inlist1, item) );
+        y = PyLong_AsLong( PyList_GetItem(inlist1, item + 1) );
         if (multi1) {
-            state = PyInt_AsLong( PyList_GetItem(inlist1, item + 2) );
+            state = PyLong_AsLong( PyList_GetItem(inlist1, item + 2) );
         } else {
             state = 1;
         }
@@ -1471,10 +1472,10 @@ static PyObject* py_join(PyObject* self, PyObject* args)
     num_cells = PyList_Size(inlist2) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        x = PyInt_AsLong( PyList_GetItem(inlist2, item) );
-        y = PyInt_AsLong( PyList_GetItem(inlist2, item + 1) );
+        x = PyLong_AsLong( PyList_GetItem(inlist2, item) );
+        y = PyLong_AsLong( PyList_GetItem(inlist2, item + 1) );
         if (multi2) {
-            state = PyInt_AsLong( PyList_GetItem(inlist2, item + 2) );
+            state = PyLong_AsLong( PyList_GetItem(inlist2, item + 2) );
         } else {
             state = 1;
         }
@@ -1507,10 +1508,10 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
         PYTHON_ERROR("hash error: arg must be [x,y,wd,ht].");
     }
     
-    int x  = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-    int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-    int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+    int x  = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
+    int y  = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
+    int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
+    int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
     const char* err = GSF_checkrect(x, y, wd, ht);
     if (err) PYTHON_ERROR(err);
     
@@ -1620,10 +1621,10 @@ static PyObject* py_select(PyObject* self, PyObject* args)
         // remove any existing selection
         GSF_select(0, 0, 0, 0);
     } else if (numitems == 4) {
-        int x  = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-        int y  = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-        int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-        int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+        int x  = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
+        int y  = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
+        int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
+        int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
         const char* err = GSF_checkrect(x, y, wd, ht);
         if (err) PYTHON_ERROR(err);
         // set selection rect
@@ -2223,10 +2224,10 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
         PYTHON_ERROR("visrect error: arg must be [x,y,wd,ht].");
     }
     
-    int x = PyInt_AsLong( PyList_GetItem(rect_list, 0) );
-    int y = PyInt_AsLong( PyList_GetItem(rect_list, 1) );
-    int wd = PyInt_AsLong( PyList_GetItem(rect_list, 2) );
-    int ht = PyInt_AsLong( PyList_GetItem(rect_list, 3) );
+    int x = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
+    int y = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
+    int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
+    int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
     const char* err = GSF_checkrect(x, y, wd, ht);
     if (err) PYTHON_ERROR(err);
     
@@ -2551,12 +2552,12 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
         UpdateLayerColors();
     } else if (len == 6) {
         // create gradient from r1,g1,b1 to r2,g2,b2
-        int r1 = PyInt_AsLong( PyList_GetItem(color_list, 0) );
-        int g1 = PyInt_AsLong( PyList_GetItem(color_list, 1) );
-        int b1 = PyInt_AsLong( PyList_GetItem(color_list, 2) );
-        int r2 = PyInt_AsLong( PyList_GetItem(color_list, 3) );
-        int g2 = PyInt_AsLong( PyList_GetItem(color_list, 4) );
-        int b2 = PyInt_AsLong( PyList_GetItem(color_list, 5) );
+        int r1 = PyLong_AsLong( PyList_GetItem(color_list, 0) );
+        int g1 = PyLong_AsLong( PyList_GetItem(color_list, 1) );
+        int b1 = PyLong_AsLong( PyList_GetItem(color_list, 2) );
+        int r2 = PyLong_AsLong( PyList_GetItem(color_list, 3) );
+        int g2 = PyLong_AsLong( PyList_GetItem(color_list, 4) );
+        int b2 = PyLong_AsLong( PyList_GetItem(color_list, 5) );
         CheckRGB(r1, g1, b1, "setcolors");
         CheckRGB(r2, g2, b2, "setcolors");
         currlayer->fromrgb.Set(r1, g1, b1);
@@ -2567,10 +2568,10 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
     } else if (len % 4 == 0) {
         int i = 0;
         while (i < len) {
-            int s = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
-            int r = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
-            int g = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
-            int b = PyInt_AsLong( PyList_GetItem(color_list, i) ); i++;
+            int s = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
+            int r = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
+            int g = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
+            int b = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
             CheckRGB(r, g, b, "setcolors");
             if (s == -1) {
                 // set all LIVE states to r,g,b (best not to alter state 0)
@@ -3180,6 +3181,28 @@ static PyMethodDef py_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+// Python 3 port. References:
+// [1] https://docs.python.org/3/howto/cporting.html
+// [2] https://python3porting.com/cextensions.html#module-initialization
+// [3] https://docs.python.org/3/extending/embedding.html
+#if PY_MAJOR_VERSION >= 3
+static PyModuleDef py_module = {
+    PyModuleDef_HEAD_INIT,
+    "golly",
+    NULL,
+    -1,
+    py_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+static PyObject* PyInit_golly(void) {
+    return PyModule_Create(&py_module);
+}
+#endif
+
 // =============================================================================
 
 bool pyinited = false;     // InitPython has been successfully called?
@@ -3192,6 +3215,11 @@ bool InitPython()
             if (!LoadPythonLib()) return false;
         #endif
         
+        // Python 3 requires this to be before `Py_Initialize`.
+        #if PY_MAJOR_VERSION >= 3
+            PyImport_AppendInittab("golly", PyInit_golly);
+        #endif
+        
         // only initialize the Python interpreter once, mainly because multiple
         // Py_Initialize/Py_Finalize calls cause leaks of about 12K each time!
         Py_Initialize();
@@ -3201,7 +3229,9 @@ bool InitPython()
         #endif
         
         // allow Python to call the above py_* routines
-        Py_InitModule((char*)"golly", py_methods);
+        #if PY_MAJOR_VERSION < 3
+            Py_InitModule((char*)"golly", py_methods);
+        #endif
         
         // catch Python messages sent to stderr and pass them to py_stderr
         if (PyRun_SimpleString(
