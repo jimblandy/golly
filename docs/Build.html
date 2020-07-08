@@ -174,10 +174,11 @@ If your Mac OS is older than 10.9 then these commands should work
 <h3>On Linux</h3>
 
 <p>
-Before building the wxWidgets libraries you might need to install some packages
-for OpenGL development.  For example, on Ubuntu:
+Before building the wxWidgets libraries you will probably need to install
+some packages for GTK-2 and OpenGL development.  For example, on Ubuntu:
 
 <pre>
+   sudo apt-get install libgtk2.0-dev
    sudo apt-get install mesa-common-dev
    sudo apt-get install freeglut3-dev
 </pre>
@@ -286,12 +287,10 @@ to a new file called local-gtk.mk.  This file is included by makefile-gtk.
 Edit local-gtk.mk and make any desired changes to the supplied default settings.
 
 <p>
-You will probably need to add some development packages.
-For example, from a default Ubuntu install (at the time of writing)
-you will need to install the following packages for GTK-2 and Python 2.7:
+You will probably need to add the development package for Python 2.7.
+For example, on Ubuntu:
 
 <pre>
-   sudo apt-get install libgtk2.0-dev
    sudo apt-get install python2.7-dev
 </pre>
 
@@ -401,6 +400,7 @@ Edit local-gtk.mk and uncomment the line:
 ENABLE_SOUND = 1
 </pre>
 Also change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
+
 
 <a name="bgolly"></a>
 <h2>How to build bgolly</h2>
