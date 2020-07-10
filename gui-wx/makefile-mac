@@ -207,6 +207,9 @@ icons/app.icns icons/file-mc.icns icons/file-rle.icns
 	mv -f app.bin $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	
 	cp -f icons/*.icns $(EXEDIR)/$(APP_NAME).app/Contents/Resources
+	
+	echo "\nWARNING: If any of the following locations start with /usr/local you've picked up local stuff!\n"
+	otool -L -arch all $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/Golly
 
 app_bundle: $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo
 
