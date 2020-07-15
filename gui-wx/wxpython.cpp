@@ -131,8 +131,12 @@ extern "C"
     // misc
     int(*G_PyArg_Parse)(PyObject*, char*, ...) = NULL;
     int(*G_PyArg_ParseTuple)(PyObject*, char*, ...) = NULL;
+#if PY_MAJOR_VERSION >= 3
+    int (*G_PyImport_AppendInittab)(const char*, PyObject*(*)(void)) = NULL;
+#endif
     PyObject*(*G_PyImport_ImportModule)(const char*) = NULL;
     PyObject*(*G_PyDict_GetItemString)(PyObject*, const char*) = NULL;
+    PyObject*(*G_PyModule_Create2)(PyModuleDef*, int) = NULL;
     PyObject*(*G_PyModule_GetDict)(PyObject*) = NULL;
     PyObject*(*G_Py_BuildValue)(char*, ...) = NULL;
     PyObject*(*G_Py_FindMethod)(PyMethodDef[], PyObject*, char*) = NULL;
@@ -166,8 +170,10 @@ extern "C"
 #define PyArg_Parse           G_PyArg_Parse
 #define PyArg_ParseTuple      G_PyArg_ParseTuple
 #define PyDict_GetItemString  G_PyDict_GetItemString
+#define PyImport_AppendInittab G_PyImport_AppendInittab
 #define PyImport_ImportModule G_PyImport_ImportModule
 #define PyModule_GetDict      G_PyModule_GetDict
+#define PyModule_Create2       G_PyModule_Create2
 #define PyRun_SimpleString    G_PyRun_SimpleString
 #define _Py_NoneStruct        (*G__Py_NoneStruct)
 
@@ -212,7 +218,9 @@ static struct PythonFunc
     PYTHON_FUNC(PyArg_ParseTuple)
     PYTHON_FUNC(PyDict_GetItemString)
     PYTHON_FUNC(PyImport_ImportModule)
+    PYTHON_FUNC(PyImport_AppendInittab)
     PYTHON_FUNC(PyModule_GetDict)
+    PYTHON_FUNC(PyModule_Create2)
     PYTHON_FUNC(PyRun_SimpleString)
     PYTHON_FUNC(_Py_NoneStruct)
     { _T(""), NULL }
@@ -3298,7 +3306,7 @@ void RunPythonScript(const wxString& filepath)
     // for the global namespace so that this script cannot change the
     // globals of a caller script (which is possible now that RunScript
     // is re-entrant)
-    wxString command = wxT("execfile('") + fpath + wxT("',{})");
+    wxString command =  wxT("exec(open('") + fpath + wxT("').read(),{})");
     PyRun_SimpleString(command.mb_str(wxConvLocal));
     // don't use wxConvUTF8 in above line because caller has already converted
     // filepath to decomposed UTF8 if on a Mac

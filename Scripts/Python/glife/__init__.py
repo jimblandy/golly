@@ -90,7 +90,7 @@ def rule(s = "B3/S23"):
 def description(s):
     """Supply a textual description to the whole pattern."""
     for line in s.split("\n"):
-        print "#D", line
+        print("#D", line)
 
 # --------------------------------------------------------------------
 
@@ -161,7 +161,7 @@ class pattern(list):
   It is also the base for computing generations subsequent to N-th."""
         if N < 0:
             raise ValueError("backward evolving requested")
-        if self.__phases.has_key(N):
+        if N in self.__phases:
             return self.__phases[N]
         M = 0
         for k in self.__phases.keys():
