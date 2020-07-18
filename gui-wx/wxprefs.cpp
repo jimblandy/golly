@@ -1824,11 +1824,10 @@ void GetPrefs()
     // init names of Perl and Python libraries
 #ifdef __WXMSW__
     perllib = wxT("perl510.dll");
-    pythonlib = wxT("python27.dll");
+    pythonlib = wxT("python38.dll");
 #elif defined(__WXMAC__)
-    // not used (Perl & Python are loaded at link time)
     perllib = wxEmptyString;
-    pythonlib = wxEmptyString;
+    pythonlib = wxT("/Library/Frameworks/Python.framework/Versions/3.8/Python");
 #else // assume Linux
     perllib = wxT(STRINGIFY(PERL_SHLIB));
     pythonlib = wxT(STRINGIFY(PYTHON_SHLIB));
@@ -2270,6 +2269,15 @@ void GetPrefs()
 
         } else if (strcmp(keyword, "python_lib") == 0) {
             pythonlib = wxString(value,wxConvLocal);
+            #ifdef __WXMAC__
+                // pythonlib will be an empty string in the GollyPrefs file for a Mac user
+                // who was using Golly with Python 2.x
+                if (pythonlib == wxEmptyString) {
+                    // Python 3 lib is now loaded at runtime
+                    pythonlib = wxT("/Library/Frameworks/Python.framework/Versions/3.8/Python");
+                }
+            #endif
+
 
         } else if (strcmp(keyword, "dir_width") == 0) {
             sscanf(value, "%d", &dirwinwd);

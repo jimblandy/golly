@@ -58,9 +58,10 @@ ifdef ENABLE_PERL
     PERL_LINK := $(subst -arch ppc,,$(PERL_LINK))
 endif
 
-# for Python script support:
-PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
-PYTHON_LINK = `/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
+# for Python 3 script support:
+PYTHON_INCLUDE = -I`/usr/local/bin/python3 -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`
+### do we need this???!!!
+### PYTHON_LINK = -Wl,-stack_size,1000000
 
 # Variables:
 

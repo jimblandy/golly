@@ -2,7 +2,7 @@
 // See docs/License.html for the copyright notice.
 
 /*
-    Golly uses an embedded Python interpreter to execute scripts.
+    Golly uses an embedded Python interpreter (3.x or later) to execute scripts.
     Here is the official Python copyright notice:
 
     Copyright (c) 2001-2005 Python Software Foundation.
@@ -48,33 +48,23 @@
 
 // =============================================================================
 
-// On Windows and Linux we need to load the Python library at runtime
-// so Golly will start up even if Python isn't installed.
+// We load the Python library at runtime so Golly will start up even if Python
+// isn't installed.
 // Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
 
-#ifdef __WXMAC__
-    // avoid warnings (only if using CMake, for some unknown reason)
-    #undef SIZEOF_LONG
-    #undef SIZEOF_SIZE_T
-    #undef SIZEOF_VOID_P
-#else
-    // load Python lib at runtime
-    #define USE_PYTHON_DYNAMIC
-
-    #ifdef __UNIX__
-        // avoid warning on Linux
-        #undef _POSIX_C_SOURCE
-        #undef _XOPEN_SOURCE
-    #endif
-
-    #ifdef __WXMSW__
-        // avoid warning on Windows
-        #undef HAVE_SSIZE_T
-    #endif
-
-    // prevent Python.h from adding Python library to link settings
-    #define USE_DL_EXPORT
+#ifdef __UNIX__
+    // avoid warning on Linux
+    #undef _POSIX_C_SOURCE
+    #undef _XOPEN_SOURCE
 #endif
+
+#ifdef __WXMSW__
+    // avoid warning on Windows
+    #undef HAVE_SSIZE_T
+#endif
+
+// prevent Python.h from adding Python library to link settings
+#define USE_DL_EXPORT
 
 // workaround for hard-linking to missing python<ver>_d.lib
 #ifdef _DEBUG
@@ -85,12 +75,8 @@
     #include <Python.h>
 #endif
 
-#ifdef USE_PYTHON_DYNAMIC
-
-#ifndef __WXMAC__
-    // avoid warning on Windows/Linux
-    #undef PyRun_SimpleString
-#endif
+// avoid warning
+#undef PyRun_SimpleString
 
 #include "wx/dynlib.h"     // for wxDynamicLibrary
 
@@ -99,11 +85,6 @@ extern "C"
 {
     // startup/shutdown
     void(*G_Py_Initialize)(void) = NULL;
-#if defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
-    PyObject*(*G_Py_InitModule4_64)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
-#else
-    PyObject*(*G_Py_InitModule4)(char*, struct PyMethodDef*, char*, PyObject*, int) = NULL;
-#endif
     void(*G_Py_Finalize)(void) = NULL;
     
     // errors
@@ -131,9 +112,7 @@ extern "C"
     // misc
     int(*G_PyArg_Parse)(PyObject*, char*, ...) = NULL;
     int(*G_PyArg_ParseTuple)(PyObject*, char*, ...) = NULL;
-#if PY_MAJOR_VERSION >= 3
     int (*G_PyImport_AppendInittab)(const char*, PyObject*(*)(void)) = NULL;
-#endif
     PyObject*(*G_PyImport_ImportModule)(const char*) = NULL;
     PyObject*(*G_PyDict_GetItemString)(PyObject*, const char*) = NULL;
     PyObject*(*G_PyModule_Create2)(PyModuleDef*, int) = NULL;
@@ -141,16 +120,12 @@ extern "C"
     PyObject*(*G_Py_BuildValue)(char*, ...) = NULL;
     PyObject*(*G_Py_FindMethod)(PyMethodDef[], PyObject*, char*) = NULL;
     int(*G_PyRun_SimpleString)(const char*) = NULL;
-    PyObject* G__Py_NoneStruct = NULL;                    // used by Py_None
+    void(*G_Py_DecRef)(PyObject*) = NULL;
+    PyObject* G__Py_NoneStruct = NULL;                  // used by Py_None
 }
 
 // redefine the Py* functions to their equivalent G_* wrappers
 #define Py_Initialize         G_Py_Initialize
-#if defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
-    #define Py_InitModule4_64  G_Py_InitModule4_64
-#else
-    #define Py_InitModule4     G_Py_InitModule4
-#endif
 #define Py_Finalize           G_Py_Finalize
 #define PyErr_Occurred        G_PyErr_Occurred
 #define PyErr_SetString       G_PyErr_SetString
@@ -173,8 +148,9 @@ extern "C"
 #define PyImport_AppendInittab G_PyImport_AppendInittab
 #define PyImport_ImportModule G_PyImport_ImportModule
 #define PyModule_GetDict      G_PyModule_GetDict
-#define PyModule_Create2       G_PyModule_Create2
+#define PyModule_Create2      G_PyModule_Create2
 #define PyRun_SimpleString    G_PyRun_SimpleString
+#define Py_DecRef             G_Py_DecRef
 #define _Py_NoneStruct        (*G__Py_NoneStruct)
 
 #ifdef __WXMSW__
@@ -192,12 +168,6 @@ static struct PythonFunc
 } pythonFuncs[] =
 {
     PYTHON_FUNC(Py_Initialize)
-#if PY_MAJOR_VERSION >= 3
-#elif defined(__LP64__) || defined(__amd64__) || defined(_WIN64)
-    PYTHON_FUNC(Py_InitModule4_64)
-#else
-    PYTHON_FUNC(Py_InitModule4)
-#endif
     PYTHON_FUNC(Py_Finalize)
     PYTHON_FUNC(PyErr_Occurred)
     PYTHON_FUNC(PyErr_SetString)
@@ -222,6 +192,7 @@ static struct PythonFunc
     PYTHON_FUNC(PyModule_GetDict)
     PYTHON_FUNC(PyModule_Create2)
     PYTHON_FUNC(PyRun_SimpleString)
+    PYTHON_FUNC(Py_DecRef)
     PYTHON_FUNC(_Py_NoneStruct)
     { _T(""), NULL }
 };
@@ -236,13 +207,15 @@ static PyObject* imp_PyExc_KeyboardInterrupt = NULL;
 
 static void GetPythonExceptions()
 {
-    PyObject* exmod = PyImport_ImportModule("__main__");
+    // this is needed for escape key to abort scripts via PyExc_KeyboardInterrupt
+    // (thanks to https://github.com/vim/vim/blob/master/src/if_python3.c)
+    PyObject* exmod = PyImport_ImportModule("builtins");
     PyObject* exdict = PyModule_GetDict(exmod);
     PyExc_RuntimeError = PyDict_GetItemString(exdict, "RuntimeError");
     PyExc_KeyboardInterrupt = PyDict_GetItemString(exdict, "KeyboardInterrupt");
     Py_XINCREF(PyExc_RuntimeError);
     Py_XINCREF(PyExc_KeyboardInterrupt);
-    Py_XDECREF(exmod);
+    Py_DecRef(exmod);
 }
 
 // handle for Python lib
@@ -268,15 +241,15 @@ static bool LoadPythonLib()
     // is needed to avoid an ImportError when importing some modules (eg. time)
     while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
         // prompt user for a different Python library;
-        // on Windows pythonlib should be something like "python27.dll"
-        // and on Linux it should be something like "libpython2.7.so"
+        // on Windows pythonlib should be something like "python38.dll"
+        // on Linux it's something like "libpython3.8.so"
+        // on Mac OS it's something like "/Library/Frameworks/Python.framework/Versions/3.8/Python"
         Beep();
         wxString str = _("If Python isn't installed then you'll have to Cancel,");
         str +=         _("\notherwise change the version numbers to match the");
         str +=         _("\nversion installed on your system and try again.");
-        str +=         _("\nNote that Python 3.x is NOT supported.");
 #ifdef __WXMSW__
-        str +=      _("\n\nIf that fails, search your system for a python2*.dll");
+        str +=      _("\n\nIf that fails, search your system for a python3*.dll");
         str +=      _("\nfile and enter the full path to that file.");
 #endif
         wxTextEntryDialog dialog( wxGetActiveWindow(), str,
@@ -315,8 +288,6 @@ static bool LoadPythonLib()
     
     return pythondll != NULL;
 }
-
-#endif // USE_PYTHON_DYNAMIC
 
 // =============================================================================
 
@@ -380,8 +351,8 @@ static void AddTwoInts(PyObject* list, long x, long y)
     PyList_Append(list, xo);
     PyList_Append(list, yo);
     // must decrement references to avoid Python memory leak
-    Py_DECREF(xo);
-    Py_DECREF(yo);
+    Py_DecRef(xo);
+    Py_DecRef(yo);
 }
 
 // -----------------------------------------------------------------------------
@@ -391,7 +362,7 @@ static void AddState(PyObject* list, long s)
     // append cell state (possibly dead) to a multi-state cell list
     PyObject* so = PyLong_FromLong(s);
     PyList_Append(list, so);
-    Py_DECREF(so);
+    Py_DecRef(so);
 }
 
 // -----------------------------------------------------------------------------
@@ -406,7 +377,7 @@ static void AddPadding(PyObject* list)
     if ((len & 1) == 0) {
         PyObject* padding = PyLong_FromLong(0L);
         PyList_Append(list, padding);
-        Py_DECREF(padding);
+        Py_DecRef(padding);
     }
 }
 
@@ -424,10 +395,10 @@ static void AddCellColor(PyObject* list, long s, long r, long g, long b)
     PyList_Append(list, go);
     PyList_Append(list, bo);
     // must decrement references to avoid Python memory leak
-    Py_DECREF(so);
-    Py_DECREF(ro);
-    Py_DECREF(go);
-    Py_DECREF(bo);
+    Py_DecRef(so);
+    Py_DecRef(ro);
+    Py_DecRef(go);
+    Py_DecRef(bo);
 }
 
 // -----------------------------------------------------------------------------
@@ -631,7 +602,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
     bool done = ExtractCellList(outlist, tempalgo, true);
     delete tempalgo;
     if (!done) {
-        Py_DECREF(outlist);
+        Py_DecRef(outlist);
         return NULL;
     }
     
@@ -1036,7 +1007,7 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
                                 if ('A' <= c && c <= 'X') {
                                     state = state + c - 'A' + 1;
                                 } else {
-                                    // Py_DECREF(outlist);
+                                    // Py_DecRef(outlist);
                                     // PYTHON_ERROR("parse error: illegal multi-char state.");
                                     // be more forgiving and treat 'p'..'y' like 'o'
                                     state = 1;
@@ -1095,7 +1066,7 @@ static PyObject* py_transform(PyObject* self, PyObject* args)
             AddState(outlist, state);
         }
         if ((n % 4096) == 0 && PythonScriptAborted()) {
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             return NULL;
         }
     }
@@ -1182,7 +1153,7 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
     bool done = ExtractCellList(outlist, tempalgo);
     delete tempalgo;
     if (!done) {
-        Py_DECREF(outlist);
+        Py_DecRef(outlist);
         return NULL;
     }
     
@@ -1396,7 +1367,7 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
         int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
         const char* err = GSF_checkrect(ileft, itop, wd, ht);
         if (err) {
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             PYTHON_ERROR(err);
         }
         int iright = ileft + wd - 1;
@@ -1421,14 +1392,14 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
                 }
                 cntr++;
                 if ((cntr % 4096) == 0 && PythonScriptAborted()) {
-                    Py_DECREF(outlist);
+                    Py_DecRef(outlist);
                     return NULL;
                 }
             }
         }
         if (multistate) AddPadding(outlist);
     } else {
-        Py_DECREF(outlist);
+        Py_DecRef(outlist);
         PYTHON_ERROR("getcells error: arg must be [] or [x,y,wd,ht].");
     }
     
@@ -1470,7 +1441,7 @@ static PyObject* py_join(PyObject* self, PyObject* args)
         AddTwoInts(outlist, x, y);
         if (multiout) AddState(outlist, state);
         if ((n % 4096) == 0 && PythonScriptAborted()) {
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             return NULL;
         }
     }
@@ -1490,7 +1461,7 @@ static PyObject* py_join(PyObject* self, PyObject* args)
         AddTwoInts(outlist, x, y);
         if (multiout) AddState(outlist, state);
         if ((n % 4096) == 0 && PythonScriptAborted()) {
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             return NULL;
         }
     }
@@ -1559,7 +1530,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
             delete templayer;
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             PYTHON_ERROR("getclip error: pattern is too big.");
         }
         int itop = top.toint();
@@ -1592,7 +1563,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
                 cntr++;
                 if ((cntr % 4096) == 0 && PythonScriptAborted()) {
                     delete templayer;
-                    Py_DECREF(outlist);
+                    Py_DecRef(outlist);
                     return NULL;
                 }
             }
@@ -1606,7 +1577,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     } else {
         // assume error message has been displayed
         delete templayer;
-        Py_DECREF(outlist);
+        Py_DecRef(outlist);
         return NULL;
     }
     
@@ -1662,7 +1633,7 @@ static PyObject* py_getrect(PyObject* self, PyObject* args)
         bigint top, left, bottom, right;
         currlayer->algo->findedges(&top, &left, &bottom, &right);
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             PYTHON_ERROR("getrect error: pattern is too big.");
         }
         long x = left.toint();
@@ -1691,7 +1662,7 @@ static PyObject* py_getselrect(PyObject* self, PyObject* args)
     
     if (viewptr->SelectionExists()) {
         if (currlayer->currsel.TooBig()) {
-            Py_DECREF(outlist);
+            Py_DecRef(outlist);
             PYTHON_ERROR("getselrect error: selection is too big.");
         }
         int x, y, wd, ht;
@@ -3193,7 +3164,6 @@ static PyMethodDef py_methods[] = {
 // [1] https://docs.python.org/3/howto/cporting.html
 // [2] https://python3porting.com/cextensions.html#module-initialization
 // [3] https://docs.python.org/3/extending/embedding.html
-#if PY_MAJOR_VERSION >= 3
 static PyModuleDef py_module = {
     PyModuleDef_HEAD_INIT,
     "golly",
@@ -3209,7 +3179,6 @@ static PyModuleDef py_module = {
 static PyObject* PyInit_golly(void) {
     return PyModule_Create(&py_module);
 }
-#endif
 
 // =============================================================================
 
@@ -3218,28 +3187,17 @@ bool pyinited = false;     // InitPython has been successfully called?
 bool InitPython()
 {
     if (!pyinited) {
-        #ifdef USE_PYTHON_DYNAMIC
-            // try to load Python library
-            if (!LoadPythonLib()) return false;
-        #endif
+        // try to load Python library
+        if (!LoadPythonLib()) return false;
         
-        // Python 3 requires this to be before `Py_Initialize`.
-        #if PY_MAJOR_VERSION >= 3
-            PyImport_AppendInittab("golly", PyInit_golly);
-        #endif
+        // Python 3 requires this to be before Py_Initialize
+        PyImport_AppendInittab("golly", PyInit_golly);
         
         // only initialize the Python interpreter once, mainly because multiple
         // Py_Initialize/Py_Finalize calls cause leaks of about 12K each time!
         Py_Initialize();
         
-        #ifdef USE_PYTHON_DYNAMIC
-            GetPythonExceptions();
-        #endif
-        
-        // allow Python to call the above py_* routines
-        #if PY_MAJOR_VERSION < 3
-            Py_InitModule((char*)"golly", py_methods);
-        #endif
+        GetPythonExceptions();
         
         // catch Python messages sent to stderr and pass them to py_stderr
         if (PyRun_SimpleString(
@@ -3306,7 +3264,10 @@ void RunPythonScript(const wxString& filepath)
     // for the global namespace so that this script cannot change the
     // globals of a caller script (which is possible now that RunScript
     // is re-entrant)
-    wxString command =  wxT("exec(open('") + fpath + wxT("').read(),{})");
+    wxString command = wxT("with open('") + fpath +
+        wxT("') as f:\n   code = compile(f.read(), '") + fpath +
+        wxT("', 'exec')\n   exec(code, {})");
+
     PyRun_SimpleString(command.mb_str(wxConvLocal));
     // don't use wxConvUTF8 in above line because caller has already converted
     // filepath to decomposed UTF8 if on a Mac
@@ -3331,7 +3292,5 @@ void FinishPythonScripting()
     // if (pyinited) Py_Finalize();
     
     // probably don't really need this either
-    #ifdef USE_PYTHON_DYNAMIC
-        FreePythonLib();
-    #endif
+    FreePythonLib();
 }
