@@ -145,3 +145,21 @@ o9boo$67bo12bo8bobbo3boo65boo$76boobbobobb3o77bo$75bob4ob4obo$76bobobo
 bobobobbo62b3o$66b3o83bo$68bo84bo$67bo74bo$78bo62boo$78boo61bobo$77bob
 o$130boo$89boo39bobo$88bobo39bo$90bo$119boo$100boo16boo$101boo17bo$
 100bo$$111b3o$113bo$112bo20$179boo$178bobo$180bo21$246b3o$248bo$247bo!
+#C Script commands for showinviewer.lua:
+#C [[ THEME 6 LABELALPHA .5 COLOR LABEL LightBlue X -9 Y -24 Z 6 AUTOSTART TRACK 0 -1/3 GPS 12 ]]
+#C [[ LABEL 87 153 4 "adjustable-period\nc/3 spaceship" ]]
+#C [[ LABELSIZE 20 ]]
+#C [[ LABEL 140 153 4 "(Paul Tooke,\nJanuary 2002)" ]]
+#C [[ COLOR LABEL DarkRed ]]
+#C [[ LABELT 20 115 5 ]]
+#C [[ LABEL 115 187 4 "period 12" ]]
+#C [[ LABELT 130 205 5 ]]
+#C [[ LABEL 115 187 4 "period 6" ]]
+#C [[ LABELT 210 285 5 ]]
+#C [[ LABEL 115 187 4 "period 21" ]]
+#C [[ LABELT 290 385 5 ]]
+#C [[ LABEL 115 187 4 "period 12" ]]
+#C [[ LABELT 400 475 5 ]]
+#C [[ LABEL 115 187 4 "period 6" ]]
+#C [[ LABELT 480 555 5 ]]
+#C [[ LABEL 115 187 4 "period 21" ]]

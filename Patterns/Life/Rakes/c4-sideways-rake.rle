@@ -640,3 +640,27 @@ $2610b4o$2606bobo$2608b4o3boo$2608b4o3bobo$2609boo4bo$2616boo$2616bobb
 o$2616bo$2618bobo$2622bo$2620bobbo$2620bobbo$2622b3o$2618b3ob3o$2614b
 3oboobb3o$2614bo7boo$2615bo6boo$2618b5o$2620boo$2619boo$2619boo$2618bo
 bo$2617boo$2617bobo$2616bo$2617boo!
+#C Script commands for showinviewer.lua:
+#C [[ MAXGRIDSIZE 14 THEME 10 X -1600 Y -1630 Z 4 AUTOSTART PAUSE 2 "The c/4 diagonal wickstretcher\nat the head of the rake..." ]]
+#C [[ T 200 X -1640 Y -1650 "...produces two perpendicular gliders\nevery time the wick stops burning." ]]
+#C [[ T 500 Z 1 ]]
+#C [[ T 800 X -1560 Y -1560 Z -1 "Each glider must be re-timed and\nreflected back to re-ignite the fuse." ]]
+#C [[ T 1100 ]]
+#C [[ T 1500 X -1830 Y -1430 Z 4 ]]
+#C [[ T 2000 ]]
+#C [[ T 2250 X -1910 Z 3 "Reactions are repeated and combined..." ]]
+#C [[ T 2500 "gradually moving the location\nof the active reaction" ]]
+#C [[ T 3000 X -1935 Y -1390 Z 2 "so that a return glider can be produced\nwith the correct lane and timing."  ]]
+#C [[ T 3450 X -1900 Y -1350 Z 3 ]]
+#C [[ T 4400 X -1540 Y -1610 Z 1 ]]
+#C [[ T 4600 Z 2 "Re-ignition..." ]]
+#C [[ T 4800 "Success!" ]]
+#C [[ T 5000 Z 2 "Gliders left over from the ignition\nare used to create cleanup salvos." ]]
+#C [[ T 5400 X -1640 Y -1706 ]]
+#C [[ T 6000 X -3130 Y -3130 Z 4 ]]
+#C [[ T 6320 X -3135 Y -3150 Z 8 "At the front end,\nthe cycle repeats ..." ]]
+#C [[ T 6500 "restarting the process that creates\nsynchronized gliders to re-ignite the wick." ]]
+#C [[ T 7000 X -1700 Y -1765 Z -6 ]]
+#C [[ T 7200 "At the same time, the\ntail component cleans up leftover junk." ]] 
+#C [[ T 8000 STEP 5 Z -2 ]]
+#C [[ T 20000 X -3740 Y -3940 Z -5 ]]

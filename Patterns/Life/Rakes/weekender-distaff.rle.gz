@@ -222,3 +222,12 @@ $252b3o2b3o19$236bo12bo$235bobo10bobo$234bo3bo8bo3bo$235bo2bo8bo2bo$
 235bobo4b2o4bobo$236b3o3b2o3b3o$239bo6bo$238bo2b4o2bo$242b2o$239b3o2b
 3o7$231bo12bo$230bobo10bobo$229bo3bo8bo3bo$230bo2bo8bo2bo$230bobo4b2o
 4bobo$231b3o3b2o3b3o$234bo6bo$233bo2b4o2bo$237b2o$234b3o2b3o!
+#C Script commands for showinviewer.lua:
+#C [[ THEME Book TRACK 0 -2/7 X 50 Y -1050 Z 4 AUTOSTART ]]
+#C [[ COLOR LABEL Red LABELSIZE 24 ]]
+#C [[ LABELT 0 500 150 ]]
+#C [[ LABEL 170 85 4 "Pan downward in LifeViewer to follow\nthe progress of the active signal" ]]
+#C [[ COLOR LABEL Purple LABELT 200 700 150 ]]
+#C [[ LABEL 170 97 4 "It will use a slow-salvo mechanism to\ngradually build an upward LWSS" ]]
+#C [[ COLOR LABEL Green LABELT 400 700 150 ]]
+#C [[ LABEL 170 111 4 "(and produce an output glider)" ]]
