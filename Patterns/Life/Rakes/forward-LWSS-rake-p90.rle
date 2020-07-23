@@ -1,8 +1,8 @@
-#C A c/3 period 90 forward MWSS rake, shooting a period 90 MWSS stream
-#C which travels ahead of the puffer. This works by taking a forward
-#C period 90 LWSS rake, and converting each of the LWSS's into MWSS's
-#C using two period 90 sideways LWSS rakes. The "hammer" reaction
-#C converting three LWSS's into a MWSS was found by Dieter Leithner.
+#C A c/3 period 90 forward LWSS and MWSS rake, which ultimately shoots
+#C a period-90 MWSS stream ahead of the puffer. Each of the LWSSes in
+#C the period-90 LWSS rake at the bottom is converted into an MWSS
+#C using two period-90 sideways LWSS rakes. The "hammer" reaction
+#C converting three LWSSes into a MWSS was found by Dieter Leithner.
 #C David I. Bell, August 2002
 x = 269, y = 475, rule = B3/S23
 171bo$90b3o77bobo$90b3o61bo14bo3bo14bo$70b2ob3o13bo3bo13b3ob2o37b3ob3o
@@ -221,7 +221,7 @@ o5b2o4b2o65bo43b2o$62b2ob2o65bo45bo$62b2o3bo38b2o21bobo$62b2o41bobo57b
 2o2$119b2o$118bo2bo$118bo2bo$117b2obo$118bobob2o$115b2obobo$115b2obobo
 bo$116bobobo2bo$117bo2bo3b2o$116b5o2b3o$117b3obob2o$121bo$121bo!
 #C Script commands for showinviewer.lua:
-#C [[ THEME 6 TRACK 0 -1/3 ZOOM 1 GRID AUTOSTART ]]
+#C [[ THEME 6 TRACK 0 -1/3 GRID X -60 Y 0 Z 2 AUTOSTART LOOP 2700 ]]
 #C [[ COLOR ARROW Red ARROW 64 250 123 240 3 ]]
 #C [[ COLOR LABEL Orange LABELSIZE 36 ]]
 #C [[ LABEL 18 245 3 "LWSS -> MWSS\nhammer reaction" ]]
