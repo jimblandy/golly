@@ -59,4 +59,4 @@ o15bo!
 #C (in LifeViewer, press Q or A to increase or\ndecrease the number of layers,
 #C   or use the left-hand slider bar in from Settings (gear icon) > Display.
 #C   Comma, period, <, and > change the display angle.)
-#C [[ THEME Yellow ANGLE 45 ZOOM -1 AUTOSTART LAYERS 10 STARS STEP 6 TRACK 0 -1/5 ]]
+#C [[ THEME Red ANGLE 45 ZOOM -1 AUTOSTART LAYERS 10 STARS STEP 6 TRACK 0 -1/5 ]]
