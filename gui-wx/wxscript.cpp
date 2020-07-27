@@ -1085,7 +1085,7 @@ void GSF_getevent(wxString& event, int get)
         pass_file_events = true;    // future open file events will call PassFileToScript
         
         // rle3path is non-empty if Golly has just seen a .rle3 file and started up 3D.lua
-        if (rle3path[0]) {
+        if (!rle3path.IsEmpty()) {
             event = wxT("file ") + rle3path;
             rle3path = wxEmptyString;
             return;
