@@ -1586,7 +1586,7 @@ void SavePrefs()
 
     fprintf(f, "text_editor=%s\n", (const char*)texteditor.mb_str(wxConvLocal));
     fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
-    fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
+    fprintf(f, "python3_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
     fprintf(f, "dir_width=%d\n", dirwinwd);
     fprintf(f, "show_files=%d\n", showfiles ? 1 : 0);
     fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
@@ -2267,7 +2267,7 @@ void GetPrefs()
         } else if (strcmp(keyword, "perl_lib") == 0) {
             perllib = wxString(value,wxConvLocal);
 
-        } else if (strcmp(keyword, "python_lib") == 0) {
+        } else if (strcmp(keyword, "python3_lib") == 0) {
             pythonlib = wxString(value,wxConvLocal);
             #ifdef __WXMAC__
                 // pythonlib will be an empty string in the GollyPrefs file for a Mac user
