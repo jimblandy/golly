@@ -54,10 +54,6 @@ IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND /DIRRKLANG_STATIC
 IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlangPro.lib
 !endif
 
-# for embedding Python:
-PYTHON_INCLUDE = -I$(PYTHON_DIR)\include
-PYTHON_LIBS = $(PYTHON_DIR)\Libs\$(PYTHON_LIB_NAME)
-
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
@@ -413,7 +409,7 @@ $(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res
 	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_gl.lib \
 	$(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib \
 	winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib \
-	rpcrt4.lib advapi32.lib wsock32.lib wininet.lib opengl32.lib $(IRRKLANG_LIBS) $(PYTHON_LIBS)
+	rpcrt4.lib advapi32.lib wsock32.lib wininet.lib opengl32.lib $(IRRKLANG_LIBS)
 
 golly.res: golly.rc
 	rc /fo$@ /d $(WX_CPU_DEF) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
