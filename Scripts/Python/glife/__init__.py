@@ -90,7 +90,7 @@ def rule(s = "B3/S23"):
 def description(s):
     """Supply a textual description to the whole pattern."""
     for line in s.split("\n"):
-        print "#D", line
+        print("#D", line)
 
 # --------------------------------------------------------------------
 

@@ -79,7 +79,7 @@ PYTHON_INCLUDE = -I`$(PYTHON) -c "import distutils.sysconfig as s; print(s.get_p
 # following generates "-Xlinker -export-dynamic" but doesn't seem to be needed
 # PYTHON_LINK = `python -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LINKFORSHARED')"`
 PYTHON_LINK =
-# the following determines the filename for the python dynamic library (e.g. libpython2.5.so)
+# the following determines the filename for the python dynamic library (e.g. libpython3.8.so)
 PYTHON_SHLIB = `$(PYTHON) -c "import distutils.sysconfig as s; print(s.get_config_var('LDLIBRARY'))"`
 PYTHON_PREFS = -DPYTHON_SHLIB="$(PYTHON_SHLIB)"
 
