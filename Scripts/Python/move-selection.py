@@ -72,8 +72,8 @@ def lookforkeys(event, deltax, deltay):
         # rotate floating selection clockwise or anticlockwise;
         # because we use g.rotate below we have to use the exact same
         # calculation (see Selection::Rotate in wxselect.cpp) for rotrect:
-        midx = selrect[0] + int((selrect[2]-1)/2)
-        midy = selrect[1] + int((selrect[3]-1)/2)
+        midx = selrect[0] + int((selrect[2]-1)//2)
+        midy = selrect[1] + int((selrect[3]-1)//2)
         newleft = midx + selrect[1] - midy
         newtop = midy + selrect[0] - midx
         rotrect = [ newleft, newtop, selrect[3], selrect[2] ]

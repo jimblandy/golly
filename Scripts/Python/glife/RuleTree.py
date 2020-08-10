@@ -285,7 +285,7 @@ def GetColors(icon_pixels, wd, ht):
 def hex2(i):
     # convert number from 0..255 into 2 hex digits
     hexdigit = "0123456789ABCDEF"
-    result = hexdigit[i / 16]
+    result = hexdigit[i // 16]
     result += hexdigit[i % 16]
     return result
 
@@ -319,7 +319,7 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
             if charsperpixel == 1:
                 rulefile.write(cindex[n])
             else:
-                rulefile.write(cindex[n % 16] + cindex[n / 16])
+                rulefile.write(cindex[n % 16] + cindex[n // 16])
             rulefile.write(" c " + hexcolor + "\"\n")
         n += 1
     
@@ -342,7 +342,7 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
                     if charsperpixel == 1:
                         rulefile.write(cindex[n])
                     else:
-                        rulefile.write(cindex[n % 16] + cindex[n / 16])
+                        rulefile.write(cindex[n % 16] + cindex[n // 16])
             rulefile.write("\"\n")
 
 # ------------------------------------------------------------------------------
@@ -421,7 +421,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
         ht = len(icon_pixels)
         iconsize = 15                   # size of icons in top row
         if ht > 22: iconsize = 31       # 31x31 icons are present
-        numicons = wd / iconsize
+        numicons = wd // iconsize
         
         # get colors used in all icons (we assume each icon size uses the same set of colors)
         colors, multi_colored = GetColors(icon_pixels, wd, ht)
@@ -454,9 +454,9 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
                             totalG += G
                             totalB += B
                 if nbcount > 0:
-                    rulefile.write(str(i+1) + ' ' + str(totalR / nbcount) + ' ' \
-                                                  + str(totalG / nbcount) + ' ' \
-                                                  + str(totalB / nbcount) + '\n')
+                    rulefile.write(str(i+1) + ' ' + str(totalR // nbcount) + ' ' \
+                                                  + str(totalG // nbcount) + ' ' \
+                                                  + str(totalB // nbcount) + '\n')
                 else:
                     # avoid div by zero
                     rulefile.write(str(i+1) + ' 0 0 0\n')

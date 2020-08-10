@@ -30,7 +30,7 @@ def draw_line(x1, y1, x2, y2):
     if dy < 0: sy = -1
 
     if ax > ay:
-        d = ay - (ax / 2)
+        d = ay - (ax // 2)
         while x1 != x2:
             g.setcell(x1, y1, 1)
             if d >= 0:
@@ -39,7 +39,7 @@ def draw_line(x1, y1, x2, y2):
             x1 += sx
             d += ay
     else:
-        d = ax - (ay / 2)
+        d = ax - (ay // 2)
         while y1 != y2:
             g.setcell(x1, y1, 1)
             if d >= 0:
@@ -118,7 +118,7 @@ g.setalgo("QuickLife")
 g.setrule("B3/S23")
 
 deadr, deadg, deadb = g.getcolor("deadcells")
-if (deadr + deadg + deadb) / 3 > 128:
+if (deadr + deadg + deadb) // 3 > 128:
     # use black if light background
     g.setcolors([1,0,0,0])
 else:
@@ -143,31 +143,31 @@ draw_line(0, 0, 0, -ylen)
 # add annotation using mono-spaced ASCII font
 t = make_text(pattname.upper(), "mono")
 bbox = getminbox(t)
-t.put((xlen - bbox.wd) / 2, -ylen - 10 - bbox.ht)
+t.put((xlen - bbox.wd) // 2, -ylen - 10 - bbox.ht)
 
 t = make_text("POPULATION", "mono")
 bbox = getminbox(t)
-t.put(-10 - bbox.ht, -(ylen - bbox.wd) / 2, rccw)
+t.put(-10 - bbox.ht, -(ylen - bbox.wd) // 2, rccw)
 
 t = make_text(str(minpop), "mono")
 bbox = getminbox(t)
-t.put(-bbox.wd - 10, -bbox.ht / 2)
+t.put(-bbox.wd - 10, -bbox.ht // 2)
 
 t = make_text(str(maxpop), "mono")
 bbox = getminbox(t)
-t.put(-bbox.wd - 10, -ylen - bbox.ht / 2)
+t.put(-bbox.wd - 10, -ylen - bbox.ht // 2)
 
 t = make_text("GENERATION (step=%s)" % stepsize, "mono")
 bbox = getminbox(t)
-t.put((xlen - bbox.wd) / 2, 10)
+t.put((xlen - bbox.wd) // 2, 10)
 
 t = make_text(str(mingen), "mono")
 bbox = getminbox(t)
-t.put(-bbox.wd / 2, 10)
+t.put(-bbox.wd // 2, 10)
 
 t = make_text(str(maxgen), "mono")
 bbox = getminbox(t)
-t.put(xlen - bbox.wd / 2, 10)
+t.put(xlen - bbox.wd // 2, 10)
 
 # display result at scale 1:1
 g.fit()

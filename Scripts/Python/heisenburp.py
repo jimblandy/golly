@@ -102,7 +102,7 @@ def burp():
                     if tickstep==3:
                         tickstep=1
                     else:
-                        tickstep=(tickstep-1)/2+1
+                        tickstep=(tickstep-1)//2+1
             else:
                 if delay<1:
                     delay*=2

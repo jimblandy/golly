@@ -281,7 +281,7 @@ for state in range(n_states):
     for color in range(n_colors):
         bg_col = palette[color]
         fg_col = palette[state+n_colors]
-        mid = [(f+b)/2 for f,b in zip(fg_col,bg_col)]
+        mid = [(f+b)//2 for f,b in zip(fg_col,bg_col)]
         for row in range(31):
             for column in range(31):
                 pixels[row][(encode(color,state)-1)*31+column] = [bg_col,fg_col,highlight,mid][icon31x31[row][column]]

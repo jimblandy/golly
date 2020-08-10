@@ -43,7 +43,7 @@ def WriteBMP(pixels,filename):
             r,g,b = pixels[row][column]
             pixel = struct.pack('<BBB',b,g,r)
             bytes += pixel
-        row_mod = (d['width']*d['colordepth']/8) % 4
+        row_mod = (d['width']*d['colordepth']//8) % 4
         if row_mod == 0:
             padding = 0
         else:

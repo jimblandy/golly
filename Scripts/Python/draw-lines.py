@@ -26,7 +26,7 @@ def drawline(x1, y1, x2, y2):
     if dy < 0: sy = -1
 
     if ax > ay:
-        d = ay - (ax / 2)
+        d = ay - (ax // 2)
         while x1 != x2:
             oldcells.append( (x1, y1, g.getcell(x1, y1)) )
             g.setcell(x1, y1, drawstate)
@@ -36,7 +36,7 @@ def drawline(x1, y1, x2, y2):
             x1 += sx
             d += ay
     else:
-        d = ax - (ay / 2)
+        d = ax - (ay // 2)
         while y1 != y2:
             oldcells.append( (x1, y1, g.getcell(x1, y1)) )
             g.setcell(x1, y1, drawstate)

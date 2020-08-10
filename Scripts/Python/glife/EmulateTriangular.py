@@ -78,7 +78,7 @@ def TriangularTransitionsToRuleTree_SplittingMethod(neighborhood,n_states,transi
     tree = RuleTree(n_states*n_states,numNeighbors[neighborhood])
     # for each transition pair, see if we can apply them both at once to a square
     for i,t1 in enumerate(transitions): # as lower
-        golly.show("Building rule tree... (pass 1 of 2: "+str(100*i/len(transitions))+"%)")
+        golly.show("Building rule tree... (pass 1 of 2: "+str(100*i//len(transitions))+"%)")
         for t2 in transitions: # as upper
             # we can only apply both rules at once if they overlap to some extent
             ### AKT: any() and isdisjoint() are not available in Python 2.3:
@@ -111,7 +111,7 @@ def TriangularTransitionsToRuleTree_SplittingMethod(neighborhood,n_states,transi
                            encode(t1[13],t2[13])[0] ) # C'
     # apply each transition to an individual triangle, leaving the other unchanged
     for i,t in enumerate(transitions):
-        golly.show("Building rule tree... (pass 2 of 2: "+str(100*i/len(transitions))+"%)")
+        golly.show("Building rule tree... (pass 2 of 2: "+str(100*i//len(transitions))+"%)")
         for t_1 in t[1]:
             if neighborhood=="triangularVonNeumann":
                 # as lower triangle:
@@ -213,8 +213,8 @@ def MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_na
                 pixels[row][column] = background_color
             else:
                 # decide if this pixel is a lower or upper triangle
-                iState = int(column/31)
-                upper = int((iState+1) / n_states)
+                iState = int(column//31)
+                upper = int((iState+1) // n_states)
                 lower = (iState+1) - upper*n_states
                 is_upper = False
                 is_lower = False

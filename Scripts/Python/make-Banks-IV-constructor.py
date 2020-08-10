@@ -47,7 +47,7 @@ def write_cell(x,y):
 # we first write the commands to 2 strings, and then to the grid
 H_OFFSET = 10   # how far from the construction face should the new pattern be?
 
-half_height = (r.height-(r.height%2))/2
+half_height = (r.height-(r.height%2))//2
 
 # write the cells that are in state 1 (can ignore the zeros)
 # (still plenty of room for optimisation here)

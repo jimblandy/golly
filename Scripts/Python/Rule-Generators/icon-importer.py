@@ -229,7 +229,7 @@ def draw_line(x1, y1, x2, y2, state = 1):
     if dy < 0: sy = -1
     
     if ax > ay:
-        d = ay - (ax / 2)
+        d = ay - (ax // 2)
         while x1 != x2:
             g.setcell(x1, y1, state)
             if d >= 0:
@@ -238,7 +238,7 @@ def draw_line(x1, y1, x2, y2, state = 1):
             x1 += sx
             d += ay
     else:
-        d = ax - (ay / 2)
+        d = ax - (ay // 2)
         while y1 != y2:
             g.setcell(x1, y1, state)
             if d >= 0:
@@ -337,7 +337,7 @@ def draw_icon_boxes(numicons, linestate):
         
         # show state number above top row of icons
         t, twd, tht = color_text(str(i+1), linestate)
-        t.put(x + 32/2 - twd/2, y - 2 - tht)
+        t.put(x + 32/2 - twd//2, y - 2 - tht)
 
 # --------------------------------------------------------------------
 
@@ -350,7 +350,7 @@ def draw_icons(iconinfo, transparent):
     chars_per_pixel = iconinfo[3]
     colordict = iconinfo[4]
     pos = 5
-    numicons = height/width
+    numicons = height//width
     for i in range(numicons):
         x = i*32
         y = 0
@@ -377,7 +377,7 @@ def create31x31icons():
     width = 15
     middle = 7                  # middle row or column in 15x15 icon
     height = iconinfo15[1]
-    numicons = height/width
+    numicons = height//width
     for i in range(numicons):
         x = i*32
         y = 32
@@ -438,19 +438,19 @@ def create_smaller_icons(big, small):
     # using a simple sampling algorithm
     global iconinfo15, iconinfo31
     if big == 15:
-        numicons = iconinfo15[1] / 15
+        numicons = iconinfo15[1] // 15
         ybig = 32
     else:
         # big = 31
-        numicons = iconinfo31[1] / 31
+        numicons = iconinfo31[1] // 31
         ybig = 0
     if small == 7:
         y = 48
     else:
         # small = 15
         y = 32
-    sample = big / small
-    offset = sample / 2
+    sample = big // small
+    offset = sample // 2
     for i in range(numicons):
         x = i*32
         for row in range(small):

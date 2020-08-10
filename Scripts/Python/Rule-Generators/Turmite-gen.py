@@ -471,7 +471,7 @@ for state in range(n_states):
         for dir in range(n_dirs):
             bg_col = palette[color]
             fg_col = palette[state+n_colors]
-            mid = [(f+b)/2 for f,b in zip(fg_col,bg_col)]
+            mid = [(f+b)//2 for f,b in zip(fg_col,bg_col)]
             for x in range(31):
                 for y in range(31):
                     column = (encode(color,state,dir)-1)*31 + rotate4[dir][0][0]*x + \

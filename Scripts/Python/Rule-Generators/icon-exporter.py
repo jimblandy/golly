@@ -22,7 +22,7 @@ multi_color_icons = False   # grayscale
 def hex2(i):
     # convert number from 0..255 into 2 hex digits
     hexdigit = "0123456789ABCDEF"
-    result = hexdigit[i / 16]
+    result = hexdigit[i // 16]
     result += hexdigit[i % 16]
     return result
 
@@ -83,7 +83,7 @@ def extract_icons(iconsize):
             if charsperpixel == 1:
                 icondata += cindex[n]
             else:
-                icondata += cindex[n % 16] + cindex[n / 16]
+                icondata += cindex[n % 16] + cindex[n // 16]
         icondata += " c " + hexcolor + "\"\n"
         n += 1
     
@@ -110,7 +110,7 @@ def extract_icons(iconsize):
                     if charsperpixel == 1:
                         icondata += cindex[n]
                     else:
-                        icondata += cindex[n % 16] + cindex[n / 16]
+                        icondata += cindex[n % 16] + cindex[n // 16]
             icondata += "\"\n"
     
     return icondata
@@ -193,9 +193,9 @@ def create_average_colors(iconsection):
                     # we've done this icon
                     state += 1
                     if nbcount > 0:
-                        colordata += str(state) + " " + str(totalR / nbcount) + " " \
-                                                      + str(totalG / nbcount) + " " \
-                                                      + str(totalB / nbcount) + "\n"
+                        colordata += str(state) + " " + str(totalR // nbcount) + " " \
+                                                      + str(totalG // nbcount) + " " \
+                                                      + str(totalB // nbcount) + "\n"
                     else:
                         # avoid div by zero
                         colordata += str(state) + " 0 0 0\n"
