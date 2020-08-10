@@ -262,8 +262,8 @@ def ReplaceTreeSection(rulepath, newtree):
 def GetColors(icon_pixels, wd, ht):
     colors = []
     multi_colored = False
-    for row in xrange(ht):
-        for col in xrange(wd):
+    for row in range(ht):
+        for col in range(wd):
             R,G,B = icon_pixels[row][col]
             if R != G or G != B:
                 multi_colored = True    # not grayscale
@@ -323,11 +323,11 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
             rulefile.write(" c " + hexcolor + "\"\n")
         n += 1
     
-    for i in xrange(numicons):
+    for i in range(numicons):
         rulefile.write("/* icon for state " + str(i+1) + " */\n")
-        for row in xrange(iconsize):
+        for row in range(iconsize):
             rulefile.write("\"")
-            for col in xrange(iconsize):
+            for col in range(iconsize):
                 R,G,B = icon_pixels[row + yoffset][col + xoffset*i]
                 if R == 0 and G == 0 and B == 0:
                     # nicer to show . or .. for black pixels
@@ -440,13 +440,13 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
                 numicons -= 1
             # set colors for each live state to the average of the non-black pixels
             # in each icon on top row (note we've skipped the extra icon detected above)
-            for i in xrange(numicons):
+            for i in range(numicons):
                 nbcount = 0
                 totalR = 0
                 totalG = 0
                 totalB = 0
-                for row in xrange(iconsize):
-                    for col in xrange(iconsize):
+                for row in range(iconsize):
+                    for col in range(iconsize):
                         R,G,B = icon_pixels[row][col + i*iconsize]
                         if R > 0 or G > 0 or B > 0:
                             nbcount += 1

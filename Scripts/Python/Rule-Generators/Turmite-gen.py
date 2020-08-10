@@ -186,7 +186,7 @@ apply it in reverse?
 '''
 
 # http://bytes.com/topic/python/answers/25176-list-subsets
-get_subsets = lambda items: [[x for (pos,x) in zip(range(len(items)), items) if (2**pos) & switches] for switches in range(2**len(items))]
+get_subsets = lambda items: [[x for (pos,x) in zip(list(range(len(items))), items) if (2**pos) & switches] for switches in range(2**len(items))]
 
 example_spec = "{{{1, 8, 1}, {1, 8, 1}}, {{1, 2, 1}, {0, 1, 0}}}"
 
@@ -234,7 +234,7 @@ while True: # (we break out if ok)
     if not turmite_turns:
         is_rule_acceptable = False
     # does turmite get stuck in any subset of states?
-    for subset in get_subsets(range(ns)):
+    for subset in get_subsets(list(range(ns))):
         if len(subset)==0 or len(subset)==ns: # (just an optimisation)
             continue
         leaves_subset = False
@@ -326,7 +326,7 @@ def flatten(l, ltypes=(list, tuple)):
     return ltype(l)
 
 # convert the string to a form we can embed in a filename
-spec_string = ''.join(map(str,map(lambda x:hex(x)[2:],flatten(action_table))))
+spec_string = ''.join(map(str,[hex(x)[2:] for x in flatten(action_table)]))
 # (ambiguous but we have to try something)
 
 # what direction would a turmite have been facing to end up here from direction
@@ -340,7 +340,7 @@ would_have_been_facing={
 
 remap = [2,1,3,0] # N,E,S,W -> S,E,W,N
 
-not_arriving_from_here = [range(n_colors) for i in range(n_dirs)] # (we're going to modify them)
+not_arriving_from_here = [list(range(n_colors)) for i in range(n_dirs)] # (we're going to modify them)
 for color in range(n_colors):
     for state in range(n_states):
         turnset = action_table[state][color][1]
@@ -394,8 +394,8 @@ for s in range(n_states):
             tree.add_rule( transition_inputs, transition_output )
 
 # default: square is left with no turmite present
-for output_color,inputs in leaving_color_behind.items():
-    tree.add_rule([inputs]+[range(total_states)]*4,output_color)
+for output_color,inputs in list(leaving_color_behind.items()):
+    tree.add_rule([inputs]+[list(range(total_states))]*4,output_color)
 
 rule_name = prefix+'_'+spec_string
 tree.write(golly.getdir('rules')+rule_name+'.tree')
@@ -465,7 +465,7 @@ palette=[[0,0,0],[0,155,67],[127,0,255],[128,128,128],[185,184,96],[0,100,255],[
 eyes = (255,255,255)
 rotate4 = [ [[1,0],[0,1]], [[0,-1],[1,0]], [[-1,0],[0,-1]], [[0,1],[-1,0]] ]
 offset4 = [ [0,0], [1,0], [1,1], [0,1] ]
-pixels = [[palette[0] for column in range(total_states)*31] for row in range(53)]
+pixels = [[palette[0] for column in list(range(total_states))*31] for row in range(53)]
 for state in range(n_states):
     for color in range(n_colors):
         for dir in range(n_dirs):

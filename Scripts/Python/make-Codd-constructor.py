@@ -39,13 +39,13 @@ inject_trigger = '60117011701160116011'
 # write the cells that are in state 1 (can ignore the zeros)
 # (still plenty of room for optimisation here)
 tape = '11'
-for row in xrange(r.top, r.top + r.height):
+for row in range(r.top, r.top + r.height):
     # if large selection then give some indication of progress
     newsecs = time()
     if newsecs - oldsecs >= 1.0:
         oldsecs = newsecs
         g.update()
-    for col in xrange(r.left, r.left + r.width):
+    for col in range(r.left, r.left + r.width):
         if g.getcell(col, row)==1:
             tape += extend*(4+col-r.left) + extend_left + extend*(r.top+r.height-row)
             tape += mark

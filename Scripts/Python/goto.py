@@ -76,7 +76,7 @@ def goto(gen):
     for i, d in enumerate(intbase(newgen - currgen, g.getbase())):
         if d > 0:
             g.setstep(i)
-            for j in xrange(d):
+            for j in range(d):
                 if g.empty():
                     g.show("Pattern is empty.")
                     return

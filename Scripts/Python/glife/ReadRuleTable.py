@@ -64,7 +64,7 @@ SupportedSymmetries = {
 'rotate4reflect':[
     [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
     [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]],
-'permute':[p+map(lambda x:x+4,p) for p in permu2(range(4))]
+'permute':[p+[x+4 for x in p] for p in permu2(list(range(4)))]
 },
 "square4_figure8v": # same symmetries as Margolus
 {
@@ -76,7 +76,7 @@ SupportedSymmetries = {
 'rotate4reflect':[
     [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
     [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]],
-'permute':[p+map(lambda x:x+4,p) for p in permu2(range(4))]
+'permute':[p+[x+4 for x in p] for p in permu2(list(range(4)))]
 },
 "square4_figure8h": # same symmetries as Margolus
 {
@@ -88,7 +88,7 @@ SupportedSymmetries = {
 'rotate4reflect':[
     [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
     [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]],
-'permute':[p+map(lambda x:x+4,p) for p in permu2(range(4))]
+'permute':[p+[x+4 for x in p] for p in permu2(list(range(4)))]
 },
 "square4_cyclic": # same symmetries as Margolus
 {
@@ -100,7 +100,7 @@ SupportedSymmetries = {
 'rotate4reflect':[
     [0,1,2,3,4,5,6,7],[2,0,3,1,6,4,7,5],[3,2,1,0,7,6,5,4],[1,3,0,2,5,7,4,6],
     [1,0,3,2,5,4,7,6],[0,2,1,3,4,6,5,7],[2,3,0,1,6,7,4,5],[3,1,2,0,7,5,6,4]],
-'permute':[p+map(lambda x:x+4,p) for p in permu2(range(4))]
+'permute':[p+[x+4 for x in p] for p in permu2(list(range(4)))]
 },
 "triangularVonNeumann":
 {
@@ -186,7 +186,7 @@ def ReadRuleTable(filename, timelimit):
                 #golly.exit()
                 message = 'Unknown neighborhood: '+neighborhood
                 return -1, -1, -1, message
-            numParams = len(SupportedSymmetries[neighborhood].items()[0][1][0])
+            numParams = len(list(SupportedSymmetries[neighborhood].items())[0][1][0])
         elif line[0:11]=='symmetries:':
             if neighborhood == '':
                 message = 'symmetry found before neighborhood'
@@ -228,7 +228,7 @@ def ReadRuleTable(filename, timelimit):
             # retrieve the variables that repeat within the transition, these are 'bound'
             bound_vars = [ e for e in set(entries) if entries.count(e)>1 and e in vars ]
             # iterate through all the possible values of each bound variable
-            var_val_indices = dict(zip(bound_vars,[0]*len(bound_vars)))
+            var_val_indices = dict(list(zip(bound_vars,[0]*len(bound_vars))))
             while True:
                 ### AKT: this code causes syntax error in Python 2.3:
                 ### transition = [ [vars[e][var_val_indices[e]]] if e in bound_vars \

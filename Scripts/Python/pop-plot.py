@@ -68,7 +68,7 @@ if g.empty(): g.exit("There is no pattern.")
 # check that a layer is available for population plot
 layername = "population plot"
 poplayer = -1
-for i in xrange(g.numlayers()):
+for i in range(g.numlayers()):
     if g.getname(i) == layername:
         poplayer = i
         break
@@ -86,7 +86,7 @@ if numsteps <= 0: g.exit()
 poplist = [ int(g.getpop()) ]
 genlist = [ int(g.getgen()) ]
 oldsecs = time()
-for i in xrange(numsteps):
+for i in range(numsteps):
     g.step()
     poplist.append( int(g.getpop()) )
     genlist.append( int(g.getgen()) )
@@ -178,7 +178,7 @@ g.show("")
 x = int(float(genlist[0] - mingen) / genscale)
 y = int(float(poplist[0] - minpop) / popscale)
 oldsecs = time()
-for i in xrange(numsteps):
+for i in range(numsteps):
     newx = int(float(genlist[i+1] - mingen) / genscale)
     newy = int(float(poplist[i+1] - minpop) / popscale)
     draw_line(x, -y, newx, -newy)

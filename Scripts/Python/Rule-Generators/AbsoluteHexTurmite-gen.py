@@ -17,7 +17,7 @@ dirs = ['A','B','C','D','E','F']
 opposite_dirs = [3,4,5,0,1,2]
 
 # http://bytes.com/topic/python/answers/25176-list-subsets
-get_subsets = lambda items: [[x for (pos,x) in zip(range(len(items)), items) if (2**pos) & switches] for switches in range(2**len(items))]
+get_subsets = lambda items: [[x for (pos,x) in zip(list(range(len(items))), items) if (2**pos) & switches] for switches in range(2**len(items))]
 
 # Generate a random rule, while filtering out the dull ones.
 # More to try:
@@ -58,7 +58,7 @@ while True: # (we break out if ok)
     if not colors_written==set(range(1,nc)):
         is_rule_acceptable = False
     # does turmite get stuck in any subset of states?
-    for subset in get_subsets(range(ns)):
+    for subset in get_subsets(list(range(ns))):
         if len(subset)==0 or len(subset)==ns: # (just an optimisation)
             continue
         leaves_subset = False
@@ -138,7 +138,7 @@ def flatten(l, ltypes=(list, tuple)):
 spec_string = '_'.join(map(str,flatten(action_table)))
 # (ambiguous but we have to try something)
 
-not_arriving_from_here = [range(n_colors) for i in range(n_dirs)] # (we're going to modify them)
+not_arriving_from_here = [list(range(n_colors)) for i in range(n_dirs)] # (we're going to modify them)
 for color in range(n_colors):
     for state in range(n_states):
         moveset = action_table[state][color][1]
@@ -185,8 +185,8 @@ for s in range(n_states):
                 transitions += [transition]
 
 # default: square is left with no turmite present
-for output_color,inputs in leaving_color_behind.items():
-    transition = [inputs]+[range(total_states)]*n_dirs+[[output_color]]
+for output_color,inputs in list(leaving_color_behind.items()):
+    transition = [inputs]+[list(range(total_states))]*n_dirs+[[output_color]]
     transitions += [transition]
 
 rule_name = prefix+'_'+spec_string

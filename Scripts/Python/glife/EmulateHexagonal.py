@@ -6,7 +6,7 @@ def HexagonalTransitionsToRuleTree(neighborhood,n_states,transitions,rule_name):
     tree = RuleTree(n_states,8)
     for t in transitions:
         # C,S,E,W,N,SE,(SW),(NE),NW
-        tree.add_rule([t[0],t[4],t[2],t[5],t[1],t[3],range(n_states),range(n_states),t[6]],t[7][0])
+        tree.add_rule([t[0],t[4],t[2],t[5],t[1],t[3],list(range(n_states)),list(range(n_states)),t[6]],t[7][0])
     tree.write( golly.getdir('rules')+rule_name+".tree" )
 
 def MakePlainHexagonalIcons(n_states,rule_name):

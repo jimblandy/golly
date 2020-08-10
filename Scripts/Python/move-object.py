@@ -55,16 +55,16 @@ def findlivecell(x, y):
     while d <= maxd:
         x -= 1
         y -= 1
-        for i in xrange(2*d):
+        for i in range(2*d):
             x += 1   # move east
             if getstate(x, y) > 0: return [x, y]
-        for i in xrange(2*d):
+        for i in range(2*d):
             y += 1   # move south
             if getstate(x, y) > 0: return [x, y]
-        for i in xrange(2*d):
+        for i in range(2*d):
             x -= 1   # move west
             if getstate(x, y) > 0: return [x, y]
-        for i in xrange(2*d):
+        for i in range(2*d):
             y -= 1   # move north
             if getstate(x, y) > 0: return [x, y]
         d += 1

@@ -61,7 +61,7 @@ would_have_been_facing={
 
 remap = [2,1,3,0] # N,E,S,W -> S,E,W,N
 
-not_arriving_from_here = [range(n_colors) for i in range(n_dirs)] # (we're going to modify them)
+not_arriving_from_here = [list(range(n_colors)) for i in range(n_dirs)] # (we're going to modify them)
 for color in range(n_colors):
     for state in range(n_states):
         turnset = action_table[state][color][1]
@@ -113,8 +113,8 @@ for s in range(n_states):
             tree.add_rule( transition_inputs, transition_output )
 
 # default: square is left with no turmite present
-for output_color,inputs in leaving_color_behind.items():
-    tree.add_rule([inputs]+[range(total_states)]*4,output_color)
+for output_color,inputs in list(leaving_color_behind.items()):
+    tree.add_rule([inputs]+[list(range(total_states))]*4,output_color)
 
 tree.write(golly.getdir('rules')+rule_name+'.tree')
 
@@ -183,7 +183,7 @@ palette=[[0,0,0],[0,155,67],[127,0,255],[128,128,128],[185,184,96],[0,100,255],[
 eyes = (255,255,255)
 rotate4 = [ [[1,0],[0,1]], [[0,-1],[1,0]], [[-1,0],[0,-1]], [[0,1],[-1,0]] ]
 offset4 = [ [0,0], [1,0], [1,1], [0,1] ]
-pixels = [[palette[0] for column in range(total_states)*31] for row in range(53)]
+pixels = [[palette[0] for column in list(range(total_states))*31] for row in range(53)]
 for state in range(n_states):
     for color in range(n_colors):
         for dir in range(n_dirs):

@@ -4,7 +4,6 @@
 # Updated to check for bounded grid, Oct 2010.
 
 from glife import validint, inside
-from string import lower
 import golly as g
 
 selrect = g.getselrect()
@@ -36,7 +35,7 @@ y = int(xym[1])
 
 # extract optional mode
 if len(xym) > 2:
-    mode = lower(xym[2])
+    mode = xym[2].lower()
     if mode=="c": mode="copy"
     if mode=="o": mode="or"
     if mode=="x": mode="xor"

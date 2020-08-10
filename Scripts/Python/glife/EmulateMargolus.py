@@ -97,7 +97,7 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
             rule_inputs = []
             for i in range(9):
                 if ForegroundInputs[iEntry][i]==-1:
-                    rule_inputs.append(encode( range(n_states), bg_inputs[i] ) + [0]) # wildcard
+                    rule_inputs.append(encode( list(range(n_states)), bg_inputs[i] ) + [0]) # wildcard
                 else:
                     rule_inputs.append(encode( tr[ForegroundInputs[iEntry][i]], bg_inputs[i] ))
             tree.add_rule( rule_inputs, encode( tr[iEntry+4], background_output )[0] )
@@ -106,7 +106,7 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
         for iOutput,background_output in enumerate(BackgroundOutputs[neighborhood]):
             bg_inputs = BackgroundInputs[iOutput]
             tree.add_rule( [ encode( [iState], bg_inputs[0] ) ] +
-                           [ encode( range(n_states), bg_inputs[i] )+[0] for i in range(1,9) ], # wildcard
+                           [ encode( list(range(n_states)), bg_inputs[i] )+[0] for i in range(1,9) ], # wildcard
                            encode( [iState], background_output )[0] )
 
     # output the rule tree
@@ -129,13 +129,13 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
             [68,171,194],[72,184,71],[184,71,72],[71,72,184],[169,255,188],[252,179,63],[63,252,179],
             [179,63,252],[80,9,0],[0,80,9],[9,0,80],[255,175,250],[199,134,213],[115,100,95],[188,163,0],
             [0,188,163],[163,0,188],[203,73,0],[0,203,73],[73,0,203],[94,189,0],[189,0,94]]
-        colors = dict(zip(range(len(random_colors)),random_colors))
+        colors = dict(list(zip(list(range(len(random_colors))),random_colors)))
     else:
         # read from the .colors file
         colors = {}
         for line in cf:
             if line[0:5]=='color':
-                entries = map(int,line[5:].replace('=',' ').replace('\n',' ').split())
+                entries = list(map(int,line[5:].replace('=',' ').replace('\n',' ').split()))
                 if len(entries)<4:
                     continue # too few entries, ignore
                 colors.update({entries[0]:[entries[1],entries[2],entries[3]]})
@@ -146,7 +146,7 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
         colors.update({0:[0,0,120]})
 
     c = open(golly.getdir('rules')+rule_name+".colors",'w')
-    for col in colors.items()[:n_states]:
+    for col in list(colors.items())[:n_states]:
         c.write('color='+str(col[0]*2+1)+' '+' '.join(map(str,col[1]))+'\n')
         c.write('color='+str(col[0]*2+2)+' '+' '.join([ str(int(x*0.7)) for x in col[1] ])+'\n')  # (darken slightly)
     c.flush()

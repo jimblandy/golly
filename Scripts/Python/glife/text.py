@@ -1,5 +1,4 @@
 from glife import *
-from string import lower
 
 # each symbol is a pattern with an additional field .width
 
@@ -162,10 +161,10 @@ def make_text (string, font='Snakial'):
     p = pattern ()
     x = 0
 
-    if lower(font[:2]) == "ea":
+    if font[:2].lower() == "ea":
         f = __eafont
         unknown = '-'
-    elif lower(font) == "mono":
+    elif font.lower() == "mono":
         f = __mfont
         unknown = '?'
     else:
@@ -173,7 +172,7 @@ def make_text (string, font='Snakial'):
         unknown = '-'
 
     for c in string:
-        if not f.has_key (c): c = unknown
+        if c not in f: c = unknown
         symbol = f[c]
         p += symbol (x, 0)
         x += symbol.width

@@ -11,7 +11,7 @@ try:
 except ImportError:
     # see http://docs.python.org/library/itertools.html#itertools.product
     def product(*args, **kwds):
-        pools = map(tuple, args) * kwds.get('repeat', 1)
+        pools = list(map(tuple, args)) * kwds.get('repeat', 1)
         result = [[]]
         for pool in pools:
             result = [x+[y] for x in result for y in pool]
@@ -37,7 +37,7 @@ H = hexagonal, TM = triangular Moore) and the value of N (2-255). e.g. H2, N7
 nhood = ''
 nhoods = {'N':'vonNeumann','TM':'triangularMoore','M':'Moore',
           'T':'triangularVonNeumann','H':'hexagonal'}
-for nh in nhoods.keys():
+for nh in list(nhoods.keys()):
     if nh in spec:
         nhood = nhoods[nh]
         n = int(spec.replace(nh,''))
@@ -51,8 +51,8 @@ if n<2 or n>255:
 nbors = {'vonNeumann':4,'Moore':8,'hexagonal':6,'triangularVonNeumann':3,
          'triangularMoore':12}
 transitions = []
-for sl in product(range(n),repeat=nbors[nhood]):
-    transitions += [ [range(n)] + [[s] for s in sl] + [[sum(sl)%n]] ]
+for sl in product(list(range(n)),repeat=nbors[nhood]):
+    transitions += [ [list(range(n))] + [[s] for s in sl] + [[sum(sl)%n]] ]
 rule_name = 'Fredkin_mod'+str(n)+'_'+nhood
 
 Converters = {

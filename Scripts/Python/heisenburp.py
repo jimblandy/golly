@@ -49,7 +49,7 @@ def burp():
     g.select([selx,sely,50,50])
 
     # keyboard handling
-    while ch<>"q":
+    while ch!="q":
         if place_signal>0:
             if ticks-last_signal>1846:
                 test_signal.put(-150,60)
@@ -132,12 +132,12 @@ def burp():
             oldticks=ticks
             ticks+=tickstep
             delta_view=int(ticks/viewport_speed) - int(oldticks/viewport_speed)
-            if delta_view <> 0: # assumes diagonal motion for now
+            if delta_view != 0: # assumes diagonal motion for now
                 setposint(x + delta_view, y + delta_view)
             sel = g.getselrect()
-            if len(sel)<>0:
+            if len(sel)!=0:
                 x, y, w, h = sel
-                if int(selx)<>x: # user changed selection
+                if int(selx)!=x: # user changed selection
                     # prepare to move new selection instead (!?!)
                     # -- use floating-point selx, sely to account for fractional speeds
                     selx=x
@@ -456,7 +456,7 @@ def show_status_text(s, d, t):
 # if there are multiple layers, get permission to remove them
 if g.numlayers() > 1:
     answer = g.getstring("All existing layers will be removed. OK?")
-    if lower(answer[:1]) == "n":
+    if answer[:1].lower() == "n":
         g.exit()
 oldswitch = g.setoption("switchlayers", True) # allow user to switch layers
 oldtile = g.setoption("tilelayers", True)

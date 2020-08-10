@@ -10,8 +10,8 @@ def collision (i, j):
 
 all = pattern ()
 
-for i in xrange (-7, 8):
-    for j in xrange (-9, 10):
+for i in range (-7, 8):
+    for j in range (-9, 10):
         all += collision (i, j) (100 * i, 100 * j)
 
 all.display ("pd-glider")

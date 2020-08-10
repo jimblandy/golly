@@ -257,7 +257,7 @@ def color_text(string, extrastate):
     # convert two-state pattern to multi-state and set state to extrastate
     mlist = []
     tlist = list(t)
-    for i in xrange(0, len(tlist), 2):
+    for i in range(0, len(tlist), 2):
         mlist.append(tlist[i])
         mlist.append(tlist[i+1])
         mlist.append(extrastate)
@@ -293,17 +293,17 @@ def init_colors():
             s += 1
     
     # finally add rainbow colors in various shades (bright, pale, dark)
-    for hue in xrange(12):
+    for hue in range(12):
         if s > 255: break
         R,G,B = hsv_to_rgb(hue/12.0, 1.0, 1.0)
         g.setcolors([s, int(255*R), int(255*G), int(255*B)])
         s += 1
-    for hue in xrange(12):
+    for hue in range(12):
         if s > 255: break
         R,G,B = hsv_to_rgb(hue/12.0, 0.5, 1.0)
         g.setcolors([s, int(255*R), int(255*G), int(255*B)])
         s += 1
-    for hue in xrange(12):
+    for hue in range(12):
         if s > 255: break
         R,G,B = hsv_to_rgb(hue/12.0, 1.0, 0.5)
         g.setcolors([s, int(255*R), int(255*G), int(255*B)])
@@ -315,7 +315,7 @@ def init_colors():
 # --------------------------------------------------------------------
 
 def draw_icon_boxes(numicons, linestate):
-    for i in xrange(numicons):
+    for i in range(numicons):
         x = -1 + i*32
         y = -1
         
@@ -351,15 +351,15 @@ def draw_icons(iconinfo, transparent):
     colordict = iconinfo[4]
     pos = 5
     numicons = height/width
-    for i in xrange(numicons):
+    for i in range(numicons):
         x = i*32
         y = 0
         if width == 15: y = 32
         if width == 7: y = 48
-        for row in xrange(width):
+        for row in range(width):
             pxls = iconinfo[pos]
             pos += 1
-            for col in xrange(width):
+            for col in range(width):
                 offset = col*chars_per_pixel
                 key = pxls[offset : offset + chars_per_pixel]
                 if not key in colordict:
@@ -378,11 +378,11 @@ def create31x31icons():
     middle = 7                  # middle row or column in 15x15 icon
     height = iconinfo15[1]
     numicons = height/width
-    for i in xrange(numicons):
+    for i in range(numicons):
         x = i*32
         y = 32
-        for row in xrange(width):
-            for col in xrange(width):
+        for row in range(width):
+            for col in range(width):
                 state = g.getcell(x+col, y+row)
                 if state > 0:
                     if row == middle and col == middle:
@@ -451,10 +451,10 @@ def create_smaller_icons(big, small):
         y = 32
     sample = big / small
     offset = sample / 2
-    for i in xrange(numicons):
+    for i in range(numicons):
         x = i*32
-        for row in xrange(small):
-            for col in xrange(small):
+        for row in range(small):
+            for col in range(small):
                 state = g.getcell(x + offset + col*sample, ybig + offset + row*sample)
                 if state > 0:
                     g.setcell(x+col, y+row, state)
