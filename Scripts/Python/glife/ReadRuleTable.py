@@ -5,7 +5,6 @@ except NameError:
     from sets import Set as set
 
 import golly
-import time
 
 # generate permutations where the input list may have duplicates
 # e.g. [1,2,1] -> [[1, 2, 1], [1, 1, 2], [2, 1, 1]]
@@ -144,16 +143,13 @@ SupportedSymmetries = {
 },
 }
 
-def ReadRuleTable(filename, timelimit):
+def ReadRuleTable(filename):
     '''
-    Return n_states, neighborhood, transitions, message
+    Return n_states, neighborhood, transitions
     e.g. 2, "vonNeumann", [[0],[0,1],[0],[0],[1],[1]]
     Transitions are expanded for symmetries and bound variables.
     '''
-    starttime=time.time()
-    lasttime=-1
-    with open(filename, "r") as f:
-        rulelines = f.readlines()
+    f=open(filename,'r')
     vars={}
     symmetry_string = ''
     symmetry = []
@@ -161,42 +157,25 @@ def ReadRuleTable(filename, timelimit):
     neighborhood = ''
     transitions = []
     numParams = 0
-    message = ''
-    for line in rulelines:
-        seconds = time.time() - starttime
-        if seconds - lasttime >= 1:
-            lasttime = seconds
-            elapsed="[{0:02d}:{1:02d}]".format(int(seconds/60),int(seconds%60))
-        if timelimit > 0 and seconds > timelimit:
-            message = "Exceeded loading time limit"
-            return -1, -1, -1, message
+    for line in f:
         if line[0]=='#' or line.strip()=='':
             pass
         elif line[0:9]=='n_states:':
             n_states = int(line[9:])
             if n_states<0 or n_states>256:
-                #golly.warn('n_states out of range: '+n_states)
-                #golly.exit()
-                message = 'n_states out of range: '+n_states
-                return -1, -1, -1, message
+                golly.warn('n_states out of range: '+n_states)
+                golly.exit()
         elif line[0:13]=='neighborhood:':
             neighborhood = line[13:].strip()
             if not neighborhood in SupportedSymmetries:
-                #golly.warn('Unknown neighborhood: '+neighborhood)
-                #golly.exit()
-                message = 'Unknown neighborhood: '+neighborhood
-                return -1, -1, -1, message
+                golly.warn('Unknown neighborhood: '+neighborhood)
+                golly.exit()
             numParams = len(list(SupportedSymmetries[neighborhood].items())[0][1][0])
         elif line[0:11]=='symmetries:':
-            if neighborhood == '':
-                message = 'symmetry found before neighborhood'
-                return -1, -1, -1, message
             symmetry_string = line[11:].strip()
             if not symmetry_string in SupportedSymmetries[neighborhood]:
-                #golly.warn('Unknown symmetry: '+symmetry_string)
-                #golly.exit()
-                message = 'Unknown symmetry: '+symmetry_string
-                return -1, -1, -1, message
+                golly.warn('Unknown symmetry: '+symmetry_string)
+                golly.exit()
             symmetry = SupportedSymmetries[neighborhood][symmetry_string]
         elif line[0:4]=='var ':
             line = line[4:] # strip var keyword
@@ -207,12 +186,7 @@ def ReadRuleTable(filename, timelimit):
             vars[entries[0]] = []
             for e in entries[1:]:
                 if e in vars: vars[entries[0]] += vars[e] # vars allowed in later vars
-                else:
-                    try:
-                        vars[entries[0]].append(int(e))
-                    except ValueError:
-                        message = 'Entry is not a number: '+e
-                        return -1, -1, -1, message
+                else: vars[entries[0]].append(int(e))
         else:
             # assume line is a transition
             if '#' in line: line = line[:line.find('#')] # strip any trailing comment
@@ -221,10 +195,8 @@ def ReadRuleTable(filename, timelimit):
             else:
                 entries = list(line.strip()) # special no-comma format
             if not len(entries)==numParams:
-                #golly.warn('Wrong number of entries on line: '+line+' (expected '+str(numParams)+')')
-                #golly.exit()
-                message = 'Wrong number of entries on line: '+line.replace('\n','')+' (expected '+str(numParams)+ ')'
-                return -1, -1, -1, message
+                golly.warn('Wrong number of entries on line: '+line+' (expected '+str(numParams)+')')
+                golly.exit()
             # retrieve the variables that repeat within the transition, these are 'bound'
             bound_vars = [ e for e in set(entries) if entries.count(e)>1 and e in vars ]
             # iterate through all the possible values of each bound variable
@@ -242,19 +214,10 @@ def ReadRuleTable(filename, timelimit):
                     elif e in vars:
                         transition.append(vars[e])
                     else:
-                        try:
-                            transition.append([int(e)])
-                        except ValueError:
-                            message = 'Entry is not a number: '+e
-                            return -1, -1, -1, message
+                        transition.append([int(e)])
                 if symmetry_string=='permute' and neighborhood in PermuteLater:
                     # permute all but C,C' (first and last entries)
                     for permuted_section in permu2(transition[1:-1]):
-                        if timelimit > 0:
-                            seconds = time.time() - starttime
-                            if seconds > timelimit:
-                                message = "Exceeded loading time limit"
-                                return -1, -1, -1, message
                         permuted_transition = [transition[0]]+permuted_section+[transition[-1]]
                         if not permuted_transition in transitions:
                             transitions.append(permuted_transition)
@@ -276,4 +239,5 @@ def ReadRuleTable(filename, timelimit):
                         var_val_to_change += 1
                 if var_val_to_change >= len(bound_vars):
                     break
-    return n_states, neighborhood, transitions, message
+    f.close()
+    return n_states, neighborhood, transitions

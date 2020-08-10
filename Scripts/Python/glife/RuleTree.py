@@ -17,7 +17,6 @@
 
 import golly
 import os
-import time
 from tempfile import mkstemp
 from shutil import move
 
@@ -54,13 +53,6 @@ class RuleTree:
 
         self._init_tree()
 
-        self.lasttime = -1
-        self.starttime = time.time()
-        self.percent = 0
-        self.input_filename=""
-        self.timeout = 0
-        self.timelimit = 0
-
     def _init_tree(self):
         self.curndd = -1
         for i in range(self.numParams):
@@ -83,19 +75,6 @@ class RuleTree:
                 return output # return the output of the transition
             else:
                 return nddr # return the node index
-        seconds=time.time()-self.starttime
-        if seconds - self.lasttime >= 1:
-            self.lasttime = seconds
-            golly.show("Building rule tree... ("+str(self.percent)+"%) for "+self.input_filename+" [{0:02d}:{1:02d}] ".format(int(seconds/60),int(seconds%60)))
-        # check if time limit set
-        if self.timelimit > 0:
-            # estimate completion time
-            if self.percent > 0:
-                etf = 100 * seconds / self.percent
-            else:
-                etf = seconds
-            if etf >= self.timelimit:
-                self.timeout = 1
         if nddr in self.cache:
             return self.cache[nddr]
         # replace the node entry at each input with the index of the node from a recursive call to the next level down
@@ -478,7 +457,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
 
 # ------------------------------------------------------------------------------
 
-def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename,timelimit):
+def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
     '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
     rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
     remap = {
@@ -487,16 +466,10 @@ def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,inpu
     }
     numNeighbors = len(remap[neighborhood])-1
     tree = RuleTree(n_states,numNeighbors)
-    tree.input_filename = input_filename
-    tree.timelimit = timelimit
-    l=len(transitions)
     for i,t in enumerate(transitions):
-        tree.percent=100*i//l
+        golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
         tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
-        if tree.timeout > 0:
-            break
-    if tree.timeout == 0:
-        tree.write(golly.getdir('rules')+rule_name+".tree" )
-        # use rule_name.tree to create rule_name.rule (no icons)
-        ConvertTreeToRule(rule_name, n_states, [])
-    return rule_name, tree.timeout
+    tree.write(golly.getdir('rules')+rule_name+".tree" )
+-    # use rule_name.tree to create rule_name.rule (no icons)
+-    ConvertTreeToRule(rule_name, n_states, [])
+-    return rule_name
