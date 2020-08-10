@@ -470,6 +470,6 @@ def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,inpu
         golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
         tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
     tree.write(golly.getdir('rules')+rule_name+".tree" )
--    # use rule_name.tree to create rule_name.rule (no icons)
--    ConvertTreeToRule(rule_name, n_states, [])
--    return rule_name
+    # use rule_name.tree to create rule_name.rule (no icons)
+    ConvertTreeToRule(rule_name, n_states, [])
+    return rule_name
