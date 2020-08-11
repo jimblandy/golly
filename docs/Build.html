@@ -42,9 +42,9 @@ and grab the appropriate source archive for your platform:
 </ul>
 
 <p>
-Golly should compile with wxWidgets 2.8.0 or later, but it's best to
-use the latest stable version (3.0.2 at time of writing).
-Mac users should definitely get 3.1 or later if you have Mac OS 10.9+.
+Golly should compile with wxWidgets 3.0 or later, but it's best to
+use the latest stable version (3.0.5 at time of writing).
+Mac users should definitely get 3.1.4 or later if you have Mac OS 10.10+.
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
@@ -145,27 +145,26 @@ void wxOSXScrollBarCocoaImpl::mouseEvent(WX_NSEvent event, WXWidget slf, void *_
 </ol>
 
 <p>
-Now you're ready to build wxWidgets.  If you're using Mac OS 10.9 or later
+Now you're ready to build wxWidgets.  If you're using Mac OS 10.10 or later
 then start up Terminal and type these commands (using the correct path and version number):
 
 <pre>
-   cd /path/to/wxWidgets-3.1.3
+   cd /path/to/wxWidgets-3.1.4
    mkdir build-osx
    cd build-osx
-   ../configure --with-osx_cocoa --disable-shared --enable-unicode --with-macosx-version-min=10.9
-                --disable-mediactrl
+   ../configure --with-osx_cocoa --disable-shared --with-macosx-version-min=10.10
    make
 </pre>
 
 <p>
-If your Mac OS is older than 10.9 then these commands should work
+If your Mac OS is older than 10.10 then these commands should work
 (again, use the correct path and version number):
 
 <pre>
-   cd /path/to/wxWidgets-3.0.2
+   cd /path/to/wxWidgets-3.0.5
    mkdir build-osx
    cd build-osx
-   ../configure --with-osx_cocoa --disable-shared --enable-unicode
+   ../configure --with-osx_cocoa --disable-shared
    make
 </pre>
 
@@ -188,7 +187,7 @@ Unpack the wxWidgets source archive wherever you like, start up a terminal
 session and type these commands (using the correct version number):
 
 <pre>
-   cd /path/to/wxWidgets-3.0.2
+   cd /path/to/wxWidgets-3.0.5
    mkdir build-gtk
    cd build-gtk
    ../configure --with-gtk --disable-shared --enable-unicode --with-opengl

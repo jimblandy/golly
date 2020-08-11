@@ -1,12 +1,14 @@
 # Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.4+ on Mac OS 10.9+)
+# cd /path/to/wxWidgets/wxWidgets-3.0.5  (use 3.1.4+ on Mac OS 10.10+)
 # mkdir build-osx
 # cd build-osx
-# ../configure --enable-unicode --disable-shared --with-osx_cocoa
-# If on Mac OS 10.9+ use this:
-# ../configure --enable-unicode --disable-shared --with-osx_cocoa --with-macosx-version-min=10.9 --disable-mediactrl
+# ../configure --disable-shared --with-osx_cocoa
+# If on Mac OS 10.10+ use this:
+# ../configure --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10
+# If /usr/local/opt/libpng etc exist then you need to add extra options:
+# ../configure --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10 --with-libpng=builtin --with-libjpeg=builtin --with-libtiff=builtin --with-liblzma=builtin
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
@@ -17,8 +19,8 @@
 OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
 osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-WX_RELEASE = $(call osx_ge,9,"3.1","3.0")
-WX_DIR = $(call osx_ge,9,"/HD/wxWidgets/wxWidgets-3.1.4","/HD/wxWidgets/wxWidgets-3.0.2")
+WX_RELEASE = $(call osx_ge,10,"3.1","3.0")
+WX_DIR = $(call osx_ge,10,"/HD/wxWidgets/wxWidgets-3.1.4","/HD/wxWidgets/wxWidgets-3.0.5")
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -72,7 +74,7 @@ TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
 CXXC = g++
-CXXC += $(call osx_ge,9,"-mmacosx-version-min=10.9","-mmacosx-version-min=10.6")
+CXXC += $(call osx_ge,10,"-mmacosx-version-min=10.10","-mmacosx-version-min=10.6")
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
@@ -86,7 +88,7 @@ CXXFLAGS = -arch x86_64 \
 CXXFLAGS += $(call osx_ge,11,"-Wno-potentially-evaluated-expression","")
 
 # some script functions need to call @autoreleasepool to avoid memory leaks
-AUTO_RELEASE = $(call osx_ge,9,"-x objective-c++ -DAUTORELEASE","")
+AUTO_RELEASE = $(call osx_ge,10,"-x objective-c++ -DAUTORELEASE","")
 
 ifdef ENABLE_PERL
     CXXFLAGS += -DENABLE_PERL
