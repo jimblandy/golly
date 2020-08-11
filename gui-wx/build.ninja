@@ -109,7 +109,7 @@ wx_cxxflags = `wx-config --cxxflags`
 zlib_cxxflags = -DZLIB
 
 # additional cxx flags for python
-python_cxxflags = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
+python_cxxflags = -I`python3 -c "import distutils.sysconfig as s; print(s.get_python_inc())"`
 
 # additional cxx flags for lua
 lua_cxxflags = -I$luadir
@@ -198,7 +198,7 @@ extra_ldflags =
 zlib_ldflags = -lz
 
 # additional link flags for opengl
-extralibs_opengl = -lwx_gtk2u_gl-3.0 -lGL -lGLU
+extralibs_opengl = `wx-config --libs gl` -lGL -lGLU
 
 # additional link flags for wx
 wx_ldflags = `wx-config --libs`
