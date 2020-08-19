@@ -44,7 +44,7 @@ and grab the appropriate source archive for your platform:
 <p>
 Golly should compile with wxWidgets 3.0 or later, but it's best to
 use the latest stable version (3.0.5 at time of writing).
-Mac users should definitely get 3.1.4 or later if you have Mac OS 10.10+.
+Mac users should definitely get 3.1.5 or later if you have Mac OS 10.10+.
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
@@ -109,62 +109,14 @@ For a 32-bit release build, open a x32 Visual Studio command prompt
 
 <p>
 Unpack the wxWidgets source archive wherever you like.
-Before building wxWidgets you need to make a couple of small but important
-changes to the source code:
-
-<ol>
-<li>
-Open <tt>src/osx/nonownedwnd_osx.cpp</tt> and edit the <tt>wxNonOwnedWindow::Update</tt>
-routine so that it looks like this:
+If you're using Mac OS 10.10 or later then start up Terminal and type these commands
+(using the correct path and version number):
 
 <pre>
-void wxNonOwnedWindow::Update()
-{
-    m_nowpeer->Update();
-}
-</pre>
-
-<p>
-This routine is called whenever a Golly script wants to update the viewport.
-Without this change, scripts like heisenburp.lua will run way too fast.
-
-<li>
-Open <tt>src/osx/cocoa/scrolbar.mm</tt> and edit the <tt>wxOSXScrollBarCocoaImpl::mouseEvent</tt>
-routine so that it begins like this:
-
-<pre>
-static bool in_mouseEvent = false;
-void wxOSXScrollBarCocoaImpl::mouseEvent(WX_NSEvent event, WXWidget slf, void *_cmd)
-{
-    // avoid crash due to possible re-entrancy
-    if (in_mouseEvent) return;
-    in_mouseEvent = true;
-    wxWidgetCocoaImpl::mouseEvent(event, slf, _cmd);
-    in_mouseEvent = false;
-</pre>
-</ol>
-
-<p>
-Now you're ready to build wxWidgets.  If you're using Mac OS 10.10 or later
-then start up Terminal and type these commands (using the correct path and version number):
-
-<pre>
-   cd /path/to/wxWidgets-3.1.4
+   cd /path/to/wxWidgets-3.1.5
    mkdir build-osx
    cd build-osx
-   ../configure --with-osx_cocoa --disable-shared --with-macosx-version-min=10.10
-   make
-</pre>
-
-<p>
-If your Mac OS is older than 10.10 then these commands should work
-(again, use the correct path and version number):
-
-<pre>
-   cd /path/to/wxWidgets-3.0.5
-   mkdir build-osx
-   cd build-osx
-   ../configure --with-osx_cocoa --disable-shared
+   ../configure --with-osx_cocoa --disable-shared --disable-sys-libs --with-macosx-version-min=10.10
    make
 </pre>
 
@@ -267,10 +219,7 @@ Go to the <b>gui-wx</b> folder and make a copy of makefile-mac called makefile.
 Edit makefile and specify where wxWidgets is installed by changing the WX_DIR
 path near the start of the file.  Also make sure WX_RELEASE specifies the first
 two digits of your wxWidgets version.
-
-<p>
-On Mac OS 10.6 or later you can then build a 64-bit Cocoa version of Golly
-by opening a Terminal window and doing:
+You can then build Golly.app by opening a Terminal window and doing:
 
 <pre>
    cd /path/to/golly/gui-wx

@@ -1,14 +1,10 @@
-# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
+# Makefile for building Golly on Mac OS 10.10+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /path/to/wxWidgets/wxWidgets-3.0.5  (use 3.1.4+ on Mac OS 10.10+)
+# cd /path/to/wxWidgets/wxWidgets-3.1.5  (use 3.1.5+ on Mac OS 10.10+)
 # mkdir build-osx
 # cd build-osx
-# ../configure --disable-shared --with-osx_cocoa
-# If on Mac OS 10.10+ use this:
-# ../configure --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10
-# If /usr/local/opt/libpng etc exist then you need to add extra options:
-# ../configure --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10 --with-libpng=builtin --with-libjpeg=builtin --with-libtiff=builtin --with-liblzma=builtin
+# ../configure --disable-sys-libs --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
@@ -20,7 +16,7 @@ OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
 osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
 WX_RELEASE = $(call osx_ge,10,"3.1","3.0")
-WX_DIR = $(call osx_ge,10,"/HD/wxWidgets/wxWidgets-3.1.4","/HD/wxWidgets/wxWidgets-3.0.5")
+WX_DIR = $(call osx_ge,10,"/Users/akt/HD/wxWidgets/wxWidgets-3.1.5","/Users/akt/HD/wxWidgets/wxWidgets-3.0.5")
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -157,6 +153,7 @@ __WXLIB_GL_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_gl-$(
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
+__LIB_ZLIB_p = -lwxzlib$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
@@ -189,7 +186,7 @@ app.bin: $(BASEOBJ) $(WXOBJ) $(LUALIB)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LUALIB) $(LDFLAGS) -L$(LIBDIRNAME) \
 $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
 $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__WXLIB_GL_p) \
-$(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
+$(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) $(__LIB_ZLIB_p) \
 $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK) $(IRRKLANG_LINK)
 
 $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
