@@ -2531,15 +2531,17 @@ void MainFrame::CreateDirControl()
     
 #if defined(__WXGTK__)
     // make sure background is white when using KDE's GTK theme
-#if wxCHECK_VERSION(2,9,0)
-    filectrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
-#else
-    filectrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
-#endif
+    #if wxCHECK_VERSION(2,9,0)
+        filectrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
+    #else
+        filectrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+    #endif
     filectrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
     // reduce indent a bit
     filectrl->GetTreeCtrl()->SetIndent(8);
 #elif defined(__WXMAC__)
+    // ensure entire background is near white (avoids bug in wxMac 3.1.5 if bg is pure white)
+    filectrl->GetTreeCtrl()->SetBackgroundColour(wxColour(254,254,254));
     // reduce indent a bit more
     filectrl->GetTreeCtrl()->SetIndent(6);
 #else
