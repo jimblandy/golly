@@ -100,14 +100,14 @@ BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASE
     $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
     $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
     $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
-    $(BASEDIR)/ruleloaderalgo.h
+    $(BASEDIR)/ruleloaderalgo.h $(BASEDIR)/superalgo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
     $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
     $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
     $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
     $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
     $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
-    $(OBJDIR)/generationsalgo.o
+    $(OBJDIR)/generationsalgo.o $(OBJDIR)/superalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
     wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
     wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
@@ -194,6 +194,9 @@ $(OBJDIR)/ruletreealgo.o: $(BASEDIR)/ruletreealgo.cpp
 
 $(OBJDIR)/generationsalgo.o: $(BASEDIR)/generationsalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/generationsalgo.cpp
+
+$(OBJDIR)/superalgo.o: $(BASEDIR)/superalgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/superalgo.cpp
 
 $(OBJDIR)/ghashbase.o: $(BASEDIR)/ghashbase.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ghashbase.cpp

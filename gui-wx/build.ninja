@@ -35,7 +35,7 @@ gollydir =
 # sound section END
 
 # lua cflags
-cflags = -O3 -Wall -Wextra -DLUA_COMPAT_5_2 -DLUA_USE_LINUX
+cflags = -O3 -Wall -Wextra -DLUA_USE_LINUX
 
 # lua build rule
 rule cc-lua
@@ -145,6 +145,7 @@ build $objdir/ruleloaderalgo.o: cxxc $basedir/ruleloaderalgo.cpp
 build $objdir/ruletable_algo.o: cxxc $basedir/ruletable_algo.cpp
 build $objdir/ruletreealgo.o: cxxc $basedir/ruletreealgo.cpp
 build $objdir/generationsalgo.o: cxxc $basedir/generationsalgo.cpp
+build $objdir/superalgo.o: cxxc $basedir/superalgo.cpp
 build $objdir/ghashbase.o: cxxc $basedir/ghashbase.cpp
 build $objdir/ghashdraw.o: cxxc $basedir/ghashdraw.cpp
 build $objdir/liferules.o: cxxc $basedir/liferules.cpp
@@ -218,7 +219,7 @@ build $exedir/golly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.
       $objdir/ghashbase.o $objdir/ghashdraw.o $objdir/readpattern.o $
       $objdir/writepattern.o $objdir/liferules.o $objdir/util.o $
       $objdir/liferender.o $objdir/viewport.o $objdir/lifepoll.o $
-      $objdir/generationsalgo.o $
+      $objdir/generationsalgo.o $objdir/superalgo.o $
       $objdir/wxutils.o $objdir/wxprefs.o $objdir/wxalgos.o $objdir/wxrule.o $
       $objdir/wxinfo.o $objdir/wxhelp.o $objdir/wxstatus.o $objdir/wxview.o $objdir/wxoverlay.o $
       $objdir/wxrender.o $objdir/wxscript.o $objdir/wxlua.o $objdir/wxpython.o $objdir/wxperl.o $
@@ -234,7 +235,7 @@ build $exedir/bgolly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo
       $objdir/ghashbase.o $objdir/ghashdraw.o $objdir/readpattern.o $
       $objdir/writepattern.o $objdir/liferules.o $objdir/util.o $
       $objdir/liferender.o $objdir/viewport.o $objdir/lifepoll.o $
-      $objdir/generationsalgo.o $
+      $objdir/generationsalgo.o $objdir/superalgo.o $
       $objdir/bgolly.o
 
 # link RuleTableToTree
@@ -244,5 +245,5 @@ build $exedir/RuleTableToTree: link $objdir/bigint.o $objdir/lifealgo.o $objdir/
       $objdir/ghashbase.o $objdir/ghashdraw.o $objdir/readpattern.o $
       $objdir/writepattern.o $objdir/liferules.o $objdir/util.o $
       $objdir/liferender.o $objdir/viewport.o $objdir/lifepoll.o $
-      $objdir/generationsalgo.o $
+      $objdir/generationsalgo.o $objdir/superalgo.o $
       $objdir/RuleTableToTree.o
