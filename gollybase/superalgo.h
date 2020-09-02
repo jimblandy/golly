@@ -61,6 +61,7 @@ private:
    void removeChar(char *string, char skip) ;
    bool lettersValid(const char *part) ;
    int addLetters(int count, int p) ;
+   const char *findPostfix(const char* rule, const char *postfix) ;
 } ;
 
 #endif

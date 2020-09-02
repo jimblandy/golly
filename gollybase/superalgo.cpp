@@ -987,12 +987,32 @@ bool superalgo::lettersValid(const char *part) {
    return true ;
 }
 
+// find postfix in rule string
+const char *superalgo::findPostfix(const char *rulestring, const char *postfix) {
+   const char *result = NULL ;
+   int postfixlen = (int) strlen(postfix) ;
+
+   // find the end of the rule ignoring any bounded grid definition
+   const char *end = rulestring + strlen(rulestring) ;
+   const char *colonpos = strchr(rulestring, ':') ;
+   if (colonpos) end = colonpos ;
+
+   // check the rule string is at least as long as the postfix
+   if (end - rulestring >= postfixlen) {
+      if (strncasecmp(end - postfixlen, postfix, postfixlen) == 0) {
+         result = end - postfixlen ;
+      }
+   }
+
+   return result ;
+}
+
 // set rule
 const char *superalgo::setrule(const char *rulestring) {
    char *r = (char *)rulestring ;
    char tidystring[MAXRULESIZE] ;  // tidy version of rule string
    char *t = (char *)tidystring ;
-   char *end = r + strlen(r) ;     // end of rule string
+   const char *end = r + strlen(r) ; // end of rule string
    char c ;
    char *charpos = 0 ;
    int digit ;
@@ -1000,7 +1020,7 @@ const char *superalgo::setrule(const char *rulestring) {
    char *colonpos = 0 ;            // position of colon
    char *slashpos = 0 ;            // position of slash
    char *underscorepos = 0 ;       // poisition of underscore
-   char *postfixpos = 0 ;          // position of postfix
+   const char *postfixpos = 0 ;    // position of postfix
    const char *postfix = NULL ;    // which postfix is being used
    char *bpos = 0 ;                // position of b
    char *spos = 0 ;                // position of s
@@ -1016,14 +1036,14 @@ const char *superalgo::setrule(const char *rulestring) {
 
    // check for Super postfix
    postfix = SUPERPOSTFIX ;
-   postfixpos = strstr(r, postfix) ;
+   postfixpos = findPostfix(r, postfix) ;
    if (postfixpos) {
       // [R]Super rule
       end = postfixpos ;
       history = false ;
    } else {
       postfix = HISTORYPOSTFIX ;
-      postfixpos = strstr(r, postfix) ;
+      postfixpos = findPostfix(r, postfix) ;
       if (postfixpos) {
          // [R]History rule
          end = postfixpos ;
