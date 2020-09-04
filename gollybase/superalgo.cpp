@@ -8,6 +8,9 @@
 
 #if defined(WIN32) || defined(WIN64)
 #define strncasecmp _strnicmp
+#define firstbitset(x,y) unsigned long _r ; _BitScanReverse(&_r, y) ; x = (state) _r
+#else
+#define firstbitset(x,y) x = (state) (ffs(y) - 1)
 #endif
 
 using namespace std ;
@@ -33,21 +36,16 @@ static const char *HISTORYPOSTFIX = "History" ;
 static const int historyStates = 7 ;
 
 // bit masks for [R]Super neighboring cell states
-static const int aliveCells = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 11) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
-static const int aliveWith14 = aliveCells | (1 << 14) ;
-static const int aliveWith18 = aliveCells | (1 << 18) ;
-static const int aliveWith14or18 = aliveWith14 | aliveWith18 ;
-static const int alive7or9 = (1 << 7) | (1 << 9) ;
-static const int alivenot7or9 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 11) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
-static const int alive7or11 = (1 << 7) | (1 << 11) ;
-static const int alivenot7or11 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 9) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
-static const int alive1or3or5 = (1 << 1) | (1 << 3) | (1 << 5) ;
+static const int aliveWith14 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 11) | (1 << 13) | (1 << 14) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
+static const int aliveWith14or18 = aliveWith14 | (1 << 18) ;
+static const int alive1or3or5or7 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7);
 static const int alive9to25 = (1 << 9) | (1 << 11) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
+static const int alive1or3or5or9or11 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 9) | (1 << 11) ;
+static const int alive7or13or15or17or19or21or23or25 = (1 << 7) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
+static const int alive1or5or7or9or11 = (1 << 1) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 11) ;
+static const int alive13or15or17or19or21or23or25 = (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
 static const int alive9or11 = (1 << 9) | (1 << 11) ;
-static const int alive1or3or5or9or11 = alive1or3or5 | alive9or11 ;
-
-// bit mask for state 6 cells for both [R]History and [R]Super
-static const int state6Cells = (1 << 6) ;
+static const int alive1or3or5or13or15or17or19or21or23or25 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
 
 // returns a count of the number of bits set in given int
 static int bitcount(int v) {
@@ -65,6 +63,7 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
    state result = 0 ;
    int typeMask = 0 ;
    int calc = 0 ;
+   bool process = true ;
 
    // get the lookup table
    char *lookup = rule3x3 ;
@@ -96,7 +95,8 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
    if (is_history) {
       // [R]History
       // handle state 6
-      if ((typeMask & state6Cells) && (result & 1)) {
+      if (typeMask & (1 << 6)) {
+         // cell would be alive but has died because of neighboring state 6
          if (result == 1) {
             result = 2 ;
          } else {
@@ -137,13 +137,40 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
    } else {
       // [R]Super
       // handle state 6
-      if ((typeMask & state6Cells) && (result & 1)) {
-         if (result == 1) {
-            result = 2 ;
+      process = true ;
+      if (typeMask & (1 << 6)) {
+         process = false ;
+         if (c == 7 || c == 8 || c >= 13) {
+            result = 0 ;
          } else {
-            result = 4 ;
+            switch (c) {
+               case 1:
+                  result = 2 ;
+                  break ;
+               
+               case 3:
+               case 5:
+                  result = 4 ;
+                  break ;
+               
+               case 9:
+                  result = 10 ;
+                  break ;
+   
+               case 11:
+                  result = 12 ;
+                  break ;
+   
+               default:
+                  // not handled here so process below
+                  process = true ;
+                  break ;
+            }
          }
-      } else {
+      }
+
+      // check whether state still needs processing
+      if (process) {
          // get cell state
          if (lookup[index]) {
             // cell alive
@@ -162,67 +189,27 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
                      result = 7 ;
                      break ;
    
-                  case 10:
-                  case 12:
-                     result = 1 ;
-                     if (((typeMask & alive7or9) != 0) && ((typeMask & alivenot7or9) == 0)) {
-                        result = 9 ;
-                     } else {
-                        if (((typeMask & alive7or11) != 0) && ((typeMask & alivenot7or11) == 0)) {
-                           result = 11 ;
-                        } else {
-                           calc = typeMask & alive9to25 ;
-                           if (bitcount(calc) == 1) {
-                              // the bit index gives the cell state
-                              result = 0 ;
-                              if (calc > 65535) {
-                                 calc >>= 16 ;
-                                 result += 16 ;
-                              }
-                              if (calc > 255) {
-                                 calc >>= 8 ;
-                                 result += 8 ;
-                              }
-                              if (calc > 15) {
-                                 calc >>= 4 ;
-                                 result += 4 ;
-                              }
-                              if (calc > 3) {
-                                 calc >>= 2 ;
-                                 result += 2 ;
-                              }
-                              result += (state)(calc >> 1) ;
-                           }
-                        }
-                     }
-                     break ;
-   
                   default:
                      result = 1 ;
                      calc = typeMask & alive9to25 ;
-                     if (((typeMask & (1 << 1)) == 0) && (bitcount(calc) == 1)) {
+                     // check if the neighbors are of just one state
+                     if (((typeMask & alive1or3or5or7) == 0) && (calc && ((calc & (calc - 1)) == 0))) {
                         // the bit index gives the cell state
-                        result = 0 ;
-                        if (calc > 65535) {
-                           calc >>= 16 ;
-                           result += 16 ;
-                        }
-                        if (calc > 255) {
-                           calc >>= 8 ;
-                           result += 8 ;
-                        }
-                        if (calc > 15) {
-                           calc >>= 4 ;
-                           result += 4 ;
-                        }
-                        if (calc > 3) {
-                           calc >>= 2 ;
-                           result += 2 ;
-                        }
-                        result += (state)(calc >> 1) ;
+                        firstbitset(result, calc) ;
                      } else {
-                        if ((typeMask & alive1or3or5or9or11) == 0) {
-                           result = 13 ;
+                        calc = typeMask & alive13or15or17or19or21or23or25 ;
+                        if ((typeMask & (1 << 3)) && (calc && (calc & (calc - 1)) == 0) && ((typeMask & alive1or5or7or9or11) == 0)) {
+                           firstbitset(result, calc) ;
+                        } else {
+                           calc = typeMask & alive9or11 ;
+                           if ((typeMask & (1 << 7)) && (calc && (calc & (calc - 1)) == 0) && ((typeMask & alive1or3or5or13or15or17or19or21or23or25) == 0)) {
+                              firstbitset(result, calc) ;
+                           } else {
+                              calc = typeMask & alive7or13or15or17or19or21or23or25 ;
+                              if (calc && ((typeMask & alive1or3or5or9or11) == 0)) {
+                                 result = 13 ;
+                              }
+                           }
                         }
                      }
                      break ;
