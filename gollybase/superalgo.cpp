@@ -38,7 +38,7 @@ static const int historyStates = 7 ;
 // bit masks for [R]Super neighboring cell states
 static const int aliveWith14 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 11) | (1 << 13) | (1 << 14) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
 static const int aliveWith14or18 = aliveWith14 | (1 << 18) ;
-static const int alive1or3or5or7 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7);
+static const int alive1or3or5or7 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) ;
 static const int alive9to25 = (1 << 9) | (1 << 11) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
 static const int alive1or3or5or9or11 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 9) | (1 << 11) ;
 static const int alive7or13or15or17or19or21or23or25 = (1 << 7) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
@@ -95,14 +95,27 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
    if (is_history) {
       // [R]History
       // handle state 6
+      process = true ;
       if (typeMask & (1 << 6)) {
-         // cell would be alive but has died because of neighboring state 6
-         if (result == 1) {
-            result = 2 ;
-         } else {
-            result = 4 ;
+         process = false ;
+         switch (c) {
+            case 1:
+               result = 2 ;
+               break ;
+
+            case 3:
+            case 5:
+               result = 4 ;
+               break ;
+
+            default:
+            process = true ;
+            break ;
          }
-      } else {
+      }
+
+      // check whether state still needs processing
+      if (process) {
          // get cell state
          if (lookup[index]) {
             // cell alive
