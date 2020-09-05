@@ -217,7 +217,7 @@ wxString StatusBar::Stringify(const bigint& b)
             p[--dest] = ',';
             commas--;
         }
-        if ( p[-1] == '-' ) p--;
+        if ( p > buf && p[-1] == '-' ) p--;
     } else {
       // use e notation for abs value > 10^9 (agrees with min & max_coord)
       const char * sign = "";
