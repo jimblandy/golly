@@ -68,11 +68,6 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
    // get the lookup table
    char *lookup = rule3x3 ;
 
-   // create array index
-   int index = ((nw & 1) ? 256 : 0) | ((n & 1) ? 128 : 0) | ((ne & 1) ? 64 : 0)
-      | ((w & 1) ? 32 : 0) | ((c & 1) ? 16 : 0) | ((e & 1) ? 8 : 0)
-      | ((sw & 1) ? 4 : 0) | ((s & 1) ? 2 : 0) | ((se & 1) ? 1 : 0) ;
-
    result = c ;
 
    // typemask has a bit set per state in the neighbouring cells
@@ -116,6 +111,11 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
 
       // check whether state still needs processing
       if (process) {
+         // create lookup index for next generation
+         int index = ((nw & 1) << 8) | ((n & 1) << 7) | ((ne & 1) << 6)
+            | ((w & 1) << 5) | ((c & 1) << 4) | ((e & 1) << 3)
+            | ((sw & 1) << 2) | ((s & 1) << 1) | (se & 1) ;
+
          // get cell state
          if (lookup[index]) {
             // cell alive
@@ -184,6 +184,11 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
 
       // check whether state still needs processing
       if (process) {
+         // create lookup index for next generation
+         int index = ((nw & 1) << 8) | ((n & 1) << 7) | ((ne & 1) << 6)
+            | ((w & 1) << 5) | ((c & 1) << 4) | ((e & 1) << 3)
+            | ((sw & 1) << 2) | ((s & 1) << 1) | (se & 1) ;
+
          // get cell state
          if (lookup[index]) {
             // cell alive
@@ -1007,6 +1012,18 @@ const char *superalgo::findPostfix(const char *rulestring, const char *postfix) 
    return result ;
 }
 
+// setup B0 with Smax
+void superalgo::setupB0Smax() {
+   char tmp ;
+
+   // B0 with Smax: rule -> NOT(reverse(bits))
+   for (int i = 0 ; i < ALL3X3 / 2 ; i++) {
+      tmp = rule3x3[i] ;
+      rule3x3[i] = 1 - rule3x3[ALL3X3 - i - 1] ;
+      rule3x3[ALL3X3 - i - 1] = 1 - tmp ;
+   }
+}
+
 // set rule
 const char *superalgo::setrule(const char *rulestring) {
    char *r = (char *)rulestring ;
@@ -1404,12 +1421,17 @@ const char *superalgo::setrule(const char *rulestring) {
       createRuleMap(bpos, spos) ;
    }
 
-   // check for B0 rules
+   // check for B0
    if (rule3x3[0]) {
-      if (history) {
-         return "Super does not support B0." ;
+      // check for Smax
+      if (rule3x3[ALL3X3 - 1]) {
+         setupB0Smax() ;
       } else {
-         return "History does not support B0." ;
+         if (history) {
+            return "History only supports B0 with Smax" ;
+         } else {
+            return "Super only supports B0 with Smax" ;
+         }
       }
    }
 

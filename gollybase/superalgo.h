@@ -4,6 +4,7 @@
 #ifndef SUPERALGO_H
 #define SUPERALGO_H
 #include "ghashbase.h"
+
 /**
  *   Our Super algo class.
  */
@@ -62,6 +63,7 @@ private:
    bool lettersValid(const char *part) ;
    int addLetters(int count, int p) ;
    const char *findPostfix(const char* rule, const char *postfix) ;
+   void setupB0Smax() ;
 } ;
 
 #endif
