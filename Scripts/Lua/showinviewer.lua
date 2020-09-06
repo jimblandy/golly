@@ -2,31 +2,12 @@
 --
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
---
--- Version history:
--- 14 [10Jan2020] - handle spaces in folder names
--- 13 [08Jan2020] - prefix URI with file: for Firefox
--- 12 [07Jan2020] - automatically create lifeviewer folder
--- 11 [05Jan2020] - removed duplicate Nobili32 header
--- 10 [22Dec2019] - download prompt if LifeViewer missing
---  9 [22Dec2019] - moved launch.html to Golly temp folder and lifeviewer/lv-plugin.js to Golly data folder
---  8 [20Dec2019] - @TREE version of JvN29 and Nobili32 (faster)
---  7 [19Dec2019] - include JvN29, Nobili32 and Hutton32 rules
---  6 [19Dec2019] - better error reporting for file io
---  5 [18Dec2019] - fix max cells issue
---  4 [18Dec2019] - handle empty patterns
---  3 [18Dec2019] - added Linux and Mac support
---  2 [18Dec2019] - make default height 700, parameterise settings, move files under Scripts/Lua/lifeviewer/
---  1 [18Dec2019] - initial version
 
 local g = golly()
 local gp = require "gplus"
 
 -- name of this script
 local myname = "showinviewer.lua"
-
--- folder name for LifeViewer files
-local lifeviewerfolder = "lifeviewer"
 
 -- width and height of the LifeViewer canvas in pixels
 local viewerwidth = 800
@@ -962,8 +943,8 @@ end
 --------------------------------------------------------------------------------
 
 local function launchLifeViewer()
-    -- check LifeViewer exists in the Golly data directory
-    local lifeviewerdir = g.getdir("data")..lifeviewerfolder..pathsep
+    -- check LifeViewer exists in Golly's Scripts/Lua/gplus folder
+    local lifeviewerdir = g.getdir("app").."Scripts"..pathsep.."Lua"..pathsep.."gplus"..pathsep
     local lifeviewerpath = lifeviewerdir..lifeviewerfilename
     local file, msg = io.open(lifeviewerpath, "r")
     if file == nil then
@@ -990,7 +971,7 @@ local function launchLifeViewer()
 <html>
     <head>
         <meta charset="UTF8">
-        <meta name="LifeViewer" content="viewer textarea 150">
+        <meta name="LifeViewer" content="viewer textarea 150 fullscreen">
 ]]
             content = content.."\t\t<script src=\"file:"..pathsep..pathsep..pathsep..lifeviewerpath.."\"></script>\n"..
 [[
@@ -1003,7 +984,7 @@ local function launchLifeViewer()
 [[
             <br>
             <br>
-            <textarea rows=6 cols=79>
+            <textarea rows=5 cols=99>
 ]]
             content = content..pattern
             content = content..
