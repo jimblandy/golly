@@ -77,17 +77,27 @@ private:
     // rule parameters (set by setrule)
     int range;                          // neighborhood radius
     int rangec;                         // squared radius of circle
-    int totalistic;                     // include middle cell in neighborhood count? (1 or 0)
-    int minS, maxS;                     // limits for survival
-    int minB, maxB;                     // limits for birth
     char ntype;                         // extended neighborhood type (M = Moore, N = von Neumann, C = shaped (circle))
     char topology;                      // grid topology (T = torus, P = plane)
+    unsigned char* births;              // flag for birth at each neighbour count
+    unsigned char* survivals;           // flag for survival at each neighbour count
+    int customcount;                    // neighborhood count for custom neighborhoods
+    bool b0;                            // whether B0 is specified
+    int* weights;                       // neighborhood weights
+    int* stateweights;                  // state weights
+    int* customneighborhood;            // custom neighborhood list
+    int customlength;                   // custom neighborhood list length
     
+    const char* read_custom(const char *n, int r, int &c, TGridType &gt, const char *&nbrend); // read custom neighborhood
+    const char* read_weighted(const char *n, int r, int states, int &c, TGridType &gt, const char *&nbrend); // read weighted neighborhood
+    char* flags_string(const unsigned char* flags, int len); // convert birth or survival flags into string
+    int max_neighbors(int range, const char neighborhood, int customcount, int *tshape); // compute max neighbors for range and neighborhood
     void create_grids(int wd, int ht);  // create a bounded universe of given width and height
     void allocate_colcounts();          // allocate the colcounts array
     void empty_boundaries();            // set minx, miny, maxx, maxy when population is 0
     void save_cells();                  // save current pattern in cell_list
     void restore_cells();               // restore pattern from cell_list
+    void do_gen(int mincol, int minrow, int maxcol, int maxrow); // calculate next generation
     void do_bounded_gen();              // calculate the next generation in a bounded universe
     bool do_unbounded_gen();            // calculate the next generation in an unbounded universe
     int getcount(int i, int j);         // used in faster_Neumann_*
@@ -105,7 +115,19 @@ private:
     void faster_Neumann_bounded(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Shaped(int mincol, int minrow, int maxcol, int maxrow);
-    // these routines are called from do_*_gen to process a rectangular region of cells
+    void fast_Asterisk(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Tripod(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Weighted(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Custom(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Hash(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Checker(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Hex(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Saltire(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Star(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Cross(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Triangular(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Gaussian(int mincol, int minrow, int maxcol, int maxrow);
+    // these routines are called from do_gen to process a rectangular region of cells
     
     void update_current_grid(unsigned char &state, int ncount);
     void update_next_grid(int x, int y, int xyoffset, int ncount);
