@@ -60,7 +60,10 @@ ltlalgo::ltlalgo()
     customlength = 0;
 }
 
-// returns a count of the number of bits set in given int
+// -----------------------------------------------------------------------------
+
+// Returns a count of the number of bits set in given int.
+
 static int bitcount(int v) {
    int r = 0 ;
    while (v) {
@@ -204,6 +207,12 @@ void ltlalgo::endofpattern()
 
 const char* ltlalgo::resize_grids(int up, int down, int left, int right)
 {
+    // for triangular rules ensure polarity doesn't change
+    if (grid_type == TRI_GRID) {
+        if (up & 1) up++;
+        if (left & 1) left++;
+    }
+
     // try to resize an unbounded universe by given amounts (possibly -ve)
     int newwd = gwd + left + right;
     int newht = ght + up + down;
@@ -300,6 +309,13 @@ int ltlalgo::setcell(int x, int y, int newstate)
                 // just adjust grid edges so that x,y is in middle of grid
                 gtop = y - int(ght / 2);
                 gleft = x - int(gwd / 2);
+
+                // for triangular type rules ensure pattern placement is on a 2x2 grid
+                if (grid_type == TRI_GRID) {
+                    gtop &= ~1;
+                    gleft &= ~1;
+                }
+
                 gbottom = gtop + ghtm1;
                 gright = gleft + gwdm1;
                 // set bigint versions of grid edges (used by GUI code)
@@ -1776,7 +1792,8 @@ void ltlalgo::fast_Tripod(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::fast_Weighted(int mincol, int minrow, int maxcol, int maxrow)
 {
-    // TBD !!! deal with triangular grid
+    const int nsize = (range + range + 1);
+    const int brow = (nsize - 1) * nsize;
 
     // check for weighted states
     if (stateweights == NULL) {
@@ -1787,13 +1804,22 @@ void ltlalgo::fast_Weighted(int mincol, int minrow, int maxcol, int maxrow)
             
             for (int x = mincol; x <= maxcol; x++) {
                 int ncount = 0;
-                int k = 0;
+                int k, l;
+                if (grid_type == TRI_GRID && (((x + y) & 1) != 0)) {
+                    l = -nsize;
+                    k = brow;
+                    l += l;
+                } else {
+                    k = 0;
+                    l = 0;
+                }
                 unsigned char* cp1 = cellptr;
                 for (int j = -range; j <= range; j++, cp1 += outerwd) {
                     for (int i = -range; i <= range; i++) {
                         if (cp1[x + i] == 1) ncount += weights[k];
                         k++;
                     }
+                    k += l;
                 }
     
                 update_next_grid(x, y, yoffset+x, ncount);
@@ -1836,8 +1862,6 @@ void ltlalgo::fast_Weighted(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::fast_Custom(int mincol, int minrow, int maxcol, int maxrow)
 {
-    // TBD !!! deal with triangular grid
-
     for (int y = minrow; y <= maxrow; y++) {
         int yoffset = y * outerwd;
         unsigned char* cellptr = currgrid + y * outerwd;
@@ -1848,6 +1872,9 @@ void ltlalgo::fast_Custom(int mincol, int minrow, int maxcol, int maxrow)
             while (j < customlength) {
                 // get the row number
                 int i = customneighborhood[j++];
+                if (grid_type == TRI_GRID && (((x + y) & 1) != 0)) {
+                    i = -i;
+                }
                 unsigned char* cp1 = cellptr + i * outerwd;
 
                 // get the count of items in the row
@@ -2119,17 +2146,18 @@ void ltlalgo::fast_Cross(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::fast_Triangular(int mincol, int minrow, int maxcol, int maxrow)
 {
-    // TBD !!! deal with x range being twice y range
-
+    // vertical range is half range
+    int halfr = range >> 1;
     int width = 0;
+
     for (int y = minrow; y <= maxrow; y++) {
         int yoffset = y * outerwd;
-        unsigned char* cellptr = currgrid + (y - range) * outerwd;
+        unsigned char* cellptr = currgrid + (y - halfr) * outerwd;
         
         for (int x = mincol; x <= maxcol; x++) {
             int ncount = 0;
             unsigned char* cp1 = cellptr;
-            for (int j = -range; j <= range; j++, cp1 += outerwd) {
+            for (int j = -halfr; j <= halfr; j++, cp1 += outerwd) {
                 if (((x + y) & 1) == 0) {
                     width = shape[j + range];
                 } else {
@@ -2739,7 +2767,7 @@ void ltlalgo::restore_cells()
 
 // -----------------------------------------------------------------------------
 
-// Compute maximum number of neighbors for outer totalistic neighborhood and range
+// Compute maximum number of neighbors for outer totalistic neighborhood and range.
 
 int ltlalgo::max_neighbors(const int range, const char neighborhood, const int customcount, int* tshape) {
     int count = 0;
@@ -2837,12 +2865,12 @@ int ltlalgo::max_neighbors(const int range, const char neighborhood, const int c
             // triangular
             r2 = range + range;
             for (int i = -1; i >= -range; i--) {
-                tshape[i + range] = r2;
+                tshape[i + range + range] = r2;
                 r2--;
             }
             r2 = range + range;
             for (int i = 0; i <= range; i++) {
-                tshape[i + range] = r2;
+                tshape[i + range + range] = r2;
                 r2--;
             }
             result = (range * 4 + 1) * (range * 2 + 1) - (range * 2 * range) - 1;
@@ -2864,8 +2892,11 @@ int ltlalgo::max_neighbors(const int range, const char neighborhood, const int c
 
 // -----------------------------------------------------------------------------
 
-// read weighted neighborhood
-// returns pointer to next character in rule string if valid, NULL if otherwise
+// Read weighted neighborhood.
+// returns error message if invalid or NULL if valid
+// updates c to contain neighborhood count
+// updates gt if grid type is hexagonal or triangular
+// updates nbrend to point to the next character in the rule string
 
 const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGridType &gt, const char *&nbrend) {
     int i = 0;
@@ -3004,8 +3035,11 @@ const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGr
 
 // -----------------------------------------------------------------------------
 
-// read custom neighborhood
-// returns pointer to next character in rule string if valid, NULL if otherwise
+// Read custom neighborhood.
+// returns error message if invalid or NULL if valid
+// updates c to contain neighborhood count
+// updates gt if grid type is hexagonal or triangular
+// updates nbrend to point to the next character in the rule string
 
 const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, const char *&nbrend) {
     int i = 0;
@@ -3150,8 +3184,8 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
 
 // -----------------------------------------------------------------------------
 
-// convert birth or survival flags to string
-// string is allocated and must be freed by caller
+// Convert birth or survival flags to string.
+// note: string is allocated and must be freed by caller
 
 char *ltlalgo::flags_string(const unsigned char *flags, int len) {
     int start = -1;
@@ -3335,7 +3369,14 @@ const char *ltlalgo::setrule(const char *s)
     
     // compute neighborhood size without middle cell and populate tshape for relevant neighborhoods
     int tshape[2 * MAXRANGE + 1];
+    memset(tshape, 0, (2 * MAXRANGE + 1) * sizeof(int));
     maxn = max_neighbors(r, n, custom, tshape);
+
+    // double the range for triangular rules
+    if (n == 'L') {
+        r = r + r;
+        if (r > MAXRANGE) return "R value is too big";
+    }
 
     // set the min and max S and B values for validation
     // for totalistic (i.e. including middle cell) the ranges should be:
@@ -3500,7 +3541,10 @@ const char *ltlalgo::setrule(const char *s)
             free(ss);
             return "bad topology in suffix (must be torus or plane)";
         }
-        if (suffix[2] != 0) {
+        if (suffix[2] == 0) {
+            // no dimensions specified
+            suffix = NULL;
+        } else {
             bool oneval = false;
             if (sscanf(suffix+2, "%d,%d%n", &newwd, &newht, &endpos) != 2) {
                 if (sscanf(suffix+2, "%d%n", &newwd, &endpos) != 1) {
@@ -3532,6 +3576,9 @@ const char *ltlalgo::setrule(const char *s)
             free(ss);
             return "grid size is too big";
         }
+    } else {
+        // no topology specified
+        suffix = NULL;
     }
     
     if (!suffix) {
@@ -3559,6 +3606,7 @@ const char *ltlalgo::setrule(const char *s)
         shape = (int*) calloc(2 * r + 1, sizeof(int));
         memcpy(shape, tshape, (2 * r + 1) * sizeof(int));
     }
+    b0 = births[0];
     
     // set the grid_type so the GUI code can display circles or diamonds in icon mode
     // (no circular grid, so adopt a square grid for now)
@@ -3574,6 +3622,11 @@ const char *ltlalgo::setrule(const char *s)
         case 'A':
             // Tripod, Hex or Asterisk
             gridt = HEX_GRID;
+            break;
+
+        case 'L':
+            // Triangular
+            gridt = TRI_GRID;
             break;
 
         case 'C':
@@ -3692,26 +3745,27 @@ const char *ltlalgo::setrule(const char *s)
     }
 
     // set the canonical rule
+    int canonr = (ntype == 'L' ? range >> 1 : range);
     if (wasLtL) {
         if (unbounded) {
             if (ntype == '@' || ntype == 'W') {
                 // null terminate neighborhood string
                 *(char*)nbrend = 0;
                 sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%s",
-                                range, scount, m, s1, s2, b1, b2, ntype, nbrhd);
+                                canonr, scount, m, s1, s2, b1, b2, ntype, nbrhd);
             } else {
                 sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c",
-                                range, scount, m, s1, s2, b1, b2, ntype);
+                                canonr, scount, m, s1, s2, b1, b2, ntype);
             }
         } else {
             if (ntype == '@' || ntype == 'W') {
                 // null terminate neighborhood string
                 *(char*)nbrend = 0;
                 sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%s:%c%d,%d",
-                                range, scount, m, s1, s2, b1, b2, ntype, nbrhd, topology, gwd, ght);
+                                canonr, scount, m, s1, s2, b1, b2, ntype, nbrhd, topology, gwd, ght);
             } else {
                 sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c:%c%d,%d",
-                                range, scount, m, s1, s2, b1, b2, ntype, topology, gwd, ght);
+                                canonr, scount, m, s1, s2, b1, b2, ntype, topology, gwd, ght);
             }
         }
     } else {
@@ -3724,31 +3778,31 @@ const char *ltlalgo::setrule(const char *s)
         if (unbounded) {
             switch (ntype) {
                 case 'M':
-                    sprintf(canonrule, "R%d,C%d,S%s,B%s", range, scount, slist, blist);
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s", canonr, scount, slist, blist);
                     break;
                 case '@':
                 case 'W':
                     // null terminate neighborhood string
                     *(char*)nbrend = 0;
-                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c%s", range, scount, slist, blist, ntype, nbrhd);
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c%s", canonr, scount, slist, blist, ntype, nbrhd);
                     break;
                 default:
-                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c", range, scount, slist, blist, ntype);
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c", canonr, scount, slist, blist, ntype);
                     break;
             }
         } else {
             switch (ntype) {
                 case 'M':
-                    sprintf(canonrule, "R%d,C%d,S%s,B%s:%c%d,%d", range, scount, slist, blist, topology, gwd, ght);
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s:%c%d,%d", canonr, scount, slist, blist, topology, gwd, ght);
                     break;
                 case '@':
                 case 'W':
                     // null terminate neighborhood string
                     *(char*)nbrend = 0;
-                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c%s:%c%d,%d", range, scount, slist, blist, ntype, nbrhd, topology, gwd, ght);
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c%s:%c%d,%d", canonr, scount, slist, blist, ntype, nbrhd, topology, gwd, ght);
                     break;
                 default:
-                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c:%c%d,%d", range, scount, slist, blist, ntype, topology, gwd, ght);
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c:%c%d,%d", canonr, scount, slist, blist, ntype, topology, gwd, ght);
                     break;
             }
         }

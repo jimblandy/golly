@@ -76,7 +76,6 @@ private:
     
     // rule parameters (set by setrule)
     int range;                          // neighborhood radius
-    int rangec;                         // squared radius of circle
     char ntype;                         // extended neighborhood type (M = Moore, N = von Neumann, C = shaped (circle))
     char topology;                      // grid topology (T = torus, P = plane)
     unsigned char* births;              // flag for birth at each neighbour count
