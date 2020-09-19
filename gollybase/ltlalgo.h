@@ -80,6 +80,8 @@ private:
     char topology;                      // grid topology (T = torus, P = plane)
     unsigned char* births;              // flag for birth at each neighbour count
     unsigned char* survivals;           // flag for survival at each neighbour count
+    unsigned char* altbirths;           // flag for birth on odd gens for B0 emulation
+    unsigned char* altsurvivals;        // flag for suvival on odd gens for B0 emulation
     int customcount;                    // neighborhood count for custom neighborhoods
     bool b0;                            // whether B0 is specified
     int* weights;                       // neighborhood weights
@@ -91,6 +93,7 @@ private:
     const char* read_weighted(const char *n, int r, int states, int &c, TGridType &gt, const char *&nbrend); // read weighted neighborhood
     char* flags_string(const unsigned char* flags, int len); // convert birth or survival flags into string
     int max_neighbors(int range, const char neighborhood, int customcount, int *tshape); // compute max neighbors for range and neighborhood
+    void setup_b0_emulation(int maxn);  // setup B0 emulation
     void create_grids(int wd, int ht);  // create a bounded universe of given width and height
     void allocate_colcounts();          // allocate the colcounts array
     void empty_boundaries();            // set minx, miny, maxx, maxy when population is 0

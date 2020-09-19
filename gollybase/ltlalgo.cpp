@@ -53,6 +53,8 @@ ltlalgo::ltlalgo()
     show_warning = true;
     births = NULL;
     survivals = NULL;
+    altbirths = NULL;
+    altsurvivals = NULL;
     b0 = false;
     weights = NULL;
     stateweights = NULL;
@@ -85,6 +87,8 @@ ltlalgo::~ltlalgo()
     if (shape) free(shape);
     if (births) free(births);
     if (survivals) free(survivals);
+    if (altbirths) free(altbirths);
+    if (altsurvivals) free(altsurvivals);
     if (weights) free(weights);
     if (stateweights) free(stateweights);
     if (customneighborhood) free(customneighborhood);
@@ -2296,6 +2300,15 @@ void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::do_gen(int mincol, int minrow, int maxcol, int maxrow)
 {
+    // check for B0 emulation
+    unsigned char* saveb = births;
+    unsigned char* saves = survivals;
+
+    if (b0 && getGeneration().odd()) {
+        births = altbirths;
+        survivals = altsurvivals;
+    }
+
     switch (ntype) {
         case 'M':
             if (colcounts) {
@@ -2374,6 +2387,10 @@ void ltlalgo::do_gen(int mincol, int minrow, int maxcol, int maxrow)
             lifefatal("unknown neighborhood in do_gen");
             break;
     }
+
+    // reset births and survivals
+    births = saveb;
+    survivals = saves;
 }
 
 // -----------------------------------------------------------------------------
@@ -2383,37 +2400,29 @@ void ltlalgo::do_bounded_gen()
     // limit processing to rectangle where births/deaths can occur
     int mincol, minrow, maxcol, maxrow;
     bool torus = topology == 'T';
-    if (b0) {
-        // birth in every dead cell so process entire grid
+    mincol = minx - range;
+    minrow = miny - range;
+    maxcol = maxx + range;
+    maxrow = maxy + range;
+
+    // check if the limits are outside the grid edges
+    if (mincol < 0) {
         mincol = 0;
-        minrow = 0;
-        maxcol = gwdm1;
-        maxrow = ghtm1;
-    } else {
-        mincol = minx - range;
-        minrow = miny - range;
-        maxcol = maxx + range;
-        maxrow = maxy + range;
-        
-        // check if the limits are outside the grid edges
-        if (mincol < 0) {
-            mincol = 0;
-            if (torus) maxcol = gwdm1;
-        }
-        if (maxcol > gwdm1) {
-            maxcol = gwdm1;
-            if (torus) mincol = 0;
-        }
-        if (minrow < 0) {
-            minrow = 0;
-            if (torus) maxrow = ghtm1;
-        }
-        if (maxrow > ghtm1) {
-            maxrow = ghtm1;
-            if (torus) minrow = 0;
-        }
+        if (torus) maxcol = gwdm1;
     }
-    
+    if (maxcol > gwdm1) {
+        maxcol = gwdm1;
+        if (torus) mincol = 0;
+    }
+    if (minrow < 0) {
+        minrow = 0;
+        if (torus) maxrow = ghtm1;
+    }
+    if (maxrow > ghtm1) {
+        maxrow = ghtm1;
+        if (torus) minrow = 0;
+    }
+
     // save pattern limits for clearing border cells at end
     int sminx = minx;
     int smaxx = maxx;
@@ -3276,6 +3285,54 @@ char *ltlalgo::flags_string(const unsigned char *flags, int len) {
 
 // -----------------------------------------------------------------------------
 
+// Setup B0 emulation.
+
+void ltlalgo::setup_b0_emulation(int maxn)
+{
+    unsigned char* bs = (unsigned char*) calloc(maxn + 1, sizeof(unsigned char));
+    if (bs == NULL) lifefatal("Not enough memory for birth flags!");
+    unsigned char* ss = (unsigned char*) calloc(maxn + 1, sizeof(unsigned char));
+    if (ss == NULL) lifefatal("Not enough memory for survival flags!");
+
+    // check for Smax
+    if (survivals[maxn]) {
+        // B0 with Smax: rule -> NOT(reverse(bits))
+        for (int i = 0; i <= maxn; i++) {
+            bs[i] = 1 - survivals[maxn - i];
+            ss[i] = 1 - births[maxn - i];
+        }
+        memcpy(births, bs, maxn + 1);
+        memcpy(survivals, ss, maxn + 1);
+        free(bs);
+        free(ss);
+
+        // clear B0 flag since no alternating required
+        b0 = false;
+    } else {
+        // B0 without Smax needs two rules
+        memcpy(bs, births, maxn + 1);
+        memcpy(ss, survivals, maxn + 1);
+
+        // odd rule -> reverse(bits)
+        for (int i = 0; i <= maxn; i++) {
+            bs[i] = survivals[maxn - i];
+            ss[i] = births[maxn - i];
+        }
+
+        // even rule -> NOT(bits)
+        for (int i = 0; i <= maxn; i++) {
+            births[i] = 1 - births[i];
+            survivals[i] = 1 - survivals[i];
+        }
+
+        // save alternate rule
+        altbirths = bs;
+        altsurvivals = ss;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 // Switch to the given rule if it is valid.
 
 const char *ltlalgo::setrule(const char *s)
@@ -3332,7 +3389,7 @@ const char *ltlalgo::setrule(const char *s)
     }
 
     // read range and number of states
-    if (sscanf(rule, "R%d,C%d,%n", &r, &c, &endpos) != 2) return "could not find R";
+    if (sscanf(rule, "R%d,C%d%n", &r, &c, &endpos) != 2) return "could not find R";
 
     // validate range and number of states
     if (r < 1) return "R value is too small";
@@ -3390,6 +3447,10 @@ const char *ltlalgo::setrule(const char *s)
 
     // check for survivals
     pos = rule + endpos;
+    if (*pos != ',') {
+        return "missing , before S";
+    }
+    pos++;
     if (*pos != 'S') {
         return "missing S";
     }
@@ -3580,15 +3641,6 @@ const char *ltlalgo::setrule(const char *s)
         // no topology specified
         suffix = NULL;
     }
-    
-    if (!suffix) {
-        // no suffix given so universe is unbounded
-        if (bs[0] == 1) {
-            free(bs);
-            free(ss);
-            return "B0 is not allowed if universe is unbounded";
-        }
-    }
 
     // the given rule is valid
     int oldrange = range;
@@ -3606,6 +3658,10 @@ const char *ltlalgo::setrule(const char *s)
         shape = (int*) calloc(2 * r + 1, sizeof(int));
         memcpy(shape, tshape, (2 * r + 1) * sizeof(int));
     }
+    if (altbirths) free(altbirths);
+    altbirths = NULL;
+    if (altsurvivals) free(altsurvivals);
+    altsurvivals = NULL;
     b0 = births[0];
     
     // set the grid_type so the GUI code can display circles or diamonds in icon mode
@@ -3812,6 +3868,11 @@ const char *ltlalgo::setrule(const char *s)
         free(slist);
     }
     
+    // setup B0 emulation if needed
+    if (b0) {
+        setup_b0_emulation(maxn);
+    }
+
     // algos assume totalistic neighborhoods so if the middle cell was not specified
     // we need to adjust the survival list by + 1
     // exception is for Weighted where the middle cell specification is ignored since
@@ -3822,6 +3883,15 @@ const char *ltlalgo::setrule(const char *s)
         memcpy(ss + 1, survivals, maxs + 1);
         free(survivals);
         survivals = ss;
+
+        // check for B0 alternate
+        if (b0) {
+            unsigned char* ss = (unsigned char*) calloc(maxs + 2, sizeof(unsigned char));
+            if (ss == NULL) lifefatal("Not enough memory to grow survival flags!");
+            memcpy(ss + 1, altsurvivals, maxs + 1);
+            free(altsurvivals);
+            altsurvivals = ss;
+        }
     }
 
     return 0;
