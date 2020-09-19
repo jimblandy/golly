@@ -2311,22 +2311,42 @@ void ltlalgo::do_gen(int mincol, int minrow, int maxcol, int maxrow)
 
     switch (ntype) {
         case 'M':
-            if (colcounts) {
-                if (maxCellStates == 2) {
-                    faster_Moore_unbounded2(mincol, minrow, maxcol, maxrow);
+            if (unbounded) {
+                if (colcounts) {
+                    if (maxCellStates == 2) {
+                        faster_Moore_unbounded2(mincol, minrow, maxcol, maxrow);
+                    } else {
+                        faster_Moore_unbounded(mincol, minrow, maxcol, maxrow);
+                    }
                 } else {
-                    faster_Moore_unbounded(mincol, minrow, maxcol, maxrow);
+                    fast_Moore(mincol, minrow, maxcol, maxrow);
                 }
             } else {
-                fast_Moore(mincol, minrow, maxcol, maxrow);
+                if (colcounts) {
+                    if (maxCellStates == 2) {
+                        faster_Moore_bounded2(mincol, minrow, maxcol, maxrow);
+                    } else {
+                        faster_Moore_bounded(mincol, minrow, maxcol, maxrow);
+                    }
+                } else {
+                    fast_Moore(mincol, minrow, maxcol, maxrow);
+                }
             }
             break;
 
         case 'N':
-            if (colcounts) {
-                faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
+            if (unbounded) {
+                if (colcounts) {
+                    faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
+                } else {
+                    fast_Neumann(mincol, minrow, maxcol, maxrow);
+                }
             } else {
-                fast_Neumann(mincol, minrow, maxcol, maxrow);
+                if (colcounts) {
+                    faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
+                } else {
+                    fast_Neumann(mincol, minrow, maxcol, maxrow);
+                }
             }
             break;
 
