@@ -3118,7 +3118,9 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
     if (valid) {
         // neighborhood valid so build list of included cells in custom neighborhood
         const int width = r * 2 + 1;
-        char* neighborhood = (char*) calloc(width * width, sizeof(char));
+        const int w2 = width * width;
+        const int w2m1 = w2 - 1;
+        char* neighborhood = (char*) calloc(w2, sizeof(char));
         int* rowcount = (int *) calloc(width, sizeof(int));
         int midk = neededlength >> 1;
         int k = 0;
@@ -3129,11 +3131,13 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
 
         // first build simple 2d neighborhood grid from the hex digits
         i = 0;
+        item = width - 1;
         while (j < width) {
             // get next 4 bits
             w = (int) (strchr(HEXCHARACTERS, n[k]) - HEXCHARACTERS);
             if (k == midk) {
-                neighborhood[i++] = 1;
+                neighborhood[w2m1 - i] = 1;
+                i++;
                 numinrow++;
             }
             k++;
@@ -3141,12 +3145,12 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
             // set neighborhood
             for (int l = 3; l >=0 ; l--) {
                 if ((w & (1 << l)) != 0) {
-                    neighborhood[i] = 1;
+                    neighborhood[w2m1 - i] = 1;
                     numinrow++;
                 }
                 i++;
                 if ((i % width) == 0) {
-                    rowcount[item++] = numinrow;
+                    rowcount[item--] = numinrow;
                     numinrow = 0;
                     j++;
                 }
@@ -3293,7 +3297,7 @@ char *ltlalgo::flags_string(const unsigned char *flags, int len) {
 
         // next pass
         if (pass == 0) {
-            buffer = (char*) malloc(bufsize + 1);
+            buffer = (char*) calloc(bufsize + 1, sizeof(char));
             if (buffer == NULL) lifefatal("Not enough memory for flags buffer!");
         }
         pass++;
@@ -3521,13 +3525,15 @@ const char *ltlalgo::setrule(const char *s)
         }
     } while(valid);
 
-    // check at least one S value was read
-    if (min == -1) {
-        free(ss);
-        return "missing S values";
-    }
-
     // decode births
+    if (min == -1) {
+        if (*pos != ',') {
+            free(ss);
+            return "missing , before B";
+        } else {
+            pos++;
+        }
+    }
     if (*pos != 'B') {
         free(ss);
         return "missing B";
@@ -3540,6 +3546,7 @@ const char *ltlalgo::setrule(const char *s)
 
     valid = true;
     min = -1;
+
     do {
         // read next birth range (x-y,) or single value (x,)
         if (sscanf(pos, "%d-%d%n", &min, &max, &endpos) != 2) {
@@ -3579,15 +3586,9 @@ const char *ltlalgo::setrule(const char *s)
         }
     } while(valid);
 
-    // check at least one B value was read
-    if (min == -1) {
-        free(bs);
-        free(ss);
-        return "missing B values";
-    }
-
     // check next section is neighborhood
     if (nbrhd) {
+        if (min == -1 && *pos == ',') pos++;
         if (pos != nbrhd - 2) {
             free(bs);
             free(ss);
