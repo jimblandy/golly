@@ -1,9 +1,10 @@
 -- Use the current selection to create a Larger than Life rule
 -- with a Custom neighborhood
 --
--- 1. User draws the neigborhood as cells
--- 2. Makes a square selection containing the the cells
--- 3. Runs this script and a rule is created with the correct
+-- Instructions:
+-- 1. Draw the neigborhood as cells
+-- 2. Make a square selection containing the cells
+-- 3. Run this script and a rule is created with the correct
 --    range and custom neighborhood definition
 --
 -- Selection must be square and have a side length which
