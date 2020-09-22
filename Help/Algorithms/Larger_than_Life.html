@@ -28,7 +28,7 @@ R<i>r</i>,C<i>c</i>,M<i>m</i>,S<i>smin</i>..<i>smax</i>,B<i>bmin</i>..<i>bmax</i
 </dd>
 
 <p>
-R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
@@ -43,7 +43,7 @@ These diagrams show the supported neighborhoods for <i>r</i> = 3:
 <table cellspacing=4 cellpadding=0>
    <tr><th>Type</th><th>Name</th><th>Diagram</th><th>Type</th><th>Name</th><th>Diagram</th></tr>
    <tr><td>NM</td><td>Moore</td><td><img src="images/NM.png"></td><td>NN</td><td>von Neumann</td><td><img src="images/NN.png"></td></tr>
-   <tr><td>NC</td><td>Circular</td><td><img src="images/NC.png"></td><td>N2</td><td>Euclidean</td><td><img src="images/N2.png"></td></tr>
+   <tr><td>NC</td><td>Circular</td><td><img src="images/NC.png"></td><td>N2</td><td>Euclidean (L2)</td><td><img src="images/N2.png"></td></tr>
    <tr><td>NB</td><td>Checkerboard</td><td><img src="images/NB.png"></td><td>N#</td><td>Hash</td><td><img src="images/NZ.png"></td></tr>
    <tr><td>N+</td><td>Cross</td><td><img src="images/N+.png"></td><td>NX</td><td>Saltire</td><td><img src="images/NX.png"></td></tr>
    <tr><td>N*</td><td>Star</td><td><img src="images/NS.png"></td><td>NH</td><td>Hexagonal</td><td><img src="images/NH.png"></td></tr>
@@ -52,11 +52,100 @@ These diagrams show the supported neighborhoods for <i>r</i> = 3:
 </table>
 
 <p>
-Additionally there are Weighted (NW), Gaussian (NG) and Custom (N@) neighborhoods.
-<b>!!! more here</b>
-
+Note: The Triangular neighborhood flips the neighborhood vertically on alternating cells.
 </p>
+<p>
+Other supported neighborhoods:
+<p>&nbsp;<br>
+<font size=+1>Weighted (NW)</font>
+<p>
+Weighted allows you to specify a weight for each cell in the neighborhood. The neighbor count
+will be the sum of each alive cell's neighborhood position weight. Weights from -127 to 127 are supported.
+<p>
+The format is NW following by a string of hexadecimal digits to specify the neighbor weights.
+<ul>
+<li>If the weights are all in the range -7 to +7 use one hexadecimal digit per weight.</li>
+<li>If the weights are all in the range -127 to +127 use two hexadecimal digits per weight.</li>
+</ul>
+<p>
+The hexadecimal representation has the MSB as the sign bit which means:<ul>
+<li>0 to 7 hexadecimal represent 0 to 7 decimal</li>
+<li>8 to f hexadecimal represent 0 to -7 decimal</li>
+<li>00 to 7f hexadecimal represent 0 to 127 decimal</li>
+<li>80 to ff hexadecimal represent 0 to -127 decimal</li>
+</ul>
+<p>
+Example (single digit):
+<dd>1, 2, 3</dd>
+<dd>4, 0, 1</dd>
+<dd>3, 2, 3</dd>
+<p>
+becomes NW123401323
+<p>
+Example (double digits):
+<dd>8, 16, 8
+<dd>10, -5, 10
+<dd>8, 16, 8</dd>
+<p>
+becomes NW0810080a850a081008
+<p>
+Following the neighborhood weights you can optionally specify state weights. In this case the neighbor count will
+be the sum of each live cell's neighborhood position weight multiplied by its state weight.
+<p>
+To specify state weights, add a comma after the NW neighborhood specification and then one hex digit per state.
+You must specify the same number of state weights as states in the pattern defined by
+the C<i>c</i> parameter.
+<p>
+Allowed state weight values are 0 to 15 (decimal) which are specified as 0 to f (hexadecimal).
+<p>
+Example:
+<p>
+If you have a 4-state pattern and want state weights 0, 1, 2, 10 then you'd specify:
+<dd>R<i>r</i>,C4,S<i>list</i>,B<i>list</i>,NW<i>neighborhood weights</i>,012A</dd>
+<p>
+Finally, if you want a non-square grid you can postfix the rule string with H for hexagonal grid or L for triangular grid.
+Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+<p>&nbsp;<br>
+<font size=+1>Gaussian (NG)</font>
+<p>
+Gaussian defines a weighted neighborhood based on the defined range. Only square grids are allowed.
+<p>
+Example: (<i>r = 2</i>)
+<dd>1, 2, 3, 2, 1</dd>
+<dd>2, 4, 6, 4, 2</dd>
+<dd>3, 6, 9, 6, 3</dd>
+<dd>2, 4, 6, 4, 2</dd>
+<dd>1, 2, 3, 2, 1</dd>
 
+<p>&nbsp;<br>
+<font size=+1>Custom (N@)</font>
+<p>
+You can specify a custom neighborhood using N@ and then hexadecimal digits.
+To create the hexadecimal digits, use the following method:
+<ol>
+   <li>Draw the neighborhood as a square with 1s and 0s. Put a 1 for each cell that
+      you want to be part of the neighborhood.
+
+      <dd>10001</dd>
+      <dd>00100</dd>
+      <dd>01<i>c</i>10</dd>
+      <dd>00100</dd>
+      <dd>10001</dd></li>
+   <li>Remove the center cell <i>c</i> and concatenate.
+      <dd>100010010001100010010001</dd>
+   <li>Now convert to hexadecimal.</li>
+      <dd>189891</dd>
+</ol>
+<p>
+Rule becomes:
+<dd>R2,C0,S<i>list</i>,B<i>list</i>,N@891891</dd>
+<p>
+If you want a non-square grid you can postfix the rule string with H for hexagonal grid or L for triangular grid.
+Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+
+
+<p>&nbsp;<br>
+<font size=+1><b>S and B Limits</b></font>
 <p>
 The S and B limits must be from 0 to the neighborhood size.
 A quick way to see the neighborhood and get the limits for a given <i>r</i>
@@ -145,7 +234,7 @@ are specified by five integers separated by commas:
 
 <p>
 This notation assumes an extended Moore neighborhood in which a live middle cell
-is included in the neighborhood count (ie. totalistic).
+is included in the neighborhood count (i.e. totalistic).
 For example, Life can be entered as 1,3,3,3,4.
 
 <p>
@@ -157,7 +246,7 @@ this notation will be in the LtL Notation.
 <font size=+2><b>HROT (Higher Range Outer Totalistic) Notation</b></font>
 
 <p>
-The third notation used by Golly is the HROT notation used by LifeViewer and some other tools.
+The third notation used by Golly is the HROT notation used by <a href="http://lazyslug.com">LifeViewer</a>.
 It provides more flexibility than the previous two notations since it allows arbitrary
 definitions of birth and survival counts to be specified.
 
@@ -167,7 +256,7 @@ R<i>r</i>,C<i>c</i>,S<i>list</i>,B<i>list</i>,N<i>n</i>
 </dd>
 
 <p>
-R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
 S<i>list</i> - specifies the counts for a state 1 cell to survive.<br>
 B<i>list</i> - specifies the counts for a dead cell to become a birth.<br>
@@ -186,6 +275,7 @@ HROT differs from LtL in three ways:
    e.g. <b><a href="rule:R1,C0,S2-3,B3">R1,C0,S2-3,B3</a></b> (Conway's Life)
 </ol>
 
+<p>
 The canonical form for a rule specified in HROT notation is also HROT.
 <p>&nbsp;<br>
 
