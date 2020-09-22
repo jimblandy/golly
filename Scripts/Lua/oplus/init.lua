@@ -1651,7 +1651,7 @@ function m.hexrule()
         -- or maybe look in the .rule file and see if the TABLE section specifies
         -- neighborhood:hexagonal or the ICONS section specifies hexagons???
     elseif algo == "Larger than Life" then
-        return rule:sub(-1) == "H"
+        return rule:sub(-1) == "H" or rule:sub(-2) == "NA" or rule:sub(-2) == "N3"
     end
 
     return false
