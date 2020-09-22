@@ -121,9 +121,21 @@ Example: (<i>r = 2</i>)
 <font size=+1>Custom (N@)</font>
 <p>
 You can specify a custom neighborhood using N@ and then hexadecimal digits.
-To create the hexadecimal digits, use the following method:
+There are two ways to create the hexadecimal digits:
+
+<p>
+The easiest is to draw the custom neighborhood in Golly as a set of live
+cells. Surround the cells in a square selection and then run
+<a href="open:Scripts/Lua/create-custom-ltl.lua">create_custom_ltl.lua</a> to
+automatically create the rule string.
+
+<p>
+<img src="images/custom.png">
+
+<p>
+Alternatively you can create them manually, using the following method:
 <ol>
-   <li>Draw the neighborhood as a square with 1s and 0s. Put a 1 for each cell that
+   <li>Write the neighborhood as a square with 1s and 0s. Put a 1 for each cell that
       you want to be part of the neighborhood.
 
       <dd>10001</dd>
