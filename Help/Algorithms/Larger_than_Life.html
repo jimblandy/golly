@@ -51,13 +51,13 @@ N<i>n</i> - specifies the extended neighborhood type.<br>
 These diagrams show the supported neighborhoods for <i>r</i> = 3:
 <p>
 
-<table cellspacing=4 cellpadding=0>
+<table cellspacing=6 cellpadding=0>
    <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
-   <tr><td>NM (Moore)</td><td><img src="images/NM.png"></td><td>NN (von Neumann)</td><td><img src="images/NN.png"></td><td>NC (Circular)</td><td><img src="images/NC.png"></td></tr>
-   <tr></tr><td>N2 (L2/Euclidean)</td><td><img src="images/N2.png"></td><td>NB (Checkerboard)</td><td><img src="images/NB.png"></td><td>N# (Hash)</td><td><img src="images/NZ.png"></td></tr>
-   <tr><td>N+ (Cross)</td><td><img src="images/N+.png"></td><td>NX (Saltire)</td><td><img src="images/NX.png"></td><td>N* (Star)</td><td><img src="images/NS.png"></td></tr>
-   <tr><td>NH (Hexagonal)</td><td><img src="images/NH.png"></td></tr><td>NA (Asterisk)</td><td><img src="images/NA.png"></td><td>N3 (Tripod)</td><td><img src="images/N3.png"></td></tr>
-   <tr><td>NL (Triangular)</td><td><img src="images/NL.png"></td></tr>
+   <tr><td>Moore<br/>(NM)</td><td><img src="images/NM.png"></td><td>&nbsp;&nbsp;von Neumann<br/>&nbsp;&nbsp;(NN)</td><td><img src="images/NN.png"></td><td>&nbsp;&nbsp;Circular<br/>&nbsp;&nbsp;(NC)</td><td><img src="images/NC.png"></td></tr>
+   <tr></tr><td>L2/Euclidean<br/>(N2)</td><td><img src="images/N2.png"></td><td>&nbsp;&nbsp;Checkerboard<br/>&nbsp;&nbsp;(NB)</td><td><img src="images/NB.png"></td><td>&nbsp;&nbsp;Hash<br/>&nbsp;&nbsp;(N#)</td><td><img src="images/NZ.png"></td></tr>
+   <tr><td>Cross<br/>(N+)</td><td><img src="images/N+.png"></td><td>&nbsp;&nbsp;Saltire<br/>&nbsp;&nbsp;(NX)</td><td><img src="images/NX.png"></td><td>&nbsp;&nbsp;Star<br/>&nbsp;&nbsp;(N*)</td><td><img src="images/NS.png"></td></tr>
+   <tr><td>Hexagonal<br/>(NH)</td><td><img src="images/NH.png"></td></tr><td>&nbsp;&nbsp;Asterisk<br/>&nbsp;&nbsp;(NA)</td><td><img src="images/NA.png"></td><td>&nbsp;&nbsp;Tripod<br/>&nbsp;&nbsp;(N3)</td><td><img src="images/N3.png"></td></tr>
+   <tr><td>Triangular<br/>(NL)</td><td><img src="images/NL.png"></td></tr>
 </table>
 
 <p>
@@ -68,7 +68,7 @@ Other supported neighborhoods:
 
 <p>&nbsp;<br>
 <a name="weighted"></a>
-<font size=+1>Weighted (NW)</font>
+<font size=+1><b>Weighted (NW)</b></font>
 <p>
 Weighted allows you to specify a weight for each cell in the neighborhood. The neighbor count
 will be the sum of each alive cell's neighborhood position weight. Weights from -127 to 127 are supported.
@@ -94,9 +94,9 @@ Example (single digit):
 becomes NW123401323
 <p>
 Example (double digits):
-<dd>8, 16, 8
-<dd>10, -5, 10
-<dd>8, 16, 8</dd>
+<dd>8,&nbsp;&nbsp;16, 8
+<dd>10,&nbsp;-5, 10
+<dd>8,&nbsp;&nbsp;16, 8</dd>
 <p>
 becomes NW0810080a850a081008
 <p>
@@ -119,7 +119,7 @@ Triangular grid will cause weightings to be treated as a triangular neighbourhoo
 
 <p>&nbsp;<br>
 <a name="gaussian"></a>
-<font size=+1>Gaussian (NG)</font>
+<font size=+1><b>Gaussian (NG)</b></font>
 <p>
 Gaussian defines a weighted neighborhood based on the defined range. Only square grids are allowed.
 <p>
@@ -132,7 +132,7 @@ Example: (<i>r = 2</i>)
 
 <p>&nbsp;<br>
 <a name="custom"></a>
-<font size=+1>Custom (N@)</font>
+<font size=+1><b>Custom (N@)</b></font>
 <p>
 You can specify a custom neighborhood using N@ and then hexadecimal digits.
 There are two ways to create the hexadecimal digits:
@@ -140,7 +140,7 @@ There are two ways to create the hexadecimal digits:
 <p>
 The easiest is to draw the custom neighborhood in Golly as a set of live
 cells. Surround the cells in a square selection and then run
-<a href="open:Scripts/Lua/create-custom-ltl.lua">create_custom_ltl.lua</a> to
+<a href="open:Scripts/Lua/create-custom-ltl.lua">create-custom-ltl.lua</a> to
 automatically create the rule string.
 
 <p>
