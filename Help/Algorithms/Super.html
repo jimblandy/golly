@@ -6,7 +6,130 @@
 Super supports the same set of rules as
 <a href="QuickLife.html">QuickLife</a> but adds history and label states.
 
-!!! more here
+The Super algorithm currently supports two rulename suffixes:  "History" mode and "Super" mode.
 
+<h2>History mode</h2>
+<p>A rule specific to Conway's Life, "LifeHistory", was added along with Golly 2.0, as soon as multistate rules were supported.
+It largely duplicated the functionality of a "HistoricalLife" rule included in a previous CA editor, MCell 4.20.</p>
+
+<p>A key idea also borrowed from MCell is that <i>odd-numbered states are ON states</i> and <i>even-numbered states are OFF states</i>.
+Any odd-numbered state in the vicinity of a cell counts as a neighbor, but any even-numbered state is just considered to be background.</p>
+
+The Super algo extends the behavior of the seven LifeHistory states to any two-state Moore-neighborhood rule supported by Golly. *** TODO: figure out how exactly to qualify this ***
+
+<table border=1 cellspacing=0 width=500><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
+<tr><td>0</td><td>OFF</td><td>black</td><td>the default background OFF state</td></tr>
+<tr><td>1</td><td>ON</td><td>green</td><td>the default ON state</td></tr>
+<tr><td>2</td><td>history/envelope</td><td>blue</td><td>state=2 if cell was ever ON but now OFF</td></tr>
+<tr><td>3</td><td>marked ON</td><td>white</td><td>may change to marked OFF but will always remain marked</td></tr>
+<tr><td>4</td><td>marked OFF</td><td>red</td><td>may change to marked ON but will always remain marked</td></tr>
+<tr><td>5</td><td>start ON</td><td>yellow</td><td>becomes a normal marked OFF cell when it dies</td></tr>
+<tr><td>6</td><td>boundary OFF</td><td>gray</td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
+</table>
+
+<p>The primary idea was to make the evolutionary history of a pattern visible by including additional OFF states to the rule.
+A state-0 cell would change to state 1 as usual when it had three neighbors, but when a state-1 cell died,
+it would change to a blue state-2 cell.</p>
+
+<p>The blue region is commonly known as the "history" or the "reaction envelope" of a pattern.  It can be very useful for editing purposes.
+For example, in LifeHistory, one phase of an oscillator can be pasted directly on top of another phase, and cells all that should be OFF
+in the new phase are all turned off (replaced by blue state-2 cells).  A similar phase change in a two-state rule would generally require
+blanking out the oscillator's rotor cells before pasting; otherwise ON cells from both phases would remain ON, usually breaking the oscillator.</p>
+
+<p>Another use of blue state-2 cells is to mark the edge of the "safe region" for oscillators, Herschel circuitry, etc., making it much easier
+to adjust subpatterns so that they are as close as possible to each other without conflicting.  In logic circuitry,
+input and output glider or spaceship lanes can be easily seen and aligned between components.</p>
+
+<p>The LifeHistory rule also supported the idea of "marked" locations in a pattern.
+With two-state CA rules, it could be somewhat difficult to mark key locations precisely.
+This might be done with labels made out of isolated cells that would die quickly without affecting a pattern,
+or by adding still lifes shaped like letters, arrows, etc. a safe distance to the side,
+to point out key features without affecting the evolution of the pattern.</p>
+
+<p>With states 3 (white) and 5 (yellow), two additional colors are available to highlight ON cells that are special in some way.
+State 5 was originally designed to carry information about cells that always remained ON from T=0 onward,
+never turning off even temporarily. However, in practice this specialized functionality is not exercised very often.
+State 5 is more often used as an alternate color to differentiate one type of highlighting from another.</p>
+
+<p>State 6 is another cell type that is seldom used for its original purpose.  State-6 cells can never turn on,
+so lines of them can be used as barriers to prevent subpatterns in a stamp collection from ever influencing each other.
+This can be helpful for collections of Herschel conduits, for example, or any set of subpatterns that releases a lot of gliders.</p>
+
+<p>State-6 "gray cells" are the only one of these cell types that can potentially make the History version of a rule
+behave radically differently from the base non-History version.  The other five cell types can only alter the colors of ON and OFF cells,
+but can not make a pattern evolve essentially differently.  By contrast, in standard Conway's Life, scatterings of gray cells
+have been used to build extremely small guns, glider reflectors, and other types of signal circuitry.</p>
+
+<h2>Super mode</h2>
+<p>The "Super" rules were conceived as a superset of the History cell states, to be used in cases where -- for example -- two extra ON states
+and two extra OFF states are not enough to clearly annotate a very large or complex pattern.</p>
+
+<p>Appending the word "Super" to any two-state rule string will make available a rule with twenty-six states instead of two,
+with behavior generally matching the two-state rule -- with the partial exception of state 6! -- but allowing
+a wide variety of annotation and history-state options, as follows:</p>
+
+<h3>[Rule]History backward compatibility:</h3>
+<p>The first seven states behave identically to their [Rule]History equivalents, to make it easier to translate patterns to and from [Rule]Super.</p>
+
+<p>A side effect of state 4 is that a glider made with a higher-numbered ON state that does not leave behind history cells, will be reduced to state 1
+and will begin to leave a state-2 trail if it passes through a boundary made of state-4 cells.  See also state 8, below:  a cleaner transition can
+be created by placing a line of state-8 cells on the "upstream" side of a crossing, and a line of state-4 cells on the "downstream" side.</p>
+
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
+<tr><td>0</td><td>OFF</td><td>black</td><td>same as History: default background OFF state</td></tr>
+<tr><td>1</td><td>ON trail #1</td><td>green</td><td>same as History: default ON state with "history" trail</td></tr>
+<tr><td>2</td><td>OFF trail #1</td><td>blue</td><td>same as History: state=2 if cell was ever state 1</td></tr>
+<tr><td>3</td><td>marked ON</td><td>white</td><td>same as History: changes to state 4 if it turns OFF, then back to state 3 if it turns ON again</td></tr>
+<tr><td>4</td><td>marked OFF</td><td>red</td><td>same as History: changes to state 3 if it turns ON</td></tr>
+<tr><td>5</td><td>start ON</td><td>yellow</td><td>changes to state 4 if it turns OFF, then to state 3 if it turns ON again</td></tr>
+<tr><td>6</td><td>boundary OFF</td><td>gray</td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
+</table>
+
+<h3>Trail states, and boundary markers for transition to no-trail states</h3>
+<p>Complex signal-circuitry constructions, large glider syntheses, and other engineered patterns often require tracking a particular moving subpattern.
+In a large pattern it can be difficult to keep track of precise causes and effects -- to know, for example, which of several gliders at T=0
+is the source of some key active pattern at T=1000.</p>
+
+<p>To address this, the Super algo supports several different colored states that can be applied to moving patterns. States 9 and 11 are ON cells equivalent to state 1,
+but when they turn OFF they leave behind different colored history/envelope cells, states 10 and 12 respectively.  Compare this to the behavior of ON cells with
+states higher than 12, which do not leave behind a trail when they turn OFF.</p>
+
+<p>Analogous to the behavior of boundary made of state-4 cells, a boundary made of state-8 cells will not allow a moving pattern to leave a trail after making the crossing.
+The pattern itself will pass through the state-8 boundary unaffected, but it will no longer leave a trail on the far side of the boundary, whatever its behavior was on the near side.</p>
+
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
+<tr><td>7</td><td>marked ON no-trail boundary</td><td>?</td><td>With state 8, this state provides a boundary beyond which moving patterns will not leave trails</td></tr>
+<tr><td>8</td><td>marked OFF no-trail boundary</td><td>?</td><td>With state 7, this state provides a boundary beyond which moving patterns will not leave trails</td></tr>
+<tr><td>9</td><td>ON trail #2</td><td>?</td><td>The second of three states that leave different-colored trails when they turn OFF</td></tr>
+<tr><td>10</td><td>OFF trail #2</td><td>?</td><td>Envelope/history state for state-9 ON cells</td></tr>
+<tr><td>11</td><td>ON trail #3</td><td>?</td><td>The third of three states that leave different-colored trails when they turn OFF</td></tr>
+<tr><td>12</td><td>OFF trail #3</td><td>?</td><td>Envelope/history state for state-11 ON cells</td></tr>
+</table>
+
+<h3>No-trail states and non-permanent label states</h3>
+<p>A glider made with any one of the following ON states will remain in that same state.  This makes it easier to track in a glider synthesis or in signal circuitry (for example).
+If any of these no-trail states come in contact with different no-trail states, new cells the the lowest no-trail state, state 13.</p>
+
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
+<tr><td>13</td><td>ON no-trail #1</td><td>?</td><td>Patterns in this state will remain in this state as they evolve, but leave no trail</td></tr>
+<tr><td>14</td><td>vanishing OFF labels</td><td>?</td><td>This cell state vanishes in one tick (spreads to state-16 neighbors)</td></tr>
+<tr><td>15</td><td>ON no-trail #2</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>16</td><td>removable OFF labels</td><td>?</td><td>This cell state decays to state 14 if touched by an ON state or an adjacent state-14 cell)</td></tr>
+<tr><td>17</td><td>ON no-trail #3</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>18</td><td>cyclable OFF state #1 (labeling)</td><td>?</td><td>Label state, switches to state 22 if a neighbor is state 22</td></tr>
+<tr><td>19</td><td>ON no-trail #4</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>20</td><td>cyclable OFF state #2 (labeling)</td><td>?</td><td>Label state, switches to state 18 if a neighbor is state 18</td></tr>
+<tr><td>21</td><td>ON no-trail #5</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>22</td><td>cyclable OFF state #3 (labeling)</td><td>?</td><td>Label state, switches to state 20 if a neighbor is state 20</td></tr>
+<tr><td>23</td><td>ON no-trail #6</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>24</td><td>hidden OFF state (pop-up labels)</td><td>?</td><td>This label state is close in color to an OFF cell, but converts to state 18 if touched by an ON cell</td></tr>
+<tr><td>25</td><td>ON no-trail #7</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+</table>
+
+<p><i><b>TODO:  make final color adjustments in Golly, LifeViewer, and the LifeSuper rule table; include color descriptions in above tables</b></i></p>
+
+<h2>Conversion scripts</h2>
+<p><i><b>TODO:  describe toSuper, toHistory, and toLife Lua conversion scripts and their default shortcuts, when these are completed and checked in.</b></i></p>
+<p></p>
 </body>
 </html>
