@@ -7,15 +7,26 @@ Larger than Life (LtL) is a family of cellular automata rules that generalize
 John Conway's Game of Life to large neighborhoods and general birth and survival thresholds.
 
 <p>
-Golly supports three different rule notations:
-<ul>
-<li><a href="#ltl">LtL</a></li>
-<li><a href="#kellie">Kellie Evans</a></li>
-<li><a href="#hrot">HROT</a></li>
-</ul>
+<dd><a href="#notations"><b>Rule Notations</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#ltl"><b>LtL Notation</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#nbrhds"><b>Neighborhoods</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#weighted"><b>Weighted</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#gaussian"><b>Gaussian</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#custom"><b>Custom</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#sandb"><b>S and B Limits</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#examples"><b>Examples</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#kellie"><b>Kellie Evans' Notation</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#hrot"><b>HROT Notation</b></a></dd>
+<dd><a href="#grid"><b>Grid topology and size limits</b></a></dd>
+<dd><a href="#history"><b>History</b></a></dd>
+<dd><a href="#References"><b>References</b></a></dd>
 
-<a name="ltl"></a>
 <p>&nbsp;<br>
+<a name="notations"></a>
+Golly supports three different rule notations:
+
+<p>&nbsp;<br>
+<a name="ltl"></a>
 <font size=+2><b>LtL Notation</b></font>
 
 <p>
@@ -35,20 +46,18 @@ S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to sur
 B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become a birth.<br>
 N<i>n</i> - specifies the extended neighborhood type.<br>
 
+<p>&nbsp;<br>
 <a name="nbrhds"></a>
-<p>
 These diagrams show the supported neighborhoods for <i>r</i> = 3:
 <p>
 
 <table cellspacing=4 cellpadding=0>
-   <tr><th>Type</th><th>Name</th><th>Diagram</th><th>Type</th><th>Name</th><th>Diagram</th></tr>
-   <tr><td>NM</td><td>Moore</td><td><img src="images/NM.png"></td><td>NN</td><td>von Neumann</td><td><img src="images/NN.png"></td></tr>
-   <tr><td>NC</td><td>Circular</td><td><img src="images/NC.png"></td><td>N2</td><td>Euclidean (L2)</td><td><img src="images/N2.png"></td></tr>
-   <tr><td>NB</td><td>Checkerboard</td><td><img src="images/NB.png"></td><td>N#</td><td>Hash</td><td><img src="images/NZ.png"></td></tr>
-   <tr><td>N+</td><td>Cross</td><td><img src="images/N+.png"></td><td>NX</td><td>Saltire</td><td><img src="images/NX.png"></td></tr>
-   <tr><td>N*</td><td>Star</td><td><img src="images/NS.png"></td><td>NH</td><td>Hexagonal</td><td><img src="images/NH.png"></td></tr>
-   <tr><td>NA</td><td>Asterisk</td><td><img src="images/NA.png"></td><td>N3</td><td>Tripod</td><td><img src="images/N3.png"></td></tr>
-   <tr><td>NL</td><td>Triangular</td><td><img src="images/NL.png"></td></tr>
+   <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
+   <tr><td>NM (Moore)</td><td><img src="images/NM.png"></td><td>NN (von Neumann)</td><td><img src="images/NN.png"></td><td>NC (Circular)</td><td><img src="images/NC.png"></td></tr>
+   <tr></tr><td>N2 (L2/Euclidean)</td><td><img src="images/N2.png"></td><td>NB (Checkerboard)</td><td><img src="images/NB.png"></td><td>N# (Hash)</td><td><img src="images/NZ.png"></td></tr>
+   <tr><td>N+ (Cross)</td><td><img src="images/N+.png"></td><td>NX (Saltire)</td><td><img src="images/NX.png"></td><td>N* (Star)</td><td><img src="images/NS.png"></td></tr>
+   <tr><td>NH (Hexagonal)</td><td><img src="images/NH.png"></td></tr><td>NA (Asterisk)</td><td><img src="images/NA.png"></td><td>N3 (Tripod)</td><td><img src="images/N3.png"></td></tr>
+   <tr><td>NL (Triangular)</td><td><img src="images/NL.png"></td></tr>
 </table>
 
 <p>
@@ -56,7 +65,9 @@ Note: The Triangular neighborhood flips the neighborhood vertically on alternati
 </p>
 <p>
 Other supported neighborhoods:
+
 <p>&nbsp;<br>
+<a name="weighted"></a>
 <font size=+1>Weighted (NW)</font>
 <p>
 Weighted allows you to specify a weight for each cell in the neighborhood. The neighbor count
@@ -105,7 +116,9 @@ If you have a 4-state pattern and want state weights 0, 1, 2, 10 then you'd spec
 <p>
 Finally, if you want a non-square grid you can postfix the rule string with H for hexagonal grid or L for triangular grid.
 Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+
 <p>&nbsp;<br>
+<a name="gaussian"></a>
 <font size=+1>Gaussian (NG)</font>
 <p>
 Gaussian defines a weighted neighborhood based on the defined range. Only square grids are allowed.
@@ -118,6 +131,7 @@ Example: (<i>r = 2</i>)
 <dd>1, 2, 3, 2, 1</dd>
 
 <p>&nbsp;<br>
+<a name="custom"></a>
 <font size=+1>Custom (N@)</font>
 <p>
 You can specify a custom neighborhood using N@ and then hexadecimal digits.
@@ -146,7 +160,7 @@ Alternatively you can create them manually, using the following method:
    <li>Remove the center cell <i>c</i> and concatenate.
       <dd>100010010001100010010001</dd>
    <li>Now convert to hexadecimal.</li>
-      <dd>189891</dd>
+      <dd>891891</dd>
 </ol>
 <p>
 Rule becomes:
@@ -155,8 +169,8 @@ Rule becomes:
 If you want a non-square grid you can postfix the rule string with H for hexagonal grid or L for triangular grid.
 Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
 
-
 <p>&nbsp;<br>
+<a name="sandb"></a>
 <font size=+1><b>S and B Limits</b></font>
 <p>
 The S and B limits must be from 0 to the neighborhood size.
@@ -172,6 +186,7 @@ included in the neighborhood counts and thus play no part in deciding the surviv
 of a state 1 cell, nor the birth of an empty cell.  C0 and C1 are equivalent to C2.
 
 <p>&nbsp;<br>
+<a name="examples"></a>
 <font size=+1><b>Examples</b></font>
 
 <p>
@@ -230,8 +245,8 @@ their commonly used names:
 </table>
 </p>
 
-<a name="kellie"></a>
 <p>&nbsp;<br>
+<a name="kellie"></a>
 <font size=+2><b>Kellie Evans' Notation</b></font>
 
 <p>
@@ -253,8 +268,8 @@ For example, Life can be entered as 1,3,3,3,4.
 Note that Golly's canonical version of Larger than Life rules defined with
 this notation will be in the LtL Notation.
 
-<a name="hrot"></a>
 <p>&nbsp;<br>
+<a name="hrot"></a>
 <font size=+2><b>HROT (Higher Range Outer Totalistic) Notation</b></font>
 
 <p>
@@ -275,7 +290,7 @@ B<i>list</i> - specifies the counts for a dead cell to become a birth.<br>
 N<i>n</i> - specifies the extended neighborhood type (and can be omitted for Moore).<br>
 <p>
 
-It supports the <a href="#nbrhds">same neighborhoods</a> as specified above for <a href="#LtL">LtL</a> notation.
+It supports the <a href="#nbrhds">same neighborhoods</a> as specified above for <a href="#ltl">LtL</a> notation.
 
 <p>
 HROT differs from LtL in three ways:
@@ -289,8 +304,9 @@ HROT differs from LtL in three ways:
 
 <p>
 The canonical form for a rule specified in HROT notation is also HROT.
-<p>&nbsp;<br>
 
+<p>&nbsp;<br>
+<a name="grid"></a>
 <font size=+1><b>Grid topology and size limits</b></font>
 
 <p>
@@ -320,6 +336,7 @@ One more restriction worth noting: For both bounded and unbounded universes
 B0 is <a href="quicklife.html#b0emulation">emulated</a> to prevent pattern strobing.
 
 <p>&nbsp;<br>
+<a name="history"></a>
 <font size=+1><b>History</b></font>
 
 <p>
@@ -359,6 +376,7 @@ boundless possibilities that implements LtL in ranges up to 500 and the potentia
 to discover LtL dynamics as yet unimagined.
 
 <p>&nbsp;<br>
+<a name="references"></a>
 <font size=+1><b>References</b></font>
 
 <a name="1"></a><p>
