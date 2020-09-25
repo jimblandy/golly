@@ -20,7 +20,9 @@
  */
 #include <limits.h>
 #if defined(_WIN64)
-   #define PRIuPTR "I64u"
+   #ifndef PRIuPTR
+      #define PRIuPTR "I64u"
+   #endif
    typedef uintptr_t g_uintptr_t ;
    #define G_MAX SIZE_MAX
    #define GOLLY64BIT (1)

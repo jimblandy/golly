@@ -25,6 +25,7 @@
 
 #include "wx/filename.h"   // for wxFileName
 
+#include <inttypes.h>
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
