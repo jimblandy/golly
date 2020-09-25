@@ -10,6 +10,7 @@
 #include <stdlib.h>     // for malloc, free, etc
 #include <limits.h>     // for INT_MIN and INT_MAX
 #include <string.h>     // for memset and strchr
+#include <cstddef>      // for ptrdiff_t
 
 // -----------------------------------------------------------------------------
 
