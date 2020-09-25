@@ -1042,7 +1042,7 @@ bool PatternView::RotatePastePattern(bool clockwise)
                 topology = suffix[1];
                 suffix[0] = 0;
             }
-            sprintf(rule, "%s:%c%d,%d", rule, topology, newwd, newht);
+            sprintf(rule+strlen(rule), ":%c%d,%d", topology, newwd, newht);
             if (pastelayer->algo->setrule(rule)) {
                 // unlikely, but could happen if the new grid size is too big
                 Warning(_("Sorry, but the clipboard pattern could not be rotated."));

@@ -435,7 +435,7 @@ const char *readmcell(lifealgo &imp, char *line) {
             if (Lcount == 1 && useltl) {
                 // call setrule again with correct width and height so we don't need
                 // yet another setrule call at the end
-                char rule[MAXRULESIZE];
+                char rule[MAXRULESIZE+32];
                 if (wd == 0 && ht == 0) {
                     // no #BOARD line was seen so use default size saved earlier
                     wd = defwd;
@@ -872,7 +872,7 @@ const char *readcomments(const char *filename, char **commptr)
                !(line[1] == 'N' && line[2] == 0)) {
             int linelen = (int)strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
-            strncpy(cptr + commlen, line, linelen);
+            strcpy(cptr + commlen, line);
             commlen += linelen;
             cptr[commlen] = '\n';      // getline strips off eol char(s)
             commlen++;
@@ -889,7 +889,7 @@ const char *readcomments(const char *filename, char **commptr)
          if (line[1] == 'D' && (line[2] == ' ' || line[2] == 0)) {
             int linelen = (int)strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
-            strncpy(cptr + commlen, line, linelen);
+            strcpy(cptr + commlen, line);
             commlen += linelen;
             cptr[commlen] = '\n';         // getline strips off eol char(s)
             commlen++;
@@ -901,7 +901,7 @@ const char *readcomments(const char *filename, char **commptr)
       while (line[0] == '#') {
          int linelen = (int)strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
-         strncpy(cptr + commlen, line, linelen);
+         strcpy(cptr + commlen, line);
          commlen += linelen;
          cptr[commlen] = '\n';         // getline strips off eol char(s)
          commlen++;
@@ -918,7 +918,7 @@ const char *readcomments(const char *filename, char **commptr)
             while (getline(line, LINESIZE)) {
                int linelen = (int)strlen(line);
                if (commlen + linelen + 1 > maxcommlen) break;
-               strncpy(cptr + commlen, line, linelen);
+               strcpy(cptr + commlen, line);
                commlen += linelen;
                cptr[commlen] = '\n';      // getline strips off eol char(s)
                commlen++;
@@ -931,7 +931,7 @@ const char *readcomments(const char *filename, char **commptr)
       while (line[0] == '!') {
          int linelen = (int)strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
-         strncpy(cptr + commlen, line, linelen);
+         strcpy(cptr + commlen, line);
          commlen += linelen;
          cptr[commlen] = '\n';            // getline strips off eol char(s)
          commlen++;
@@ -945,7 +945,7 @@ const char *readcomments(const char *filename, char **commptr)
          if (line[1] == 'C') {
             int linelen = (int)strlen(line);
             if (commlen + linelen + 1 > maxcommlen) break;
-            strncpy(cptr + commlen, line, linelen);
+            strcpy(cptr + commlen, line);
             commlen += linelen;
             cptr[commlen] = '\n';         // getline strips off eol char(s)
             commlen++;
