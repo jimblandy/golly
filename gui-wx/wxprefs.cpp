@@ -2085,7 +2085,9 @@ void GetPrefs()
                 if (i != QLIFE_ALGO) algoinfo[i]->algomem = maxmem;
 
         } else if (strcmp(keyword, "rule") == 0) {
-            strncpy(initrule, value, sizeof(initrule));
+            if (strlen(value)+1 > sizeof(initrule))
+              Fatal(_("Length of initial rule exceeds 255 characters: ")+value);
+            strcpy(initrule, value);
 
         } else if (strcmp(keyword, "named_rule") == 0) {
             // value must have format "name|rule" with name and rule non-empty
