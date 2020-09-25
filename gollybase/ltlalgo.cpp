@@ -3185,7 +3185,7 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
         // populate the list from each row in the cache
         k = 0;
         count = 0;
-        for (i = 0; i < width; i++) {
+        for (int i = 0; i < width; i++) {
             // get the row
             if (rowcount[i] > 0) {
                 item = neighborcache[k];
