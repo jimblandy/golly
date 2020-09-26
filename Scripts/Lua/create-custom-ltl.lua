@@ -54,7 +54,7 @@ end
 local inc = 2
 if (#selcells & 1) == 1 then inc = 3 end
 
-for i = 1, #selcells, inc do
+for i = 1, #selcells - 1, inc do
     offset = (selcells[i] - x) + wd * (selcells[i + 1] - y) + 1
     bitmap[offset] = 1
 end
