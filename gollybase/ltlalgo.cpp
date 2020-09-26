@@ -3504,7 +3504,7 @@ const char *ltlalgo::setrule(const char *s)
     min = -1;
 
     do {
-        // read next survival range (x-y,) or single value (x,)
+        // read next survival range (x-y) or single value (x)
         if (sscanf(pos, "%d-%d%n", &min, &max, &endpos) != 2) {
             if (sscanf(pos, "%d%n", &min, &endpos) == 1) {
                 max = min;
@@ -3540,15 +3540,25 @@ const char *ltlalgo::setrule(const char *s)
         }
     } while(valid);
 
-    // decode births
+    // check if there were any survival counts
     if (min == -1) {
+        // no counts so next character must be a comma
         if (*pos != ',') {
             free(ss);
             return "missing , before B";
         } else {
+            // skip comma
             pos++;
         }
+    } else {
+        // survival counts were present and might have ended with comma
+        if (*(pos - 1) != ',') {
+            free(ss);
+            return "missing , before B";
+        }
     }
+
+    // check for B
     if (*pos != 'B') {
         free(ss);
         return "missing B";
@@ -3563,7 +3573,7 @@ const char *ltlalgo::setrule(const char *s)
     min = -1;
 
     do {
-        // read next birth range (x-y,) or single value (x,)
+        // read next birth range (x-y) or single value (x)
         if (sscanf(pos, "%d-%d%n", &min, &max, &endpos) != 2) {
             if (sscanf(pos, "%d%n", &min, &endpos) == 1) {
                 max = min;
