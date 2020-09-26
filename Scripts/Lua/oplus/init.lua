@@ -1652,6 +1652,8 @@ function m.hexrule()
         -- neighborhood:hexagonal or the ICONS section specifies hexagons???
     elseif algo == "Larger than Life" then
         return rule:sub(-1) == "H" or rule:sub(-2) == "NA" or rule:sub(-2) == "N3"
+    elseif algo == "Super" then
+        return rule:sub(-8) == "HHistory" or rule:sub(-6) == "HSuper"
     end
 
     return false

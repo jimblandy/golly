@@ -1841,7 +1841,15 @@ void ltlalgo::fast_Weighted(int mincol, int minrow, int maxcol, int maxrow)
             
             for (int x = mincol; x <= maxcol; x++) {
                 int ncount = 0;
-                int k = 0;
+                int k, l;
+                if (grid_type == TRI_GRID && (((x + y) & 1) != 0)) {
+                    l = -nsize;
+                    k = brow;
+                    l += l;
+                } else {
+                    k = 0;
+                    l = 0;
+                }
                 unsigned char* cp1 = cellptr;
                 for (int j = -range; j <= range; j++, cp1 += outerwd) {
                     for (int i = -range; i <= range; i++) {
@@ -1855,6 +1863,7 @@ void ltlalgo::fast_Weighted(int mincol, int minrow, int maxcol, int maxrow)
                         }
                         k++;
                     }
+                    k += l;
                 }
     
                 update_next_grid(x, y, yoffset+x, ncount);
@@ -2992,19 +3001,6 @@ const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGr
         }
     }
 
-    // check for hexagonal or triangular grid type postfix
-    if (i < l) {
-        if (tolower(n[i]) == 'h') {
-            gt = HEX_GRID;
-            i++;
-        } else {
-            if (tolower(n[i]) == 'l') {
-                gt = TRI_GRID;
-                i++;
-            }
-        }
-    }
-
     // check for optional state weights
     if (n[i] == ',') {
         i++;
@@ -3055,6 +3051,19 @@ const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGr
     weights = weightslist;
     if (stateweights) free(stateweights);
     stateweights = stateweightslist;
+
+    // check for hexagonal or triangular grid type postfix
+    if (i < l) {
+        if (tolower(n[i]) == 'h') {
+            gt = HEX_GRID;
+            i++;
+        } else {
+            if (tolower(n[i]) == 'l') {
+                gt = TRI_GRID;
+                i++;
+            }
+        }
+    }
 
     // update next character position
     nbrend = n + i;
