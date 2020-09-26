@@ -7,12 +7,14 @@
 -- 3. Run this script and a rule is created with the correct
 --    range and custom neighborhood definition
 --
--- Selection must be square and have a side length which
--- is an odd number from 3 to 99
+-- Selection must be square and have a side length which is an
+-- odd number from 3 to 81 (which equates to ranges 1 to 40)
 --
 -- Author: Chris Rowett (crowett@gmail.com), Sep 2020
 
 local g = golly()
+local minlen = 3
+local maxlen = 81
 
 -- check for selection
 local selrect = g.getselrect()
@@ -31,8 +33,8 @@ if (wd & 1) ~= 1 then
     g.warn("Selection dimension must be odd.", false)
     g.exit("")
 end
-if wd < 3 or wd > 99 then
-    g.warn("Selection dimension must be from 3 to 99.", false)
+if wd < minlen or wd > maxlen then
+    g.warn("Selection dimension must be from "..minlen.." to "..maxlen..".", false)
     g.exit("")
 end
 

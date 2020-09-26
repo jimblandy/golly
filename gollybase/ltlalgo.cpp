@@ -3376,6 +3376,11 @@ const char *ltlalgo::setrule(const char *s)
     int l = (int) strlen(s);
     TGridType gridt = SQUARE_GRID;
 
+    // check supplied rule string is not too long
+    if (l >= MAXRULESIZE) {
+      return "Rule name is too long." ;
+    }
+
     // convert rule to upper case
     for (int i = 0; i <= l; i++) {
         urule[i] = (char) toupper(s[i]);
