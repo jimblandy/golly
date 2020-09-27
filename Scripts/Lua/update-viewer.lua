@@ -6,6 +6,9 @@
 local g = golly()
 local gp = require "gplus"
 
+-- folder name for LifeViewer files
+local lifeviewerfolder = "lifeviewer"
+
 -- name of LifeViewer Javascript plugin
 local lifeviewerfilename = "lv-plugin.js"
 
@@ -46,7 +49,7 @@ end
 
 local function downloadLifeViewer()
     -- check LifeViewer exists in Golly's Scripts/Lua/gplus folder
-    local lifeviewerdir = g.getdir("app").."Scripts"..pathsep.."Lua"..pathsep.."gplus"..pathsep
+    local lifeviewerdir = g.getdir("data")..lifeviewerfolder..pathsep
     local lifeviewerpath = lifeviewerdir..lifeviewerfilename
     -- prompt to download LifeViewer (Cancel will abort script)
     g.note("Update LifeViewer\n\nClick OK to go to download page or Cancel to stop.\n\n"..lifeviewerdownload)

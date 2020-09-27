@@ -13,6 +13,9 @@ local myname = "showinviewer.lua"
 local viewerwidth = 800
 local viewerheight = 700
 
+-- folder name for LifeViewer files
+local lifeviewerfolder = "lifeviewer"
+
 -- name of launch HTML file
 local launchfilename = "launch.html"
 
@@ -944,7 +947,7 @@ end
 
 local function launchLifeViewer()
     -- check LifeViewer exists in Golly's Scripts/Lua/gplus folder
-    local lifeviewerdir = g.getdir("app").."Scripts"..pathsep.."Lua"..pathsep.."gplus"..pathsep
+    local lifeviewerdir = g.getdir("data")..lifeviewerfolder..pathsep
     local lifeviewerpath = lifeviewerdir..lifeviewerfilename
     local file, msg = io.open(lifeviewerpath, "r")
     if file == nil then
