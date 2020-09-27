@@ -48,7 +48,7 @@ N<i>n</i> - specifies the extended neighborhood type.<br>
 
 <p>&nbsp;<br>
 <a name="nbrhds"></a>
-These diagrams show the supported neighborhoods for <i>r</i> = 3:
+These diagrams show the supported neighborhoods, N<i>n</i>, for <i>r</i> = 3:
 <p>
 
 <table cellspacing=6 cellpadding=0>
@@ -114,7 +114,7 @@ Example:
 If you have a 4-state pattern and want state weights 0, 1, 2, 10 then you'd specify:
 <dd>R<i>r</i>,C4,S<i>list</i>,B<i>list</i>,NW<i>neighborhood weights</i>,012A</dd>
 <p>
-Finally, if you want a non-square grid you can postfix the rule string with H for hexagonal grid or L for triangular grid.
+Finally, if you want a non-square grid you can add a suffix to the rule string of H for hexagonal grid or L for triangular grid.
 Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
 
 <p>&nbsp;<br>
@@ -166,7 +166,7 @@ Alternatively you can create them manually, using the following method:
 Rule becomes:
 <dd>R2,C0,S<i>list</i>,B<i>list</i>,N@891891</dd>
 <p>
-If you want a non-square grid you can postfix the rule string with H for hexagonal grid or L for triangular grid.
+If you want a non-square grid you can add a suffix to the rule string of H for hexagonal grid or L for triangular grid.
 Triangular grid will cause the custom neighborhood to be treated as a triangular neighbourhood and flip vertically on alternating cells.
 
 <p>&nbsp;<br>
@@ -268,7 +268,7 @@ For example, Life can be entered as 1,3,3,3,4.
 
 <p>
 Note that Golly's canonical version of Larger than Life rules defined with
-this notation will be in the LtL Notation.
+this notation will be in the <a href="#ltl">LtL</a> notation.
 
 <p>&nbsp;<br>
 <a name="hrot"></a>
