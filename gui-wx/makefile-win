@@ -115,7 +115,6 @@ WXO = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
 LUAO = $(LUADIR)\lapi.obj \
     $(LUADIR)\lauxlib.obj \
     $(LUADIR)\lbaselib.obj \
-    $(LUADIR)\lbitlib.obj \
     $(LUADIR)\lcode.obj \
     $(LUADIR)\lcorolib.obj \
     $(LUADIR)\lctype.obj \

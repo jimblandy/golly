@@ -48,7 +48,6 @@ rule cc-lua
 build $luadir/lapi.o: cc-lua $luadir/lapi.c
 build $luadir/lauxlib.o: cc-lua $luadir/lauxlib.c
 build $luadir/lbaselib.o: cc-lua $luadir/lbaselib.c
-build $luadir/lbitlib.o: cc-lua $luadir/lbitlib.c
 build $luadir/lcode.o: cc-lua $luadir/lcode.c
 build $luadir/lcorolib.o: cc-lua $luadir/lcorolib.c
 build $luadir/lctype.o: cc-lua $luadir/lctype.c
@@ -89,7 +88,7 @@ rule link_lua
 
 # build lua library
 build $lua_lib: link_lua $luadir/lapi.o $luadir/lauxlib.o $luadir/lbaselib.o $
-      $luadir/lbitlib.o $luadir/lcode.o $luadir/lcorolib.o $luadir/lctype.o $luadir/ldblib.o $
+      $luadir/lcode.o $luadir/lcorolib.o $luadir/lctype.o $luadir/ldblib.o $
       $luadir/ldebug.o $luadir/ldo.o $luadir/ldump.o $luadir/lfunc.o $luadir/lgc.o $
       $luadir/linit.o $luadir/liolib.o $luadir/llex.o $luadir/lmathlib.o $luadir/lmem.o $
       $luadir/loadlib.o $luadir/lobject.o $luadir/lopcodes.o $luadir/loslib.o $luadir/lparser.o $
