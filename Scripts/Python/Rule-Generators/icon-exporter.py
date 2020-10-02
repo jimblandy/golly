@@ -22,7 +22,7 @@ multi_color_icons = False   # grayscale
 def hex2(i):
     # convert number from 0..255 into 2 hex digits
     hexdigit = "0123456789ABCDEF"
-    result = hexdigit[i / 16]
+    result = hexdigit[i // 16]
     result += hexdigit[i % 16]
     return result
 
@@ -39,8 +39,8 @@ def extract_icons(iconsize):
         y = 0
         if iconsize == 15: y = 32
         if iconsize == 7: y = 48
-        for row in xrange(iconsize):
-            for col in xrange(iconsize):
+        for row in range(iconsize):
+            for col in range(iconsize):
                 state = g.getcell(x+col, y+row)
                 rgb = (allcolors[state*4+1], allcolors[state*4+2], allcolors[state*4+3])
                 if not rgb in iconcolors:
@@ -83,19 +83,19 @@ def extract_icons(iconsize):
             if charsperpixel == 1:
                 icondata += cindex[n]
             else:
-                icondata += cindex[n % 16] + cindex[n / 16]
+                icondata += cindex[n % 16] + cindex[n // 16]
         icondata += " c " + hexcolor + "\"\n"
         n += 1
     
-    for i in xrange(numicons):
+    for i in range(numicons):
         icondata += "/* icon for state " + str(i+1) + " */\n"
         x = i*32
         y = 0
         if iconsize == 15: y = 32
         if iconsize == 7: y = 48
-        for row in xrange(iconsize):
+        for row in range(iconsize):
             icondata += "\""
-            for col in xrange(iconsize):
+            for col in range(iconsize):
                 state = g.getcell(x+col, y+row)
                 if state == 0:
                     # show . or .. for background color
@@ -110,7 +110,7 @@ def extract_icons(iconsize):
                     if charsperpixel == 1:
                         icondata += cindex[n]
                     else:
-                        icondata += cindex[n % 16] + cindex[n / 16]
+                        icondata += cindex[n % 16] + cindex[n // 16]
             icondata += "\"\n"
     
     return icondata
@@ -176,7 +176,7 @@ def create_average_colors(iconsection):
             
             elif xpmcount <= 1 + num_colors + height:
                 # parse pixel data in line like "......AAA......"
-                for col in xrange(width):
+                for col in range(width):
                     offset = col*chars_per_pixel
                     key = line[offset : offset + chars_per_pixel]
                     if not key in colordict:
@@ -193,9 +193,9 @@ def create_average_colors(iconsection):
                     # we've done this icon
                     state += 1
                     if nbcount > 0:
-                        colordata += str(state) + " " + str(totalR / nbcount) + " " \
-                                                      + str(totalG / nbcount) + " " \
-                                                      + str(totalB / nbcount) + "\n"
+                        colordata += str(state) + " " + str(totalR // nbcount) + " " \
+                                                      + str(totalG // nbcount) + " " \
+                                                      + str(totalB // nbcount) + "\n"
                     else:
                         # avoid div by zero
                         colordata += str(state) + " 0 0 0\n"
@@ -307,7 +307,7 @@ def export_icons(iconsection, rulename):
         g.addlayer()
         g.new("icon test")
         g.setrule(rulename)
-        for i in xrange(g.numstates()-1):
+        for i in range(g.numstates()-1):
             g.setcell(i, 0, i+1)
         g.fit()
         g.setoption("showicons",True)

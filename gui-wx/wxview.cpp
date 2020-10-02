@@ -69,6 +69,9 @@ int glMaxTextureSize = 1024;         // maximum texture size
 BEGIN_EVENT_TABLE(PatternView, wxGLCanvas)
 EVT_PAINT            (           PatternView::OnPaint)
 EVT_SIZE             (           PatternView::OnSize)
+#ifdef __WXMAC__
+EVT_CHAR_HOOK        (           PatternView::OnCharHook)
+#endif
 EVT_KEY_DOWN         (           PatternView::OnKeyDown)
 EVT_KEY_UP           (           PatternView::OnKeyUp)
 EVT_CHAR             (           PatternView::OnChar)
@@ -1039,7 +1042,7 @@ bool PatternView::RotatePastePattern(bool clockwise)
                 topology = suffix[1];
                 suffix[0] = 0;
             }
-            sprintf(rule, "%s:%c%d,%d", rule, topology, newwd, newht);
+            sprintf(rule+strlen(rule), ":%c%d,%d", topology, newwd, newht);
             if (pastelayer->algo->setrule(rule)) {
                 // unlikely, but could happen if the new grid size is too big
                 Warning(_("Sorry, but the clipboard pattern could not be rotated."));
@@ -2413,6 +2416,53 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+
+// we need this hook handler to avoid problems seeing ctrl-Q and option-EINU`
+
+void PatternView::OnCharHook(wxKeyEvent& event)
+{
+    int key = event.GetKeyCode();
+    int mods = event.GetModifiers();
+
+    // close any open tool tip window and clear any status bar message
+    wxToolTip::RemoveToolTips();
+    statusptr->ClearMessage();
+
+    // avoid ctrl-Q not being seen until hit twice
+    if (mods == wxMOD_RAW_CONTROL && key == 'Q') {
+        // convert Q to lower case
+        key = 'q';
+        if (inscript && pass_key_events) {
+            PassKeyToScript(key, mods);
+        } else {
+            ProcessKey(key, mods);
+        }
+        // don't call event.Skip()
+        return;
+    }
+
+    // avoid option-EINU` not being seen and causing a beep
+    if (mods == wxMOD_ALT && (key == 'E' || key == 'I' || key == 'N' ||
+                              key == 'U' || key == '`')) {
+        // convert key to lower case
+        if (key >= 'A' && key <= 'Z') key += 32;
+        if (inscript && pass_key_events) {
+            PassKeyToScript(key, mods);
+        } else {
+            ProcessKey(key, mods);
+        }
+        // don't call event.Skip()
+        return;
+    }
+
+    event.Skip();
+}
+
+#endif // __WXMAC__
+
+// -----------------------------------------------------------------------------
+
 #if defined(__WXMAC__) && wxCHECK_VERSION(2,9,0)
     // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
     #define wxMOD_CONTROL wxMOD_RAW_CONTROL
@@ -2421,11 +2471,6 @@ void PatternView::OnSize(wxSizeEvent& event)
 
 void PatternView::OnKeyDown(wxKeyEvent& event)
 {
-#ifdef __WXMAC__
-    // close any open tool tip window (fixes wxMac bug?)
-    wxToolTip::RemoveToolTips();
-#endif
-    
     realkey = event.GetKeyCode();
     int mods = event.GetModifiers();
     
@@ -2481,19 +2526,9 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
         realkey = 0;
     }
     
-#ifdef __WXOSX__
+#ifdef __WXMAC__
     // pass ctrl/cmd-key combos directly to OnChar
     if (realkey > 0 && ((mods & wxMOD_CONTROL) || (mods & wxMOD_CMD))) {
-        OnChar(event);
-        return;
-    }
-#endif
-    
-#ifdef __WXMAC__
-    // allow option-E/I/N/U/` (OnChar is not called for those key combos
-    // although the prefs dialog KeyComboCtrl::OnChar *is* called)
-    if (mods == wxMOD_ALT && (realkey == 'E' || realkey == 'I' || realkey == 'N' ||
-                              realkey == 'U' || realkey == '`')) {
         OnChar(event);
         return;
     }

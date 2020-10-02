@@ -85,3 +85,14 @@ $149bo80b3o192bo$153bo77b2o193bo2bo$150bo3bo272b3o$149b2ob2o275b2obo$
 150bo37b3o240bo$151b2ob2o31bo2bob2o$187b3o$188b5o$190b2o$189bobo$190bo
 $188bo$185b4o2bo$184b2ob2o2bo$185b2o2b2o3$191b3o$185b3ob6o$185bo2b3ob
 3o$185b2o3bo$189bo$187b3o2b3o$192bo!
+#C Script commands for showinviewer.lua:
+#C [[ AUTOSTART PAUSE 2 THEME 0 ]]
+#C [[ T 200 X -308 Y 30 Z 3 ]]
+#C [[ T 300 X -280 Y 60 Z 4 ]]
+#C [[ T 500 Z 5 ]]
+#C [[ T 1000 Y -25 Z 2.5 ]]
+#C [[ T 1200 Z 2 ]]
+#C [[ T 1500 X -365 Y 25 Z 7 ]]
+#C [[ T 1800 Z 3 ]]
+#C [[ T 2500 X -1250 Y 0 Z 2 ]]
+#C [[ LOOP 4300 ]]

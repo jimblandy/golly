@@ -15,6 +15,7 @@
 #include "generationsalgo.h"
 #include "ltlalgo.h"
 #include "jvnalgo.h"
+#include "superalgo.h"
 #include "ruleloaderalgo.h"
 
 #include "wxgolly.h"       // for wxGetApp
@@ -762,6 +763,7 @@ void InitAlgorithms()
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
     ltlalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
+    superalgo::doInitializeAlgoInfo(AlgoData::tick());
     
     // RuleLoader must be last so we can display detailed error messages
     // (see LoadRule in wxhelp.cpp)

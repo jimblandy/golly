@@ -55,16 +55,16 @@ def findlivecell(x, y):
     while d <= maxd:
         x -= 1
         y -= 1
-        for i in xrange(2*d):
+        for i in range(2*d):
             x += 1   # move east
             if getstate(x, y) > 0: return [x, y]
-        for i in xrange(2*d):
+        for i in range(2*d):
             y += 1   # move south
             if getstate(x, y) > 0: return [x, y]
-        for i in xrange(2*d):
+        for i in range(2*d):
             x -= 1   # move west
             if getstate(x, y) > 0: return [x, y]
-        for i in xrange(2*d):
+        for i in range(2*d):
             y -= 1   # move north
             if getstate(x, y) > 0: return [x, y]
         d += 1
@@ -151,12 +151,12 @@ def lookforkeys(event):
         obox = getminbox(object)
         if event == "key x none":
             # translate object so that bounding box doesn't change
-            xshift = 2 * (obox.left + int(obox.wd/2))
+            xshift = 2 * (obox.left + int(obox.wd//2))
             if obox.wd % 2 == 0: xshift -= 1
             object = g.transform(object, xshift, 0, -1, 0, 0, 1)
         else:
             # translate object so that bounding box doesn't change
-            yshift = 2 * (obox.top + int(obox.ht/2))
+            yshift = 2 * (obox.top + int(obox.ht//2))
             if obox.ht % 2 == 0: yshift -= 1
             object = g.transform(object, 0, yshift, 1, 0, 0, -1)
         oldcells = underneath(object)
@@ -168,8 +168,8 @@ def lookforkeys(event):
         # rotate floating object clockwise or anticlockwise
         # about the center of the object's bounding box
         obox = getminbox(object)
-        midx = obox.left + int(obox.wd/2)
-        midy = obox.top + int(obox.ht/2)
+        midx = obox.left + int(obox.wd//2)
+        midy = obox.top + int(obox.ht//2)
         newleft = midx + obox.top - midy
         newtop = midy + obox.left - midx
         rotrect = [ newleft, newtop, obox.ht, obox.wd ]

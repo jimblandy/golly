@@ -3,22 +3,56 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-<font size=+1><b>Changes in version 3.4 (!!!)</b></font>
+<font size=+1><b>Changes in version 4.0 (released October 2020)</b></font>
+
+<p>
+<b>NOTE:</b> This release coincides with the 50th anniversary of Martin Gardner's
+Scientific American column that introduced John Conway's Game of Life.
+
+<p>
+<ul>
+<li> Golly no longer supports 32-bit systems.
+<li> Golly now requires Python 3.3+ (64-bit) to run .py scripts.
+<li> Updated Lua to version 5.4.0.
+<li> A new <a href="Algorithms/Super.html">Super</a> algorithm has been added.
+<li> The <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> algorithm now supports
+     <a href="Algorithms/Larger_than_Life.html#hrot">HROT</a> format rules, B0 emulation
+     and many new <a href="Algorithms/Larger_than_Life.html#nbrhds">neighborhoods</a>
+     including <a href="Algorithms/Larger_than_Life.html#weighted">weighted</a> and
+     <a href="Algorithms/Larger_than_Life.html#custom">custom</a> neighborhoods.
+<li> New script <a href="open:Scripts/Lua/create-custom-ltl.lua">create-custom-ltl.lua</a>
+     creates Larger than Life <a href="Algorithms/Larger_than_Life.html#custom">custom</a> rule strings.
+<li> <a href=open:Scripts/Lua/showinviewer.lua>showinviewer.lua</a>: LifeViewer now fills
+     the browser window and resizes with the browser. 
+<li> New script <a href=open:Scripts/Lua/update-viewer.lua>update-viewer.lua</a> downloads the
+     latest version of LifeViewer to use with showinviewer.lua.
+</ul>
+
+<p>
+<font size=+1><b>Changes in version 3.4 (released August 2020)</b></font>
+
+<p>
+<b>NOTE:</b> This is the last version that will support 32-bit systems.
+It's also the last version that will support Python 2.x.  All future
+versions of Golly will only run on 64-bit systems and will require
+a Python 3.x (64-bit) installation to run .py scripts.
+
 <p>
 <ul>
 <li> Mac app now supports Retina screens (no more fuzzy text).
 <li> Keyboard shortcuts can be assigned to these new actions: Open Recent Pattern and Run Recent Script.
 <li> New script <a href=open:Scripts/Lua/showinviewer.lua>showinviewer.lua</a> opens the current pattern
-     in LifeViewer in your default browser.
-     (Note that lifeviewer.lua is no longer needed and has been removed.)
-<li> New patterns:
+     in LifeViewer in your default browser. Examples of LifeViewer scripting commands can be found in the
+     Patterns/Life/Rakes folder.  (Note that lifeviewer.lua is no longer needed and has been removed.)
+<li> New pattern:
      <a href="open:Patterns/Self-Rep/Devore/Mahler-rep.zip">Devore/Mahler-rep.zip</a> in <i>Self-Rep</i>.
 <li> Fixed a bug that caused incorrect pattern comments to be displayed.
 <li> Fixed a bug in the Mac app that caused ctrl-O to generate two key down events.
+<li> Fixed a problem with Mac app not seeing certain key combinations (ctrl-Q and option-EINU`).
 </ul>
 
 <p>
-<font size=+1><b>Changes in version 3.3 (September 2019)</b></font>
+<font size=+1><b>Changes in version 3.3 (released September 2019)</b></font>
 
 <p>
 <ul>

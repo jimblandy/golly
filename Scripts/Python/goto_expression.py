@@ -112,10 +112,10 @@ def ee_approx(m, e):
   e = int(e)
   if e<0:
     e = 10**(-e)
-    return m/(e*2**64)
+    return m//(e*2**64)
   else:
     e = 10**e
-    return (m*e)/(2**64)
+    return (m*e)//(2**64)
 
 def erf_ee(match):
   "Scientific notation: 1.2e5 -> 120000"
@@ -304,7 +304,7 @@ def goto(newgen, delay):
    for i, d in enumerate(intbase(newgen, g.getbase())):
       if d > 0:
          g.setstep(i)
-         for j in xrange(d):
+         for j in range(d):
             if g.empty():
                g.show("Pattern is empty.")
                return

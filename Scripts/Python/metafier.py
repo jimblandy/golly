@@ -45,7 +45,7 @@ if len(selrect) == 0: g.exit("There is no selection.")
 # if metafied layer already exists then we'll use that
 layername = "metafied"
 metalayer = -1
-for i in xrange(g.numlayers()):
+for i in range(g.numlayers()):
     if g.getname(i) == layername:
         metalayer = i
         break
@@ -63,8 +63,8 @@ selwidth = selrect[2]
 selheight = selrect[3]
 
 # create a 2D list of 0s and 1s representing entire selection
-livecell = [[0 for y in xrange(selheight)] for x in xrange(selwidth)]
-for i in xrange(0, len(slist), 2):
+livecell = [[0 for y in range(selheight)] for x in range(selwidth)]
+for i in range(0, len(slist), 2):
     livecell[slist[i] - selrect[0]][slist[i+1] - selrect[1]] = 1
 
 # build a patch pattern based on the current rule
@@ -798,8 +798,8 @@ ONcell += RuleBits
 g.new(layername)
 g.setalgo("QuickLife")              # qlife's setcell is faster
 
-for j in xrange(selheight):
-    for i in xrange(selwidth):
+for j in range(selheight):
+    for i in range(selwidth):
         golly.show("Placing (" + str(i+1) + "," + str(j+1) + ") tile" +
                    " in a " + str(selwidth) + " by " + str(selheight) + " rectangle.")
         if livecell[i][j]:

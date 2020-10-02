@@ -55,3 +55,8 @@ b3o15b3oboo25bo15bo$354bo25bo$355bo3bo15bo3bo$356bobbo15bobbo11$360boo
 o15bobbo28bo7bo$405booboboboo3booboboboo$402b3obob3o9b3obob3o$402bo3bo
 bo5bobo5bobo3bo$406boo6bobo6boo$403boo9bobo9boo$403booboo15booboo$407b
 o15bo!
+#C Script commands for showinviewer.lua:
+#C (in LifeViewer, press Q or A to increase or\ndecrease the number of layers,
+#C   or use the left-hand slider bar in from Settings (gear icon) > Display.
+#C   Comma, period, <, and > change the display angle.)
+#C [[ THEME Red ANGLE 45 ZOOM -1 AUTOSTART LAYERS 10 STARS STEP 6 TRACK 0 -1/5 ]]

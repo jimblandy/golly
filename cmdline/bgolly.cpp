@@ -6,6 +6,7 @@
 #include "generationsalgo.h"
 #include "ltlalgo.h"
 #include "jvnalgo.h"
+#include "superalgo.h"
 #include "ruleloaderalgo.h"
 #include "readpattern.h"
 #include "util.h"
@@ -523,6 +524,7 @@ int main(int argc, char *argv[]) {
    generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    ltlalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    jvnalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   superalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    ruleloaderalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    while (argc > 1 && argv[1][0] == '-') {
       argc-- ;

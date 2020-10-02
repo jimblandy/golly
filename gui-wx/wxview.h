@@ -124,6 +124,9 @@ private:
     // event handlers
     void OnPaint(wxPaintEvent& event);
     void OnSize(wxSizeEvent& event);
+#ifdef __WXMAC__
+    void OnCharHook(wxKeyEvent& event);
+#endif
     void OnKeyDown(wxKeyEvent& event);
     void OnKeyUp(wxKeyEvent& event);
     void OnChar(wxKeyEvent& event);

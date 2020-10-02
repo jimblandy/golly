@@ -5,7 +5,32 @@
 <p>
 Larger than Life (LtL) is a family of cellular automata rules that generalize
 John Conway's Game of Life to large neighborhoods and general birth and survival thresholds.
-The LtL rule notation used by Golly is identical to the one created by Mirek Wojtowicz
+
+<p>
+<dd><a href="#notations"><b>Rule Notations</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#ltl"><b>LtL Notation</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#nbrhds"><b>Neighborhoods</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#weighted"><b>Weighted</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#gaussian"><b>Gaussian</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#custom"><b>Custom</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#sandb"><b>S and B Limits</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a href="#examples"><b>Examples</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#kellie"><b>Kellie Evans' Notation</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#hrot"><b>HROT Notation</b></a></dd>
+<dd><a href="#grid"><b>Grid topology and size limits</b></a></dd>
+<dd><a href="#history"><b>History</b></a></dd>
+<dd><a href="#references"><b>References</b></a></dd>
+
+<p>&nbsp;<br>
+<a name="notations"></a>
+Golly supports three different rule notations:
+
+<p>&nbsp;<br>
+<a name="ltl"></a>
+<font size=+2><b>LtL Notation</b></font>
+
+<p>
+The first rule notation used by Golly is identical to the one created by Mirek Wojtowicz
 for <a href="http://www.mirekw.com/ca/rullex_lgtl.html">MCell</a>:
 
 <p>
@@ -14,43 +39,156 @@ R<i>r</i>,C<i>c</i>,M<i>m</i>,S<i>smin</i>..<i>smax</i>,B<i>bmin</i>..<i>bmax</i
 </dd>
 
 <p>
-R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
 B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become a birth.<br>
-N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore, N for von Neumann, and C is for circular).
+N<i>n</i> - specifies the extended neighborhood type.<br>
+
+<p>&nbsp;<br>
+<a name="nbrhds"></a>
+These diagrams show the supported neighborhoods, N<i>n</i>, for <i>r</i> = 3:
+<p>
+
+<table cellspacing=6 cellpadding=0>
+   <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
+   <tr><td>Moore<br/>(NM)</td><td><img src="images/NM.png"></td><td>&nbsp;&nbsp;von Neumann<br/>&nbsp;&nbsp;(NN)</td><td><img src="images/NN.png"></td><td>&nbsp;&nbsp;Circular<br/>&nbsp;&nbsp;(NC)</td><td><img src="images/NC.png"></td></tr>
+   <tr></tr><td>L2/Euclidean<br/>(N2)</td><td><img src="images/N2.png"></td><td>&nbsp;&nbsp;Checkerboard<br/>&nbsp;&nbsp;(NB)</td><td><img src="images/NB.png"></td><td>&nbsp;&nbsp;Hash<br/>&nbsp;&nbsp;(N#)</td><td><img src="images/NZ.png"></td></tr>
+   <tr><td>Cross<br/>(N+)</td><td><img src="images/N+.png"></td><td>&nbsp;&nbsp;Saltire<br/>&nbsp;&nbsp;(NX)</td><td><img src="images/NX.png"></td><td>&nbsp;&nbsp;Star<br/>&nbsp;&nbsp;(N*)</td><td><img src="images/NS.png"></td></tr>
+   <tr><td>Hexagonal<br/>(NH)</td><td><img src="images/NH.png"></td></tr><td>&nbsp;&nbsp;Asterisk<br/>&nbsp;&nbsp;(NA)</td><td><img src="images/NA.png"></td><td>&nbsp;&nbsp;Tripod<br/>&nbsp;&nbsp;(N3)</td><td><img src="images/N3.png"></td></tr>
+   <tr><td>Triangular<br/>(NL)</td><td><img src="images/NL.png"></td></tr>
+</table>
 
 <p>
-These diagrams show the NM, NN and NC neighborhoods for <i>r</i> = 3
-(the NC diagram also shows the circle used to determine which cells are
-within the circular neighborhood):
+Note: The Triangular neighborhood flips the neighborhood vertically on alternating cells.
+</p>
+<p>
+Other supported neighborhoods:
+
+<p>&nbsp;<br>
+<a name="weighted"></a>
+<font size=+1><b>Weighted (NW)</b></font>
+<p>
+Weighted allows you to specify a weight for each cell in the neighborhood. The neighbor count
+will be the sum of each alive cell's neighborhood position weight. Weights from -127 to 127 are supported.
+<p>
+The format is NW following by a string of hexadecimal digits to specify the neighbor weights.
+<ul>
+<li>If the weights are all in the range -7 to +7 use one hexadecimal digit per weight.</li>
+<li>If the weights are all in the range -127 to +127 use two hexadecimal digits per weight.</li>
+</ul>
+<p>
+The hexadecimal representation has the MSB as the sign bit which means:<ul>
+<li>0 to 7 hexadecimal represent 0 to 7 decimal</li>
+<li>8 to f hexadecimal represent 0 to -7 decimal</li>
+<li>00 to 7f hexadecimal represent 0 to 127 decimal</li>
+<li>80 to ff hexadecimal represent 0 to -127 decimal</li>
+</ul>
+<p>
+Example (single digit):
+<dd>1, 2, 3</dd>
+<dd>4, 0, 1</dd>
+<dd>3, 2, 3</dd>
+<p>
+becomes NW123401323
+<p>
+Example (double digits):
+<dd>8,&nbsp;&nbsp;16, 8
+<dd>10,&nbsp;-5, 10
+<dd>8,&nbsp;&nbsp;16, 8</dd>
+<p>
+becomes NW0810080a850a081008
+<p>
+Following the neighborhood weights you can optionally specify state weights. In this case the neighbor count will
+be the sum of each live cell's neighborhood position weight multiplied by its state weight.
+<p>
+To specify state weights, add a comma after the NW neighborhood specification and then one hex digit per state.
+You must specify the same number of state weights as states in the pattern defined by
+the C<i>c</i> parameter.
+<p>
+Allowed state weight values are 0 to 15 (decimal) which are specified as 0 to f (hexadecimal).
+<p>
+Example:
+<p>
+If you have a 4-state pattern and want state weights 0, 1, 2, 10 then you'd specify:
+<dd>R<i>r</i>,C4,S<i>list</i>,B<i>list</i>,NW<i>neighborhood weights</i>,012A</dd>
+<p>
+Finally, if you want a non-square grid you can add a suffix to the rule string of H for hexagonal grid or L for triangular grid.
+Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+
+<p>&nbsp;<br>
+<a name="gaussian"></a>
+<font size=+1><b>Gaussian (NG)</b></font>
+<p>
+Gaussian defines a weighted neighborhood based on the defined range. Only square grids are allowed.
+<p>
+Example: (<i>r = 2</i>)
+<dd>1, 2, 3, 2, 1</dd>
+<dd>2, 4, 6, 4, 2</dd>
+<dd>3, 6, 9, 6, 3</dd>
+<dd>2, 4, 6, 4, 2</dd>
+<dd>1, 2, 3, 2, 1</dd>
+
+<p>&nbsp;<br>
+<a name="custom"></a>
+<font size=+1><b>Custom (N@)</b></font>
+<p>
+You can specify a custom neighborhood using N@ and then hexadecimal digits.
+There are two ways to create the hexadecimal digits:
 
 <p>
-<dd>
-<img src="NM.png"> &nbsp;&nbsp;&nbsp;
-<img src="NN.png"> &nbsp;&nbsp;&nbsp;
-<img src="NC.png">
-</dd>
+The easiest is to draw the custom neighborhood in Golly as a set of live
+cells. Surround the cells in a square selection and then run
+<a href="open:Scripts/Lua/create-custom-ltl.lua">create-custom-ltl.lua</a> to
+automatically create the rule string.
 
 <p>
-The S and B limits must be from 0 to the neighborhood size:
-(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N,
-or approximately 3.14(<i>r</i>+0.5)^2 when <i>n</i> = C.
-The set of points in a circular neighborhood is those whose Euclidean distance
-from the center point is less than <i>r</i>+0.5.
-A quick way to see the circular neighborhood for a given <i>r</i> and <i>n</i>
-is to use a rule with only B1 set.  For example, switch to
+<img src="images/custom.png">
+
+<p>
+Alternatively you can create them manually, using the following method:
+<ol>
+   <li>Write the neighborhood as a square with 1s and 0s. Put a 1 for each cell that
+      you want to be part of the neighborhood.
+
+      <dd>10001</dd>
+      <dd>00100</dd>
+      <dd>01<i>c</i>10</dd>
+      <dd>00100</dd>
+      <dd>10001</dd></li>
+   <li>Remove the center cell <i>c</i> and concatenate.
+      <dd>100010010001100010010001</dd>
+   <li>Now convert to hexadecimal.</li>
+      <dd>891891</dd>
+</ol>
+<p>
+Rule becomes:
+<dd>R2,C0,S<i>list</i>,B<i>list</i>,N@891891</dd>
+<p>
+If you want a non-square grid you can add a suffix to the rule string of H for hexagonal grid or L for triangular grid.
+Triangular grid will cause the custom neighborhood to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+
+<p>&nbsp;<br>
+<a name="sandb"></a>
+<font size=+1><b>S and B Limits</b></font>
+<p>
+The S and B limits must be from 0 to the neighborhood size.
+A quick way to see the neighborhood and get the limits for a given <i>r</i>
+and <i>n</i> is to use a rule with only B1 set.  For example, switch to
 <b><a href="rule:R6,C0,M0,S1..1,B1..1,NC">R6,C0,M0,S1..1,B1..1,NC</a></b>,
-turn on a single cell and hit the space bar.
+turn on a single cell and hit the space bar. The population count is the limit.
 
 <p>
 If the number of states (specified after C) is greater than 2 then states 1 and above
 don't die immediately but gradually decay.  Note that state values above 1 are not
 included in the neighborhood counts and thus play no part in deciding the survival
-of a state 1 cell, nor the birth of an empty cell.  C0 and C1 are equivalent to C2.
+of a state 1 cell, nor the birth of an empty cell.  The one exception to this is
+<a href="#weighted">Weighted</a> neighborhoods that have state weights defined.
+C0 and C1 are equivalent to C2.
 
 <p>&nbsp;<br>
+<a name="examples"></a>
 <font size=+1><b>Examples</b></font>
 
 <p>
@@ -110,10 +248,11 @@ their commonly used names:
 </p>
 
 <p>&nbsp;<br>
-<font size=+1><b>Alternative rule notation</b></font>
+<a name="kellie"></a>
+<font size=+2><b>Kellie Evans' Notation</b></font>
 
 <p>
-Golly also allows rules to be entered using the notation defined by
+The second notation used by Golly was defined by
 Kellie Evans in her thesis [<a href="#2">2</a>].  The range, birth limits and survival limits
 are specified by five integers separated by commas:
 
@@ -124,14 +263,52 @@ are specified by five integers separated by commas:
 
 <p>
 This notation assumes an extended Moore neighborhood in which a live middle cell
-is included in the neighborhood count (ie. totalistic).
+is included in the neighborhood count (i.e. totalistic).
 For example, Life can be entered as 1,3,3,3,4.
 
 <p>
-Note that Golly's canonical version of a Larger than Life rule
-always uses the MCell syntax.
+Note that Golly's canonical version of Larger than Life rules defined with
+this notation will be in the <a href="#ltl">LtL</a> notation.
 
 <p>&nbsp;<br>
+<a name="hrot"></a>
+<font size=+2><b>HROT (Higher Range Outer Totalistic) Notation</b></font>
+
+<p>
+The third notation used by Golly is the HROT notation used by <a href="http://lazyslug.com">LifeViewer</a>.
+It provides more flexibility than the previous two notations since it allows arbitrary
+definitions of birth and survival counts to be specified.
+
+<p>
+<dd>
+R<i>r</i>,C<i>c</i>,S<i>list</i>,B<i>list</i>,N<i>n</i>
+</dd>
+
+<p>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
+C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
+S<i>list</i> - specifies the counts for a state 1 cell to survive.<br>
+B<i>list</i> - specifies the counts for a dead cell to become a birth.<br>
+N<i>n</i> - specifies the extended neighborhood type (and can be omitted for Moore).<br>
+<p>
+
+It supports the <a href="#nbrhds">same neighborhoods</a> as specified above for <a href="#ltl">LtL</a> notation.
+
+<p>
+HROT differs from LtL in three ways:
+<ol>
+   <li>There is no M<i>m</i> middle cell parameter so rules are always outer totalistic.</li>
+   <li>The birth and survival counts are a <i>list</i> rather than a single range.</li>
+   e.g. <b><a href="rule:R3,C2,S0,7-12,27,B8,12,20-27,N2">R3,C2,S0,7-12,27,B8,12,20-27,N2</a></b>
+   <li>If the neighborhood is Moore (NM), the default, it can be omitted.</li>
+   e.g. <b><a href="rule:R1,C0,S2-3,B3">R1,C0,S2-3,B3</a></b> (Conway's Life)
+</ol>
+
+<p>
+The canonical form for a rule specified in HROT notation is also HROT.
+
+<p>&nbsp;<br>
+<a name="grid"></a>
 <font size=+1><b>Grid topology and size limits</b></font>
 
 <p>
@@ -157,9 +334,11 @@ within the editing limits of +/- 1 billion.
 For the vast majority of patterns these limits won't ever be a problem.
 
 <p>
-One more restriction worth noting: B0 is not allowed in an unbounded universe.
+One more restriction worth noting: For both bounded and unbounded universes
+B0 is <a href="quicklife.html#b0emulation">emulated</a> to prevent pattern strobing.
 
 <p>&nbsp;<br>
+<a name="history"></a>
 <font size=+1><b>History</b></font>
 
 <p>
@@ -199,6 +378,7 @@ boundless possibilities that implements LtL in ranges up to 500 and the potentia
 to discover LtL dynamics as yet unimagined.
 
 <p>&nbsp;<br>
+<a name="references"></a>
 <font size=+1><b>References</b></font>
 
 <a name="1"></a><p>

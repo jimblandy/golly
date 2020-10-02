@@ -47,17 +47,17 @@ def write_cell(x,y):
 # we first write the commands to 2 strings, and then to the grid
 H_OFFSET = 10   # how far from the construction face should the new pattern be?
 
-half_height = (r.height-(r.height%2))/2
+half_height = (r.height-(r.height%2))//2
 
 # write the cells that are in state 1 (can ignore the zeros)
 # (still plenty of room for optimisation here)
-for col in xrange(r.left + r.width-1, r.left-1,-1):
+for col in range(r.left + r.width-1, r.left-1,-1):
     # if large selection then give some indication of progress
     newsecs = time()
     if newsecs - oldsecs >= 1.0:
         oldsecs = newsecs
         g.update()
-    for row in xrange(r.top, r.top + r.height):
+    for row in range(r.top, r.top + r.height):
         if g.getcell(col,row)==3:
             write_cell(H_OFFSET + col-r.left,row - r.top - half_height)
 

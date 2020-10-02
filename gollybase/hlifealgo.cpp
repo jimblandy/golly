@@ -1683,7 +1683,7 @@ default:       return "Illegal character in readmacrocell." ;
             *pp = 0 ;
             
             // AKT: need to check for B0-not-Smax rule
-            err = hliferules.setrule(p, this);
+            err = setrule(p);
             if (err)
                return err;
             if (hliferules.alternate_rules)

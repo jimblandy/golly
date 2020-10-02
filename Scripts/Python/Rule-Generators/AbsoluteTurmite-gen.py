@@ -23,7 +23,7 @@ prefix = 'AbsoluteTurmite'
 # are a deeper generalization.
 
 # http://bytes.com/topic/python/answers/25176-list-subsets
-get_subsets = lambda items: [[x for (pos,x) in zip(range(len(items)), items) if (2**pos) & switches] for switches in range(2**len(items))]
+get_subsets = lambda items: [[x for (pos,x) in zip(list(range(len(items))), items) if (2**pos) & switches] for switches in range(2**len(items))]
 
 example_spec = "{{{1,'E',1},{1,'W',1}},{{1,'W',0},{1,'',0}}}"
 
@@ -58,7 +58,7 @@ while True: # (we break out if ok)
     if not changes_one:
         is_rule_acceptable = False
     # does turmite get stuck in any subset of states?
-    for subset in get_subsets(range(ns)):
+    for subset in get_subsets(list(range(ns))):
         if len(subset)==0 or len(subset)==ns: # (just an optimisation)
             continue
         leaves_subset = False
@@ -151,13 +151,13 @@ def flatten(l, ltypes=(list, tuple)):
     return ltype(l)
 
 # convert the string to a form we can embed in a filename
-spec_string = ''.join(map(str,map(str,flatten(action_table))))
+spec_string = ''.join(map(str,list(map(str,flatten(action_table)))))
 # (ambiguous but we have to try something)
 rule_name = prefix+'_'+spec_string
 
 remap = [2,1,3,0] # N,E,S,W -> S,E,W,N
 
-not_arriving_from_here = [range(n_colors) for i in range(n_dirs)] # (we're going to modify them)
+not_arriving_from_here = [list(range(n_colors)) for i in range(n_dirs)] # (we're going to modify them)
 for color in range(n_colors):
     for state in range(n_states):
         moveset = action_table[state][color][1]
@@ -208,8 +208,8 @@ for s in range(n_states):
             tree.add_rule( transition_inputs, transition_output )
 
 # default: square is left with no turmite present
-for output_color,inputs in leaving_color_behind.items():
-    tree.add_rule([inputs]+[range(total_states)]*4,output_color)
+for output_color,inputs in list(leaving_color_behind.items()):
+    tree.add_rule([inputs]+[list(range(total_states))]*4,output_color)
 
 tree.write(golly.getdir('rules')+rule_name+'.tree')
 
@@ -276,12 +276,12 @@ palette=[[0,0,0],[0,155,67],[127,0,255],[128,128,128],[185,184,96],[0,100,255],[
     [255,175,250],[199,134,213],[115,100,95],[188,163,0],[0,188,163],[163,0,188],[203,73,0],
     [0,203,73],[73,0,203],[94,189,0],[189,0,94]]
 highlight=(255,255,255)
-pixels = [[palette[0] for column in range(total_states)*31] for row in range(53)]
+pixels = [[palette[0] for column in list(range(total_states))*31] for row in range(53)]
 for state in range(n_states):
     for color in range(n_colors):
         bg_col = palette[color]
         fg_col = palette[state+n_colors]
-        mid = [(f+b)/2 for f,b in zip(fg_col,bg_col)]
+        mid = [(f+b)//2 for f,b in zip(fg_col,bg_col)]
         for row in range(31):
             for column in range(31):
                 pixels[row][(encode(color,state)-1)*31+column] = [bg_col,fg_col,highlight,mid][icon31x31[row][column]]

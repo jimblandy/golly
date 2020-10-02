@@ -10,6 +10,7 @@
 #include <stdlib.h>     // for malloc, free, etc
 #include <limits.h>     // for INT_MIN and INT_MAX
 #include <string.h>     // for memset and strchr
+#include <cstddef>      // for ptrdiff_t
 
 // -----------------------------------------------------------------------------
 
@@ -29,6 +30,12 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 // range is 1 or 2, similar when 5, but much faster when 10 or above
 #define SMALL_NN_RANGE 4
 
+// valid neighborhoods (upper case)
+static const char *VALIDNEIGHBORHOODS = "MNC+X*2HB#@3ALGW";
+
+// hex digits (upper case)
+static const char *HEXCHARACTERS = "0123456789ABCDEF";
+
 // -----------------------------------------------------------------------------
 
 // Create a new empty universe.
@@ -45,6 +52,28 @@ ltlalgo::ltlalgo()
     generation = 0;
     increment = 1;
     show_warning = true;
+    births = NULL;
+    survivals = NULL;
+    altbirths = NULL;
+    altsurvivals = NULL;
+    b0 = false;
+    weights = NULL;
+    stateweights = NULL;
+    customneighborhood = NULL;
+    customlength = 0;
+}
+
+// -----------------------------------------------------------------------------
+
+// Returns a count of the number of bits set in given int.
+
+static int bitcount(int v) {
+   int r = 0 ;
+   while (v) {
+      r++ ;
+      v &= v - 1 ;
+   }
+   return r ;
 }
 
 // -----------------------------------------------------------------------------
@@ -56,7 +85,14 @@ ltlalgo::~ltlalgo()
     free(outergrid1);
     if (outergrid2) free(outergrid2);
     if (colcounts) free(colcounts);
-    if (shape) free(shape) ;
+    if (shape) free(shape);
+    if (births) free(births);
+    if (survivals) free(survivals);
+    if (altbirths) free(altbirths);
+    if (altsurvivals) free(altsurvivals);
+    if (weights) free(weights);
+    if (stateweights) free(stateweights);
+    if (customneighborhood) free(customneighborhood);
 }
 
 // -----------------------------------------------------------------------------
@@ -77,9 +113,9 @@ void ltlalgo::allocate_colcounts()
             colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
             // if NULL then use fast_Neumann
         }
-    } else if (ntype == 'C') {
+    } else if (strchr(VALIDNEIGHBORHOODS, ntype) != NULL) {
         colcounts = NULL ;
-        // use fast_Shaped
+        // use fast_<neighborhood>
     } else {
         lifefatal("Unexpected ntype!");
     }
@@ -176,6 +212,12 @@ void ltlalgo::endofpattern()
 
 const char* ltlalgo::resize_grids(int up, int down, int left, int right)
 {
+    // for triangular rules ensure polarity doesn't change
+    if (grid_type == TRI_GRID) {
+        if (up & 1) up++;
+        if (left & 1) left++;
+    }
+
     // try to resize an unbounded universe by given amounts (possibly -ve)
     int newwd = gwd + left + right;
     int newht = ght + up + down;
@@ -272,6 +314,13 @@ int ltlalgo::setcell(int x, int y, int newstate)
                 // just adjust grid edges so that x,y is in middle of grid
                 gtop = y - int(ght / 2);
                 gleft = x - int(gwd / 2);
+
+                // for triangular type rules ensure pattern placement is on a 2x2 grid
+                if (grid_type == TRI_GRID) {
+                    gtop &= ~1;
+                    gleft &= ~1;
+                }
+
                 gbottom = gtop + ghtm1;
                 gright = gleft + gwdm1;
                 // set bigint versions of grid edges (used by GUI code)
@@ -416,14 +465,14 @@ void ltlalgo::update_current_grid(unsigned char &state, int ncount)
     // return the state of the cell based on the neighbor count
     if (state == 0) {
         // this cell is dead
-        if (ncount >= minB && ncount <= maxB) {
+        if (births[ncount]) {
             // new cell is born
             state = 1;
             population++;
         }
     } else if (state == 1) {
         // this cell is alive
-        if (ncount < minS || ncount > maxS) {
+        if (!survivals[ncount]) {
             // this cell doesn't survive
             if (maxCellStates > 2) {
                 // cell decays to state 2
@@ -456,7 +505,7 @@ void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
     unsigned char state = *(currgrid + xyoffset);
     if (state == 0) {
         // this cell is dead
-        if (ncount >= minB && ncount <= maxB) {
+        if (births[ncount]) {
             // new cell is born in nextgrid
             unsigned char* nextcell = nextgrid + xyoffset;
             *nextcell = 1;
@@ -468,7 +517,7 @@ void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
         }
     } else if (state == 1) {
         // this cell is alive
-        if (ncount >= minS && ncount <= maxS) {
+        if (survivals[ncount]) {
             // cell survives so copy into nextgrid
             unsigned char* nextcell = nextgrid + xyoffset;
             *nextcell = 1;
@@ -793,7 +842,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
     unsigned char* stateptr = currgrid + minrow*outerwd+mincol;
     int ncount = *ccptr;
     if (*stateptr == 0) {
-        if (ncount >= minB && ncount <= maxB) {
+        if (births[ncount]) {
             *stateptr = 1;
             population++;
             minx = mincol;
@@ -802,7 +851,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
             maxy = minrow;
         }
     } else {
-        if (ncount < minS || ncount > maxS) {
+        if (!survivals[ncount]) {
             *stateptr = 0;
             population--;
         }
@@ -823,7 +872,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
         // do i == minrow
         ncount = *ccptr1++ - *ccptr2++;
         if (*stateptr == 0) {
-            if (ncount >= minB && ncount <= maxB) {
+            if (births[ncount]) {
                 *stateptr = 1;
                 population++;
                 if (j < minx) minx = j;
@@ -831,7 +880,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
                 rowchanged = true;
             }
         } else {
-            if (ncount < minS || ncount > maxS) {
+            if (!survivals[ncount]) {
                 *stateptr = 0;
                 population--;
             }
@@ -857,7 +906,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
         // do j == mincol
         ncount = *ccptr1 - *ccptr2;
         if (*stateptr == 0) {
-            if (ncount >= minB && ncount <= maxB) {
+            if (births[ncount]) {
                 *stateptr = 1;
                 population++;
                 if (i < miny) miny = i;
@@ -865,7 +914,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
                 colchanged = true;
             }
         } else {
-            if (ncount < minS || ncount > maxS) {
+            if (!survivals[ncount]) {
                 *stateptr = 0;
                 population--;
             }
@@ -898,7 +947,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
         for (j = mincol+1; j <= maxcol; j++) {
             ncount = *ccptr1++ + *ccptr2++ - *ccptr3++ - *ccptr4++;
             if (*stateptr == 0) {
-                if (ncount >= minB && ncount <= maxB) {
+                if (births[ncount]) {
                     *stateptr = 1;
                     population++;
                     if (j < minx) minx = j;
@@ -906,7 +955,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
                     rowchanged = true;
                 }
             } else {
-                if (ncount < minS || ncount > maxS) {
+                if (!survivals[ncount]) {
                     *stateptr = 0;
                     population--;
                 }
@@ -1235,7 +1284,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
     unsigned char* stateptr = currgrid + minrow*outerwd+mincol;
     int ncount = *ccptr;
     if (*stateptr == 0) {
-        if (ncount >= minB && ncount <= maxB) {
+        if (births[ncount]) {
             *stateptr = 1;
             population++;
             minx = mincol;
@@ -1244,7 +1293,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
             maxy = minrow;
         }
     } else {
-        if (ncount < minS || ncount > maxS) {
+        if (!survivals[ncount]) {
             *stateptr = 0;
             population--;
         }
@@ -1265,7 +1314,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
         // do i == minrow
         ncount = *ccptr1++ - *ccptr2++;
         if (*stateptr == 0) {
-            if (ncount >= minB && ncount <= maxB) {
+            if (births[ncount]) {
                 *stateptr = 1;
                 population++;
                 if (j < minx) minx = j;
@@ -1273,7 +1322,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
                 rowchanged = true;
             }
         } else {
-            if (ncount < minS || ncount > maxS) {
+            if (!survivals[ncount]) {
                 *stateptr = 0;
                 population--;
             }
@@ -1299,7 +1348,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
         // do j == mincol
         ncount = *ccptr1 - *ccptr2;
         if (*stateptr == 0) {
-            if (ncount >= minB && ncount <= maxB) {
+            if (births[ncount]) {
                 *stateptr = 1;
                 population++;
                 if (i < miny) miny = i;
@@ -1307,7 +1356,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
                 colchanged = true;
             }
         } else {
-            if (ncount < minS || ncount > maxS) {
+            if (!survivals[ncount]) {
                 *stateptr = 0;
                 population--;
             }
@@ -1340,7 +1389,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
         for (j = mincol+1; j <= maxcol; j++) {
             ncount = *ccptr1++ + *ccptr2++ - *ccptr3++ - *ccptr4++;
             if (*stateptr == 0) {
-                if (ncount >= minB && ncount <= maxB) {
+                if (births[ncount]) {
                     *stateptr = 1;
                     population++;
                     if (j < minx) minx = j;
@@ -1348,7 +1397,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
                     rowchanged = true;
                 }
             } else {
-                if (ncount < minS || ncount > maxS) {
+                if (!survivals[ncount]) {
                     *stateptr = 0;
                     population--;
                 }
@@ -1465,41 +1514,41 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::fast_Shaped(int mincol, int minrow, int maxcol, int maxrow)
 {
-     for (int y = minrow; y <= maxrow; y++) {
-         int yoffset = y * outerwd;
-         int ymrange = y - range;
-         int yprange = y + range;
-         
-         // for the 1st cell in this row we count the state-1 cells in the
-         // shaped neighborhood and remember the column counts
-         int ncount = 0;
-         unsigned char* cellptr = currgrid + ymrange * outerwd ;
-         for (int j = ymrange; j <= yprange; j++, cellptr += outerwd) {
-             int xmrange = mincol - shape[j-ymrange] ;
-             int xprange = mincol + shape[j-ymrange] ;
-             for (int i = xmrange; i <= xprange; i++)
-                 if (cellptr[i] == 1) ncount++ ;
-         }
-            
-         update_next_grid(mincol, y, yoffset+mincol, ncount);
-         
-         // for the remaining cells in this row we only need subtract
-         // points in relevant rows and add points in other relevant
-         // rows according to the shape.
-         cellptr = currgrid + ymrange * outerwd ;
-         for (int x = mincol+1; x <= maxcol; x++) {
-             unsigned char* cp = cellptr ;
-             for (int j = ymrange; j <= yprange; j++, cp += outerwd) {
-                int xmrange = x - shape[j-ymrange] ;
-                int xprange = x + shape[j-ymrange] ;
-                if (cp[xmrange-1] == 1)
-                   ncount-- ;
-                if (cp[xprange] == 1)
-                   ncount++ ;
-             }
-             update_next_grid(x, y, yoffset+x, ncount);
-         }
-     }
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        int ymrange = y - range;
+        int yprange = y + range;
+        
+        // for the 1st cell in this row we count the state-1 cells in the
+        // shaped neighborhood and remember the column counts
+        int ncount = 0;
+        unsigned char* cellptr = currgrid + ymrange * outerwd ;
+        for (int j = ymrange; j <= yprange; j++, cellptr += outerwd) {
+            int xmrange = mincol - shape[j-ymrange] ;
+            int xprange = mincol + shape[j-ymrange] ;
+            for (int i = xmrange; i <= xprange; i++)
+                if (cellptr[i] == 1) ncount++ ;
+        }
+           
+        update_next_grid(mincol, y, yoffset+mincol, ncount);
+        
+        // for the remaining cells in this row we only need subtract
+        // points in relevant rows and add points in other relevant
+        // rows according to the shape.
+        cellptr = currgrid + ymrange * outerwd ;
+        for (int x = mincol+1; x <= maxcol; x++) {
+            unsigned char* cp = cellptr ;
+            for (int j = ymrange; j <= yprange; j++, cp += outerwd) {
+               int xmrange = x - shape[j-ymrange] ;
+               int xprange = x + shape[j-ymrange] ;
+               if (cp[xmrange-1] == 1)
+                  ncount-- ;
+               if (cp[xprange] == 1)
+                  ncount++ ;
+            }
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1690,6 +1739,512 @@ void ltlalgo::faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int m
 
 // -----------------------------------------------------------------------------
 
+void ltlalgo::fast_Asterisk(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + (y - range) * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            unsigned char* cp1 = cellptr;
+            for (int j = -range; j < 0; j++, cp1 += outerwd) {
+                if (cp1[x] == 1)     ncount++;
+                if (cp1[x + j] == 1) ncount++;
+            }
+            for (int j = -range; j <= range; j++) {
+                if (cp1[x + j] == 1) ncount++;
+            }
+            cp1 += outerwd;
+            for (int j = 1; j <= range; j++, cp1 += outerwd) {
+                if (cp1[x] == 1)     ncount++;
+                if (cp1[x + j] == 1) ncount++;
+            }
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Tripod(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + (y - range) * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            unsigned char* cp1 = cellptr;
+            for (int j = -range; j < 0; j++, cp1 += outerwd) {
+                if (cp1[x] == 1) ncount++;
+            }
+            for (int j = -range; j <= 0; j++) {
+                if (cp1[x + j] == 1) ncount++;
+            }
+            cp1 += outerwd;
+            for (int j = 1; j <= range; j++, cp1 += outerwd) {
+                if (cp1[x + j] == 1) ncount++;
+            }
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Weighted(int mincol, int minrow, int maxcol, int maxrow)
+{
+    const int nsize = (range + range + 1);
+    const int brow = (nsize - 1) * nsize;
+
+    // check for weighted states
+    if (stateweights == NULL) {
+        // just weighted neighborhood
+        for (int y = minrow; y <= maxrow; y++) {
+            int yoffset = y * outerwd;
+            unsigned char* cellptr = currgrid + (y - range) * outerwd;
+            
+            for (int x = mincol; x <= maxcol; x++) {
+                int ncount = 0;
+                int k, l;
+                if (grid_type == TRI_GRID && (((x + y) & 1) != 0)) {
+                    l = -nsize;
+                    k = brow;
+                    l += l;
+                } else {
+                    k = 0;
+                    l = 0;
+                }
+                unsigned char* cp1 = cellptr;
+                for (int j = -range; j <= range; j++, cp1 += outerwd) {
+                    for (int i = -range; i <= range; i++) {
+                        if (cp1[x + i] == 1) ncount += weights[k];
+                        k++;
+                    }
+                    k += l;
+                }
+    
+                update_next_grid(x, y, yoffset+x, ncount);
+            }
+        }
+    } else {
+        // weighted states and neighborhood
+        int deadweight = stateweights[0];
+        int state = 0;
+
+        for (int y = minrow; y <= maxrow; y++) {
+            int yoffset = y * outerwd;
+            unsigned char* cellptr = currgrid + (y - range) * outerwd;
+            
+            for (int x = mincol; x <= maxcol; x++) {
+                int ncount = 0;
+                int k, l;
+                if (grid_type == TRI_GRID && (((x + y) & 1) != 0)) {
+                    l = -nsize;
+                    k = brow;
+                    l += l;
+                } else {
+                    k = 0;
+                    l = 0;
+                }
+                unsigned char* cp1 = cellptr;
+                for (int j = -range; j <= range; j++, cp1 += outerwd) {
+                    for (int i = -range; i <= range; i++) {
+                        state = cp1[x + i];
+                        if (state > 0) {
+                            ncount += weights[k] * stateweights[state];
+                        } else {
+                            if (deadweight > 0) {
+                                ncount += weights[k] * deadweight;
+                            }
+                        }
+                        k++;
+                    }
+                    k += l;
+                }
+    
+                update_next_grid(x, y, yoffset+x, ncount);
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Custom(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            int j = 0;
+            while (j < customlength) {
+                // get the row number
+                int i = customneighborhood[j++];
+                if (grid_type == TRI_GRID && (((x + y) & 1) != 0)) {
+                    i = -i;
+                }
+                unsigned char* cp1 = cellptr + i * outerwd;
+
+                // get the count of items in the row
+                int k = customneighborhood[j++];
+                for (int l = j; l < j + k; l++) {
+                    if (cp1[x + customneighborhood[l]] == 1) ncount++;
+                }
+                j += k;
+            }
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Hash(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        // for the first cell count the entire neighborhood
+        int rowcount1 = 0;
+        int rowcount2 = 0;
+        int x = mincol;
+        int ncount = 0;
+        unsigned char* cp1 = cellptr - outerwd;
+        unsigned char *cp2 = cellptr + outerwd;
+        // row -1 and + 1
+        for (int i = -range; i <= range; i++) {
+            if (cp1[x + i] == 1) rowcount1++;
+            if (cp2[x + i] == 1) rowcount2++;
+        }
+
+        // row 0
+        if (cellptr[x - 1] == 1) ncount++;
+        if (cellptr[x] == 1)     ncount++;
+        if (cellptr[x + 1] == 1) ncount++;
+
+        // remaining rows
+        cp1 -= outerwd;
+        cp2 += outerwd;
+        for (int j = 2; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+            if (cp1[x - 1] == 1) ncount++;
+            if (cp1[x + 1] == 1) ncount++;
+            if (cp2[x - 1] == 1) ncount++;
+            if (cp2[x + 1] == 1) ncount++;
+        }
+        ncount += rowcount1 + rowcount2;
+        update_next_grid(x, y, yoffset+x, ncount);
+
+        // for remaining columns subtract the left and add the right cells
+        for (int x = mincol + 1; x <= maxcol; x++) {
+            int ncount = 0;
+            cp1 = cellptr - outerwd;
+            cp2 = cellptr + outerwd;
+            // row -1 and + 1
+            if (cp1[x - range - 1] == 1) rowcount1--;
+            if (cp1[x + range] == 1)     rowcount1++;
+            if (cp2[x - range - 1] == 1) rowcount2--;
+            if (cp2[x + range] == 1)     rowcount2++;
+
+            // row 0
+            if (cellptr[x - 1] == 1) ncount++;
+            if (cellptr[x] == 1)     ncount++;
+            if (cellptr[x + 1] == 1) ncount++;
+
+            // remaining rows
+            cp1 -= outerwd;
+            cp2 += outerwd;
+            for (int j = 2; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+                if (cp1[x - 1] == 1) ncount++;
+                if (cp1[x + 1] == 1) ncount++;
+                if (cp2[x - 1] == 1) ncount++;
+                if (cp2[x + 1] == 1) ncount++;
+            }
+            ncount += rowcount1 + rowcount2;
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
+{
+    int topoffset = range * outerwd;
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            int offset = 1;
+            unsigned char* cp1 = cellptr - topoffset;
+            for (int j = -range; j <= range; j++, cp1 += outerwd) {
+                for (int i = -range + offset; i <= range - offset; i += 2) {
+                    if (cp1[x + i] == 1) ncount++;
+                }
+                offset = 1 - offset;
+            }
+            if (cellptr[x] == 1) ncount++;
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Hex(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + (y - range) * outerwd;
+        
+        // for the first cell count the entire neighborhood
+        int ncount = 0;
+        unsigned char* cp1 = cellptr;
+        int x = mincol;
+        for (int j = -range; j < 0; j++, cp1 += outerwd) {
+            for (int i = -range; i <= range + j; i++) {
+                if (cp1[x + i] == 1) ncount++;
+            }
+        }
+        for (int j = 0; j <= range; j++, cp1 += outerwd) {
+            for (int i = -range + j; i <= range; i++) {
+                if (cp1[x + i] == 1) ncount++;
+            }
+        }
+        update_next_grid(x, y, yoffset+x, ncount);
+
+        // for remaining columns subtract the left and add the right cells
+        for (int x = mincol + 1; x <= maxcol; x++) {
+            cp1 = cellptr;
+            for (int j = -range; j < 0; j++, cp1 += outerwd) {
+                if (cp1[x - range - 1] == 1) ncount--;
+                if (cp1[x + range + j] == 1) ncount++;
+            }
+            for (int j = 0; j <= range; j++, cp1 += outerwd) {
+                if (cp1[x - range + j - 1] == 1) ncount--;
+                if (cp1[x + range] == 1)         ncount++;
+            }
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Saltire(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            if (cellptr[x] == 1) ncount++;
+            unsigned char* cp1 = cellptr - outerwd;
+            unsigned char* cp2 = cellptr + outerwd;
+            for (int j = 1; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+                if (cp1[x - j] == 1) ncount++;
+                if (cp1[x + j] == 1) ncount++;
+                if (cp2[x - j] == 1) ncount++;
+                if (cp2[x + j] == 1) ncount++;
+            }
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Star(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        // for the first cell count the entire neighborhood
+        int rowcount = 0;
+        int ncount = 0;
+        unsigned char* cp1 = cellptr - outerwd;
+        unsigned char* cp2 = cellptr + outerwd;
+        int x = mincol;
+        for (int j = 1; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+            if (cp1[x - j] == 1) ncount++;
+            if (cp1[x] == 1)     ncount++;
+            if (cp1[x + j] == 1) ncount++;
+            if (cp2[x - j] == 1) ncount++;
+            if (cp2[x] == 1)     ncount++;
+            if (cp2[x + j] == 1) ncount++;
+        }
+        for (int j = -range; j <= range; j++) {
+            if (cellptr[x + j] == 1) rowcount++;
+        }
+        ncount += rowcount;
+        update_next_grid(x, y, yoffset+x, ncount);
+
+        // for remaining columns subtract the left and add the right cells
+        for (int x = mincol + 1; x <= maxcol; x++) {
+            int ncount = 0;
+            cp1 = cellptr - outerwd;
+            cp2 = cellptr + outerwd;
+            for (int j = 1; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+                if (cp1[x - j] == 1) ncount++;
+                if (cp1[x] == 1)     ncount++;
+                if (cp1[x + j] == 1) ncount++;
+                if (cp2[x - j] == 1) ncount++;
+                if (cp2[x] == 1)     ncount++;
+                if (cp2[x + j] == 1) ncount++;
+            }
+            if (cellptr[x - range - 1] == 1) rowcount--;
+            if (cellptr[x + range] == 1)     rowcount++;
+            ncount += rowcount;
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Cross(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        // for the first cell count the entire neighborhood
+        int rowcount = 0;
+        int ncount = 0;
+        unsigned char* cp1 = cellptr - outerwd;
+        unsigned char* cp2 = cellptr + outerwd;
+        int x = mincol;
+        for (int j = 1; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+            if (cp1[x] == 1) ncount++;
+            if (cp2[x] == 1) ncount++;
+        }
+        for (int j = -range; j <= range; j++) {
+            if (cellptr[x + j] == 1) rowcount++;
+        }
+        ncount += rowcount;
+        update_next_grid(x, y, yoffset+x, ncount);
+
+        // for remaining columns subtract the left and add the right cells
+        for (int x = mincol + 1; x <= maxcol; x++) {
+            int ncount = 0;
+            cp1 = cellptr - outerwd;
+            cp2 = cellptr + outerwd;
+            for (int j = 1; j <= range; j++, cp1 -= outerwd, cp2 += outerwd) {
+                if (cp1[x] == 1) ncount++;
+                if (cp2[x] == 1) ncount++;
+            }
+            if (cellptr[x - range - 1] == 1) rowcount--;
+            if (cellptr[x + range] == 1)     rowcount++;
+            ncount += rowcount;
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Triangular(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // vertical range is half range
+    int halfr = range >> 1;
+    int width = 0;
+
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + (y - halfr) * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            unsigned char* cp1 = cellptr;
+            for (int j = -halfr; j <= halfr; j++, cp1 += outerwd) {
+                if (((x + y) & 1) == 0) {
+                    width = shape[j + range];
+                } else {
+                    width = shape[range - j];
+                }
+                for (int i = -width; i <= width; i++) {
+                    if (cp1[x + i] == 1) ncount++;
+                }
+            }
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Gaussian(int mincol, int minrow, int maxcol, int maxrow)
+{
+    int topoffset = range * outerwd;
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * outerwd;
+        unsigned char* cellptr = currgrid + y * outerwd;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int ncount = 0;
+            int inc = 0;
+            int weight = 0;
+            unsigned char* cp1 = cellptr - topoffset;
+            unsigned char* cp2 = cellptr + topoffset;
+            for (int j = -range; j < 0; j++, cp1 += outerwd, cp2 -= outerwd) {
+                inc = j + range + 1;
+                weight = inc;
+                for (int i = -range; i <= 0; i++) {
+                    if (cp1[x + i] == 1) ncount += weight;
+                    weight += inc;
+                }
+                weight -= inc + inc;
+                for (int i = 1; i <= range; i++) {
+                    if (cp1[x + i] == 1) ncount += weight;
+                    weight -= inc;
+                }
+                inc = j + range + 1;
+                weight = inc;
+                for (int i = -range; i <= 0; i++) {
+                    if (cp2[x + i] == 1) ncount += weight;
+                    weight += inc;
+                }
+                weight -= inc + inc;
+                for (int i = 1; i <= range; i++) {
+                    if (cp2[x + i] == 1) ncount += weight;
+                    weight -= inc;
+                }
+            }
+            inc = range + 1;
+            weight = inc;
+            for (int i = -range; i <= 0; i++) {
+                if (cellptr[x + i] == 1) ncount += weight;
+                weight += inc;
+            }
+            weight -= inc + inc;
+            for (int i = 1; i <= range; i++) {
+                if (cellptr[x + i] == 1) ncount += weight;
+                weight -= inc;
+            }
+            if (cellptr[x]) ncount++;
+
+            update_next_grid(x, y, yoffset+x, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
 {
     if (range == 1) {
@@ -1753,42 +2308,151 @@ void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
 
 // -----------------------------------------------------------------------------
 
+void ltlalgo::do_gen(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // check for B0 emulation
+    unsigned char* saveb = births;
+    unsigned char* saves = survivals;
+
+    if (b0 && getGeneration().odd()) {
+        births = altbirths;
+        survivals = altsurvivals;
+    }
+
+    switch (ntype) {
+        case 'M':
+            if (unbounded) {
+                if (colcounts) {
+                    if (maxCellStates == 2) {
+                        faster_Moore_unbounded2(mincol, minrow, maxcol, maxrow);
+                    } else {
+                        faster_Moore_unbounded(mincol, minrow, maxcol, maxrow);
+                    }
+                } else {
+                    fast_Moore(mincol, minrow, maxcol, maxrow);
+                }
+            } else {
+                if (colcounts) {
+                    if (maxCellStates == 2) {
+                        faster_Moore_bounded2(mincol, minrow, maxcol, maxrow);
+                    } else {
+                        faster_Moore_bounded(mincol, minrow, maxcol, maxrow);
+                    }
+                } else {
+                    fast_Moore(mincol, minrow, maxcol, maxrow);
+                }
+            }
+            break;
+
+        case 'N':
+            if (unbounded) {
+                if (colcounts) {
+                    faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
+                } else {
+                    fast_Neumann(mincol, minrow, maxcol, maxrow);
+                }
+            } else {
+                if (colcounts) {
+                    faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
+                } else {
+                    fast_Neumann(mincol, minrow, maxcol, maxrow);
+                }
+            }
+            break;
+
+        case 'C':
+        case '2':
+            fast_Shaped(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'A':
+            fast_Asterisk(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case '3':
+            fast_Tripod(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'W':
+            fast_Weighted(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case '@':
+            fast_Custom(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case '#':
+            fast_Hash(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'B':
+            fast_Checker(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'H':
+            fast_Hex(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'X':
+            fast_Saltire(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case '*':
+            fast_Star(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case '+':
+            fast_Cross(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'L':
+            fast_Triangular(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'G':
+            fast_Gaussian(mincol, minrow, maxcol, maxrow);
+            break;
+
+        default:
+            lifefatal("unknown neighborhood in do_gen");
+            break;
+    }
+
+    // reset births and survivals
+    births = saveb;
+    survivals = saves;
+}
+
+// -----------------------------------------------------------------------------
+
 void ltlalgo::do_bounded_gen()
 {
     // limit processing to rectangle where births/deaths can occur
     int mincol, minrow, maxcol, maxrow;
     bool torus = topology == 'T';
-    if (minB == 0) {
-        // birth in every dead cell so process entire grid
+    mincol = minx - range;
+    minrow = miny - range;
+    maxcol = maxx + range;
+    maxrow = maxy + range;
+
+    // check if the limits are outside the grid edges
+    if (mincol < 0) {
         mincol = 0;
-        minrow = 0;
-        maxcol = gwdm1;
-        maxrow = ghtm1;
-    } else {
-        mincol = minx - range;
-        minrow = miny - range;
-        maxcol = maxx + range;
-        maxrow = maxy + range;
-        
-        // check if the limits are outside the grid edges
-        if (mincol < 0) {
-            mincol = 0;
-            if (torus) maxcol = gwdm1;
-        }
-        if (maxcol > gwdm1) {
-            maxcol = gwdm1;
-            if (torus) mincol = 0;
-        }
-        if (minrow < 0) {
-            minrow = 0;
-            if (torus) maxrow = ghtm1;
-        }
-        if (maxrow > ghtm1) {
-            maxrow = ghtm1;
-            if (torus) minrow = 0;
-        }
+        if (torus) maxcol = gwdm1;
     }
-    
+    if (maxcol > gwdm1) {
+        maxcol = gwdm1;
+        if (torus) mincol = 0;
+    }
+    if (minrow < 0) {
+        minrow = 0;
+        if (torus) maxrow = ghtm1;
+    }
+    if (maxrow > ghtm1) {
+        maxrow = ghtm1;
+        if (torus) minrow = 0;
+    }
+
     // save pattern limits for clearing border cells at end
     int sminx = minx;
     int smaxx = maxx;
@@ -1914,26 +2578,8 @@ void ltlalgo::do_bounded_gen()
     // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
     empty_boundaries();
     
-    // create next generation
-    if (ntype == 'M') {
-        if (colcounts) {
-            if (maxCellStates == 2) {
-                faster_Moore_bounded2(mincol, minrow, maxcol, maxrow);
-            } else {
-                faster_Moore_bounded(mincol, minrow, maxcol, maxrow);
-            }
-        } else {
-            fast_Moore(mincol, minrow, maxcol, maxrow);
-        }
-    } else if (ntype == 'N') {
-        if (colcounts) {
-            faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
-        } else {
-            fast_Neumann(mincol, minrow, maxcol, maxrow);
-        }
-    } else {
-        fast_Shaped(mincol, minrow, maxcol, maxrow);
-    }
+    // compute next generation based on neighborhood type
+    do_gen(mincol, minrow, maxcol, maxrow);
 
     // if using one grid with a torus then clear border cells copied above
     if (colcounts && torus) {
@@ -2063,25 +2709,9 @@ bool ltlalgo::do_unbounded_gen()
     // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
     empty_boundaries();
 
-    if (ntype == 'M') {
-        if (colcounts) {
-            if (maxCellStates == 2) {
-                faster_Moore_unbounded2(mincol, minrow, maxcol, maxrow);
-            } else {
-                faster_Moore_unbounded(mincol, minrow, maxcol, maxrow);
-            }
-        } else {
-            fast_Moore(mincol, minrow, maxcol, maxrow);
-        }
-    } else if (ntype == 'N') {
-        if (colcounts) {
-            faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
-        } else {
-            fast_Neumann(mincol, minrow, maxcol, maxrow);
-        }
-    } else {
-        fast_Shaped(mincol, minrow, maxcol, maxrow);
-    }
+    // compute next generation based on neighborhood type
+    do_gen(mincol, minrow, maxcol, maxrow);
+
     return true;
 }
 
@@ -2093,7 +2723,7 @@ void ltlalgo::step()
 {
     bigint t = increment;
     while (t != 0) {
-        if (population > 0 || minB == 0) {
+        if (population > 0 || b0) {
             int prevpop = population;
             
             // calculate the next generation in nextgrid
@@ -2176,70 +2806,857 @@ void ltlalgo::restore_cells()
 
 // -----------------------------------------------------------------------------
 
+// Compute maximum number of neighbors for outer totalistic neighborhood and range.
+
+int ltlalgo::max_neighbors(const int range, const char neighborhood, const int customcount, int* tshape) {
+    int count = 0;
+    int width = 0;
+    int r2 = 0;
+    int result = 0;
+
+    switch(neighborhood) {
+        case 'M':
+            // Moore
+            result = (range * 2 + 1) * (range * 2 + 1) - 1;
+            break;
+
+        case 'N':
+            // von Neumann
+            result = 2 * range * (range + 1);
+            break;
+
+        case 'C':
+            // circular
+            count = 0;
+            r2 = range * range + range;
+            for (int i = -range; i <= range; i++) {
+                width = 0;
+                while ((width + 1) * (width + 1) + (i * i) <= r2) {
+                    width++;
+                }
+                tshape[i + range] = width;
+                count += 2 * width + 1;
+            }
+            result = count - 1;
+            break;
+
+        case '+':
+            // cross
+            result = range * 4;
+            break;
+
+        case 'X':
+            // saltire
+            result = range * 4;
+            break;
+
+        case '*':
+            // star
+            result = range * 8;
+            break;
+
+        case '2':
+            // L2
+            count = 0;
+            r2 = range * range;
+            for (int i = -range; i <= range; i++) {
+                width = 0;
+                while ((width + 1) * (width + 1) + (i * i) <= r2) {
+                    width++;
+                }
+                tshape[i + range] = width;
+                count += 2 * width + 1;
+            }
+            result = count - 1;
+            break;
+
+        case 'H':
+            // hexagonal
+            result = (range * 2 + 1) * (range * 2 + 1) - (range * (range + 1)) - 1;
+            break;
+
+        case 'B':
+            // checkerboard
+            result = ((range * 2 + 1) * (range * 2 + 1) - 1) / 2;
+            break;
+
+        case '#':
+            // hash
+            result = range * 8;
+            break;
+
+        case '@':
+            // custom
+            result = customcount;
+            break;
+
+        case '3':
+            // tripod
+            result = range * 3;
+            break;
+
+        case 'A':
+            // asterisk
+            result = range * 6;
+            break;
+
+        case 'L':
+            // triangular
+            r2 = range + range;
+            for (int i = -1; i >= -range; i--) {
+                tshape[i + range + range] = r2;
+                r2--;
+            }
+            r2 = range + range;
+            for (int i = 0; i <= range; i++) {
+                tshape[i + range + range] = r2;
+                r2--;
+            }
+            result = (range * 4 + 1) * (range * 2 + 1) - (range * 2 * range) - 1;
+            break;
+
+        case 'G':
+            // gaussian
+            result = (range + 1) * (range + 1) * (range + 1) * (range + 1);
+            break;
+
+        case 'W':
+            // weighted
+            result = customcount;
+            break;
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+// Read weighted neighborhood.
+// returns error message if invalid or NULL if valid
+// updates c to contain neighborhood count
+// updates gt if grid type is hexagonal or triangular
+// updates nbrend to point to the next character in the rule string
+
+const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGridType &gt, const char *&nbrend) {
+    int i = 0;
+    int j = 0;
+    int l = (int) strlen(n);
+    int needed1 = (r * 2 + 1) * (r * 2 + 1);
+    int needed2 = needed1 + needed1;
+    int maxsw = 0;
+    bool valid = true;
+    int* weightslist = NULL;
+    int* stateweightslist = NULL;
+    ptrdiff_t next = 0;
+
+    // check string is at least long enough for single digit hex characters
+    if (l < needed1) return "weighted neighborhood is too short";
+
+    // read up to double digit hex characters
+    valid = true;
+    while (i < needed2 && valid) {
+        if (n[i] && (strchr(HEXCHARACTERS, n[i]) != NULL)) {
+            i++;
+        } else {
+            valid = false;
+        }
+    }
+
+    // check for length 1
+    if (i == needed1) {
+        // allocate weights array
+        weightslist = (int*) malloc(needed1 * sizeof(int));
+        if (weightslist == NULL) lifefatal("Not enough memory for weights!");
+        i = 0;
+        while (i < needed1) {
+            // the character is guaranteed to exist since we validated above
+            next = strchr(HEXCHARACTERS, n[i]) - HEXCHARACTERS;
+            // check for negative
+            if ((next & 8) != 0) {
+                next = -(next & 7);
+            }
+            weightslist[i] = (int) next;
+            i++;
+        }
+    } else {
+        // check for length 2
+        if (i == needed2) {
+            // allocates weights array (note: needed1 since 2 digits per entry)
+            weightslist = (int*) malloc(needed1 * sizeof(int));
+            if (weightslist == NULL) lifefatal("Not enough memory for weights!");
+            i = 0;
+            while (i < needed2) {
+                // the character is guaranteed to exist since we validated above
+                next = (strchr(HEXCHARACTERS, n[i]) - HEXCHARACTERS) << 4;
+                i++;
+                next |= strchr(HEXCHARACTERS, n[i]) - HEXCHARACTERS;
+                if ((next & 128) != 0) {
+                    next = -(next & 127);
+                }
+                weightslist[i] = (int) next;
+            }
+        } else {
+            // invalid number of digits
+            return "weighted neighborhood is too short";
+        }
+    }
+
+    // check for optional state weights
+    if (n[i] == ',') {
+        i++;
+
+        // check how long hex string is
+        j = i;
+        while (i < l && (strchr(HEXCHARACTERS, n[i]) != NULL)) {
+            i++;
+        }
+
+        // ensure states are at least 2
+        if (states < 2) states = 2;
+
+        // check number of weights matches nmber of states in rule
+        if ((i - j) != states) {
+            free(weightslist);
+            return "weighted states do not match states in rule";
+        } else {
+            // read state weights and compute the maximum
+            stateweightslist = (int*) malloc(states * sizeof(int));
+            if (stateweightslist == NULL) lifefatal("Not enough memory for state weights!");
+            i = j;
+            while (i < j + states) {
+                // the character is guaranteed to exist since we validated above
+                next = strchr(HEXCHARACTERS, n[i]) - HEXCHARACTERS;
+                stateweightslist[i - j] = (int) next;
+                if ((int) next > maxsw) {
+                    maxsw = (int) next;
+                }
+                i++;
+            }
+        }
+    } else {
+        // no state weights so set maximum to 1
+        maxsw = 1;
+    }
+
+    // sum weights ignoring negatives for maximum neighbor count
+    c = 0;
+    for (j = 0; j < needed1; j++) {
+        if (weightslist[j] > 0) {
+            c += weightslist[j] * maxsw;
+        }
+    }
+
+    // remember the weights and state weights
+    if (weights) free(weights);
+    weights = weightslist;
+    if (stateweights) free(stateweights);
+    stateweights = stateweightslist;
+
+    // check for hexagonal or triangular grid type postfix
+    if (i < l) {
+        if (tolower(n[i]) == 'h') {
+            gt = HEX_GRID;
+            i++;
+        } else {
+            if (tolower(n[i]) == 'l') {
+                gt = TRI_GRID;
+                i++;
+            }
+        }
+    }
+
+    // update next character position
+    nbrend = n + i;
+
+    // return success
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+// Read custom neighborhood.
+// returns error message if invalid or NULL if valid
+// updates c to contain neighborhood count
+// updates gt if grid type is hexagonal or triangular
+// updates nbrend to point to the next character in the rule string
+
+const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, const char *&nbrend) {
+    int i = 0;
+    int l = (int) strlen(n);
+    int neededlength = ((r * 2 + 1) * (r * 2 + 1) - 1) / 4;
+    int count = 0;
+    bool valid = true;
+    const char* loc = NULL;
+
+    // check string is at long enough
+    if (l < neededlength) return "custom neighborhood is too short";
+
+    // read hex characters
+    valid = true;
+    while (i < neededlength && valid) {
+        loc = strchr(HEXCHARACTERS, n[i]);
+        if (loc) {
+            i++;
+            count += bitcount((int) (loc - HEXCHARACTERS));
+        } else {
+            valid = false;
+        }
+    }
+
+    // check if enough digits were read
+    if (valid) {
+        if (i != neededlength) {
+            valid = false;
+        } else {
+            // check for hexagonal or triangular grid type postfix
+            if (i < l) {
+                if (tolower(n[i]) == 'h') {
+                    gt = HEX_GRID;
+                    i++;
+                } else {
+                    if (tolower(n[i]) == 'l') {
+                        gt = TRI_GRID;
+                        i++;
+                    }
+                }
+            }
+            c = count;
+            nbrend = n + i;
+        }
+    }
+
+    if (valid) {
+        // neighborhood valid so build list of included cells in custom neighborhood
+        const int width = r * 2 + 1;
+        const int w2 = width * width;
+        const int w2m1 = w2 - 1;
+        char* neighborhood = (char*) calloc(w2, sizeof(char));
+        int* rowcount = (int *) calloc(width, sizeof(int));
+        int midk = neededlength >> 1;
+        int k = 0;
+        int j = 0;
+        int w = 0;
+        int numinrow = 0;
+        int item = 0;
+
+        // first build simple 2d neighborhood grid from the hex digits
+        i = 0;
+        item = width - 1;
+        while (j < width) {
+            // get next 4 bits
+            w = (int) (strchr(HEXCHARACTERS, n[k]) - HEXCHARACTERS);
+            if (k == midk) {
+                neighborhood[w2m1 - i] = 1;
+                i++;
+                numinrow++;
+            }
+            k++;
+
+            // set neighborhood
+            for (int l = 3; l >=0 ; l--) {
+                if ((w & (1 << l)) != 0) {
+                    neighborhood[w2m1 - i] = 1;
+                    numinrow++;
+                }
+                i++;
+                if ((i % width) == 0) {
+                    rowcount[item--] = numinrow;
+                    numinrow = 0;
+                    j++;
+                }
+            }
+        }
+
+        // allocate the neighbor cache (including middle cell)
+        int* neighborcache = (int*) calloc(count + 1, sizeof(int));
+
+        // populate the cache from the neighborhood grid
+        count = 0;
+        k = 0;
+        for (j = 0; j < width; j++) {
+            for (int i = 0; i < width; i++) {
+                if (neighborhood[k++] > 0) {
+                    neighborcache[count++] = (j << 16) | i;
+                }
+            }
+        }
+
+        // allocate the neighbor list
+        int total = 0;
+        for (int i = 0; i < width; i++) {
+            // number of items in the row plus the count plus the row number
+            if (rowcount[i] > 0) {
+                total += rowcount[i] + 2;
+            }
+        }
+        int* neighborlist = (int*) calloc(total, sizeof(int));
+
+        // populate the list from each row in the cache
+        k = 0;
+        count = 0;
+        for (int i = 0; i < width; i++) {
+            // get the row
+            if (rowcount[i] > 0) {
+                item = neighborcache[k];
+                neighborlist[count] = (item >> 16) - (width >> 1);
+                neighborlist[count + 1] = rowcount[i];
+                count += 2;
+                for (j = 0; j < rowcount[i]; j++) {
+                    neighborlist[count + j]  = (neighborcache[k] & 65535) - (width >> 1);
+                    k++;
+                }
+                count += rowcount[i];
+            }
+        }
+
+        // free the temporary buffers
+        free(rowcount);
+        free(neighborhood);
+        free(neighborcache);
+        
+        // save the neighborhood
+        if (customneighborhood) free(customneighborhood);
+        customneighborhood = neighborlist;
+        customlength = total;
+
+        return NULL;
+    } else {
+        return "invalid custom neighborhood";
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+// Convert birth or survival flags to string.
+// note: string is allocated and must be freed by caller
+
+char *ltlalgo::flags_string(const unsigned char *flags, int len) {
+    int start = -1;
+    int i = 0;
+    int pass = 0;
+    char *buffer = NULL;
+    int bufsize = 0;
+    char value[20];
+    int vallen = 0;
+
+    // do two passes, the first to size the buffer, the second to populate
+    while (pass < 2) {
+        bufsize = 0;
+        i = 0;
+        start = -1;
+
+        // read the array looking for ranges
+        while (i < len) {
+            // check for set value
+            if (flags[i] == 1) {
+                // if no current run then set as start of run
+                if (start == -1) {
+                    start = i;
+                }
+            } else {
+                // zero so check if current run being processed
+                if (start != -1) {
+                    // output current run
+                    if (bufsize > 0) {
+                        if (pass == 1) buffer[bufsize] = ',';
+                        bufsize++;
+                    }
+
+                    sprintf(value, "%d%c", start, 0);
+                    vallen = (int) strlen(value);
+                    if (pass == 1) strcpy(buffer + bufsize, value);
+                    bufsize += vallen;
+
+                    if ((i - 1) != start) {
+                        if (pass == 1) buffer[bufsize] = '-';
+                        bufsize++;
+                        sprintf(value, "%d%c", (i - 1), 0);
+                        vallen = (int) strlen(value);
+                        if (pass == 1) strcpy(buffer + bufsize, value);
+                        bufsize += vallen;
+                    }
+    
+                    // reset run
+                    start = -1;
+                }
+            }
+            // next item
+            i++;
+        }
+    
+        // check if still processing a run
+        if (start != -1) {
+            if (bufsize > 0) {
+                if (pass == 1) buffer[bufsize] = ',';
+                bufsize++;
+            }
+            sprintf(value, "%d%c", start, 0);
+            vallen = (int) strlen(value);
+            if (pass == 1) strcpy(buffer + bufsize, value);
+            bufsize += vallen;
+
+            if ((i - 1) != start) {
+                if (pass == 1) buffer[bufsize] = '-';
+                bufsize++;
+                sprintf(value, "%d%c", (i - 1), 0);
+                vallen = (int) strlen(value);
+                if (pass == 1) strcpy(buffer + bufsize, value);
+                bufsize += vallen;
+            }
+        }
+
+        // next pass
+        if (pass == 0) {
+            buffer = (char*) calloc(bufsize + 1, sizeof(char));
+            if (buffer == NULL) lifefatal("Not enough memory for flags buffer!");
+        }
+        pass++;
+    }
+    
+    // return string buffer
+    return buffer;
+}
+
+// -----------------------------------------------------------------------------
+
+// Setup B0 emulation.
+
+void ltlalgo::setup_b0_emulation(int maxn)
+{
+    unsigned char* bs = (unsigned char*) calloc(maxn + 1, sizeof(unsigned char));
+    if (bs == NULL) lifefatal("Not enough memory for birth flags!");
+    unsigned char* ss = (unsigned char*) calloc(maxn + 1, sizeof(unsigned char));
+    if (ss == NULL) lifefatal("Not enough memory for survival flags!");
+
+    // check for Smax
+    if (survivals[maxn]) {
+        // B0 with Smax: rule -> NOT(reverse(bits))
+        for (int i = 0; i <= maxn; i++) {
+            bs[i] = 1 - survivals[maxn - i];
+            ss[i] = 1 - births[maxn - i];
+        }
+        memcpy(births, bs, maxn + 1);
+        memcpy(survivals, ss, maxn + 1);
+        free(bs);
+        free(ss);
+
+        // clear B0 flag since no alternating required
+        b0 = false;
+    } else {
+        // B0 without Smax needs two rules
+        memcpy(bs, births, maxn + 1);
+        memcpy(ss, survivals, maxn + 1);
+
+        // odd rule -> reverse(bits)
+        for (int i = 0; i <= maxn; i++) {
+            bs[i] = survivals[maxn - i];
+            ss[i] = births[maxn - i];
+        }
+
+        // even rule -> NOT(bits)
+        for (int i = 0; i <= maxn; i++) {
+            births[i] = 1 - births[i];
+            survivals[i] = 1 - survivals[i];
+        }
+
+        // save alternate rule
+        altbirths = bs;
+        altsurvivals = ss;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 // Switch to the given rule if it is valid.
 
 const char *ltlalgo::setrule(const char *s)
 {
-    int r, c, m, s1, s2, b1, b2, endpos;
+    int r, c, m, s1, s2, b1, b2, endpos, maxn, min, max;
+    int mins, maxs, minb, maxb;
+    int custom = 0;
     char n;
-    if (sscanf(s, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%n",
-                  &r, &c, &m, &s1, &s2, &b1, &b2, &n, &endpos) != 8) {
+    char rule[MAXRULESIZE];
+    char urule[MAXRULESIZE];
+    const char* nbrend = NULL;
+    const char* nbrhd = NULL;
+    const char* pos = NULL;
+    bool valid;
+    bool wasLtL = false;
+    int l = (int) strlen(s);
+    TGridType gridt = SQUARE_GRID;
+
+    // check supplied rule string is not too long
+    if (l >= MAXRULESIZE) {
+      return "Rule name is too long." ;
+    }
+
+    // convert rule to upper case
+    for (int i = 0; i <= l; i++) {
+        urule[i] = (char) toupper(s[i]);
+    }
+
+    // check for LtL syntax
+    if ((strstr(urule, "..") != 0) && sscanf(urule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%n",
+                  &r, &c, &m, &s1, &s2, &b1, &b2, &n, &endpos) == 8) {
+        // note middle cell value was read above and is in m
+
+        // convert to HROT format
+        sprintf(rule, "R%d,C%d,S%d-%d,B%d-%d,N%c%s", r, c, s1, s2, b1, b2, n, urule + endpos);
+        wasLtL = true;
+    } else {
         // try alternate LtL syntax as defined by Kellie Evans;
         // eg: 5,34,45,34,58 is equivalent to R5,C0,M1,S34..58,B34..45,NM
-        if (sscanf(s, "%d,%d,%d,%d,%d%n",
+        if (sscanf(urule, "%d,%d,%d,%d,%d%n",
                       &r, &b1, &b2, &s1, &s2, &endpos) == 5) {
+            // match so set other parameters
             c = 0;
-            m = 1;
             n = 'M';
+            // middle cell is included
+            m = 1;
+
+            // convert to HROT format
+            sprintf(rule, "R%d,C%d,S%d-%d,B%d-%d,N%c%s", r, c, s1, s2, b1, b2, n, urule + endpos);
+            wasLtL = true;
         } else {
-            return "bad syntax in Larger than Life rule";
+            // assume already in HROT format
+            memcpy(rule, urule, l + 1);
+
+            // middle cell is not included
+            m = 0;
+            wasLtL = false;
+        }
+    }
+
+    // read range and number of states
+    if (sscanf(rule, "R%d,C%d%n", &r, &c, &endpos) != 2) return "could not find R";
+
+    // validate range and number of states
+    if (r < 1) return "R value is too small";
+    if (r > MAXRANGE) return "R value is too big";
+    if (c < 0 || c > 256) return "C value must be from 0 to 256";
+
+    // find neighborhood
+    nbrhd = strstr(rule, ",N");
+    if (nbrhd == NULL && wasLtL) return "neighborhood not found";
+
+    // for non-LtL the neighborhood is optional and defaults to Moore
+    if (nbrhd == NULL) {
+        n = 'M';
+    } else {
+        // get the neighborhood type
+        nbrhd += 2;
+        n = (char) toupper(*nbrhd++);
+    
+        // validate neighborhood
+        if (strchr(VALIDNEIGHBORHOODS, n) == NULL) return "invalid neighborhood specificed";
+    
+        // check for custom or weighted neighborhoods
+        nbrend = nbrhd;
+        if (n == '@') {
+            const char *error = read_custom(nbrhd, r, custom, gridt, nbrend);
+            if (error) return error;
+        } else {
+            if (n == 'W') {
+                const char *error = read_weighted(nbrhd, r, c, custom, gridt, nbrend);
+                if (error) return error;
+            }
         }
     }
     
-    if (r < 1) return "R value is too small";
-    int r2 = r*r+r ;
-    if (r > MAXRANGE) return "R value is too big";
-    if (c < 0 || c > 256) return "C value must be from 0 to 256";
-    if (m < 0 || m > 1) return "M value must be 0 or 1";
-    if (s1 > s2) return "S minimum must be <= S maximum";
-    if (b1 > b2) return "B minimum must be <= B maximum";
-    if (n != 'M' && n != 'N' && n != 'C') return "N must be followed by M or N or C";
-    int maxn = n == 'M' ? (2*r+1)*(2*r+1) : 2*r*(r+1)+1;
-    int tshape[2*MAXRANGE+1] ;
-    if (n == 'C') {
-       int cnt = 0 ;
-       for (int i=-r; i<=r; i++) {
-          int w = 0 ;
-          while ((w + 1) * (w + 1) + (i * i) <= r2)
-             w++ ;
-          tshape[i+r] = w ;
-          cnt += 2 * w + 1 ;
-       }
-       maxn = cnt ;
-    }
-    maxn -= (1 - m);    // adjust max neighbors by middle cell setting
-    if (s1 < 0 || s1 > maxn || s2 < 0 || s2 > maxn) return "S value must be from 0 to max neighbors";
-    if (b1 < 0 || b1 > maxn || b2 < 0 || b2 > maxn) return "B value must be from 0 to max neighbors";
-    if (s[endpos] != 0 && s[endpos] != ':') return "bad suffix";
+    // compute neighborhood size without middle cell and populate tshape for relevant neighborhoods
+    int tshape[2 * MAXRANGE + 1];
+    memset(tshape, 0, (2 * MAXRANGE + 1) * sizeof(int));
+    maxn = max_neighbors(r, n, custom, tshape);
 
+    // double the range for triangular rules
+    if (n == 'L') {
+        r = r + r;
+        if (r > MAXRANGE) return "R value is too big";
+    }
+
+    // set the min and max S and B values for validation
+    // for totalistic (i.e. including middle cell) the ranges should be:
+    // B: 0 to maxn
+    // S: 1 to maxn + 1
+    // however several patterns use B: 0 to maxn + 1 so we support that here
+    minb = 0;
+    maxb = maxn + m;
+    mins = m;
+    maxs = maxn + m;
+
+    // check for survivals
+    pos = rule + endpos;
+    if (*pos != ',') {
+        return "missing , before S";
+    }
+    pos++;
+    if (*pos != 'S') {
+        return "missing S";
+    }
+    pos++;
+
+    // allocate survival flags
+    unsigned char* ss = (unsigned char*) calloc(maxs + 1, sizeof(unsigned char));
+    if (ss == NULL) lifefatal("Not enough memory for survival flags!");
+
+    // decode survival values
+    valid = true;
+    min = -1;
+
+    do {
+        // read next survival range (x-y) or single value (x)
+        if (sscanf(pos, "%d-%d%n", &min, &max, &endpos) != 2) {
+            if (sscanf(pos, "%d%n", &min, &endpos) == 1) {
+                max = min;
+            } else {
+                valid = false;
+            }
+        }
+        if (valid) {
+            // validate survival values
+            if (min > max) {
+                free(ss);
+                return "S range min must be less than max";
+            }
+            if (min < mins || min > maxs || max < mins || max > maxs) {
+                free(ss);
+                return "S value out of range";
+            }
+
+            // populate survival list
+            for (int i = min; i <= max; i++) {
+                ss[i] = 1;
+            }
+
+            // move to next item
+            pos += endpos;
+
+            // check for separator
+            if (*pos == ',') {
+                pos++;
+            } else {
+                valid = false;
+            }
+        }
+    } while(valid);
+
+    // check if there were any survival counts
+    if (min == -1) {
+        // no counts so next character must be a comma
+        if (*pos != ',') {
+            free(ss);
+            return "missing , before B";
+        } else {
+            // skip comma
+            pos++;
+        }
+    } else {
+        // survival counts were present and might have ended with comma
+        if (*(pos - 1) != ',') {
+            free(ss);
+            return "missing , before B";
+        }
+    }
+
+    // check for B
+    if (*pos != 'B') {
+        free(ss);
+        return "missing B";
+    }
+    pos++;
+
+    // allocate birth flags
+    unsigned char* bs = (unsigned char*) calloc(maxb + 1, sizeof(unsigned char));
+    if (bs == NULL) lifefatal("Not enough memory for birth flags!");
+
+    valid = true;
+    min = -1;
+
+    do {
+        // read next birth range (x-y) or single value (x)
+        if (sscanf(pos, "%d-%d%n", &min, &max, &endpos) != 2) {
+            if (sscanf(pos, "%d%n", &min, &endpos) == 1) {
+                max = min;
+            } else {
+                valid = false;
+            }
+        }
+        if (valid) {
+            // validate birth values
+            if (min > max) {
+                free(bs);
+                free(ss);
+                return "B range min must be less than max";
+            }
+            if (min < minb || min > maxb || max < minb || max > maxb) {
+                free(bs);
+                free(ss);
+                return "B value out of range";
+            }
+
+            // populate birth list
+            for (int i = min; i <= max; i++) {
+                bs[i] = 1;
+            }
+
+            // move to next item
+            pos += endpos;
+
+            // check for separator
+            if (*pos == ',') {
+                pos++;
+            } else {
+                valid = false;
+            }
+        }
+    } while(valid);
+
+    // check next section is neighborhood
+    if (nbrhd) {
+        if (min == -1 && *pos == ',') pos++;
+        if (pos != nbrhd - 2) {
+            free(bs);
+            free(ss);
+            return "bad characters before N";
+        } else {
+            pos = nbrend;
+        }
+    }
+
+    // check for suffix
+    if (*pos != 0 && *pos != ':') {
+        free(bs);
+        free(ss);
+        return "bad suffix";
+    }
+
+    // decode suffix
     char t = 'T';
     int newwd = DEFAULTSIZE;
     int newht = DEFAULTSIZE;
 
     // check for explicit suffix like ":T200,100"
-    const char *suffix = strchr(s, ':');
+    const char* suffix = NULL;
+    if (*pos == ':') suffix = pos;
     if (suffix && suffix[1] != 0) {
         if (suffix[1] == 'T' || suffix[1] == 't') {
             t = 'T';
         } else if (suffix[1] == 'P' || suffix[1] == 'p') {
             t = 'P';
         } else {
+            free(bs);
+            free(ss);
             return "bad topology in suffix (must be torus or plane)";
         }
-        if (suffix[2] != 0) {
+        if (suffix[2] == 0) {
+            // no dimensions specified
+            suffix = NULL;
+        } else {
             bool oneval = false;
             if (sscanf(suffix+2, "%d,%d%n", &newwd, &newht, &endpos) != 2) {
                 if (sscanf(suffix+2, "%d%n", &newwd, &endpos) != 1) {
+                    free(bs);
+                    free(ss);
                     return "bad grid size";
                 } else {
                     newht = newwd;
@@ -2248,19 +3665,27 @@ const char *ltlalgo::setrule(const char *s)
                         if (suffix[endpos+2] == ',' && suffix[endpos+3] == 0) {
                             // allow dangling comma after width to be consistent with lifealgo::setgridsize
                         } else {
+                            free(bs);
+                            free(ss);
                             return "unexpected character in suffix";
                         }
                     }
                 }
             }
-            if (!oneval && suffix[endpos+2] != 0) return "unexpected character in suffix";
+            if (!oneval && suffix[endpos+2] != 0) {
+                free(bs);
+                free(ss);
+                return "unexpected character in suffix";
+            }   
         }
-        if ((float)newwd * (float)newht > MAXCELLS) return "grid size is too big";
-    }
-    
-    if (!suffix) {
-        // no suffix given so universe is unbounded
-        if (b1 == 0) return "B0 is not allowed if universe is unbounded";
+        if ((float)newwd * (float)newht > MAXCELLS) {
+            free(bs);
+            free(ss);
+            return "grid size is too big";
+        }
+    } else {
+        // no topology specified
+        suffix = NULL;
     }
 
     // the given rule is valid
@@ -2268,26 +3693,56 @@ const char *ltlalgo::setrule(const char *s)
     char oldtype = ntype;
     int scount = c;
     range = r;
-    rangec = r2;
-    totalistic = m;
-    minS = s1;
-    maxS = s2;
-    minB = b1;
-    maxB = b2;
     ntype = n;
     topology = t;
-    
-    if (shape)
-        free(shape) ;
-    shape = (int *)calloc(sizeof(int), 2*r+1) ;
-    for (int i=0; i<2*r+1; i++) {
-        shape[i] = tshape[i] ;
+    if (births) free(births);
+    births = bs;
+    if (survivals) free(survivals);
+    survivals = ss;
+    if (shape) free(shape);
+    if (n == 'C' || n == '2' || n == 'L') {
+        shape = (int*) calloc(2 * r + 1, sizeof(int));
+        memcpy(shape, tshape, (2 * r + 1) * sizeof(int));
     }
+    if (altbirths) free(altbirths);
+    altbirths = NULL;
+    if (altsurvivals) free(altsurvivals);
+    altsurvivals = NULL;
+    b0 = births[0];
+    
     // set the grid_type so the GUI code can display circles or diamonds in icon mode
     // (no circular grid, so adopt a square grid for now)
     #define CIRC_GRID SQUARE_GRID
-    grid_type = ntype == 'M' ? SQUARE_GRID : (ntype == 'N' ? VN_GRID : CIRC_GRID) ;
-    
+    switch(ntype) {
+        case 'N':
+            // von Neumann
+            gridt = VN_GRID;
+            break;
+
+        case 'T':
+        case 'H':
+        case 'A':
+            // Tripod, Hex or Asterisk
+            gridt = HEX_GRID;
+            break;
+
+        case 'L':
+            // Triangular
+            gridt = TRI_GRID;
+            break;
+
+        case 'C':
+            // Circular
+            gridt = CIRC_GRID;
+            break;
+
+        default:
+            // do nothing since grid type was defaulted to SQUARE_GRID
+            // and may have been updated by read_custom or read_weighted
+            break;
+    }
+    grid_type = gridt;
+
     if (suffix) {
         // use a bounded universe
         int minsize = 2 * range;
@@ -2320,7 +3775,6 @@ const char *ltlalgo::setrule(const char *s)
         // set bounded grid dimensions used by GUI code
         gridwd = gwd;
         gridht = ght;
-
     } else {
         // no suffix given so use an unbounded universe
         unbounded = true;
@@ -2393,19 +3847,97 @@ const char *ltlalgo::setrule(const char *s)
     }
 
     // set the canonical rule
-    if (unbounded) {
-        sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c",
-                           range, scount, totalistic, minS, maxS, minB, maxB, ntype);
+    int canonr = (ntype == 'L' ? range >> 1 : range);
+    if (wasLtL) {
+        if (unbounded) {
+            if (ntype == '@' || ntype == 'W') {
+                // null terminate neighborhood string
+                *(char*)nbrend = 0;
+                sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%s",
+                                canonr, scount, m, s1, s2, b1, b2, ntype, nbrhd);
+            } else {
+                sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c",
+                                canonr, scount, m, s1, s2, b1, b2, ntype);
+            }
+        } else {
+            if (ntype == '@' || ntype == 'W') {
+                // null terminate neighborhood string
+                *(char*)nbrend = 0;
+                sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%s:%c%d,%d",
+                                canonr, scount, m, s1, s2, b1, b2, ntype, nbrhd, topology, gwd, ght);
+            } else {
+                sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c:%c%d,%d",
+                                canonr, scount, m, s1, s2, b1, b2, ntype, topology, gwd, ght);
+            }
+        }
     } else {
-        sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c:%c%d,%d",
-                           range, scount, totalistic, minS, maxS, minB, maxB, ntype,
-                           topology, gwd, ght);
+        // note: flags_string() returns a malloc'd string so it needs to be freed
+        char *blist = flags_string(births, maxb + 1);
+        char *slist = flags_string(survivals, maxs + 1);
+
+        // blist and slist will fit in canonical rule since they are no longer than the specified rule
+        // and possibly smaller in canonical form
+        if (unbounded) {
+            switch (ntype) {
+                case 'M':
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s", canonr, scount, slist, blist);
+                    break;
+                case '@':
+                case 'W':
+                    // null terminate neighborhood string
+                    *(char*)nbrend = 0;
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c%s", canonr, scount, slist, blist, ntype, nbrhd);
+                    break;
+                default:
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c", canonr, scount, slist, blist, ntype);
+                    break;
+            }
+        } else {
+            switch (ntype) {
+                case 'M':
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s:%c%d,%d", canonr, scount, slist, blist, topology, gwd, ght);
+                    break;
+                case '@':
+                case 'W':
+                    // null terminate neighborhood string
+                    *(char*)nbrend = 0;
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c%s:%c%d,%d", canonr, scount, slist, blist, ntype, nbrhd, topology, gwd, ght);
+                    break;
+                default:
+                    sprintf(canonrule, "R%d,C%d,S%s,B%s,N%c:%c%d,%d", canonr, scount, slist, blist, ntype, topology, gwd, ght);
+                    break;
+            }
+        }
+
+        // free the strings
+        free(blist);
+        free(slist);
     }
     
-    // adjust the survival range if the center cell is not included
-    if (totalistic == 0) {
-        minS++;
-        maxS++;
+    // setup B0 emulation if needed
+    if (b0) {
+        setup_b0_emulation(maxn);
+    }
+
+    // algos assume totalistic neighborhoods so if the middle cell was not specified
+    // we need to adjust the survival list by + 1
+    // exception is for Weighted where the middle cell specification is ignored since
+    // it is explicitly defined in the neighborhood
+    if (m == 0 && ntype != 'W') {
+        unsigned char* ss = (unsigned char*) calloc(maxs + 2, sizeof(unsigned char));
+        if (ss == NULL) lifefatal("Not enough memory to grow survival flags!");
+        memcpy(ss + 1, survivals, maxs + 1);
+        free(survivals);
+        survivals = ss;
+
+        // check for B0 alternate
+        if (b0) {
+            unsigned char* ss = (unsigned char*) calloc(maxs + 2, sizeof(unsigned char));
+            if (ss == NULL) lifefatal("Not enough memory to grow survival flags!");
+            memcpy(ss + 1, altsurvivals, maxs + 1);
+            free(altsurvivals);
+            altsurvivals = ss;
+        }
     }
 
     return 0;

@@ -90,7 +90,7 @@ def rule(s = "B3/S23"):
 def description(s):
     """Supply a textual description to the whole pattern."""
     for line in s.split("\n"):
-        print("#D", line)
+        print(("#D", line))
 
 # --------------------------------------------------------------------
 
@@ -164,7 +164,7 @@ class pattern(list):
         if N in self.__phases:
             return self.__phases[N]
         M = 0
-        for k in self.__phases.keys():
+        for k in list(self.__phases.keys()):
             if M < k < N: M = k
         p = self.__phases[N] = pattern(golly.evolve(self.__phases[M], N - M))
         return p
@@ -213,10 +213,10 @@ def getminbox(patt):
     # return a rect which is the minimal bounding box of given pattern;
     # note that if the pattern is a multi-state list then any dead cells
     # are included in the bounding box
-    minx =  sys.maxint
-    maxx = -sys.maxint
-    miny =  sys.maxint
-    maxy = -sys.maxint
+    minx =  sys.maxsize
+    maxx = -sys.maxsize
+    miny =  sys.maxsize
+    maxy = -sys.maxsize
     clist = list(patt)
     clen = len(clist)
     inc = 2
@@ -226,11 +226,11 @@ def getminbox(patt):
         # ignore padding int if it is present
         if clen % 3 == 1: clen -= 1
 
-    for x in xrange(0, clen, inc):
+    for x in range(0, clen, inc):
         if clist[x] < minx: minx = clist[x]
         if clist[x] > maxx: maxx = clist[x]
 
-    for y in xrange(1, clen, inc):
+    for y in range(1, clen, inc):
         if clist[y] < miny: miny = clist[y]
         if clist[y] > maxy: maxy = clist[y]
 

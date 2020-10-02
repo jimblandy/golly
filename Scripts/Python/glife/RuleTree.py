@@ -17,7 +17,6 @@
 
 import golly
 import os
-import time
 from tempfile import mkstemp
 from shutil import move
 
@@ -54,13 +53,6 @@ class RuleTree:
 
         self._init_tree()
 
-        self.lasttime = -1
-        self.starttime = time.time()
-        self.percent = 0
-        self.input_filename=""
-        self.timeout = 0
-        self.timelimit = 0
-
     def _init_tree(self):
         self.curndd = -1
         for i in range(self.numParams):
@@ -83,19 +75,6 @@ class RuleTree:
                 return output # return the output of the transition
             else:
                 return nddr # return the node index
-        seconds=time.time()-self.starttime
-        if seconds - self.lasttime >= 1:
-            self.lasttime = seconds
-            golly.show("Building rule tree... ("+str(self.percent)+"%) for "+self.input_filename+" [{0:02d}:{1:02d}] ".format(int(seconds/60),int(seconds%60)))
-        # check if time limit set
-        if self.timelimit > 0:
-            # estimate completion time
-            if self.percent > 0:
-                etf = 100 * seconds / self.percent
-            else:
-                etf = seconds
-            if etf >= self.timelimit:
-                self.timeout = 1
         if nddr in self.cache:
             return self.cache[nddr]
         # replace the node entry at each input with the index of the node from a recursive call to the next level down
@@ -262,8 +241,8 @@ def ReplaceTreeSection(rulepath, newtree):
 def GetColors(icon_pixels, wd, ht):
     colors = []
     multi_colored = False
-    for row in xrange(ht):
-        for col in xrange(wd):
+    for row in range(ht):
+        for col in range(wd):
             R,G,B = icon_pixels[row][col]
             if R != G or G != B:
                 multi_colored = True    # not grayscale
@@ -285,7 +264,7 @@ def GetColors(icon_pixels, wd, ht):
 def hex2(i):
     # convert number from 0..255 into 2 hex digits
     hexdigit = "0123456789ABCDEF"
-    result = hexdigit[i / 16]
+    result = hexdigit[i // 16]
     result += hexdigit[i % 16]
     return result
 
@@ -319,15 +298,15 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
             if charsperpixel == 1:
                 rulefile.write(cindex[n])
             else:
-                rulefile.write(cindex[n % 16] + cindex[n / 16])
+                rulefile.write(cindex[n % 16] + cindex[n // 16])
             rulefile.write(" c " + hexcolor + "\"\n")
         n += 1
     
-    for i in xrange(numicons):
+    for i in range(numicons):
         rulefile.write("/* icon for state " + str(i+1) + " */\n")
-        for row in xrange(iconsize):
+        for row in range(iconsize):
             rulefile.write("\"")
-            for col in xrange(iconsize):
+            for col in range(iconsize):
                 R,G,B = icon_pixels[row + yoffset][col + xoffset*i]
                 if R == 0 and G == 0 and B == 0:
                     # nicer to show . or .. for black pixels
@@ -342,7 +321,7 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
                     if charsperpixel == 1:
                         rulefile.write(cindex[n])
                     else:
-                        rulefile.write(cindex[n % 16] + cindex[n / 16])
+                        rulefile.write(cindex[n % 16] + cindex[n // 16])
             rulefile.write("\"\n")
 
 # ------------------------------------------------------------------------------
@@ -421,7 +400,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
         ht = len(icon_pixels)
         iconsize = 15                   # size of icons in top row
         if ht > 22: iconsize = 31       # 31x31 icons are present
-        numicons = wd / iconsize
+        numicons = wd // iconsize
         
         # get colors used in all icons (we assume each icon size uses the same set of colors)
         colors, multi_colored = GetColors(icon_pixels, wd, ht)
@@ -440,13 +419,13 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
                 numicons -= 1
             # set colors for each live state to the average of the non-black pixels
             # in each icon on top row (note we've skipped the extra icon detected above)
-            for i in xrange(numicons):
+            for i in range(numicons):
                 nbcount = 0
                 totalR = 0
                 totalG = 0
                 totalB = 0
-                for row in xrange(iconsize):
-                    for col in xrange(iconsize):
+                for row in range(iconsize):
+                    for col in range(iconsize):
                         R,G,B = icon_pixels[row][col + i*iconsize]
                         if R > 0 or G > 0 or B > 0:
                             nbcount += 1
@@ -454,9 +433,9 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
                             totalG += G
                             totalB += B
                 if nbcount > 0:
-                    rulefile.write(str(i+1) + ' ' + str(totalR / nbcount) + ' ' \
-                                                  + str(totalG / nbcount) + ' ' \
-                                                  + str(totalB / nbcount) + '\n')
+                    rulefile.write(str(i+1) + ' ' + str(totalR // nbcount) + ' ' \
+                                                  + str(totalG // nbcount) + ' ' \
+                                                  + str(totalB // nbcount) + '\n')
                 else:
                     # avoid div by zero
                     rulefile.write(str(i+1) + ' 0 0 0\n')
@@ -478,7 +457,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
 
 # ------------------------------------------------------------------------------
 
-def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename,timelimit):
+def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
     '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
     rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
     remap = {
@@ -487,16 +466,10 @@ def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,inpu
     }
     numNeighbors = len(remap[neighborhood])-1
     tree = RuleTree(n_states,numNeighbors)
-    tree.input_filename = input_filename
-    tree.timelimit = timelimit
-    l=len(transitions)
     for i,t in enumerate(transitions):
-        tree.percent=100*i//l
+        golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
         tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
-        if tree.timeout > 0:
-            break
-    if tree.timeout == 0:
-        tree.write(golly.getdir('rules')+rule_name+".tree" )
-        # use rule_name.tree to create rule_name.rule (no icons)
-        ConvertTreeToRule(rule_name, n_states, [])
-    return rule_name, tree.timeout
+    tree.write(golly.getdir('rules')+rule_name+".tree" )
+    # use rule_name.tree to create rule_name.rule (no icons)
+    ConvertTreeToRule(rule_name, n_states, [])
+    return rule_name

@@ -202,3 +202,5 @@ obobo$412bobbo$328boo$327boo$329bo81boboo22boobo$410boobooboo16booboob
 oo$216boo54bo136bobbobobbo16bobbobobbo$215bobo53b3o136bo5boo4boo4boo4b
 oo5bo$217bo53boboo144booboo4booboo$272b3o144boo3bobbo3boo$272boo145boo
 10boo5$288boo$288bobo$288bo$$256bo$256boo$255bobo!
+#C Script commands for showinviewer.lua:
+#C [[ ANGLE 90 ZOOM -1.5 THEME 3 AUTOSTART AUTOHIDEGUI TRACKBOX 1/4 -1/3 0 -1/3 ]]

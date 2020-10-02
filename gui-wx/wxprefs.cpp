@@ -19,6 +19,7 @@
 #include "wx/image.h"       // for wxImage
 
 #include "lifealgo.h"
+#include "liferules.h"      // for MAXRULESIZE
 #include "viewport.h"       // for MAX_MAG
 #include "util.h"           // for linereader
 
@@ -99,7 +100,7 @@ int ruleexwd = 500;              // rule dialog's initial extra size
 int ruleexht = 200;
 bool showalgohelp = false;       // show algorithm help in rule dialog?
 
-char initrule[256] = "B3/S23";   // initial rule
+char initrule[MAXRULESIZE] = "B3/S23"; // initial rule
 bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
 bool initshowhashinfo = false;   // initial showhashinfo setting
@@ -2085,7 +2086,11 @@ void GetPrefs()
                 if (i != QLIFE_ALGO) algoinfo[i]->algomem = maxmem;
 
         } else if (strcmp(keyword, "rule") == 0) {
-            strncpy(initrule, value, sizeof(initrule));
+            if (strlen(value)+1 > sizeof(initrule)) {
+                // should never happen if sizeof(initrule) is MAXRULESIZE
+                Fatal(_("Initial rule is too long: ")+value);
+            }
+            strcpy(initrule, value);
 
         } else if (strcmp(keyword, "named_rule") == 0) {
             // value must have format "name|rule" with name and rule non-empty

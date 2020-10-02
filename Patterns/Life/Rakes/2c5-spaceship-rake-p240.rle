@@ -404,3 +404,17 @@ o101boo211b5o$979boo7bo105booboo173bo9boo14b3o$953boo24bobo7bo3bo101b
 4o4boo$949bo9boo4bo8boo295bo3boob3o12b3o$950bobbo5boo13bobo295bobo18bo
 $952bo6boo13bo319bo$$948bobbo315b4o$947bo319bo3bo13bobbo$947bo3bo315bo
 16bo$947b4o13b4o300bobbo12bo3bo$964bo3bo315b4o$964bo$965bobbo!
+#C Script commands for showinviewer.lua:
+#C [[ AUTOSTART PAUSE 2 THEME 1 ]]
+#C [[ T 160 X -725 Y 0 Z 2 ]]
+#C [[ T 350 Z 3 ]]
+#C [[ T 870 ]]
+#C [[ T 1550 Z 4 ]]
+#C [[ T 1800 ]]
+#C [[ T 2200 Z 1.5 ]]
+#C [[ T 2500 ]]
+#C [[ T 2900 Z 7 ]]
+#C [[ T 3000 Z 2 ]]
+#C [[ T 3300 Z 1 ]]
+#C [[ T 3800 X -2300 ]]
+#C [[ LOOP 8000 ]]

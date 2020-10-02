@@ -1,12 +1,10 @@
-# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
+# Makefile for building Golly on Mac OS 10.10+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.4+ on Mac OS 10.9+)
+# cd /path/to/wxWidgets/wxWidgets-3.1.5  (use 3.1.5+ on Mac OS 10.10+)
 # mkdir build-osx
 # cd build-osx
-# ../configure --enable-unicode --disable-shared --with-osx_cocoa
-# If on Mac OS 10.9+ use this:
-# ../configure --enable-unicode --disable-shared --with-osx_cocoa --with-macosx-version-min=10.9 --disable-mediactrl
+# ../configure --disable-sys-libs --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
@@ -17,15 +15,15 @@
 OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
 osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-WX_RELEASE = $(call osx_ge,9,"3.1","3.0")
-WX_DIR = $(call osx_ge,9,"/HD/wxWidgets/wxWidgets-3.1.4","/HD/wxWidgets/wxWidgets-3.0.2")
+WX_RELEASE = $(call osx_ge,10,"3.1","3.0")
+WX_DIR = $(call osx_ge,10,"/Users/akt/HD/wxWidgets/wxWidgets-3.1.5","/Users/akt/HD/wxWidgets/wxWidgets-3.0.5")
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 3.4b1
+APP_VERSION = 4.0b1
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -41,7 +39,7 @@ SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rule
 BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly \
    $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
-GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
+GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
@@ -60,8 +58,7 @@ endif
 
 # for Python 3 script support:
 PYTHON_INCLUDE = -I`/usr/local/bin/python3 -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`
-### do we need this???!!!
-### PYTHON_LINK = -Wl,-stack_size,1000000
+# PYTHON_LINK is no longer needed
 
 # Variables:
 
@@ -73,7 +70,7 @@ TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
 CXXC = g++
-CXXC += $(call osx_ge,9,"-mmacosx-version-min=10.9","-mmacosx-version-min=10.6")
+CXXC += $(call osx_ge,10,"-mmacosx-version-min=10.10","-mmacosx-version-min=10.6")
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
@@ -87,7 +84,7 @@ CXXFLAGS = -arch x86_64 \
 CXXFLAGS += $(call osx_ge,11,"-Wno-potentially-evaluated-expression","")
 
 # some script functions need to call @autoreleasepool to avoid memory leaks
-AUTO_RELEASE = $(call osx_ge,9,"-x objective-c++ -DAUTORELEASE","")
+AUTO_RELEASE = $(call osx_ge,10,"-x objective-c++ -DAUTORELEASE","")
 
 ifdef ENABLE_PERL
     CXXFLAGS += -DENABLE_PERL
@@ -127,14 +124,14 @@ BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASE
    $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
    $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
    $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
-   $(BASEDIR)/ruleloaderalgo.h
+   $(BASEDIR)/ruleloaderalgo.h $(BASEDIR)/superalgo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
    $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
-   $(OBJDIR)/generationsalgo.o
+   $(OBJDIR)/generationsalgo.o $(OBJDIR)/superalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
    wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
    wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
@@ -156,6 +153,7 @@ __WXLIB_GL_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_gl-$(
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
+__LIB_ZLIB_p = -lwxzlib$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
@@ -188,7 +186,7 @@ app.bin: $(BASEOBJ) $(WXOBJ) $(LUALIB)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LUALIB) $(LDFLAGS) -L$(LIBDIRNAME) \
 $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
 $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__WXLIB_GL_p) \
-$(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
+$(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) $(__LIB_ZLIB_p) \
 $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK) $(IRRKLANG_LINK)
 
 $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
@@ -208,6 +206,9 @@ icons/app.icns icons/file-mc.icns icons/file-rle.icns
 	mv -f app.bin $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	
 	cp -f icons/*.icns $(EXEDIR)/$(APP_NAME).app/Contents/Resources
+	
+	echo "\nWARNING: If any of the following locations start with /usr/local you've picked up local stuff!\n"
+	otool -L -arch all $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/Golly
 
 app_bundle: $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo
 
@@ -252,6 +253,9 @@ $(OBJDIR)/ruletreealgo.o: $(BASEDIR)/ruletreealgo.cpp
 
 $(OBJDIR)/generationsalgo.o: $(BASEDIR)/generationsalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/generationsalgo.cpp
+
+$(OBJDIR)/superalgo.o: $(BASEDIR)/superalgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/superalgo.cpp
 
 $(OBJDIR)/ghashbase.o: $(BASEDIR)/ghashbase.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ghashbase.cpp

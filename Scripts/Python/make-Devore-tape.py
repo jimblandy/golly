@@ -23,7 +23,7 @@ data_tape_y = 8
 #   twoway_range(0,10,2)==[0,2,4,6,8]
 #   twoway_range(0,-10,2)==[0,-2,-4,-6,-8]
 def twoway_range(start,stop,step=1):
-    return range(start,stop,(-1 if (stop-start)<0 else 1)*abs(step))
+    return list(range(start,stop,(-1 if (stop-start)<0 else 1)*abs(step)))
 
 # range from start to stop including both end points (either direction)
 #   inclusive_range(0,10,2)==[0,2,4,6,8,10]

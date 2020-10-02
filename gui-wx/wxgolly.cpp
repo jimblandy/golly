@@ -265,12 +265,9 @@ bool GollyApp::OnInit()
     // set variable seed for later rand() calls
     srand(time(0));
     
-#if defined(__WXMAC__) && !wxCHECK_VERSION(2,7,2)
-    // prevent rectangle animation when windows open/close
-    wxSystemOptions::SetOption(wxMAC_WINDOW_PLAIN_TRANSITION, 1);
-    // prevent position problem in wxTextCtrl with wxTE_DONTWRAP style
-    // (but doesn't fix problem with I-beam cursor over scroll bars)
-    wxSystemOptions::SetOption(wxMAC_TEXTCONTROL_USE_MLTE, 1);
+#ifdef __WXMAC__
+    // remove Show Tab Bar etc from View menu
+    OSXEnableAutomaticTabbing(false);
 #endif
     
     // get current working directory before calling SetAppDirectory
@@ -288,20 +285,10 @@ bool GollyApp::OnInit()
     // let non-wx modules call Fatal, Warning, BeginProgress, etc
     lifeerrors::seterrorhandler(&wxerrhandler);
     
-    // allow .html files to include common graphic formats,
-    // and .icons files to be in any of these formats;
-    // note that wxBMPHandler is always installed, so it needs not be added,
-    // and we can assume that if HAVE_WX_BMP_HANDLER is not defined, then
-    // the handlers have not been auto-detected (and we just install them all).
-#if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_GIF_HANDLER)
+    // allow .html files to include common graphic formats
     wxImage::AddHandler(new wxGIFHandler);
-#endif
-#if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_PNG_HANDLER)
     wxImage::AddHandler(new wxPNGHandler);
-#endif
-#if !defined(HAVE_WX_BMP_HANDLER) || defined(HAVE_WX_TIFF_HANDLER)
     wxImage::AddHandler(new wxTIFFHandler);
-#endif
     
     // wxInternetFSHandler is needed to allow downloading files
     wxFileSystem::AddHandler(new wxInternetFSHandler);

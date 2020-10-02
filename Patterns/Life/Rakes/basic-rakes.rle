@@ -19,3 +19,23 @@ $89bo65bo5bo9b4oboo64b4o13b4o$156b6o9b6o64bo3bo$bboo116b3o49b4o69bo$o
 o$168bo5bo75booboo3bo3bo$174bo77boo5b4o$173bo3$182boo74bo$178b4oboo74b
 oo$179b5o76bo$180b3o77bo$259bo$$180b4o$179bo3bo77bo$183bo78bo$174boo6b
 o60bo14bo3bo$170b4oboo67bo14b4o$170b6o64bo3bo$171b4o66b4o!
+#C Script commands for showinviewer.lua:
+#C [[ AUTOSTART GPS 30 TRACK 1/2 0 THEME 2 "Zoom in to see labels for individual rakes.\nSource: rakes.lif (Alan Hensel's collection)" ]]
+#C [[ LABELSIZE 48 ]]
+#C [[ COLOR LABEL Red ]]
+#C [[ LABEL 256 0 9 "P20 c/2 forerake\n('space rake', circa 1971)" ]]
+#C [[ LABEL 256 90 9 "P20 c/2 backrake\n(based on an ecologist, same as the space rake above,\nbut with the trailing LWSS in a different location)" ]]
+#C [[ COLOR LABEL Yellow ]]
+#C [[ LABEL 170 0 9 "P16 c/2 forerake\nTim Coe, 1996" ]]
+#C [[ LABEL 170 50 9 "P16 c/2 backrake\nTim Coe, 1996" ]]
+#C [[ LABELSIZE 28 LABELALPHA .8 COLOR LABEL SpringGreen ]]
+#C [[ LABEL 60 20 3 7 "sample higher-period forerake (p240),\nbased on a repeatably ignited blinker fuse" ]]
+#C
+#C -- notice below that coordinates for points of interest are pattern coordinates,
+#C    whereas labels are cursor/screen coordinates --
+#C [[ POI X 125 Y -25 Z 10 ]]
+#C [[ POI X 128 Y 44 Z 6 ]]
+#C [[ POI X 40 Y -30 Z 10 ]]
+#C [[ POI X 40 Y 25 Z 13 ]]
+#C [[ POI X -70 Y -20 Z 6 ]]
+#C [[ POI X 10 Y 10 Z 2 ]]

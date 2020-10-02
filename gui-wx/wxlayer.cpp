@@ -2453,6 +2453,16 @@ void UpdateCurrentColors()
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
     
+    // get the algorithm name
+    wxString rulename = wxString(currlayer->algo->getrule(), wxConvLocal);
+    // replace any '\' and '/' chars with underscores;
+    // ie. given 12/34/6 we look for 12_34_6.rule
+    rulename.Replace(wxT("\\"), wxT("_"));
+    rulename.Replace(wxT("/"), wxT("_"));
+    
+    // strip off any suffix like ":T100,200" used to specify a bounded grid
+    if (rulename.Find(':') >= 0) rulename = rulename.BeforeFirst(':');
+
     // copy default colors from current algo
     currlayer->fromrgb = ad->fromrgb;
     currlayer->torgb = ad->torgb;
@@ -2463,22 +2473,18 @@ void UpdateCurrentColors()
         currlayer->cellg[0] = ad->algog[0];
         currlayer->cellb[0] = ad->algob[0];
     } else {
+        // the Super algo supports two rule families: Super and History
+        // the History default colors start at index 26 in the list
+        int o = 0;
+        if (strcmp(ad->algoName, "Super") == 0 && rulename.EndsWith("History")) o = 26;
+
         for (int n = 0; n <= maxstate; n++) {
-            currlayer->cellr[n] = ad->algor[n];
-            currlayer->cellg[n] = ad->algog[n];
-            currlayer->cellb[n] = ad->algob[n];
+            currlayer->cellr[n] = ad->algor[n + o];
+            currlayer->cellg[n] = ad->algog[n + o];
+            currlayer->cellb[n] = ad->algob[n + o];
         }
     }
     
-    wxString rulename = wxString(currlayer->algo->getrule(), wxConvLocal);
-    // replace any '\' and '/' chars with underscores;
-    // ie. given 12/34/6 we look for 12_34_6.rule
-    rulename.Replace(wxT("\\"), wxT("_"));
-    rulename.Replace(wxT("/"), wxT("_"));
-    
-    // strip off any suffix like ":T100,200" used to specify a bounded grid
-    if (rulename.Find(':') >= 0) rulename = rulename.BeforeFirst(':');
-
     // deallocate current layer's old icons
     DeleteIcons(currlayer);
 

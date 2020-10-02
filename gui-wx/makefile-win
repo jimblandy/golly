@@ -38,7 +38,7 @@
 
 ### Golly-related variables: ###
 
-APP_VERSION = 3.4b1
+APP_VERSION = 4.0b1
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -56,7 +56,7 @@ IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlangPro.lib
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
-GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
+GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
 LUAFILES = $(LUADIR)\*.h $(LUADIR)\*.c $(LUADIR)\*.hpp $(LUADIR)\Makefile $(LUADIR)\ReadMe.html
@@ -93,7 +93,7 @@ BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASE
     $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
     $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
     $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
-    $(BASEDIR)/ruleloaderalgo.h
+    $(BASEDIR)/ruleloaderalgo.h $(BASEDIR)/superalgo.h
 BASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
     $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
     $(OBJDIR)/ltlalgo.obj $(OBJDIR)/ltldraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
@@ -101,7 +101,7 @@ BASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
     $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
     $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
     $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
-    $(OBJDIR)/generationsalgo.obj
+    $(OBJDIR)/generationsalgo.obj $(OBJDIR)/superalgo.obj
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
     wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
     wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
@@ -115,7 +115,6 @@ WXO = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
 LUAO = $(LUADIR)\lapi.obj \
     $(LUADIR)\lauxlib.obj \
     $(LUADIR)\lbaselib.obj \
-    $(LUADIR)\lbitlib.obj \
     $(LUADIR)\lcode.obj \
     $(LUADIR)\lcorolib.obj \
     $(LUADIR)\lctype.obj \
@@ -438,7 +437,7 @@ MBASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
     $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
     $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
     $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
-    $(OBJDIR)/generationsalgo.obj
+    $(OBJDIR)/generationsalgo.obj $(OBJDIR)/superalgo.obj
 
 MBASES = $(BASEDIR)/bigint.cpp $(BASEDIR)/lifealgo.cpp $(BASEDIR)/hlifealgo.cpp \
     $(BASEDIR)/hlifedraw.cpp $(BASEDIR)/qlifealgo.cpp $(BASEDIR)/qlifedraw.cpp \
@@ -447,7 +446,7 @@ MBASES = $(BASEDIR)/bigint.cpp $(BASEDIR)/lifealgo.cpp $(BASEDIR)/hlifealgo.cpp 
     $(BASEDIR)/ghashdraw.cpp $(BASEDIR)/readpattern.cpp \
     $(BASEDIR)/writepattern.cpp $(BASEDIR)/liferules.cpp $(BASEDIR)/util.cpp \
     $(BASEDIR)/liferender.cpp $(BASEDIR)/viewport.cpp $(BASEDIR)/lifepoll.cpp \
-    $(BASEDIR)/generationsalgo.cpp
+    $(BASEDIR)/generationsalgo.cpp $(BASEDIR)/superalgo.cpp
 
 $(MBASEO): $(MBASES)
 	-$(CXX) /MP8 /Fo$(OBJDIR)/ /c /nologo $(CXXFLAGS) $(MBASES)

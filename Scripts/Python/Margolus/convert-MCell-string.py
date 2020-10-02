@@ -19,7 +19,7 @@ See: http://psoup.math.wisc.edu/mcell/rullex_marg.html
 "MS,D0;8;4;3;2;5;9;7;1;6;10;11;12;13;14;15","Enter Margolus specification") # defaults to BBM
 
 # pull out the 16 numeric tokens that tell us what each partition becomes
-becomes = map(int,s.replace('M',' ').replace('S',' ').replace(',',' ').replace('D',' ').replace(';',' ').split())
+becomes = list(map(int,s.replace('M',' ').replace('S',' ').replace(',',' ').replace('D',' ').replace(';',' ').split()))
 
 # write straight into the user's rules folder, so we can call setrule immediately
 folder = golly.getdir('rules')
