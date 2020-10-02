@@ -4,9 +4,9 @@
 
 <p>
 Super supports the same set of rules as
-<a href="QuickLife.html">QuickLife</a> but adds history and label states.
+<a href="QuickLife.html">QuickLife</a> and adds history and label states.
 
-The Super algorithm currently supports two rulename suffixes:  "History" mode and "Super" mode.
+The Super algorithm currently supports two rulename suffixes, "History" and "Super".
 
 <h2>History mode</h2>
 <p>A rule specific to Conway's Life, "LifeHistory", was added along with Golly 2.0, as soon as multistate rules were supported.
@@ -15,16 +15,17 @@ It largely duplicated the functionality of a "HistoricalLife" rule included in a
 <p>A key idea also borrowed from MCell is that <i>odd-numbered states are ON states</i> and <i>even-numbered states are OFF states</i>.
 Any odd-numbered state in the vicinity of a cell counts as a neighbor, but any even-numbered state is just considered to be background.</p>
 
-The Super algo extends the behavior of the seven LifeHistory states to any two-state Moore-neighborhood rule supported by Golly. *** TODO: figure out how exactly to qualify this ***
+<p>The Super algo extends the behavior of the seven LifeHistory states to any non-Wolfram rule supported by QuickLife.
+To enable it, add the suffix "History" to the standard rule string.</p>
 
-<table border=1 cellspacing=0 width=500><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
-<tr><td>0</td><td>OFF</td><td>black</td><td>the default background OFF state</td></tr>
-<tr><td>1</td><td>ON</td><td>green</td><td>the default ON state</td></tr>
-<tr><td>2</td><td>history/envelope</td><td>blue</td><td>state=2 if cell was ever ON but now OFF</td></tr>
-<tr><td>3</td><td>marked ON</td><td>white</td><td>may change to marked OFF but will always remain marked</td></tr>
-<tr><td>4</td><td>marked OFF</td><td>red</td><td>may change to marked ON but will always remain marked</td></tr>
-<tr><td>5</td><td>start ON</td><td>yellow</td><td>becomes a normal marked OFF cell when it dies</td></tr>
-<tr><td>6</td><td>boundary OFF</td><td>gray</td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>&nbsp;&nbsp;&nbsp;</b></td><td><b>Description</b></td></tr>
+<tr><td>0</td><td>OFF</td><td>black</td><td style="background-color:rgb(48, 48, 48);"></td><td>the default background OFF state</td></tr>
+<tr><td>1</td><td>ON</td><td>green</td><td style="background-color:rgb(0, 255, 0);"></td><td>the default ON state</td></tr>
+<tr><td>2</td><td>history/envelope</td><td>blue</td><td style="background-color:rgb(0, 0, 128);"></td><td>state=2 if cell was ever ON but now OFF</td></tr>
+<tr><td>3</td><td>marked ON</td><td>white</td><td style="background-color:rgb(255, 216, 255);"></td><td>may change to marked OFF but will always remain marked</td></tr>
+<tr><td>4</td><td>marked OFF</td><td>red</td><td style="background-color:rgb(255, 0, 0);"></td><td>may change to marked ON but will always remain marked</td></tr>
+<tr><td>5</td><td>start ON</td><td>yellow</td><td style="background-color:rgb(255, 255, 0);"></td><td>becomes a normal marked OFF cell when it dies</td></tr>
+<tr><td>6</td><td>boundary OFF</td><td>gray</td><td style="background-color:rgb(96, 96, 96);"></td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
 </table>
 
 <p>The primary idea was to make the evolutionary history of a pattern visible by including additional OFF states to the rule.
@@ -64,7 +65,7 @@ have been used to build extremely small guns, glider reflectors, and other types
 <p>The "Super" rules were conceived as a superset of the History cell states, to be used in cases where -- for example -- two extra ON states
 and two extra OFF states are not enough to clearly annotate a very large or complex pattern.</p>
 
-<p>Appending the word "Super" to any two-state rule string will make available a rule with twenty-six states instead of two,
+<p>Appending the suffix "Super" to any two-state rule string will make available a rule with twenty-six states instead of two,
 with behavior generally matching the two-state rule -- with the partial exception of state 6! -- but allowing
 a wide variety of annotation and history-state options, as follows:</p>
 
@@ -75,14 +76,14 @@ a wide variety of annotation and history-state options, as follows:</p>
 and will begin to leave a state-2 trail if it passes through a boundary made of state-4 cells.  See also state 8, below:  a cleaner transition can
 be created by placing a line of state-8 cells on the "upstream" side of a crossing, and a line of state-4 cells on the "downstream" side.</p>
 
-<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
-<tr><td>0</td><td>OFF</td><td>black</td><td>same as History: default background OFF state</td></tr>
-<tr><td>1</td><td>ON trail #1</td><td>green</td><td>same as History: default ON state with "history" trail</td></tr>
-<tr><td>2</td><td>OFF trail #1</td><td>blue</td><td>same as History: state=2 if cell was ever state 1</td></tr>
-<tr><td>3</td><td>marked ON</td><td>white</td><td>same as History: changes to state 4 if it turns OFF, then back to state 3 if it turns ON again</td></tr>
-<tr><td>4</td><td>marked OFF</td><td>red</td><td>same as History: changes to state 3 if it turns ON</td></tr>
-<tr><td>5</td><td>start ON</td><td>yellow</td><td>changes to state 4 if it turns OFF, then to state 3 if it turns ON again</td></tr>
-<tr><td>6</td><td>boundary OFF</td><td>gray</td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>&nbsp;&nbsp;&nbsp;</b></td><td><b>Description</b></td></tr>
+<tr><td>0</td><td>OFF</td><td>black</td><td style="background-color:rgb(48, 48, 48);"></td><td>same function as History: default background OFF state</td></tr>
+<tr><td>1</td><td>ON trail #1</td><td>green</td><td style="background-color:rgb(0, 255, 0);"></td><td>same function as History: default ON state with "history" trail</td></tr>
+<tr><td>2</td><td>OFF trail #1</td><td>blue</td><td style="background-color:rgb(0, 0, 160);"></td><td>same function History: state=2 if cell was ever state 1</td></tr>
+<tr><td>3</td><td>marked ON</td><td>pink</td><td style="background-color:rgb(255, 216, 255);"></td><td>same as History: changes to state 4 if it turns OFF, then back to state 3 if it turns ON again</td></tr>
+<tr><td>4</td><td>marked OFF</td><td>red</td><td style="background-color:rgb(255, 0, 0);"></td><td>same function as History: changes to state 3 if it turns ON</td></tr>
+<tr><td>5</td><td>start ON</td><td>yellow</td><td style="background-color:rgb(255, 255, 0);"></td><td>changes to state 4 if it turns OFF, then to state 3 if it turns ON again</td></tr>
+<tr><td>6</td><td>boundary OFF</td><td>gray</td><td style="background-color:rgb(96, 96, 96);"></td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
 </table>
 
 <h3>Trail states, and boundary markers for transition to no-trail states</h3>
@@ -97,39 +98,38 @@ states higher than 12, which do not leave behind a trail when they turn OFF.</p>
 <p>Analogous to the behavior of boundary made of state-4 cells, a boundary made of state-8 cells will not allow a moving pattern to leave a trail after making the crossing.
 The pattern itself will pass through the state-8 boundary unaffected, but it will no longer leave a trail on the far side of the boundary, whatever its behavior was on the near side.</p>
 
-<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
-<tr><td>7</td><td>marked ON no-trail boundary</td><td>?</td><td>With state 8, this state provides a boundary beyond which moving patterns will not leave trails</td></tr>
-<tr><td>8</td><td>marked OFF no-trail boundary</td><td>?</td><td>With state 7, this state provides a boundary beyond which moving patterns will not leave trails</td></tr>
-<tr><td>9</td><td>ON trail #2</td><td>?</td><td>The second of three states that leave different-colored trails when they turn OFF</td></tr>
-<tr><td>10</td><td>OFF trail #2</td><td>?</td><td>Envelope/history state for state-9 ON cells</td></tr>
-<tr><td>11</td><td>ON trail #3</td><td>?</td><td>The third of three states that leave different-colored trails when they turn OFF</td></tr>
-<tr><td>12</td><td>OFF trail #3</td><td>?</td><td>Envelope/history state for state-11 ON cells</td></tr>
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>&nbsp;&nbsp;&nbsp;</b></td><td><b>Description</b></td></tr>
+<tr><td>7</td><td>marked ON no-trail boundary</td><td>hot pink</td><td style="background-color:rgb(255, 105, 180);"></td><td>With state 8, this state provides a boundary beyond which moving patterns will not leave trails</td></tr>
+<tr><td>8</td><td>marked OFF no-trail boundary</td><td>purple</td><td style="background-color:rgb(128, 0, 128);"></td><td>With state 7, this state provides a boundary beyond which moving patterns will not leave trails</td></tr>
+<tr><td>9</td><td>ON trail #2</td><td>sky blue</td><td style="background-color:rgb(0, 191, 255);"></td><td>The second of three states that leave different-colored trails when they turn OFF</td></tr>
+<tr><td>10</td><td>OFF trail #2</td><td>gray-blue</td><td style="background-color:rgb(0, 64, 128);"></td><td>Envelope/history state for state-9 ON cells</td></tr>
+<tr><td>11</td><td>ON trail #3</td><td>turquoise</td><td style="background-color:rgb(64, 224, 208);"></td><td>The third of three states that leave different-colored trails when they turn OFF</td></tr>
+<tr><td>12</td><td>OFF trail #3</td><td>blue-green</td><td style="background-color:rgb(0, 128, 64);"></td><td>Envelope/history state for state-11 ON cells</td></tr>
 </table>
 
 <h3>No-trail states and non-permanent label states</h3>
 <p>A glider made with any one of the following ON states will remain in that same state.  This makes it easier to track in a glider synthesis or in signal circuitry (for example).
-If any of these no-trail states come in contact with different no-trail states, new cells the the lowest no-trail state, state 13.</p>
+All of these no-trail ON states propagate their own state to new births, as long as there isn't any disagreement.  If the three neighbors of an OFF cell don't share the same state,
+the new ON cell will be created in the lowest no-trail state, state 13.  A similar rule for ON states with trails reduces a new birth cell to state 1 when there's any disagreement.</p>
 
-<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>Description</b></td></tr>
-<tr><td>13</td><td>ON no-trail #1</td><td>?</td><td>Patterns in this state will remain in this state as they evolve, but leave no trail</td></tr>
-<tr><td>14</td><td>vanishing OFF labels</td><td>?</td><td>This cell state vanishes in one tick (spreads to state-16 neighbors)</td></tr>
-<tr><td>15</td><td>ON no-trail #2</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
-<tr><td>16</td><td>removable OFF labels</td><td>?</td><td>This cell state decays to state 14 if touched by an ON state or an adjacent state-14 cell)</td></tr>
-<tr><td>17</td><td>ON no-trail #3</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
-<tr><td>18</td><td>cyclable OFF state #1 (labeling)</td><td>?</td><td>Label state, switches to state 22 if a neighbor is state 22</td></tr>
-<tr><td>19</td><td>ON no-trail #4</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
-<tr><td>20</td><td>cyclable OFF state #2 (labeling)</td><td>?</td><td>Label state, switches to state 18 if a neighbor is state 18</td></tr>
-<tr><td>21</td><td>ON no-trail #5</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
-<tr><td>22</td><td>cyclable OFF state #3 (labeling)</td><td>?</td><td>Label state, switches to state 20 if a neighbor is state 20</td></tr>
-<tr><td>23</td><td>ON no-trail #6</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
-<tr><td>24</td><td>hidden OFF state (pop-up labels)</td><td>?</td><td>This label state is close in color to an OFF cell, but converts to state 18 if touched by an ON cell</td></tr>
-<tr><td>25</td><td>ON no-trail #7</td><td>?</td><td>Patterns in this state leave no trail</td></tr>
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>&nbsp;&nbsp;&nbsp;</b></td><td><b>Description</b></td></tr>
+<tr><td>13</td><td>ON no-trail #1</td><td>white</td><td style="background-color:rgb(255, 255, 255);"></td><td>Patterns in this state will remain in this state as they evolve, but leave no trail</td></tr>
+<tr><td>14</td><td>vanishing OFF labels</td><td>tomato</td><td style="background-color:rgb(255, 99, 71);"></td><td>This cell state vanishes in one tick (spreads to state-16 neighbors)</td></tr>
+<tr><td>15</td><td>ON no-trail #2</td><td>salmon</td><td style="background-color:rgb(250, 128, 114);"></td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>16</td><td>removable OFF labels</td><td>pale red</td><td style="background-color:rgb(219, 112, 147);"></td><td>This cell state decays to state 14 if touched by an ON state or an adjacent state-14 cell)</td></tr>
+<tr><td>17</td><td>ON no-trail #3</td><td>orange</td><td style="background-color:rgb(255, 165, 0);"></td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>18</td><td>cyclable OFF state #1 (labeling)</td><td>wheat</td><td style="background-color:rgb(245, 222, 179);"></td><td>Label state, switches to state 22 if a neighbor is state 22</td></tr>
+<tr><td>19</td><td>ON no-trail #4</td><td>cyan</td><td style="background-color:rgb(0, 255, 255);"></td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>20</td><td>cyclable OFF state #2 (labeling)</td><td>silver</td><td style="background-color:rgb(192, 192, 192);"></td><td>Label state, switches to state 18 if a neighbor is state 18</td></tr>
+<tr><td>21</td><td>ON no-trail #5</td><td>yellow-green</td><td style="background-color:rgb(192, 255, 128);"></td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>22</td><td>cyclable OFF state #3 (labeling)</td><td>light pink</td><td style="background-color:rgb(255, 182, 193);"></td><td>Label state, switches to state 20 if a neighbor is state 20</td></tr>
+<tr><td>23</td><td>ON no-trail #6</td><td>brighter green</td><td style="background-color:rgb(0, 255, 127);"></td><td>Patterns in this state leave no trail</td></tr>
+<tr><td>24</td><td>hidden OFF state (pop-up labels)</td><td>near-black</td><td style="background-color:rgb(1, 1, 1);"></td><td>This label state is close in color to an OFF cell, but converts to state 18 if touched by an ON cell</td></tr>
+<tr><td>25</td><td>ON no-trail #7</td><td>red-magenta</td><td style="background-color:rgb(255, 0, 127);"></td><td>Patterns in this state leave no trail</td></tr>
 </table>
 
-<p><i><b>TODO:  make final color adjustments in Golly, LifeViewer, and the LifeSuper rule table; include color descriptions in above tables</b></i></p>
-
 <h2>Conversion scripts</h2>
-<p><i><b>TODO:  describe toSuper, toHistory, and toLife Lua conversion scripts and their default shortcuts, when these are completed and checked in.</b></i></p>
+<p><i><b>TODO:  describe toSuper, toHistory, and toLife Lua conversion scripts and their default shortcuts, once these are completed and checked in.</b></i></p>
 <p></p>
 </body>
 </html>
