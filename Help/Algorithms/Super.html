@@ -128,8 +128,38 @@ the new ON cell will be created in the lowest no-trail state, state 13.  A simil
 <tr><td>25</td><td>ON no-trail #7</td><td>red-magenta</td><td style="background-color:rgb(255, 0, 127);"></td><td>Patterns in this state leave no trail</td></tr>
 </table>
 
+<h2>Changing default colors</h2>
+<p>The default colors for the Super algorithm can be changed by opening Preferencess > Colors and switching to the Super algorithm.
+The colors for Super rules will be states 0 to 25.  To allow the Super algo to support two different color schemes,
+default History colors are defined as states 26 to 32, so these colors can be changed independently of states 0 to 6.</p>
+
 <h2>Conversion scripts</h2>
-<p><i><b>TODO:  describe toSuper, toHistory, and toLife Lua conversion scripts and their default shortcuts, once these are completed and checked in.</b></i></p>
-<p></p>
+<p>Four conversion scripts are included in Golly's Scripts/Lua folder:  <b>toSuper.lua</b>, <b>toHistory.lua</b>, <b>toStandard.lua</b>,
+and <b>toChangeState.lua</b>. Each of these scripts makes sure that the correct suffix is applied to the current rule
+-- either "...Super", "...History", or no suffix -- and switches to the Super algorithm if needed.</p>
+
+<p>"Upward" conversions, increasing the number of states, are done simply by adding the "History" or "Super" suffix,
+with no changes made to any cell states.  "Downward" conversions are more complicated.  If the suffix were to be changed
+manually from "Super" to "History", for example, any states higher than 6 would be reduced to state 6.  This is not an
+optimal conversion for two reasons: state 6 is an OFF state with non-standard behavior, and all odd-numbered states
+in a Super rule are considered to be ON states, so would be better mapped to a valid History ON state.</p>
+
+<p>Therefore, <b>toHistory.lua</b> changes any with-trail ON state to state 1, and any with-trail OFF state to state 2.
+No-trail ON states are also reduced to state 1, but no-trail OFF states are removed (changed to state 0).  States 7 and 8
+are reduced to state 3 and state 4, respectively.
+
+<p>Similarly, <b>toStandard.lua</b> converts any odd-numbered Super or History ON state to state 1, and any even-numbered
+state to state 0.  This provides an easy way to remove unwanted history or label cells in a History or Super pattern.</p>
+
+<h3>Key mappings</h3>
+<p>The default key mapping for the conversion scripts is Alt + G for toSuper.lua, Alt + H for toHistory.lua, and Alt + J for toStandard.lua.
+As usual, the alt modifier corresponds to the option key on a Mac.</p>
+
+<p>Alt + K is mapped by default to the helper script <b>toChangeState.lua</b>, which allows state adjustments to be made more easily
+in History and Super rules; it is a search-and-replace function for cells of one specific state chosen by a mouse click,
+either in the entire pattern or inside a selection. This provides a way to remove or modify unwanted states while retaining others.</p>
+
+<p>If you have migrated to the current version of Golly from an earlier version, you may have to go to Preferences > Keyboard
+and manually map one or more of these keyboard shortcuts, since they are only mapped when a new GollyPrefs is created.</p>
 </body>
 </html>
