@@ -50,20 +50,33 @@ N<i>n</i> - specifies the extended neighborhood type.<br>
 <a name="nbrhds"></a>
 These diagrams show the supported neighborhoods, N<i>n</i>, for <i>r</i> = 3:
 <p>
-
+Square grid:
 <table cellspacing=6 cellpadding=0>
    <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
    <tr><td>Moore<br/>(NM)</td><td><img src="images/NM.png"></td><td>&nbsp;&nbsp;von Neumann<br/>&nbsp;&nbsp;(NN)</td><td><img src="images/NN.png"></td><td>&nbsp;&nbsp;Circular<br/>&nbsp;&nbsp;(NC)</td><td><img src="images/NC.png"></td></tr>
    <tr></tr><td>L2/Euclidean<br/>(N2)</td><td><img src="images/N2.png"></td><td>&nbsp;&nbsp;Checkerboard<br/>&nbsp;&nbsp;(NB)</td><td><img src="images/NB.png"></td><td>&nbsp;&nbsp;Hash<br/>&nbsp;&nbsp;(N#)</td><td><img src="images/NZ.png"></td></tr>
    <tr><td>Cross<br/>(N+)</td><td><img src="images/N+.png"></td><td>&nbsp;&nbsp;Saltire<br/>&nbsp;&nbsp;(NX)</td><td><img src="images/NX.png"></td><td>&nbsp;&nbsp;Star<br/>&nbsp;&nbsp;(N*)</td><td><img src="images/NS.png"></td></tr>
+</table>
+<p>
+Hexagonal grid:
+<table cellspacing=6 cellpadding=0>
+   <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
    <tr><td>Hexagonal<br/>(NH)</td><td><img src="images/NH.png"></td></tr><td>&nbsp;&nbsp;Asterisk<br/>&nbsp;&nbsp;(NA)</td><td><img src="images/NA.png"></td><td>&nbsp;&nbsp;Tripod<br/>&nbsp;&nbsp;(N3)</td><td><img src="images/N3.png"></td></tr>
+</table>
+<p>
+Use <a href="open:Scripts/Lua/hexgrid.lua">hexgrid.lua</a> or <a href="open:Scripts/Lua/showinviewer.lua">showinviewer.lua</a> to view Hexagonal, Asterisk or Tripod neighborhoods on a hexagonal grid.
+<p>
+Triangular grid:
+<table cellspacing=6 cellpadding=0>
+   <tr><th>Type</th><th>Diagram</th></tr>
    <tr><td>Triangular<br/>(NL)</td><td><img src="images/NL.png"></td></tr>
 </table>
-
 <p>
-Note: The Triangular neighborhood flips the neighborhood vertically on alternating cells.
-</p>
+The Triangular neighborhood flips the neighborhood vertically on alternating cells.
 <p>
+Use <a href="open:Scripts/Lua/showinviewer.lua">showinviewer.lua</a> to
+view Triangular neighborhoods on a triangular grid.
+<p>&nbsp;<br>
 Other supported neighborhoods:
 
 <p>&nbsp;<br>
@@ -123,7 +136,7 @@ Triangular grid will cause weightings to be treated as a triangular neighbourhoo
 <p>
 Gaussian defines a weighted neighborhood based on the defined range. Only square grids are allowed.
 <p>
-Example: (<i>r = 2</i>)
+Example: <a href="rule:R2,C2,M0,S31..48,B24..38,NG">R2,C2,M0,S31..48,B24..38,NG</a> (<i>r = 2</i>) 
 <dd>1, 2, 3, 2, 1</dd>
 <dd>2, 4, 6, 4, 2</dd>
 <dd>3, 6, 9, 6, 3</dd>
