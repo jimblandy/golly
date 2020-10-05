@@ -22,8 +22,8 @@
 #ifndef WX_PRECOMP
     #include "wx/wx.h"     // for all others include the necessary headers
 #endif
-
 #include "wx/filename.h"   // for wxFileName
+#include "wx/dynlib.h"     // for wxDynamicLibrary
 
 #include <inttypes.h>
 #include "bigint.h"
@@ -53,21 +53,26 @@
 // isn't installed.
 // Based on code from Mahogany (mahogany.sourceforge.net) and Vim (www.vim.org).
 
-#ifdef __UNIX__
+#if 0 // #ifdef __UNIX__
     // avoid warning on Linux
     #undef _POSIX_C_SOURCE
     #undef _XOPEN_SOURCE
 #endif
 
 #ifdef __WXMSW__
-    // avoid warning on Windows
     #undef HAVE_SSIZE_T
 #endif
 
 // prevent Python.h from adding Python library to link settings
 #define USE_DL_EXPORT
 
+// Including the Python header
+// Python's stable ABI version >= 3.3 is needed
+// in order to support PyArg_ParseTuple
+#define Py_LIMITED_API 0x03030000
+#define PY_SSIZE_T_CLEAN
 // workaround for hard-linking to missing python<ver>_d.lib
+// Also needed because Py_LIMITED_API cannot be used with _DEBUG
 #ifdef _DEBUG
     #undef _DEBUG
     #include <Python.h>
@@ -76,147 +81,83 @@
     #include <Python.h>
 #endif
 
-// avoid warning
-#undef PyRun_SimpleString
-
-#include "wx/dynlib.h"     // for wxDynamicLibrary
-
 // declare G_* wrappers for the functions we want to use from Python lib
+// The wrappers are function pointers that point to the corresponding
+// Python C API functions from the python DLL.
+// Some conventions for the names:
+// 1. Only declare the functions we need
+// 2. Try to use functions from Python3's Stable ABI as much as possible.
+// 3. When declaring and using dynamically loaded **FUNCTION POINTERS**,
+//    prepend "G_" to the corresponding Python C API function names.
+//    Otherwise the functions are masked by <Python.h> and the compiler cannot
+//    detect uses-before-declaration.
+// 4. N.B. Python **TYPES** and **SINGLETONS** are used without "G_" prefixes.
+//    (Because they're unique or static variables inside the header files.)
 extern "C"
 {
     // startup/shutdown
     void(*G_Py_Initialize)(void) = NULL;
     void(*G_Py_Finalize)(void) = NULL;
-    
+
     // errors
     PyObject*(*G_PyErr_Occurred)(void) = NULL;
     void(*G_PyErr_SetString)(PyObject*, const char*) = NULL;
-    
+    void(*G_PyErr_Print)() = NULL;
+    void(*G_PyErr_Fetch)(PyObject**, PyObject**, PyObject**) = NULL;
+    void(*G_PyErr_Restore)(PyObject*, PyObject*, PyObject*) = NULL;
+
     // ints
     long(*G_PyLong_AsLong)(PyObject*) = NULL;
     PyObject*(*G_PyLong_FromLong)(long) = NULL;
-    PyTypeObject* G_PyLong_Type = NULL;
-    
+
     // lists
-    PyObject*(*G_PyList_New)(int size) = NULL;
-    int(*G_PyList_Append)(PyObject*, PyObject*) = NULL;
+    PyTypeObject *G_PyList_Type = NULL;  // This should be loaded from the Python DLL directly.
+    PyObject*(*G_PyList_New)(Py_ssize_t) = NULL;
+    Py_ssize_t(*G_PyList_Size)(PyObject*) = NULL;
     PyObject*(*G_PyList_GetItem)(PyObject*, int) = NULL;
-    int(*G_PyList_SetItem)(PyObject*, int, PyObject*) = NULL;
-    int(*G_PyList_Size)(PyObject*) = NULL;
-    PyTypeObject* G_PyList_Type = NULL;
-    
-    // tuples
-    PyObject*(*G_PyTuple_New)(int) = NULL;
-    int(*G_PyTuple_SetItem)(PyObject*, int, PyObject*) = NULL;
-    PyObject*(*G_PyTuple_GetItem)(PyObject*, int) = NULL;
-    
-    // misc
-    int(*G_PyArg_Parse)(PyObject*, char*, ...) = NULL;
+    int(*G_PyList_Append)(PyObject*, PyObject*) = NULL;
+
+    // parsing arguments and building values
     int(*G_PyArg_ParseTuple)(PyObject*, char*, ...) = NULL;
-    int (*G_PyImport_AppendInittab)(const char*, PyObject*(*)(void)) = NULL;
+    PyObject*(*G_Py_BuildValue)(const char*, ...) = NULL;
+
+    // general objects
+    PyObject*(*G_PyObject_GetAttrString)(PyObject*, const char*) = NULL;
+
+    // Modules
+    int(*G_PyImport_AppendInittab)(const char*, PyObject*(*)(void)) = NULL;
     PyObject*(*G_PyImport_ImportModule)(const char*) = NULL;
-    PyObject*(*G_PyDict_GetItemString)(PyObject*, const char*) = NULL;
     PyObject*(*G_PyModule_Create2)(PyModuleDef*, int) = NULL;
     PyObject*(*G_PyModule_GetDict)(PyObject*) = NULL;
-    PyObject*(*G_Py_BuildValue)(char*, ...) = NULL;
-    PyObject*(*G_Py_FindMethod)(PyMethodDef[], PyObject*, char*) = NULL;
-    int(*G_PyRun_SimpleString)(const char*) = NULL;
+
+    // These functions below are very very probably in the Stable ABI,
+    // but I'm not 100% sure.
+    // In PEP 384, there was a function called `Py_CompileStringFlags`, [1]
+    // but it was renamed to `Py_CompileString` in Python 3.2; [2]
+    // [1] https://svn.python.org/projects/python/branches/pep-0384/PC/python3.def
+    // [2] https://github.com/python/cpython/commit/0d012f284be829c6217f60523db0e1671b7db9d9
+    PyObject*(*G_Py_CompileString)(const char*, const char*, int) = NULL;
+    PyObject*(*G_PyEval_EvalCode)(PyObject*, PyObject*, PyObject*) = NULL;
+    PyObject*(*G_PyEval_GetGlobals)() = NULL;
+    PyObject*(*G_PyEval_GetLocals)() = NULL;
+    // `Py_IncRef` and `Py_DecRef` are provided from Python as wrapper functions.
+    // Note capitalization. (`Py_(X)INCREF` and `Py_(X)DECREF` are macros.)
+    // References:
+    // [1] https://docs.python.org/3/c-api/refcounting.html (Read the 2nd to the last paragraph.)
+    // [2] https://github.com/python/cpython/blob/2.7/Include/object.h#L864-L865
+    // [3] https://github.com/python/cpython/blob/3.8/Include/object.h#L551-L552
+    void(*G_Py_IncRef)(PyObject*) = NULL;
     void(*G_Py_DecRef)(PyObject*) = NULL;
-    PyObject* G__Py_NoneStruct = NULL;                  // used by Py_None
 }
 
-// redefine the Py* functions to their equivalent G_* wrappers
-#define Py_Initialize         G_Py_Initialize
-#define Py_Finalize           G_Py_Finalize
-#define PyErr_Occurred        G_PyErr_Occurred
-#define PyErr_SetString       G_PyErr_SetString
-#define PyLong_AsLong         G_PyLong_AsLong
-#define PyLong_FromLong       G_PyLong_FromLong
-#define PyLong_Type           (*G_PyLong_Type)
-#define PyList_New            G_PyList_New
-#define PyList_Append         G_PyList_Append
-#define PyList_GetItem        G_PyList_GetItem
-#define PyList_SetItem        G_PyList_SetItem
-#define PyList_Size           G_PyList_Size
-#define PyList_Type           (*G_PyList_Type)
-#define PyTuple_New           G_PyTuple_New
-#define PyTuple_SetItem       G_PyTuple_SetItem
-#define PyTuple_GetItem       G_PyTuple_GetItem
-#define Py_BuildValue         G_Py_BuildValue
-#define PyArg_Parse           G_PyArg_Parse
-#define PyArg_ParseTuple      G_PyArg_ParseTuple
-#define PyDict_GetItemString  G_PyDict_GetItemString
-#define PyImport_AppendInittab G_PyImport_AppendInittab
-#define PyImport_ImportModule G_PyImport_ImportModule
-#define PyModule_GetDict      G_PyModule_GetDict
-#define PyModule_Create2      G_PyModule_Create2
-#define PyRun_SimpleString    G_PyRun_SimpleString
-#define Py_DecRef             G_Py_DecRef
-#define _Py_NoneStruct        (*G__Py_NoneStruct)
-
-#ifdef __WXMSW__
-    #define PYTHON_PROC FARPROC
-#else
-    #define PYTHON_PROC void *
-#endif
-#define PYTHON_FUNC(func) { _T(#func), (PYTHON_PROC*)&G_ ## func },
-
-// store function names and their addresses in Python lib
-static struct PythonFunc
-{
-    const wxChar* name;     // function name
-    PYTHON_PROC* ptr;       // function pointer
-} pythonFuncs[] =
-{
-    PYTHON_FUNC(Py_Initialize)
-    PYTHON_FUNC(Py_Finalize)
-    PYTHON_FUNC(PyErr_Occurred)
-    PYTHON_FUNC(PyErr_SetString)
-    PYTHON_FUNC(PyLong_AsLong)
-    PYTHON_FUNC(PyLong_FromLong)
-    PYTHON_FUNC(PyLong_Type)
-    PYTHON_FUNC(PyList_New)
-    PYTHON_FUNC(PyList_Append)
-    PYTHON_FUNC(PyList_GetItem)
-    PYTHON_FUNC(PyList_SetItem)
-    PYTHON_FUNC(PyList_Size)
-    PYTHON_FUNC(PyList_Type)
-    PYTHON_FUNC(PyTuple_New)
-    PYTHON_FUNC(PyTuple_SetItem)
-    PYTHON_FUNC(PyTuple_GetItem)
-    PYTHON_FUNC(Py_BuildValue)
-    PYTHON_FUNC(PyArg_Parse)
-    PYTHON_FUNC(PyArg_ParseTuple)
-    PYTHON_FUNC(PyDict_GetItemString)
-    PYTHON_FUNC(PyImport_ImportModule)
-    PYTHON_FUNC(PyImport_AppendInittab)
-    PYTHON_FUNC(PyModule_GetDict)
-    PYTHON_FUNC(PyModule_Create2)
-    PYTHON_FUNC(PyRun_SimpleString)
-    PYTHON_FUNC(Py_DecRef)
-    PYTHON_FUNC(_Py_NoneStruct)
-    { _T(""), NULL }
-};
-
-// imported exception objects -- we can't import the symbols from the
-// lib as this can cause errors (importing data symbols is not reliable)
-static PyObject* imp_PyExc_RuntimeError = NULL;
-static PyObject* imp_PyExc_KeyboardInterrupt = NULL;
-
-#define PyExc_RuntimeError imp_PyExc_RuntimeError
-#define PyExc_KeyboardInterrupt imp_PyExc_KeyboardInterrupt
-
-static void GetPythonExceptions()
-{
-    // this is needed for escape key to abort scripts via PyExc_KeyboardInterrupt
-    // (thanks to https://github.com/vim/vim/blob/master/src/if_python3.c)
-    PyObject* exmod = PyImport_ImportModule("builtins");
-    PyObject* exdict = PyModule_GetDict(exmod);
-    PyExc_RuntimeError = PyDict_GetItemString(exdict, "RuntimeError");
-    PyExc_KeyboardInterrupt = PyDict_GetItemString(exdict, "KeyboardInterrupt");
-    Py_XINCREF(PyExc_RuntimeError);
-    Py_XINCREF(PyExc_KeyboardInterrupt);
-    Py_DecRef(exmod);
+// These are objects, not functions.
+// Thus these probably need refcounting and need to be loaded using the functions above.
+// Previous comments say that loading objects directly from DLLs aren't recommended.
+extern "C" {
+    PyObject *G_PyExc_RuntimeError = NULL;
+    PyObject *G_PyExc_KeyboardInterrupt = NULL;
+    // The singleton `None` object.
+    PyObject *G_Py_None = NULL;
 }
 
 // handle for Python lib
@@ -237,7 +178,21 @@ static bool LoadPythonLib()
     
     // don't log errors in here
     wxLogNull noLog;
-    
+
+    // The prompt message for loading python DLL lib.
+    wxString prompt = _(
+        "If Python 3 isn't installed then you'll have to Cancel,\n"
+        "otherwise change the version numbers to match the\n"
+        "version installed on your system and try again."
+    );
+#ifdef __WXMSW__
+    prompt += _(
+        "\n\n"
+        "If that fails, search your system for a python3.dll file\n"
+        "and enter the full path to that file."
+    );
+#endif
+
     // wxDL_GLOBAL corresponds to RTLD_GLOBAL on Linux (ignored on Windows) and
     // is needed to avoid an ImportError when importing some modules (eg. time)
     while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
@@ -246,16 +201,13 @@ static bool LoadPythonLib()
         // on Linux it's something like "libpython3.8.so"
         // on Mac OS it's something like "/Library/Frameworks/Python.framework/Versions/3.8/Python"
         Beep();
-        wxString str = _("If Python isn't installed then you'll have to Cancel,");
-        str +=         _("\notherwise change the version numbers to match the");
-        str +=         _("\nversion installed on your system and try again.");
-#ifdef __WXMSW__
-        str +=      _("\n\nIf that fails, search your system for a python3*.dll");
-        str +=      _("\nfile and enter the full path to that file.");
-#endif
-        wxTextEntryDialog dialog( wxGetActiveWindow(), str,
-                                 _("Could not load the Python library"),
-                                 pythonlib, wxOK | wxCANCEL );
+        wxTextEntryDialog dialog(
+            wxGetActiveWindow(),
+            prompt,
+            _("Could not load the Python library"),
+            pythonlib,
+            wxOK | wxCANCEL
+        );
         int button = dialog.ShowModal();
         viewptr->ResetMouseDown();
         if (button == wxID_OK) {
@@ -264,21 +216,53 @@ static bool LoadPythonLib()
             return false;
         }
     }
-    
+
+    // load python function address with symbol "FUNC_NAME"
+    // to our function pointer G_FUNC_NAME.
+    #define LOAD_PYTHON_SYMBOL(NAME) \
+        do { \
+            void* ptr = dynlib.GetSymbol(#NAME); \
+            if ( !ptr ) { \
+                wxString err = \
+                    _("The Python library does not have this symbol: ") \
+                    + wxString(#NAME); \
+                Warning(err); \
+                return false; \
+            } \
+            void** g_ptr_address = (void**)(&G_ ## NAME); \
+            *g_ptr_address = ptr; \
+        } while(0)
+
     if ( dynlib.IsLoaded() ) {
-        // load all functions named in pythonFuncs
-        void* funcptr;
-        PythonFunc* pf = pythonFuncs;
-        while ( pf->name[0] ) {
-            funcptr = dynlib.GetSymbol(pf->name);
-            if ( !funcptr ) {
-                wxString err = _("The Python library does not have this symbol:\n");
-                err += pf->name;
-                Warning(err);
-                return false;
-            }
-            *(pf++->ptr) = (PYTHON_PROC)funcptr;
-        }
+        // load all functions used
+        LOAD_PYTHON_SYMBOL(Py_Initialize);
+        LOAD_PYTHON_SYMBOL(Py_Finalize);
+        LOAD_PYTHON_SYMBOL(PyErr_Occurred);
+        LOAD_PYTHON_SYMBOL(PyErr_SetString);
+        LOAD_PYTHON_SYMBOL(PyErr_Print);
+        LOAD_PYTHON_SYMBOL(PyErr_Fetch);
+        LOAD_PYTHON_SYMBOL(PyErr_Restore);
+        LOAD_PYTHON_SYMBOL(PyLong_AsLong);
+        LOAD_PYTHON_SYMBOL(PyLong_FromLong);
+        LOAD_PYTHON_SYMBOL(PyList_Type);
+        LOAD_PYTHON_SYMBOL(PyList_New);
+        LOAD_PYTHON_SYMBOL(PyList_Append);
+        LOAD_PYTHON_SYMBOL(PyList_GetItem);
+        LOAD_PYTHON_SYMBOL(PyList_Size);
+        LOAD_PYTHON_SYMBOL(Py_BuildValue);
+        LOAD_PYTHON_SYMBOL(PyArg_ParseTuple);
+        LOAD_PYTHON_SYMBOL(PyObject_GetAttrString);
+        LOAD_PYTHON_SYMBOL(PyImport_ImportModule);
+        LOAD_PYTHON_SYMBOL(PyImport_AppendInittab);
+        LOAD_PYTHON_SYMBOL(PyModule_Create2);
+        LOAD_PYTHON_SYMBOL(PyModule_GetDict);
+        LOAD_PYTHON_SYMBOL(Py_CompileString);
+        LOAD_PYTHON_SYMBOL(PyEval_EvalCode);
+        LOAD_PYTHON_SYMBOL(PyEval_GetGlobals);
+        LOAD_PYTHON_SYMBOL(PyEval_GetLocals);
+        LOAD_PYTHON_SYMBOL(Py_IncRef);
+        LOAD_PYTHON_SYMBOL(Py_DecRef);
+        //
         pythondll = dynlib.Detach();
     }
     
@@ -290,13 +274,30 @@ static bool LoadPythonLib()
     return pythondll != NULL;
 }
 
+static void GetPythonObjects()
+{
+    // this is needed for escape key to abort scripts via PyExc_KeyboardInterrupt
+    // (thanks to https://github.com/vim/vim/blob/master/src/if_python3.c)
+
+    // load the `builtins` module for retrieving builtin objects.
+    PyObject* builtins = G_PyImport_ImportModule("builtins");  // New reference.
+    // load the objects.
+    G_PyExc_RuntimeError = G_PyObject_GetAttrString(builtins, "RuntimeError");
+    G_PyExc_KeyboardInterrupt = G_PyObject_GetAttrString(builtins, "KeyboardInterrupt");
+    G_Py_None = G_PyObject_GetAttrString(builtins, "None");
+    // refcount the objects.
+    G_Py_DecRef(G_PyExc_RuntimeError);
+    G_Py_DecRef(G_PyExc_KeyboardInterrupt);
+    G_Py_DecRef(G_Py_None);
+    G_Py_DecRef(builtins);
+}
+
 // =============================================================================
 
 // some useful macros
 
-#define RETURN_NONE Py_INCREF(Py_None); return Py_None
-
-#define PYTHON_ERROR(msg) { PyErr_SetString(PyExc_RuntimeError, msg); return NULL; }
+#define G_Py_RETURN_NONE return G_Py_IncRef(G_Py_None), G_Py_None
+#define PYTHON_ERROR(msg) { G_PyErr_SetString(G_PyExc_RuntimeError, msg); return NULL; }
 
 #define CheckRGB(r,g,b,cmd)                                            \
     if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {    \
@@ -333,11 +334,11 @@ bool PythonScriptAborted()
     if (allowcheck) wxGetApp().Poller()->checkevents();
     
     // if user hit escape key then AbortPythonScript has raised an exception
-    // and PyErr_Occurred will be true; if so, caller must return NULL
+    // and G_PyErr_Occurred will be true; if so, caller must return NULL
     // otherwise Python can abort app with this message:
     // Fatal Python error: unexpected exception during garbage collection
     
-    return PyErr_Occurred() != NULL;
+    return G_PyErr_Occurred() != NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -347,13 +348,13 @@ static void AddTwoInts(PyObject* list, long x, long y)
     // append two ints to the given list -- these ints can be:
     // the x,y coords of a live cell in a one-state cell list,
     // or the x,y location of a rect, or the wd,ht of a rect
-    PyObject* xo = PyLong_FromLong(x);
-    PyObject* yo = PyLong_FromLong(y);
-    PyList_Append(list, xo);
-    PyList_Append(list, yo);
+    PyObject* xo = G_PyLong_FromLong(x);
+    PyObject* yo = G_PyLong_FromLong(y);
+    G_PyList_Append(list, xo);
+    G_PyList_Append(list, yo);
     // must decrement references to avoid Python memory leak
-    Py_DecRef(xo);
-    Py_DecRef(yo);
+    G_Py_DecRef(xo);
+    G_Py_DecRef(yo);
 }
 
 // -----------------------------------------------------------------------------
@@ -361,9 +362,9 @@ static void AddTwoInts(PyObject* list, long x, long y)
 static void AddState(PyObject* list, long s)
 {
     // append cell state (possibly dead) to a multi-state cell list
-    PyObject* so = PyLong_FromLong(s);
-    PyList_Append(list, so);
-    Py_DecRef(so);
+    PyObject* so = G_PyLong_FromLong(s);
+    G_PyList_Append(list, so);
+    G_Py_DecRef(so);
 }
 
 // -----------------------------------------------------------------------------
@@ -373,12 +374,12 @@ static void AddPadding(PyObject* list)
     // assume list is multi-state and add an extra int if necessary so the list
     // has an odd number of ints (this is how we distinguish multi-state lists
     // from one-state lists -- the latter always have an even number of ints)
-    int len = PyList_Size(list);
+    int len = G_PyList_Size(list);
     if (len == 0) return;         // always return [] rather than [0]
     if ((len & 1) == 0) {
-        PyObject* padding = PyLong_FromLong(0L);
-        PyList_Append(list, padding);
-        Py_DecRef(padding);
+        PyObject* padding = G_PyLong_FromLong(0L);
+        G_PyList_Append(list, padding);
+        G_Py_DecRef(padding);
     }
 }
 
@@ -387,19 +388,19 @@ static void AddPadding(PyObject* list)
 static void AddCellColor(PyObject* list, long s, long r, long g, long b)
 {
     // append state,r,g,b values to given list
-    PyObject* so = PyLong_FromLong(s);
-    PyObject* ro = PyLong_FromLong(r);
-    PyObject* go = PyLong_FromLong(g);
-    PyObject* bo = PyLong_FromLong(b);
-    PyList_Append(list, so);
-    PyList_Append(list, ro);
-    PyList_Append(list, go);
-    PyList_Append(list, bo);
+    PyObject* so = G_PyLong_FromLong(s);
+    PyObject* ro = G_PyLong_FromLong(r);
+    PyObject* go = G_PyLong_FromLong(g);
+    PyObject* bo = G_PyLong_FromLong(b);
+    G_PyList_Append(list, so);
+    G_PyList_Append(list, ro);
+    G_PyList_Append(list, go);
+    G_PyList_Append(list, bo);
     // must decrement references to avoid Python memory leak
-    Py_DecRef(so);
-    Py_DecRef(ro);
-    Py_DecRef(go);
-    Py_DecRef(bo);
+    G_Py_DecRef(so);
+    G_Py_DecRef(ro);
+    G_Py_DecRef(go);
+    G_Py_DecRef(bo);
 }
 
 // -----------------------------------------------------------------------------
@@ -411,7 +412,7 @@ static bool ExtractCellList(PyObject* list, lifealgo* universe, bool shift = fal
         bigint top, left, bottom, right;
         universe->findedges(&top, &left, &bottom, &right);
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-            PyErr_SetString(PyExc_RuntimeError, "Universe is too big to extract all cells!");
+            G_PyErr_SetString(G_PyExc_RuntimeError, "Universe is too big to extract all cells!");
             return false;
         }
         bool multistate = universe->NumCellStates() > 2;
@@ -461,12 +462,12 @@ static PyObject* py_open(PyObject* self, PyObject* args)
     int remember = 0;
     const char* err;
     
-    if (!PyArg_ParseTuple(args, (char*)"s|i", &filename, &remember)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s|i", &filename, &remember)) return NULL;
     
     err = GSF_open(wxString(filename,PY_ENC), remember);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -480,12 +481,12 @@ static PyObject* py_save(PyObject* self, PyObject* args)
     const char* format;
     int remember = 0;
     
-    if (!PyArg_ParseTuple(args, (char*)"ss|i", &filename, &format, &remember)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ss|i", &filename, &format, &remember)) return NULL;
     
     const char* err = GSF_save(wxString(filename,PY_ENC), format, remember);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -501,7 +502,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
     const char* initialfname = "";
     int mustexist = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
+    if (!G_PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
                           &initialdir, &initialfname, &mustexist)) return NULL;
     
     wxString wxs_title(title, PY_ENC);
@@ -527,7 +528,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
     }
     viewptr->ResetMouseDown();
     
-    return Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -543,7 +544,7 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
     const char* initialfname = "";
     int suppressprompt = 0;
     
-    if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
+    if (!G_PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
                           &initialdir, &initialfname, &suppressprompt)) return NULL;
     
     wxString wxs_title(title, PY_ENC);
@@ -560,7 +561,7 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
     if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
     viewptr->ResetMouseDown();
     
-    return Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -572,7 +573,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* filename;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &filename)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &filename)) return NULL;
     
     // create temporary universe of same type as current universe
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
@@ -599,11 +600,11 @@ static PyObject* py_load(PyObject* self, PyObject* args)
     
     // convert pattern into a cell list, shifting cell coords so that the
     // bounding box's top left cell is at 0,0
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     bool done = ExtractCellList(outlist, tempalgo, true);
     delete tempalgo;
     if (!done) {
-        Py_DecRef(outlist);
+        G_Py_DecRef(outlist);
         return NULL;
     }
     
@@ -621,7 +622,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
     const char* filename;
     const char* description = NULL; // ignored
     
-    if (!PyArg_ParseTuple(args, (char*)"O!s|s", &PyList_Type, &inlist, &filename, &description))
+    if (!G_PyArg_ParseTuple(args, (char*)"O!s|s", G_PyList_Type, &inlist, &filename, &description))
         return NULL;
     
     // create temporary universe of same type as current universe
@@ -630,18 +631,18 @@ static PyObject* py_store(PyObject* self, PyObject* args)
     if (err) tempalgo->setrule(tempalgo->DefaultRule());
     
     // copy cell list into temporary universe
-    bool multistate = (PyList_Size(inlist) & 1) == 1;
+    bool multistate = (G_PyList_Size(inlist) & 1) == 1;
     int ints_per_cell = multistate ? 3 : 2;
-    int num_cells = PyList_Size(inlist) / ints_per_cell;
+    int num_cells = G_PyList_Size(inlist) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        long x = PyLong_AsLong( PyList_GetItem(inlist, item) );
-        long y = PyLong_AsLong( PyList_GetItem(inlist, item + 1) );
+        long x = G_PyLong_AsLong( G_PyList_GetItem(inlist, item) );
+        long y = G_PyLong_AsLong( G_PyList_GetItem(inlist, item + 1) );
         // check if x,y is outside bounded grid
         const char* err = GSF_checkpos(tempalgo, x, y);
         if (err) { delete tempalgo; PYTHON_ERROR(err); }
         if (multistate) {
-            long state = PyLong_AsLong( PyList_GetItem(inlist, item + 2) );
+            long state = G_PyLong_AsLong( G_PyList_GetItem(inlist, item + 2) );
             if (tempalgo->setcell(x, y, state) < 0) {
                 tempalgo->endofpattern();
                 delete tempalgo;
@@ -669,7 +670,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
     delete tempalgo;
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -681,9 +682,9 @@ static PyObject* py_appdir(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"s", (const char*)gollydir.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)gollydir.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -695,9 +696,9 @@ static PyObject* py_datadir(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"s", (const char*)datadir.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)datadir.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -711,12 +712,12 @@ static PyObject* py_setdir(PyObject* self, PyObject* args)
     const char* newdir;
     const char* err;
     
-    if (!PyArg_ParseTuple(args, (char*)"ss", &dirname, &newdir)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ss", &dirname, &newdir)) return NULL;
     
     err = GSF_setdir(dirname, wxString(newdir,PY_ENC));
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -728,12 +729,12 @@ static PyObject* py_getdir(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* dirname;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &dirname)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &dirname)) return NULL;
     
     const char* dirstring = GSF_getdir(dirname);
     if (dirstring == NULL) PYTHON_ERROR("getdir error: unknown directory name.");
     
-    return Py_BuildValue((char*)"s", dirstring);
+    return G_Py_BuildValue((char*)"s", dirstring);
 }
 
 // -----------------------------------------------------------------------------
@@ -745,12 +746,12 @@ static PyObject* py_new(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* title;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &title)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &title)) return NULL;
     
     mainptr->NewPattern(wxString(title,PY_ENC));
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -761,7 +762,7 @@ static PyObject* py_cut(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (viewptr->SelectionExists()) {
         viewptr->CutSelection();
@@ -770,7 +771,7 @@ static PyObject* py_cut(PyObject* self, PyObject* args)
         PYTHON_ERROR("cut error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -781,7 +782,7 @@ static PyObject* py_copy(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (viewptr->SelectionExists()) {
         viewptr->CopySelection();
@@ -790,7 +791,7 @@ static PyObject* py_copy(PyObject* self, PyObject* args)
         PYTHON_ERROR("copy error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -802,7 +803,7 @@ static PyObject* py_clear(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int where;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &where)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &where)) return NULL;
     
     if (viewptr->SelectionExists()) {
         if (where == 0)
@@ -814,7 +815,7 @@ static PyObject* py_clear(PyObject* self, PyObject* args)
         PYTHON_ERROR("clear error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -828,12 +829,12 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
     const char* mode;
     const char* err;
     
-    if (!PyArg_ParseTuple(args, (char*)"iis", &x, &y, &mode)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"iis", &x, &y, &mode)) return NULL;
     
     err = GSF_paste(x, y, mode);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -845,7 +846,7 @@ static PyObject* py_shrink(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     
     int remove_if_empty = 0;
-    if (!PyArg_ParseTuple(args, (char*)"|i", &remove_if_empty)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|i", &remove_if_empty)) return NULL;
     
     if (viewptr->SelectionExists()) {
         currlayer->currsel.Shrink(false, remove_if_empty != 0);
@@ -855,7 +856,7 @@ static PyObject* py_shrink(PyObject* self, PyObject* args)
         PYTHON_ERROR("shrink error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -867,7 +868,7 @@ static PyObject* py_randfill(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int perc;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &perc)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &perc)) return NULL;
     
     if (perc < 1 || perc > 100) {
         PYTHON_ERROR("randfill error: percentage must be from 1 to 100.");
@@ -883,7 +884,7 @@ static PyObject* py_randfill(PyObject* self, PyObject* args)
         PYTHON_ERROR("randfill error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -895,7 +896,7 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int direction;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &direction)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &direction)) return NULL;
     
     if (viewptr->SelectionExists()) {
         viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
@@ -904,7 +905,7 @@ static PyObject* py_flip(PyObject* self, PyObject* args)
         PYTHON_ERROR("flip error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -916,7 +917,7 @@ static PyObject* py_rotate(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int direction;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &direction)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &direction)) return NULL;
     
     if (viewptr->SelectionExists()) {
         viewptr->RotateSelection(direction == 0);    // 0 = clockwise
@@ -925,7 +926,7 @@ static PyObject* py_rotate(PyObject* self, PyObject* args)
         PYTHON_ERROR("rotate error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -945,10 +946,10 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
     long ayx = 0;
     long ayy = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"s|llllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
+    if (!G_PyArg_ParseTuple(args, (char*)"s|llllll", &s, &x0, &y0, &axx, &axy, &ayx, &ayy))
         return NULL;
     
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
     long x = 0, y = 0;
     
@@ -1008,7 +1009,7 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
                                 if ('A' <= c && c <= 'X') {
                                     state = state + c - 'A' + 1;
                                 } else {
-                                    // Py_DecRef(outlist);
+                                    // G_Py_DecRef(outlist);
                                     // PYTHON_ERROR("parse error: illegal multi-char state.");
                                     // be more forgiving and treat 'p'..'y' like 'o'
                                     state = 1;
@@ -1047,27 +1048,27 @@ static PyObject* py_transform(PyObject* self, PyObject* args)
     long ayx = 0;
     long ayy = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!ll|llll",
-                          &PyList_Type, &inlist, &x0, &y0, &axx, &axy, &ayx, &ayy))
+    if (!G_PyArg_ParseTuple(args, (char*)"O!ll|llll",
+                          G_PyList_Type, &inlist, &x0, &y0, &axx, &axy, &ayx, &ayy))
         return NULL;
     
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
-    bool multistate = (PyList_Size(inlist) & 1) == 1;
+    bool multistate = (G_PyList_Size(inlist) & 1) == 1;
     int ints_per_cell = multistate ? 3 : 2;
-    int num_cells = PyList_Size(inlist) / ints_per_cell;
+    int num_cells = G_PyList_Size(inlist) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        long x = PyLong_AsLong( PyList_GetItem(inlist, item) );
-        long y = PyLong_AsLong( PyList_GetItem(inlist, item + 1) );
+        long x = G_PyLong_AsLong( G_PyList_GetItem(inlist, item) );
+        long y = G_PyLong_AsLong( G_PyList_GetItem(inlist, item + 1) );
         AddTwoInts(outlist, x0 + x * axx + y * axy,
                    y0 + x * ayx + y * ayy);
         if (multistate) {
-            long state = PyLong_AsLong( PyList_GetItem(inlist, item + 2) );
+            long state = G_PyLong_AsLong( G_PyList_GetItem(inlist, item + 2) );
             AddState(outlist, state);
         }
         if ((n % 4096) == 0 && PythonScriptAborted()) {
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             return NULL;
         }
     }
@@ -1086,7 +1087,7 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
     int ngens = 0;
     PyObject* inlist;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!i", &PyList_Type, &inlist, &ngens)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"O!i", G_PyList_Type, &inlist, &ngens)) return NULL;
     
     if (ngens < 0) {
         PYTHON_ERROR("evolve error: number of generations is negative.");
@@ -1098,18 +1099,18 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
     if (err) tempalgo->setrule(tempalgo->DefaultRule());
     
     // copy cell list into temporary universe
-    bool multistate = (PyList_Size(inlist) & 1) == 1;
+    bool multistate = (G_PyList_Size(inlist) & 1) == 1;
     int ints_per_cell = multistate ? 3 : 2;
-    int num_cells = PyList_Size(inlist) / ints_per_cell;
+    int num_cells = G_PyList_Size(inlist) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        long x = PyLong_AsLong( PyList_GetItem(inlist, item) );
-        long y = PyLong_AsLong( PyList_GetItem(inlist, item + 1) );
+        long x = G_PyLong_AsLong( G_PyList_GetItem(inlist, item) );
+        long y = G_PyLong_AsLong( G_PyList_GetItem(inlist, item + 1) );
         // check if x,y is outside bounded grid
         const char* err = GSF_checkpos(tempalgo, x, y);
         if (err) { delete tempalgo; PYTHON_ERROR(err); }
         if (multistate) {
-            long state = PyLong_AsLong( PyList_GetItem(inlist, item + 2) );
+            long state = G_PyLong_AsLong( G_PyList_GetItem(inlist, item + 2) );
             if (tempalgo->setcell(x, y, state) < 0) {
                 tempalgo->endofpattern();
                 delete tempalgo;
@@ -1150,11 +1151,11 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
     mainptr->generating = false;
     
     // convert new pattern into a new cell list
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     bool done = ExtractCellList(outlist, tempalgo);
     delete tempalgo;
     if (!done) {
-        Py_DecRef(outlist);
+        G_Py_DecRef(outlist);
         return NULL;
     }
     
@@ -1185,7 +1186,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
     // have dead cells so in that case 'copy' mode is not the same as 'or' mode
     const char* mode = "or";
     
-    if (!PyArg_ParseTuple(args, (char*)"O!|lllllls", &PyList_Type, &list,
+    if (!G_PyArg_ParseTuple(args, (char*)"O!|lllllls", G_PyList_Type, &list,
                           &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
         return NULL;
     
@@ -1203,9 +1204,9 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
     // use ChangeCell below and combine all changes due to consecutive setcell/putcells
     // if (savecells) SavePendingChanges();
     
-    bool multistate = (PyList_Size(list) & 1) == 1;
+    bool multistate = (G_PyList_Size(list) & 1) == 1;
     int ints_per_cell = multistate ? 3 : 2;
-    int num_cells = PyList_Size(list) / ints_per_cell;
+    int num_cells = G_PyList_Size(list) / ints_per_cell;
     bool abort = false;
     const char* err = NULL;
     bool pattchanged = false;
@@ -1220,8 +1221,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             int newstate = 1;
             for (int n = 0; n < num_cells; n++) {
                 int item = ints_per_cell * n;
-                long x = PyLong_AsLong( PyList_GetItem(list, item) );
-                long y = PyLong_AsLong( PyList_GetItem(list, item + 1) );
+                long x = G_PyLong_AsLong( G_PyList_GetItem(list, item) );
+                long y = G_PyLong_AsLong( G_PyList_GetItem(list, item + 1) );
                 int newx = x0 + x * axx + y * axy;
                 int newy = y0 + x * ayx + y * ayy;
                 // check if newx,newy is outside bounded grid
@@ -1230,7 +1231,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
                 int oldstate = curralgo->getcell(newx, newy);
                 if (multistate) {
                     // multi-state lists can contain dead cells so newstate might be 0
-                    newstate = PyLong_AsLong( PyList_GetItem(list, item + 2) );
+                    newstate = G_PyLong_AsLong( G_PyList_GetItem(list, item + 2) );
                 }
                 if (newstate != oldstate && oldstate > 0) {
                     curralgo->setcell(newx, newy, 0);
@@ -1248,8 +1249,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
         int numstates = curralgo->NumCellStates();
         for (int n = 0; n < num_cells; n++) {
             int item = ints_per_cell * n;
-            long x = PyLong_AsLong( PyList_GetItem(list, item) );
-            long y = PyLong_AsLong( PyList_GetItem(list, item + 1) );
+            long x = G_PyLong_AsLong( G_PyList_GetItem(list, item) );
+            long y = G_PyLong_AsLong( G_PyList_GetItem(list, item + 1) );
             int newx = x0 + x * axx + y * axy;
             int newy = y0 + x * ayx + y * ayy;
             // check if newx,newy is outside bounded grid
@@ -1259,7 +1260,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             int newstate;
             if (multistate) {
                 // multi-state lists can contain dead cells so newstate might be 0
-                newstate = PyLong_AsLong( PyList_GetItem(list, item + 2) );
+                newstate = G_PyLong_AsLong( G_PyList_GetItem(list, item + 2) );
                 if (newstate == oldstate) {
                     if (oldstate != 0) newstate = 0;
                 } else {
@@ -1270,7 +1271,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
                 if (newstate != oldstate) {
                     // paste (possibly transformed) cell into current universe
                     if (curralgo->setcell(newx, newy, newstate) < 0) {
-                        PyErr_SetString(PyExc_RuntimeError, BAD_STATE);
+                        G_PyErr_SetString(G_PyExc_RuntimeError, BAD_STATE);
                         abort = true;
                         break;
                     }
@@ -1282,7 +1283,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
                 newstate = 1 - oldstate;
                 // paste (possibly transformed) cell into current universe
                 if (curralgo->setcell(newx, newy, newstate) < 0) {
-                    PyErr_SetString(PyExc_RuntimeError, BAD_STATE);
+                    G_PyErr_SetString(G_PyExc_RuntimeError, BAD_STATE);
                     abort = true;
                     break;
                 }
@@ -1301,8 +1302,8 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
         int maxstate = curralgo->NumCellStates() - 1;
         for (int n = 0; n < num_cells; n++) {
             int item = ints_per_cell * n;
-            long x = PyLong_AsLong( PyList_GetItem(list, item) );
-            long y = PyLong_AsLong( PyList_GetItem(list, item + 1) );
+            long x = G_PyLong_AsLong( G_PyList_GetItem(list, item) );
+            long y = G_PyLong_AsLong( G_PyList_GetItem(list, item + 1) );
             int newx = x0 + x * axx + y * axy;
             int newy = y0 + x * ayx + y * ayy;
             // check if newx,newy is outside bounded grid
@@ -1311,14 +1312,14 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
             int oldstate = curralgo->getcell(newx, newy);
             if (multistate) {
                 // multi-state lists can contain dead cells so newstate might be 0
-                newstate = PyLong_AsLong( PyList_GetItem(list, item + 2) );
+                newstate = G_PyLong_AsLong( G_PyList_GetItem(list, item + 2) );
                 if (notmode) newstate = maxstate - newstate;
                 if (ormode && newstate == 0) newstate = oldstate;
             }
             if (newstate != oldstate) {
                 // paste (possibly transformed) cell into current universe
                 if (curralgo->setcell(newx, newy, newstate) < 0) {
-                    PyErr_SetString(PyExc_RuntimeError, BAD_STATE);
+                    G_PyErr_SetString(G_PyExc_RuntimeError, BAD_STATE);
                     abort = true;
                     break;
                 }
@@ -1341,7 +1342,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
     if (err) PYTHON_ERROR(err);
     if (abort) return NULL;
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1353,22 +1354,22 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     PyObject* rect_list;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &rect_list)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"O!", G_PyList_Type, &rect_list)) return NULL;
     
     // convert pattern in given rect into a cell list
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
-    int numitems = PyList_Size(rect_list);
+    int numitems = G_PyList_Size(rect_list);
     if (numitems == 0) {
         // return empty cell list
     } else if (numitems == 4) {
-        int ileft = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
-        int itop = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
-        int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
-        int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
+        int ileft = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 0) );
+        int itop = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 1) );
+        int wd = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 2) );
+        int ht = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 3) );
         const char* err = GSF_checkrect(ileft, itop, wd, ht);
         if (err) {
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             PYTHON_ERROR(err);
         }
         int iright = ileft + wd - 1;
@@ -1393,14 +1394,14 @@ static PyObject* py_getcells(PyObject* self, PyObject* args)
                 }
                 cntr++;
                 if ((cntr % 4096) == 0 && PythonScriptAborted()) {
-                    Py_DecRef(outlist);
+                    G_Py_DecRef(outlist);
                     return NULL;
                 }
             }
         }
         if (multistate) AddPadding(outlist);
     } else {
-        Py_DecRef(outlist);
+        G_Py_DecRef(outlist);
         PYTHON_ERROR("getcells error: arg must be [] or [x,y,wd,ht].");
     }
     
@@ -1417,52 +1418,52 @@ static PyObject* py_join(PyObject* self, PyObject* args)
     PyObject* inlist1;
     PyObject* inlist2;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!O!", &PyList_Type, &inlist1, &PyList_Type, &inlist2))
+    if (!G_PyArg_ParseTuple(args, (char*)"O!O!", G_PyList_Type, &inlist1, G_PyList_Type, &inlist2))
         return NULL;
     
-    bool multi1 = (PyList_Size(inlist1) & 1) == 1;
-    bool multi2 = (PyList_Size(inlist2) & 1) == 1;
+    bool multi1 = (G_PyList_Size(inlist1) & 1) == 1;
+    bool multi2 = (G_PyList_Size(inlist2) & 1) == 1;
     bool multiout = multi1 || multi2;
     int ints_per_cell, num_cells;
     long x, y, state;
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
     // append 1st list
     ints_per_cell = multi1 ? 3 : 2;
-    num_cells = PyList_Size(inlist1) / ints_per_cell;
+    num_cells = G_PyList_Size(inlist1) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        x = PyLong_AsLong( PyList_GetItem(inlist1, item) );
-        y = PyLong_AsLong( PyList_GetItem(inlist1, item + 1) );
+        x = G_PyLong_AsLong( G_PyList_GetItem(inlist1, item) );
+        y = G_PyLong_AsLong( G_PyList_GetItem(inlist1, item + 1) );
         if (multi1) {
-            state = PyLong_AsLong( PyList_GetItem(inlist1, item + 2) );
+            state = G_PyLong_AsLong( G_PyList_GetItem(inlist1, item + 2) );
         } else {
             state = 1;
         }
         AddTwoInts(outlist, x, y);
         if (multiout) AddState(outlist, state);
         if ((n % 4096) == 0 && PythonScriptAborted()) {
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             return NULL;
         }
     }
     
     // append 2nd list
     ints_per_cell = multi2 ? 3 : 2;
-    num_cells = PyList_Size(inlist2) / ints_per_cell;
+    num_cells = G_PyList_Size(inlist2) / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        x = PyLong_AsLong( PyList_GetItem(inlist2, item) );
-        y = PyLong_AsLong( PyList_GetItem(inlist2, item + 1) );
+        x = G_PyLong_AsLong( G_PyList_GetItem(inlist2, item) );
+        y = G_PyLong_AsLong( G_PyList_GetItem(inlist2, item + 1) );
         if (multi2) {
-            state = PyLong_AsLong( PyList_GetItem(inlist2, item + 2) );
+            state = G_PyLong_AsLong( G_PyList_GetItem(inlist2, item + 2) );
         } else {
             state = 1;
         }
         AddTwoInts(outlist, x, y);
         if (multiout) AddState(outlist, state);
         if ((n % 4096) == 0 && PythonScriptAborted()) {
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             return NULL;
         }
     }
@@ -1481,23 +1482,23 @@ static PyObject* py_hash(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     PyObject* rect_list;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &rect_list)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"O!", G_PyList_Type, &rect_list)) return NULL;
     
-    int numitems = PyList_Size(rect_list);
+    int numitems = G_PyList_Size(rect_list);
     if (numitems != 4) {
         PYTHON_ERROR("hash error: arg must be [x,y,wd,ht].");
     }
     
-    int x  = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
-    int y  = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
-    int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
-    int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
+    int x  = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 0) );
+    int y  = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 1) );
+    int wd = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 2) );
+    int ht = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 3) );
     const char* err = GSF_checkrect(x, y, wd, ht);
     if (err) PYTHON_ERROR(err);
     
     int hash = GSF_hash(x, y, wd, ht);
     
-    return Py_BuildValue((char*)"i", hash);
+    return G_Py_BuildValue((char*)"i", hash);
 }
 
 // -----------------------------------------------------------------------------
@@ -1508,7 +1509,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (!mainptr->ClipboardHasText()) {
         PYTHON_ERROR("getclip error: no pattern in clipboard.");
@@ -1517,7 +1518,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     // convert pattern in clipboard into a cell list, but where the first 2 items
     // are the pattern's width and height (not necessarily the minimal bounding box
     // because the pattern might have empty borders, or it might even be empty)
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
     // create a temporary layer for storing the clipboard pattern
     Layer* templayer = CreateTemporaryLayer();
@@ -1531,7 +1532,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
             delete templayer;
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             PYTHON_ERROR("getclip error: pattern is too big.");
         }
         int itop = top.toint();
@@ -1564,13 +1565,13 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
                 cntr++;
                 if ((cntr % 4096) == 0 && PythonScriptAborted()) {
                     delete templayer;
-                    Py_DecRef(outlist);
+                    G_Py_DecRef(outlist);
                     return NULL;
                 }
             }
         }
         // if no live cells then return [wd,ht] rather than [wd,ht,0]
-        if (multistate && PyList_Size(outlist) > 2) {
+        if (multistate && G_PyList_Size(outlist) > 2) {
             AddPadding(outlist);
         }
         
@@ -1578,7 +1579,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     } else {
         // assume error message has been displayed
         delete templayer;
-        Py_DecRef(outlist);
+        G_Py_DecRef(outlist);
         return NULL;
     }
     
@@ -1594,17 +1595,17 @@ static PyObject* py_select(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     PyObject* rect_list;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &rect_list)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"O!", G_PyList_Type, &rect_list)) return NULL;
     
-    int numitems = PyList_Size(rect_list);
+    int numitems = G_PyList_Size(rect_list);
     if (numitems == 0) {
         // remove any existing selection
         GSF_select(0, 0, 0, 0);
     } else if (numitems == 4) {
-        int x  = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
-        int y  = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
-        int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
-        int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
+        int x  = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 0) );
+        int y  = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 1) );
+        int wd = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 2) );
+        int ht = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 3) );
         const char* err = GSF_checkrect(x, y, wd, ht);
         if (err) PYTHON_ERROR(err);
         // set selection rect
@@ -1615,7 +1616,7 @@ static PyObject* py_select(PyObject* self, PyObject* args)
     
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1626,15 +1627,15 @@ static PyObject* py_getrect(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
     if (!currlayer->algo->isEmpty()) {
         bigint top, left, bottom, right;
         currlayer->algo->findedges(&top, &left, &bottom, &right);
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             PYTHON_ERROR("getrect error: pattern is too big.");
         }
         long x = left.toint();
@@ -1657,13 +1658,13 @@ static PyObject* py_getselrect(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
     if (viewptr->SelectionExists()) {
         if (currlayer->currsel.TooBig()) {
-            Py_DecRef(outlist);
+            G_Py_DecRef(outlist);
             PYTHON_ERROR("getselrect error: selection is too big.");
         }
         int x, y, wd, ht;
@@ -1686,12 +1687,12 @@ static PyObject* py_setcell(PyObject* self, PyObject* args)
     int x, y, state;
     const char* err;
     
-    if (!PyArg_ParseTuple(args, (char*)"iii", &x, &y, &state)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"iii", &x, &y, &state)) return NULL;
     
     err = GSF_setcell(x, y, state);    
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1703,13 +1704,13 @@ static PyObject* py_getcell(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int x, y;
     
-    if (!PyArg_ParseTuple(args, (char*)"ii", &x, &y)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ii", &x, &y)) return NULL;
     
     // check if x,y is outside bounded grid
     const char* err = GSF_checkpos(currlayer->algo, x, y);
     if (err) PYTHON_ERROR(err);
     
-    return Py_BuildValue((char*)"i", currlayer->algo->getcell(x, y));
+    return G_Py_BuildValue((char*)"i", currlayer->algo->getcell(x, y));
 }
 
 // -----------------------------------------------------------------------------
@@ -1721,7 +1722,7 @@ static PyObject* py_setcursor(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* newcursor;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &newcursor)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &newcursor)) return NULL;
     
     const char* oldcursor = CursorToString(currlayer->curs);
     wxCursor* cursptr = StringToCursor(newcursor);
@@ -1734,7 +1735,7 @@ static PyObject* py_setcursor(PyObject* self, PyObject* args)
     }
     
     // return old cursor (simplifies saving and restoring cursor)
-    return Py_BuildValue((char*)"s", oldcursor);
+    return G_Py_BuildValue((char*)"s", oldcursor);
 }
 
 // -----------------------------------------------------------------------------
@@ -1745,9 +1746,9 @@ static PyObject* py_getcursor(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"s", CursorToString(currlayer->curs));
+    return G_Py_BuildValue((char*)"s", CursorToString(currlayer->curs));
 }
 
 // -----------------------------------------------------------------------------
@@ -1758,9 +1759,9 @@ static PyObject* py_empty(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currlayer->algo->isEmpty() ? 1 : 0);
+    return G_Py_BuildValue((char*)"i", currlayer->algo->isEmpty() ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -1772,7 +1773,7 @@ static PyObject* py_run(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int ngens;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &ngens)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &ngens)) return NULL;
     
     if (ngens > 0 && !currlayer->algo->isEmpty()) {
         if (ngens > 1) {
@@ -1786,7 +1787,7 @@ static PyObject* py_run(PyObject* self, PyObject* args)
         DoAutoUpdate();
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1797,14 +1798,14 @@ static PyObject* py_step(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (!currlayer->algo->isEmpty()) {
         mainptr->NextGeneration(true);      // step by current increment
         DoAutoUpdate();
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1816,12 +1817,12 @@ static PyObject* py_setstep(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int exp;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &exp)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &exp)) return NULL;
     
     mainptr->SetStepExponent(exp);
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1832,9 +1833,9 @@ static PyObject* py_getstep(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currlayer->currexpo);
+    return G_Py_BuildValue((char*)"i", currlayer->currexpo);
 }
 
 // -----------------------------------------------------------------------------
@@ -1846,7 +1847,7 @@ static PyObject* py_setbase(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int base;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &base)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &base)) return NULL;
     
     if (base < 2) base = 2;
     if (base > MAX_BASESTEP) base = MAX_BASESTEP;
@@ -1855,7 +1856,7 @@ static PyObject* py_setbase(PyObject* self, PyObject* args)
     mainptr->SetGenIncrement();
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1866,9 +1867,9 @@ static PyObject* py_getbase(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currlayer->currbase);
+    return G_Py_BuildValue((char*)"i", currlayer->currbase);
 }
 
 // -----------------------------------------------------------------------------
@@ -1880,7 +1881,7 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int where, ngens;
     
-    if (!PyArg_ParseTuple(args, (char*)"ii", &where, &ngens)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ii", &where, &ngens)) return NULL;
     
     if (ngens > 0) {
         if (viewptr->SelectionExists()) {
@@ -1897,7 +1898,7 @@ static PyObject* py_advance(PyObject* self, PyObject* args)
         }
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1908,14 +1909,14 @@ static PyObject* py_reset(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
         mainptr->ResetPattern();
         DoAutoUpdate();
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1928,12 +1929,12 @@ static PyObject* py_setgen(PyObject* self, PyObject* args)
     const char* genstring = NULL;
     const char* err;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &genstring)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &genstring)) return NULL;
     
     err = GSF_setgen(genstring);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1945,9 +1946,9 @@ static PyObject* py_getgen(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     char sepchar = '\0';
     
-    if (!PyArg_ParseTuple(args, (char*)"|c", &sepchar)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|c", &sepchar)) return NULL;
     
-    return Py_BuildValue((char*)"s", currlayer->algo->getGeneration().tostring(sepchar));
+    return G_Py_BuildValue((char*)"s", currlayer->algo->getGeneration().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -1959,9 +1960,9 @@ static PyObject* py_getpop(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     char sepchar = '\0';
     
-    if (!PyArg_ParseTuple(args, (char*)"|c", &sepchar)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|c", &sepchar)) return NULL;
     
-    return Py_BuildValue((char*)"s", currlayer->algo->getPopulation().tostring(sepchar));
+    return G_Py_BuildValue((char*)"s", currlayer->algo->getPopulation().tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -1973,12 +1974,12 @@ static PyObject* py_setalgo(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* algostring = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &algostring)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &algostring)) return NULL;
     
     const char* err = GSF_setalgo(algostring);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -1990,7 +1991,7 @@ static PyObject* py_getalgo(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int index = currlayer->algtype;
     
-    if (!PyArg_ParseTuple(args, (char*)"|i", &index)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|i", &index)) return NULL;
     
     if (index < 0 || index >= NumAlgos()) {
         char msg[64];
@@ -1998,7 +1999,7 @@ static PyObject* py_getalgo(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
-    return Py_BuildValue((char*)"s", GetAlgoName(index));
+    return G_Py_BuildValue((char*)"s", GetAlgoName(index));
 }
 
 // -----------------------------------------------------------------------------
@@ -2010,12 +2011,12 @@ static PyObject* py_setrule(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* rulestring = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &rulestring)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &rulestring)) return NULL;
     
     const char* err = GSF_setrule(rulestring);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2026,9 +2027,9 @@ static PyObject* py_getrule(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"s", currlayer->algo->getrule());
+    return G_Py_BuildValue((char*)"s", currlayer->algo->getrule());
 }
 
 // -----------------------------------------------------------------------------
@@ -2039,9 +2040,9 @@ static PyObject* py_getwidth(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currlayer->algo->gridwd);
+    return G_Py_BuildValue((char*)"i", currlayer->algo->gridwd);
 }
 
 // -----------------------------------------------------------------------------
@@ -2052,9 +2053,9 @@ static PyObject* py_getheight(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currlayer->algo->gridht);
+    return G_Py_BuildValue((char*)"i", currlayer->algo->gridht);
 }
 
 // -----------------------------------------------------------------------------
@@ -2065,9 +2066,9 @@ static PyObject* py_numstates(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currlayer->algo->NumCellStates());
+    return G_Py_BuildValue((char*)"i", currlayer->algo->NumCellStates());
 }
 
 // -----------------------------------------------------------------------------
@@ -2078,9 +2079,9 @@ static PyObject* py_numalgos(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", NumAlgos());
+    return G_Py_BuildValue((char*)"i", NumAlgos());
 }
 
 // -----------------------------------------------------------------------------
@@ -2093,12 +2094,12 @@ static PyObject* py_setpos(PyObject* self, PyObject* args)
     const char* x;
     const char* y;
     
-    if (!PyArg_ParseTuple(args, (char*)"ss", &x, &y)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ss", &x, &y)) return NULL;
     
     const char* err = GSF_setpos(x, y);
     if (err) PYTHON_ERROR(err);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2110,16 +2111,13 @@ static PyObject* py_getpos(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     char sepchar = '\0';
     
-    if (!PyArg_ParseTuple(args, (char*)"|c", &sepchar)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|c", &sepchar)) return NULL;
     
     bigint bigx, bigy;
     viewptr->GetPos(bigx, bigy);
     
     // return position as x,y tuple
-    PyObject* xytuple = PyTuple_New(2);
-    PyTuple_SetItem(xytuple, 0, Py_BuildValue((char*)"s",bigx.tostring(sepchar)));
-    PyTuple_SetItem(xytuple, 1, Py_BuildValue((char*)"s",bigy.tostring(sepchar)));
-    return xytuple;
+    return G_Py_BuildValue("(s, s)", bigx.tostring(sepchar), bigy.tostring(sepchar));
 }
 
 // -----------------------------------------------------------------------------
@@ -2131,12 +2129,12 @@ static PyObject* py_setmag(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int mag;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &mag)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &mag)) return NULL;
     
     viewptr->SetMag(mag);
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2147,9 +2145,9 @@ static PyObject* py_getmag(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", viewptr->GetMag());
+    return G_Py_BuildValue((char*)"i", viewptr->GetMag());
 }
 
 // -----------------------------------------------------------------------------
@@ -2160,12 +2158,12 @@ static PyObject* py_fit(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     viewptr->FitPattern();
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2176,7 +2174,7 @@ static PyObject* py_fitsel(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (viewptr->SelectionExists()) {
         viewptr->FitSelection();
@@ -2185,7 +2183,7 @@ static PyObject* py_fitsel(PyObject* self, PyObject* args)
         PYTHON_ERROR("fitsel error: no selection.");
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2197,17 +2195,17 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     PyObject* rect_list;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &rect_list)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"O!", G_PyList_Type, &rect_list)) return NULL;
     
-    int numitems = PyList_Size(rect_list);
+    int numitems = G_PyList_Size(rect_list);
     if (numitems != 4) {
         PYTHON_ERROR("visrect error: arg must be [x,y,wd,ht].");
     }
     
-    int x = PyLong_AsLong( PyList_GetItem(rect_list, 0) );
-    int y = PyLong_AsLong( PyList_GetItem(rect_list, 1) );
-    int wd = PyLong_AsLong( PyList_GetItem(rect_list, 2) );
-    int ht = PyLong_AsLong( PyList_GetItem(rect_list, 3) );
+    int x = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 0) );
+    int y = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 1) );
+    int wd = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 2) );
+    int ht = G_PyLong_AsLong( G_PyList_GetItem(rect_list, 3) );
     const char* err = GSF_checkrect(x, y, wd, ht);
     if (err) PYTHON_ERROR(err);
     
@@ -2218,7 +2216,7 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
     int visible = viewptr->CellVisible(left, top) &&
                   viewptr->CellVisible(right, bottom);
     
-    return Py_BuildValue((char*)"i", visible);
+    return G_Py_BuildValue((char*)"i", visible);
 }
 
 // -----------------------------------------------------------------------------
@@ -2230,7 +2228,7 @@ static PyObject* py_setview(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int wd, ht;
     
-    if (!PyArg_ParseTuple(args, (char*)"ii", &wd, &ht)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ii", &wd, &ht)) return NULL;
     if (wd < 0) wd = 0;
     if (ht < 0) ht = 0;
     
@@ -2243,7 +2241,7 @@ static PyObject* py_setview(PyObject* self, PyObject* args)
     mainptr->GetSize(&mainwd, &mainht);
     mainptr->SetSize(mainwd + (wd - currwd), mainht + (ht - currht));
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2254,7 +2252,7 @@ static PyObject* py_getview(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
 
     int currwd, currht;
     bigview->GetClientSize(&currwd, &currht);
@@ -2262,10 +2260,7 @@ static PyObject* py_getview(PyObject* self, PyObject* args)
     if (currht < 0) currht = 0;
     
     // return viewport size as wd,ht tuple
-    PyObject* tuple = PyTuple_New(2);
-    PyTuple_SetItem(tuple, 0, Py_BuildValue((char*)"i", currwd));
-    PyTuple_SetItem(tuple, 1, Py_BuildValue((char*)"i", currht));
-    return tuple;
+    return G_Py_BuildValue("(i, i)", currwd, currht);
 }
 
 // -----------------------------------------------------------------------------
@@ -2276,11 +2271,11 @@ static PyObject* py_update(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     GSF_update();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2292,11 +2287,11 @@ static PyObject* py_autoupdate(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int flag;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &flag)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &flag)) return NULL;
     
     autoupdate = (flag != 0);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2307,7 +2302,7 @@ static PyObject* py_addlayer(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (numlayers >= MAX_LAYERS) {
         PYTHON_ERROR("addlayer error: no more layers can be added.");
@@ -2317,7 +2312,7 @@ static PyObject* py_addlayer(PyObject* self, PyObject* args)
     }
     
     // return index of new layer
-    return Py_BuildValue((char*)"i", currindex);
+    return G_Py_BuildValue((char*)"i", currindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -2328,7 +2323,7 @@ static PyObject* py_clone(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (numlayers >= MAX_LAYERS) {
         PYTHON_ERROR("clone error: no more layers can be added.");
@@ -2338,7 +2333,7 @@ static PyObject* py_clone(PyObject* self, PyObject* args)
     }
     
     // return index of new layer
-    return Py_BuildValue((char*)"i", currindex);
+    return G_Py_BuildValue((char*)"i", currindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -2349,7 +2344,7 @@ static PyObject* py_duplicate(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (numlayers >= MAX_LAYERS) {
         PYTHON_ERROR("duplicate error: no more layers can be added.");
@@ -2359,7 +2354,7 @@ static PyObject* py_duplicate(PyObject* self, PyObject* args)
     }
     
     // return index of new layer
-    return Py_BuildValue((char*)"i", currindex);
+    return G_Py_BuildValue((char*)"i", currindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -2370,7 +2365,7 @@ static PyObject* py_dellayer(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     if (numlayers <= 1) {
         PYTHON_ERROR("dellayer error: there is only one layer.");
@@ -2379,7 +2374,7 @@ static PyObject* py_dellayer(PyObject* self, PyObject* args)
         DoAutoUpdate();
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2391,7 +2386,7 @@ static PyObject* py_movelayer(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int fromindex, toindex;
     
-    if (!PyArg_ParseTuple(args, (char*)"ii", &fromindex, &toindex)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"ii", &fromindex, &toindex)) return NULL;
     
     if (fromindex < 0 || fromindex >= numlayers) {
         char msg[64];
@@ -2407,7 +2402,7 @@ static PyObject* py_movelayer(PyObject* self, PyObject* args)
     MoveLayer(fromindex, toindex);
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2419,7 +2414,7 @@ static PyObject* py_setlayer(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int index;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &index)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &index)) return NULL;
     
     if (index < 0 || index >= numlayers) {
         char msg[64];
@@ -2430,7 +2425,7 @@ static PyObject* py_setlayer(PyObject* self, PyObject* args)
     SetLayer(index);
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2441,9 +2436,9 @@ static PyObject* py_getlayer(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", currindex);
+    return G_Py_BuildValue((char*)"i", currindex);
 }
 
 // -----------------------------------------------------------------------------
@@ -2454,9 +2449,9 @@ static PyObject* py_numlayers(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", numlayers);
+    return G_Py_BuildValue((char*)"i", numlayers);
 }
 
 // -----------------------------------------------------------------------------
@@ -2467,9 +2462,9 @@ static PyObject* py_maxlayers(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"i", MAX_LAYERS);
+    return G_Py_BuildValue((char*)"i", MAX_LAYERS);
 }
 
 // -----------------------------------------------------------------------------
@@ -2482,7 +2477,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
     const char* name;
     int index = currindex;
     
-    if (!PyArg_ParseTuple(args, (char*)"s|i", &name, &index)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s|i", &name, &index)) return NULL;
     
     if (index < 0 || index >= numlayers) {
         char msg[64];
@@ -2492,7 +2487,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
     
     GSF_setname(wxString(name,PY_ENC), index);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2504,7 +2499,7 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int index = currindex;
     
-    if (!PyArg_ParseTuple(args, (char*)"|i", &index)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|i", &index)) return NULL;
     
     if (index < 0 || index >= numlayers) {
         char msg[64];
@@ -2512,7 +2507,7 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
-    return Py_BuildValue((char*)"s", (const char*)GetLayer(index)->currname.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)GetLayer(index)->currname.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2524,20 +2519,20 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     PyObject* color_list;
     
-    if (!PyArg_ParseTuple(args, (char*)"O!", &PyList_Type, &color_list)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"O!", G_PyList_Type, &color_list)) return NULL;
     
-    int len = PyList_Size(color_list);
+    int len = G_PyList_Size(color_list);
     if (len == 0) {
         // restore default colors in current layer and its clones
         UpdateLayerColors();
     } else if (len == 6) {
         // create gradient from r1,g1,b1 to r2,g2,b2
-        int r1 = PyLong_AsLong( PyList_GetItem(color_list, 0) );
-        int g1 = PyLong_AsLong( PyList_GetItem(color_list, 1) );
-        int b1 = PyLong_AsLong( PyList_GetItem(color_list, 2) );
-        int r2 = PyLong_AsLong( PyList_GetItem(color_list, 3) );
-        int g2 = PyLong_AsLong( PyList_GetItem(color_list, 4) );
-        int b2 = PyLong_AsLong( PyList_GetItem(color_list, 5) );
+        int r1 = G_PyLong_AsLong( G_PyList_GetItem(color_list, 0) );
+        int g1 = G_PyLong_AsLong( G_PyList_GetItem(color_list, 1) );
+        int b1 = G_PyLong_AsLong( G_PyList_GetItem(color_list, 2) );
+        int r2 = G_PyLong_AsLong( G_PyList_GetItem(color_list, 3) );
+        int g2 = G_PyLong_AsLong( G_PyList_GetItem(color_list, 4) );
+        int b2 = G_PyLong_AsLong( G_PyList_GetItem(color_list, 5) );
         CheckRGB(r1, g1, b1, "setcolors");
         CheckRGB(r2, g2, b2, "setcolors");
         currlayer->fromrgb.Set(r1, g1, b1);
@@ -2548,10 +2543,10 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
     } else if (len % 4 == 0) {
         int i = 0;
         while (i < len) {
-            int s = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
-            int r = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
-            int g = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
-            int b = PyLong_AsLong( PyList_GetItem(color_list, i) ); i++;
+            int s = G_PyLong_AsLong( G_PyList_GetItem(color_list, i) ); i++;
+            int r = G_PyLong_AsLong( G_PyList_GetItem(color_list, i) ); i++;
+            int g = G_PyLong_AsLong( G_PyList_GetItem(color_list, i) ); i++;
+            int b = G_PyLong_AsLong( G_PyList_GetItem(color_list, i) ); i++;
             CheckRGB(r, g, b, "setcolors");
             if (s == -1) {
                 // set all LIVE states to r,g,b (best not to alter state 0)
@@ -2580,7 +2575,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
     
     DoAutoUpdate();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2592,9 +2587,9 @@ static PyObject* py_getcolors(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int state = -1;
     
-    if (!PyArg_ParseTuple(args, (char*)"|i", &state)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|i", &state)) return NULL;
     
-    PyObject* outlist = PyList_New(0);
+    PyObject* outlist = G_PyList_New(0);
     
     if (state == -1) {
         // return colors for ALL states, including state 0
@@ -2624,9 +2619,9 @@ static PyObject* py_os(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
 
-    return Py_BuildValue((char*)"s", GSF_os());
+    return G_Py_BuildValue((char*)"s", GSF_os());
 }
 
 // -----------------------------------------------------------------------------
@@ -2639,14 +2634,14 @@ static PyObject* py_setoption(PyObject* self, PyObject* args)
     const char* optname;
     int oldval, newval;
     
-    if (!PyArg_ParseTuple(args, (char*)"si", &optname, &newval)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"si", &optname, &newval)) return NULL;
     
     if (!GSF_setoption(optname, newval, &oldval)) {
         PYTHON_ERROR("setoption error: unknown option.");
     }
     
     // return old value (simplifies saving and restoring settings)
-    return Py_BuildValue((char*)"i", oldval);
+    return G_Py_BuildValue((char*)"i", oldval);
 }
 
 // -----------------------------------------------------------------------------
@@ -2659,13 +2654,13 @@ static PyObject* py_getoption(PyObject* self, PyObject* args)
     const char* optname;
     int optval;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &optname)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &optname)) return NULL;
     
     if (!GSF_getoption(optname, &optval)) {
         PYTHON_ERROR("getoption error: unknown option.");
     }
     
-    return Py_BuildValue((char*)"i", optval);
+    return G_Py_BuildValue((char*)"i", optval);
 }
 
 // -----------------------------------------------------------------------------
@@ -2678,7 +2673,7 @@ static PyObject* py_setcolor(PyObject* self, PyObject* args)
     const char* colname;
     int r, g, b;
     
-    if (!PyArg_ParseTuple(args, (char*)"siii", &colname, &r, &g, &b)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"siii", &colname, &r, &g, &b)) return NULL;
     
     wxColor newcol(r, g, b);
     wxColor oldcol;
@@ -2688,11 +2683,7 @@ static PyObject* py_setcolor(PyObject* self, PyObject* args)
     }
     
     // return old r,g,b values (simplifies saving and restoring colors)
-    PyObject* rgbtuple = PyTuple_New(3);
-    PyTuple_SetItem(rgbtuple, 0, Py_BuildValue((char*)"i",oldcol.Red()));
-    PyTuple_SetItem(rgbtuple, 1, Py_BuildValue((char*)"i",oldcol.Green()));
-    PyTuple_SetItem(rgbtuple, 2, Py_BuildValue((char*)"i",oldcol.Blue()));
-    return rgbtuple;
+    return G_Py_BuildValue("(i, i, i)", oldcol.Red(), oldcol.Green(), oldcol.Blue());
 }
 
 // -----------------------------------------------------------------------------
@@ -2705,18 +2696,14 @@ static PyObject* py_getcolor(PyObject* self, PyObject* args)
     const char* colname;
     wxColor color;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &colname)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &colname)) return NULL;
     
     if (!GSF_getcolor(colname, color)) {
         PYTHON_ERROR("getcolor error: unknown color.");
     }
     
     // return r,g,b tuple
-    PyObject* rgbtuple = PyTuple_New(3);
-    PyTuple_SetItem(rgbtuple, 0, Py_BuildValue((char*)"i",color.Red()));
-    PyTuple_SetItem(rgbtuple, 1, Py_BuildValue((char*)"i",color.Green()));
-    PyTuple_SetItem(rgbtuple, 2, Py_BuildValue((char*)"i",color.Blue()));
-    return rgbtuple;
+    return G_Py_BuildValue("(i, i, i)", color.Red(), color.Green(), color.Blue());
 }
 
 // -----------------------------------------------------------------------------
@@ -2728,12 +2715,12 @@ static PyObject* py_setclipstr(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* clipstr;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &clipstr)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &clipstr)) return NULL;
     
     wxString wxs_clip(clipstr, PY_ENC);
     mainptr->CopyTextToClipboard(wxs_clip);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2744,7 +2731,7 @@ static PyObject* py_getclipstr(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     wxTextDataObject data;
     if (!mainptr->GetTextFromClipboard(&data)) {
@@ -2752,7 +2739,7 @@ static PyObject* py_getclipstr(PyObject* self, PyObject* args)
     }
     
     wxString wxs_clipstr = data.GetText();
-    return Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2766,7 +2753,7 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
     const char* initial = "";
     const char* title = "";
     
-    if (!PyArg_ParseTuple(args, (char*)"s|ss", &prompt, &initial, &title))
+    if (!G_PyArg_ParseTuple(args, (char*)"s|ss", &prompt, &initial, &title))
         return NULL;
     
     wxString result;
@@ -2777,7 +2764,7 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
         return NULL;
     }
     
-    return Py_BuildValue((char*)"s", (const char*)result.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)result.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2788,13 +2775,13 @@ static PyObject* py_getxy(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
     
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
-    return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2806,12 +2793,12 @@ static PyObject* py_getevent(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int get = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"|i", &get)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|i", &get)) return NULL;
     
     wxString event;
     GSF_getevent(event, get);
     
-    return Py_BuildValue((char*)"s", (const char*)event.mb_str(PY_ENC));
+    return G_Py_BuildValue((char*)"s", (const char*)event.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2823,14 +2810,14 @@ static PyObject* py_doevent(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* event;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
     
     if (event[0]) {
         const char* err = GSF_doevent(wxString(event,PY_ENC));
         if (err) PYTHON_ERROR(err);
     }
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2841,13 +2828,13 @@ static PyObject* py_getkey(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     char s[2];        // room for char + NULL
     s[0] = GSF_getkey();
     s[1] = '\0';
     
-    return Py_BuildValue((char*)"s", s);
+    return G_Py_BuildValue((char*)"s", s);
 }
 
 // -----------------------------------------------------------------------------
@@ -2859,11 +2846,11 @@ static PyObject* py_dokey(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* ascii;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &ascii)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &ascii)) return NULL;
     
     GSF_dokey(ascii);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2875,7 +2862,7 @@ static PyObject* py_show(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* s = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
     inscript = false;
     statusptr->DisplayMessage(wxString(s,PY_ENC));
@@ -2883,7 +2870,7 @@ static PyObject* py_show(PyObject* self, PyObject* args)
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2895,7 +2882,7 @@ static PyObject* py_error(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* s = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
     inscript = false;
     statusptr->ErrorMessage(wxString(s,PY_ENC));
@@ -2903,7 +2890,7 @@ static PyObject* py_error(PyObject* self, PyObject* args)
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2916,14 +2903,14 @@ static PyObject* py_warn(PyObject* self, PyObject* args)
     const char* s = NULL;
     int showCancel = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
     Warning(wxString(s,PY_ENC), showCancel != 0);
 
     // if user hit Cancel then best to abort *now*
     if (showCancel != 0 && PythonScriptAborted()) return NULL;
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2936,14 +2923,14 @@ static PyObject* py_note(PyObject* self, PyObject* args)
     const char* s = NULL;
     int showCancel = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
     Note(wxString(s,PY_ENC), showCancel != 0);
 
     // if user hit Cancel then best to abort *now*
     if (showCancel != 0 && PythonScriptAborted()) return NULL;
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2955,11 +2942,11 @@ static PyObject* py_help(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* htmlfile = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &htmlfile)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &htmlfile)) return NULL;
     
     ShowHelp(wxString(htmlfile,PY_ENC));
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2976,11 +2963,11 @@ static PyObject* py_check(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     int flag;
     
-    if (!PyArg_ParseTuple(args, (char*)"i", &flag)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"i", &flag)) return NULL;
     
     allowcheck = (flag != 0);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -2992,7 +2979,7 @@ static PyObject* py_exit(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* err = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"|s", &err)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"|s", &err)) return NULL;
     
     GSF_exit(wxString(err, PY_ENC));
     AbortPythonScript();
@@ -3011,12 +2998,12 @@ static PyObject* py_stderr(PyObject* self, PyObject* args)
     wxUnusedVar(self);
     const char* s = NULL;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
+    if (!G_PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
     // accumulate stderr messages in global string (shown after script finishes)
     scripterr = wxString(s, PY_ENC);
     
-    RETURN_NONE;
+    G_Py_RETURN_NONE;
 }
 
 // -----------------------------------------------------------------------------
@@ -3029,7 +3016,7 @@ static PyObject* py_getinfo(PyObject* self, PyObject* args)
 
     const char* comments = GSF_getinfo();
     
-    return Py_BuildValue((char*)"s", comments);
+    return G_Py_BuildValue((char*)"s", comments);
 }
 
 // -----------------------------------------------------------------------------
@@ -3042,7 +3029,7 @@ static PyObject* py_getpath(PyObject* self, PyObject* args)
 
     const char* path = GSF_getpath();
     
-    return Py_BuildValue((char*)"s", path);
+    return G_Py_BuildValue((char*)"s", path);
 }
 
 // -----------------------------------------------------------------------------
@@ -3178,12 +3165,45 @@ static PyModuleDef py_module = {
 };
 
 static PyObject* PyInit_golly(void) {
-    return PyModule_Create(&py_module);
+    // Args: PyModule_Create2(moduledef, module_api_version)
+    // PYTHON_API_VERSION has been 1013 since 2.5,
+    // so this should be compatible with all versions of Python 3.
+    return G_PyModule_Create2(&py_module, 1013);
 }
 
 // =============================================================================
 
-bool pyinited = false;     // InitPython has been successfully called?
+static bool pyinited = false;     // InitPython has been successfully called?
+
+int G_PyRun_SimpleString(const char* command) {
+    // IMHO **not** short-circuiting is cleaner when you build
+    // multiple dependent `PyObject*`s that you have to clean up.
+    PyObject* main = NULL;
+    PyObject* main_dict = NULL;
+    PyObject* code = NULL;
+    PyObject* result = NULL;
+    // Docs for `Py_CompileString` and `Py_file_input`:
+    // https://docs.python.org/3/c-api/veryhigh.html
+    code = G_Py_CompileString(command, "wxpython.cpp", Py_file_input);  // New ref.
+    // Get the main namespace as there might not be an existing frame.
+    if (code != NULL) { main = G_PyImport_ImportModule("__main__"); }  // New ref.
+    if (main != NULL) { main_dict = G_PyModule_GetDict(main); } // Borrowed ref.
+    if (main_dict != NULL) { result = G_PyEval_EvalCode(code, main_dict, main_dict); } // New ref.
+    // Take care of any exceptions
+    // PyObject* err_type;
+    // PyObject* err_value;
+    // PyObject* err_traceback;
+    // G_PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    // ... some golly-specific error logging...
+    // G_PyErr_Restore(err_type, err_value, err_traceback);
+    if (G_PyErr_Occurred() != NULL) { G_PyErr_Print(); }
+    // Cleanup and return status.
+    int status = (result != NULL) ? 0 : -1;
+    G_Py_DecRef(result);
+    G_Py_DecRef(main);
+    G_Py_DecRef(code);
+    return status;
+}
 
 bool InitPython()
 {
@@ -3191,25 +3211,25 @@ bool InitPython()
         // try to load Python library
         if (!LoadPythonLib()) return false;
         
-        // Python 3 requires this to be before Py_Initialize
-        PyImport_AppendInittab("golly", PyInit_golly);
+        // Python 3 requires this to be before G_Py_Initialize
+        G_PyImport_AppendInittab("golly", PyInit_golly);
         
         // only initialize the Python interpreter once, mainly because multiple
-        // Py_Initialize/Py_Finalize calls cause leaks of about 12K each time!
-        Py_Initialize();
+        // G_Py_Initialize/G_Py_Finalize calls cause leaks of about 12K each time!
+        G_Py_Initialize();
         
-        GetPythonExceptions();
+        GetPythonObjects();
         
         // catch Python messages sent to stderr and pass them to py_stderr
-        if (PyRun_SimpleString(
+        if (G_PyRun_SimpleString(
                 "import golly\n"
                 "import sys\n"
                 "class StderrCatcherForGolly:\n"
-                "   def __init__(self):\n"
-                "      self.data = ''\n"
-                "   def write(self, stuff):\n"
-                "      self.data += stuff\n"
-                "      golly.stderr(self.data)\n"
+                "    def __init__(self):\n"
+                "        self.data = ''\n"
+                "    def write(self, stuff):\n"
+                "        self.data += stuff\n"
+                "        golly.stderr(self.data)\n"
                 "sys.stderr = StderrCatcherForGolly()\n"
                 
                 // also create dummy sys.argv so scripts can import Tkinter
@@ -3235,15 +3255,15 @@ bool InitPython()
         // also insert script's current directory at start of sys.path
         // since that's what most Python interpreters do (thanks to Joel Snyder)
         command += wxT(" ; sys.path.insert(0,'')");
-        if (PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0)
+        if (G_PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0)
             Warning(_("Failed to append Scripts path!"));
         
         pyinited = true;
     } else {
-        // Py_Initialize has already been successfully called;
-        // Py_Finalize is not used to close stderr so reset it here
-        if (PyRun_SimpleString("import sys ; sys.stderr = StderrCatcherForGolly()\n") < 0)
-            Warning(_("PyRun_SimpleString failed!"));
+        // G_Py_Initialize has already been successfully called;
+        // G_Py_Finalize is not used to close stderr so reset it here
+        if (G_PyRun_SimpleString("import sys ; sys.stderr = StderrCatcherForGolly()\n") < 0)
+            Warning(_("G_PyRun_SimpleString failed!"));
     }
     
     return true;
@@ -3269,11 +3289,11 @@ void RunPythonScript(const wxString& filepath)
         wxT("') as f:\n   code = compile(f.read(), '") + fpath +
         wxT("', 'exec')\n   exec(code, {})");
 
-    PyRun_SimpleString(command.mb_str(wxConvLocal));
+    G_PyRun_SimpleString(command.mb_str(wxConvLocal));
     // don't use wxConvUTF8 in above line because caller has already converted
     // filepath to decomposed UTF8 if on a Mac
     
-    // note that PyRun_SimpleString returns -1 if an exception occurred;
+    // note that G_PyRun_SimpleString returns -1 if an exception occurred;
     // the error message (in scripterr) is checked at the end of RunScript
 }
 
@@ -3282,15 +3302,15 @@ void RunPythonScript(const wxString& filepath)
 void AbortPythonScript()
 {
     // raise an exception with a special message
-    PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
+    G_PyErr_SetString(G_PyExc_KeyboardInterrupt, abortmsg);
 }
 
 // -----------------------------------------------------------------------------
 
 void FinishPythonScripting()
 {
-    // Py_Finalize can cause an obvious delay, so best not to call it
-    // if (pyinited) Py_Finalize();
+    // G_Py_Finalize can cause an obvious delay, so best not to call it
+    // if (pyinited) G_Py_Finalize();
     
     // probably don't really need this either
     FreePythonLib();
