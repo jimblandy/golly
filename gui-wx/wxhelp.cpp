@@ -1306,7 +1306,7 @@ void ShowAboutBox()
 #if defined(__WXMAC__)
                                   wxSize(400, 330),
 #elif defined(__WXGTK__)
-                                  wxSize(420, 370),
+                                  wxSize(450, 370),
 #else
                                   wxSize(400, 350),
 #endif
