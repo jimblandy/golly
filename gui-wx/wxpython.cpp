@@ -138,8 +138,6 @@ extern "C"
     // [2] https://github.com/python/cpython/commit/0d012f284be829c6217f60523db0e1671b7db9d9
     PyObject*(*G_Py_CompileString)(const char*, const char*, int) = NULL;
     PyObject*(*G_PyEval_EvalCode)(PyObject*, PyObject*, PyObject*) = NULL;
-    PyObject*(*G_PyEval_GetGlobals)() = NULL;
-    PyObject*(*G_PyEval_GetLocals)() = NULL;
     // `Py_IncRef` and `Py_DecRef` are provided from Python as wrapper functions.
     // Note capitalization. (`Py_(X)INCREF` and `Py_(X)DECREF` are macros.)
     // References:
@@ -258,8 +256,6 @@ static bool LoadPythonLib()
         LOAD_PYTHON_SYMBOL(PyModule_GetDict);
         LOAD_PYTHON_SYMBOL(Py_CompileString);
         LOAD_PYTHON_SYMBOL(PyEval_EvalCode);
-        LOAD_PYTHON_SYMBOL(PyEval_GetGlobals);
-        LOAD_PYTHON_SYMBOL(PyEval_GetLocals);
         LOAD_PYTHON_SYMBOL(Py_IncRef);
         LOAD_PYTHON_SYMBOL(Py_DecRef);
         //
