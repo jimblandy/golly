@@ -1825,10 +1825,10 @@ void GetPrefs()
     // init names of Perl and Python libraries
 #ifdef __WXMSW__
     perllib = wxT("perl510.dll");
-    pythonlib = wxT("python38.dll");
+    pythonlib = wxT("python39.dll");
 #elif defined(__WXMAC__)
     perllib = wxEmptyString;
-    pythonlib = wxT("/Library/Frameworks/Python.framework/Versions/3.8/Python");
+    pythonlib = wxT("/Library/Frameworks/Python.framework/Versions/3.9/Python");
 #else // assume Linux
     perllib = wxT(STRINGIFY(PERL_SHLIB));
     pythonlib = wxT(STRINGIFY(PYTHON_SHLIB));
