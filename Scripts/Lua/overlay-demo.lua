@@ -649,7 +649,7 @@ local function bezierx(t, x0, x1, x2, x3)
     local aX = x3 - x0 - cX - bX
 
     -- compute x position
-    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0
+    local x = (aX * (t ^ 3)) + (bX * (t ^ 2)) + (cX * t) + x0
     return x
 end
 

@@ -32,7 +32,7 @@ local maxzoom = 32
 --------------------------------------------------------------------------------
 
 local function lineartoreal(zoom)
-    return minzoom * math.pow(maxzoom / minzoom, zoom)
+    return minzoom * ((maxzoom / minzoom) ^ zoom)
 end
 
 --------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ local function bezierx(t, x0, x1, x2, x3)
     local aX = x3 - x0 - cX - bX
 
     -- compute x position
-    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0
+    local x = (aX * (t ^ 3)) + (bX * (t ^ 2)) + (cX * t) + x0
     return x
 end
 
@@ -125,8 +125,8 @@ local function animate_credits()
     local creditstext = [[
 © The Golly Gang:
 
-Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene,
-Jason Summers, Maks Verver, Robert Munafo, Chris Rowett.
+Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene, Chris Rowett,
+Jason Summers, Maks Verver, Robert Munafo, Dongook Lee.
 
 
 
@@ -170,6 +170,8 @@ Jason Summers
 Maks Verver
 
 Robert Munafo
+
+Dongook Lee
 
 
 
