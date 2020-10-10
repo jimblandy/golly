@@ -1,4 +1,4 @@
-# A simplified Makefile for building the Lua library on Mac OS X or Linux.
+# A simplified Makefile for building the Lua library on macOS or Linux.
 
 LUA_LIB = liblua.a
 CC = cc
@@ -7,11 +7,11 @@ PLATFORM = $(shell uname)
 ifeq "$(PLATFORM)" "Darwin"
 CFLAGS = -O2 -Wall -Wextra -DLUA_USE_MACOSX -arch x86_64
 
-# determine Mac OS X version (eg. 6 for Snow Leopard, 11 for El Capitan)
+# determine macOS version (eg. 6 for Snow Leopard, 11 for El Capitan)
 OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
 osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-CFLAGS += $(call osx_ge,9,"-mmacosx-version-min=10.9","")
+CFLAGS += $(call osx_ge,10,"-mmacosx-version-min=10.10","")
 else
 CFLAGS = -O2 -Wall -Wextra -DLUA_USE_LINUX
 endif
