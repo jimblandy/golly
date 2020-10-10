@@ -122,11 +122,13 @@ local function animate_credits()
     ovt{"rgba", 255, 192, 32, 144}
     maketext(bannertext, gollytranslucentclip)
 
-    local creditstext = [[
+    local creditstext1 = [[
+Golly 4.0
+
 © The Golly Gang:
 
-Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene, Chris Rowett,
-Jason Summers, Maks Verver, Robert Munafo, Dongook Lee.
+
+
 
 
 
@@ -139,10 +141,10 @@ CREDITS
 The Pioneers
 
 
-John Conway
+
 for creating the Game of Life
 
-Martin Gardner
+
 for popularizing the topic in Scientific American
 
 
@@ -151,17 +153,189 @@ for popularizing the topic in Scientific American
 The Programmers
 
 
-Tom Rokicki
+
 for the complicated stuff
 
-Andrew Trevorrow
+
 for the cross-platform GUI and overlay
 
-Chris Rowett
+
 for rule, rendering and overlay improvements
 
-Tim Hutton
+
 for the RuleTable algorithm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The Beta Testers
+
+
+Thanks to all the bug hunters for their
+reports and suggestions, especially:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thanks to
+
+
+
+for the idea behind the HashLife algorithm
+
+
+for QuickLife ideas and non-totalistic algorithm
+
+
+for the B0 rule emulation idea
+
+
+for clever ideas to speed up Larger than Life
+
+
+for inspiring Golly's scripting capabilities
+
+
+for the wonderful Life Lexicon
+
+
+for the brilliant LifeWiki and the online archive
+
+
+for wxWidgets
+
+
+for Python
+
+
+for Lua
+]]
+
+    if sound_enabled then
+        creditstext1 = creditstext1.."\n\nfor irrKlang\n"
+    end
+
+    creditstext1 = creditstext1..
+[[
+
+
+
+
+Pattern Collection
+
+
+
+
+Thanks to everybody who allowed us to distribute
+their fantastic patterns, especially:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]
+
+    local creditstext2 = [[
+
+
+
+
+Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene, Chris Rowett,
+Jason Summers, Maks Verver, Robert Munafo, Dongook Lee.
+
+
+
+
+
+
+
+
+
+
+
+
+John Conway
+
+
+Martin Gardner
+
+
+
+
+
+
+
+
+Tom Rokicki
+
+
+Andrew Trevorrow
+
+
+Chris Rowett
+
+
+Tim Hutton
+
 
 Dave Greene
 
@@ -176,11 +350,11 @@ Dongook Lee
 
 
 
-The Beta Testers
 
 
-Thanks to all the bug hunters for their
-reports and suggestions, especially:
+
+
+
 
 Dave Greene
 
@@ -209,57 +383,57 @@ Arie Paap
 
 
 
-Thanks to
+
 
 
 Bill Gosper
-for the idea behind the HashLife algorithm
+
 
 Alan Hensel
-for QuickLife ideas and non-totalistic algorithm
+
 
 David Eppstein
-for the B0 rule emulation idea
+
 
 Adam P. Goucher and Dean Hickerson
-for clever ideas to speed up Larger than Life
+
 
 Eugene Langvagen
-for inspiring Golly's scripting capabilities
+
 
 Stephen Silver
-for the wonderful Life Lexicon
+
 
 Nathaniel Johnston
-for the brilliant LifeWiki and the online archive
+
 
 Julian Smart and all wxWidgets developers
-for wxWidgets
+
 
 Guido van Rossum
-for Python
+
 
 Roberto Ierusalimschy and all Lua developers
-for Lua
+
 ]]
 
     if sound_enabled then
-        creditstext = creditstext.."\nNikolaus Gebhardt @ Ambiera\nfor irrKlang\n"
+        creditstext2 = creditstext2.."\nNikolaus Gebhardt @ Ambiera\n\n"
     end
 
-    creditstext = creditstext..
+    creditstext2 = creditstext2..
 [[
 
 
 
 
-Pattern Collection
+
 
 
 Dave Greene and Alan Hensel
 
-Thanks to everybody who allowed us to distribute
-their fantastic patterns, especially:
+
+
 
 Nick Gotts
 
@@ -295,15 +469,18 @@ Kenichi Morita
     -- start music if sound enabled
     if sound_enabled then
         ov("sound loop oplus/sounds/overlay-demo/animation.ogg")
-        creditstext = creditstext.."\n\n\n\nMusic\n\n\n'Contentment'\nWritten and performed by Chris Rowett"
+        creditstext1 = creditstext1.."\n\n\n\nMusic\n\n\n'Contentment'\n"
+        creditstext2 = creditstext2.."\n\n\n\n\n\n\n\nWritten and performed by Chris Rowett"
     end
 
     -- create credits clip
     ov("textoption align center")
     ov("font 14 roman")
 
-    local creditsclip = "credits"
-    local credwidth, credheight = maketext(creditstext, creditsclip, "rgba 128 255 255 255", 2, 2)
+    local creditsclip1 = "credits1"
+    local creditsclip2 = "credits2"
+    local credwidth1, credheight1 = maketext(creditstext1, creditsclip1, "rgba 128 255 255 255", 2, 2)
+    local credwidth2, credheight2 = maketext(creditstext2, creditsclip2, "rgba 224 255 255 255", 2, 2)
 
     -- create graduated background
     local bgclip = "bg"
@@ -324,7 +501,8 @@ Kenichi Morita
     local texty
     local running = true
     local credity = ht
-    local creditx = floor((wd - credwidth) / 2)
+    local creditx1 = floor((wd - credwidth1) / 2)
+    local creditx2 = floor((wd - credwidth2) / 2)
     local credpos
     local firsttime = true
     local starttime, endtime
@@ -360,7 +538,8 @@ Kenichi Morita
             create_anim_bg(bgclip)
 
             -- recenter credits text
-            creditx = floor((wd - credwidth) / 2)
+            creditx1 = floor((wd - credwidth1) / 2)
+            creditx2 = floor((wd - credwidth2) / 2)
         end
 
         -- stop when key pressed or mouse button clicked
@@ -464,9 +643,10 @@ Kenichi Morita
 
         -- draw credits
         credpos = floor(credity)
-        pastetext(creditx, credpos, op.identity, creditsclip)
+        pastetext(creditx1, credpos, op.identity, creditsclip1)
+        pastetext(creditx2, credpos, op.identity, creditsclip2)
         credity = credity - .5
-        if credity < -credheight then
+        if credity < -credheight1 and credity < -credheight2 then
             credity = ht
         end
 
@@ -498,7 +678,8 @@ Kenichi Morita
     ov("delete "..exitclip)
     ov("delete "..gollytranslucentclip)
     ov("delete "..gollyopaqueclip)
-    ov("delete "..creditsclip)
+    ov("delete "..creditsclip1)
+    ov("delete "..creditsclip2)
     ov("delete "..bgclip)
 
     -- restore settings
