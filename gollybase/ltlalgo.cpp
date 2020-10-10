@@ -2723,7 +2723,9 @@ void ltlalgo::step()
 {
     bigint t = increment;
     while (t != 0) {
-        if (population > 0 || b0) {
+        // check if anything is alive
+        // note: b0 is emulated so zero population does not come alive
+        if (population > 0) {
             int prevpop = population;
             
             // calculate the next generation in nextgrid
