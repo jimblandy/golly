@@ -3688,6 +3688,14 @@ const char *ltlalgo::setrule(const char *s)
         suffix = NULL;
     }
 
+    // check for B0 and more than 2 states
+    b0 = bs[0];
+    if (b0 && c > 2) {
+        free(bs);
+        free(ss);
+        return "B0 is not allowed with more than 2 states";
+    }
+
     // the given rule is valid
     int oldrange = range;
     char oldtype = ntype;
@@ -3708,7 +3716,6 @@ const char *ltlalgo::setrule(const char *s)
     altbirths = NULL;
     if (altsurvivals) free(altsurvivals);
     altsurvivals = NULL;
-    b0 = births[0];
     
     // set the grid_type so the GUI code can display circles or diamonds in icon mode
     // (no circular grid, so adopt a square grid for now)
