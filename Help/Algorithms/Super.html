@@ -22,7 +22,7 @@ To enable it, add the suffix "History" to the standard rule string.</p>
 <tr><td>0</td><td>OFF</td><td>black</td><td style="background-color:rgb(48, 48, 48);"></td><td>the default background OFF state</td></tr>
 <tr><td>1</td><td>ON</td><td>green</td><td style="background-color:rgb(0, 255, 0);"></td><td>the default ON state</td></tr>
 <tr><td>2</td><td>history/envelope</td><td>blue</td><td style="background-color:rgb(0, 0, 128);"></td><td>state=2 if cell was ever ON but now OFF</td></tr>
-<tr><td>3</td><td>marked ON</td><td>white</td><td style="background-color:rgb(255, 216, 255);"></td><td>may change to marked OFF but will always remain marked</td></tr>
+<tr><td>3</td><td>marked ON</td><td>white</td><td style="background-color:rgb(216, 255, 216);"></td><td>may change to marked OFF but will always remain marked</td></tr>
 <tr><td>4</td><td>marked OFF</td><td>red</td><td style="background-color:rgb(255, 0, 0);"></td><td>may change to marked ON but will always remain marked</td></tr>
 <tr><td>5</td><td>start ON</td><td>yellow</td><td style="background-color:rgb(255, 255, 0);"></td><td>becomes a normal marked OFF cell when it dies</td></tr>
 <tr><td>6</td><td>boundary OFF</td><td>gray</td><td style="background-color:rgb(96, 96, 96);"></td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
@@ -47,7 +47,7 @@ This might be done with labels made out of isolated cells that would die quickly
 or by adding still lifes shaped like letters, arrows, etc. a safe distance to the side,
 to point out key features without affecting the evolution of the pattern.</p>
 
-<p>With states 3 (white) and 5 (yellow), two additional colors are available to highlight ON cells that are special in some way.
+<p>With states 3 (greenish white) and 5 (yellow), two additional colors are available to highlight ON cells that are special in some way.
 State 5 was originally designed to carry information about cells that always remained ON from T=0 onward,
 never turning off even temporarily. However, in practice this specialized functionality is not exercised very often.
 State 5 is more often used as an alternate color to differentiate one type of highlighting from another.</p>
@@ -69,7 +69,7 @@ and two extra OFF states are not enough to clearly annotate a very large or comp
 with behavior generally matching the two-state rule -- with the partial exception of state 6! -- but allowing
 a wide variety of annotation and history-state options, as follows:</p>
 
-<h3>[Rule]History backward compatibility:</h3>
+<h3>[Rule]History backward compatibility</h3>
 <p>The first seven states behave identically to their [Rule]History equivalents, to make it easier to translate patterns to and from [Rule]Super.</p>
 
 <p>A side effect of state 4 is that a glider made with a higher-numbered ON state that does not leave behind history cells, will be reduced to state 1
@@ -85,6 +85,14 @@ be created by placing a line of state-8 cells on the "upstream" side of a crossi
 <tr><td>5</td><td>start ON</td><td>yellow</td><td style="background-color:rgb(255, 255, 0);"></td><td>changes to state 4 if it turns OFF, then to state 3 if it turns ON again</td></tr>
 <tr><td>6</td><td>boundary OFF</td><td>gray</td><td style="background-color:rgb(96, 96, 96);"></td><td>can never turn on, so subpatterns separated by state-6 walls can never affect each other</td></tr>
 </table>
+<p>States 2 and 3 are deliberately chosen to be slightly different in a Super version of a rule than in the equivalent History rule.
+State 2 is a slightly brighter blue, to match the brightness of the other two trail colors, states 10 and 12.  In Super rules,
+it's possible to make a deliberate decision as to whether a moving pattern leaves a trail of "history" cells behind it or not,
+so the trail states all need to be clearly visible.</p>
+
+<p>History rules' greenish-white state 3 conflicted with other Super ON states, so it was changed to pink, signalling an overlap
+between an ON cell and the red marked background color, state 4.  These differences make it easier to distinguish a Super rule
+from its History version at a quick glance.</p>
 
 <h3>Trail states, and boundary markers for transition to no-trail states</h3>
 <p>Complex signal-circuitry constructions, large glider syntheses, and other engineered patterns often require tracking a particular moving subpattern.
@@ -152,12 +160,14 @@ are reduced to state 3 and state 4, respectively.
 state to state 0.  This provides an easy way to remove unwanted history or label cells in a History or Super pattern.</p>
 
 <h3>Key mappings</h3>
-<p>The default key mapping for the conversion scripts is Alt + G for toSuper.lua, Alt + H for toHistory.lua, and Alt + J for toStandard.lua.
-As usual, the alt modifier corresponds to the option key on a Mac.</p>
+<p>The default key mapping for the conversion scripts is Alt + G for <b>toSuper.lua</b>, Alt + H for <b>toHistory.lua</b>,
+and Alt + J for <b>toStandard.lua</b>.  As usual, the alt modifier corresponds to the option key on a Mac.</p>
 
 <p>Alt + K is mapped by default to the helper script <b>toChangeState.lua</b>, which allows state adjustments to be made more easily
 in History and Super rules; it is a search-and-replace function for cells of one specific state chosen by a mouse click,
-either in the entire pattern or inside a selection. This provides a way to remove or modify unwanted states while retaining others.</p>
+either in the entire pattern or inside a selection. This provides a way to remove or modify unwanted states while retaining others.
+The script remembers the last chosen target state, which is independent Golly's current drawing state. The current target state is
+reported by the script. Change it by clicking the state you want in the edit bar <i>after</i> running the script.</p>
 
 <p>If you have migrated to the current version of Golly from an earlier version, you may have to go to Preferences > Keyboard
 and manually map one or more of these keyboard shortcuts, since they are only mapped when a new GollyPrefs is created.</p>
