@@ -2,10 +2,10 @@
 // See docs/License.html for the copyright notice.
 
 /*
-    Golly uses an embedded Python interpreter (3.x or later) to execute scripts.
+    Golly uses an embedded Python interpreter (3.3 or later) to execute scripts.
     Here is the official Python copyright notice:
 
-    Copyright (c) 2001-2005 Python Software Foundation.
+    Copyright (c) 2001-2020 Python Software Foundation.
     All Rights Reserved.
 
     Copyright (c) 2000 BeOpen.com.
