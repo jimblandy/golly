@@ -313,7 +313,7 @@ void superalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defb2 = 0 ;
    // if not using gradient then set all states to white
    // first 26 colors are for [R]Super rules
-   ai.defr[0] = 0    ; ai.defg[0] = 0    ; ai.defb[0] = 0 ;
+   ai.defr[0] = 48   ; ai.defg[0] = 48   ; ai.defb[0] = 48;
    ai.defr[1] = 0    ; ai.defg[1] = 255  ; ai.defb[1] = 0 ;
    ai.defr[2] = 0    ; ai.defg[2] = 0    ; ai.defb[2] = 160 ;
    ai.defr[3] = 255  ; ai.defg[3] = 216  ; ai.defb[3] = 255 ;
@@ -340,7 +340,7 @@ void superalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defr[24] = 1   ; ai.defg[24] = 1   ; ai.defb[24] = 1 ;
    ai.defr[25] = 255 ; ai.defg[25] = 0   ; ai.defb[25] = 127 ;
    // next 7 colors are for [R]History rules
-   ai.defr[26] = 0    ; ai.defg[26] = 0    ; ai.defb[26] = 0 ;
+   ai.defr[26] = 48   ; ai.defg[26] = 48   ; ai.defb[26] = 48;
    ai.defr[27] = 0    ; ai.defg[27] = 255  ; ai.defb[27] = 0 ;
    ai.defr[28] = 0    ; ai.defg[28] = 0    ; ai.defb[28] = 128 ;
    ai.defr[29] = 216  ; ai.defg[29] = 255  ; ai.defb[29] = 216 ;
