@@ -158,10 +158,12 @@ to set the appropriate compile and link options for building Golly.
 <h2>How to install Python</h2>
 
 <p>
-Golly uses Python 2.x for scripting, so you'll need to make sure a suitable
-version of Python is installed (note that Python 3.x is NOT supported).
-Mac OS X users don't have to do anything because Python 2.7 is already installed.
-Windows and Linux users can download a Python 2.7 installer from
+From version 4.0, Golly uses Python 3.3+ for scripting, (via Python's Stable C ABI)
+so you'll need to make sure a suitable version of Python is installed.
+(Note: Python 2.x, 3.0, 3.1, and 3.2 are <strong>NOT</strong> supported,
+due to incomplete support for Python's stable C ABI.
+(See <a href="https://www.python.org/dev/peps/pep-0384">PEP 384</a>))<br>
+Windows, Linux, and MacOS users can download a Python 3 installer from
 <a href="http://www.python.org/download">http://www.python.org/download</a>.
 
 
@@ -235,11 +237,11 @@ to a new file called local-gtk.mk.  This file is included by makefile-gtk.
 Edit local-gtk.mk and make any desired changes to the supplied default settings.
 
 <p>
-You will probably need to add the development package for Python 2.7.
+You will probably need to add the development package for Python 3 (version > 3.3).<br>
 For example, on Ubuntu:
 
 <pre>
-   sudo apt-get install python2.7-dev
+   sudo apt-get install python3-dev
 </pre>
 
 <p>
