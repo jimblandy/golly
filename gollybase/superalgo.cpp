@@ -1094,14 +1094,8 @@ const char *superalgo::setrule(const char *rulestring) {
          r += 3 ;
          bpos = r ;
 
-         // terminate at the colon if one is present
-         if (colonpos) *colonpos = 0 ;
-
          // check the length of the map
-         int maplen = (int) strlen(r) ;
-
-         // replace the colon if one was present
-         if (colonpos) *colonpos = ':' ;
+         int maplen = (int) (end - r) ;
 
          // check if there is base64 padding
          if (maplen > 2 && !strncmp(r + maplen - 2, "==", 2)) {
@@ -1132,6 +1126,11 @@ const char *superalgo::setrule(const char *rulestring) {
                neighbormask = VON_NEUMANN ;
                neighbors = 4 ;
             }
+         }
+
+         // skip base64 padding if present
+         if (strncmp(r, "==", 2) == 0) {
+            r += 2 ;
          }
 
          // check for postfix
