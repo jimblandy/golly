@@ -89,6 +89,15 @@ void MainFrame::SetWindowTitle(const wxString& filename)
     }
     
     wxString rule = GetRuleName( wxString(currlayer->algo->getrule(),wxConvLocal) );
+    if (rule.Length() > 63) {
+        // nicer to mid-truncate a really long rule
+        wxString prefix = rule.Left(30);
+        wxString suffix = rule.Right(30);
+        rule = prefix;
+        rule += wxT(" ... ");   // using spaces makes it more obvious than "..." or an ellipsis
+        rule += suffix;
+    }
+
     wxString wtitle;
 #ifdef __WXMAC__
     wtitle.Printf(_("%s%s [%s]"),
@@ -98,7 +107,6 @@ void MainFrame::SetWindowTitle(const wxString& filename)
                   prefix.c_str(), currlayer->currname.c_str(), rule.c_str());
 #endif
     
-    // nicer to truncate a really long title???
     SetTitle(wtitle);
 }
 
