@@ -349,10 +349,12 @@ void AddDefaultKeyActions()
 
     // include some examples of DO_OPENFILE
 #ifdef __WXMSW__
+    keyaction[(int)'g'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'g'][mk_ALT].file =     wxT("Scripts\\Lua\\toSuper.lua");
     keyaction[(int)'h'][mk_ALT].id =       DO_OPENFILE;
-    keyaction[(int)'h'][mk_ALT].file =     wxT("Rules\\LifeHistory.rule");
+    keyaction[(int)'h'][mk_ALT].file =     wxT("Scripts\\Lua\\toHistory.lua");
     keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
-    keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts\\Lua\\toLife.lua");
+    keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts\\Lua\\toStandard.lua");
     keyaction[(int)'k'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'k'][mk_ALT].file =     wxT("Scripts\\Lua\\toChangeState.lua");
     keyaction[(int)'l'][mk_ALT].id =       DO_OPENFILE;
@@ -360,10 +362,12 @@ void AddDefaultKeyActions()
     keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
     keyaction[(int)'s'][mk_SHIFT].file =   wxT("Scripts\\Lua\\shift.lua");
 #else
+    keyaction[(int)'g'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'g'][mk_ALT].file =     wxT("Scripts/Lua/toSuper.lua");
     keyaction[(int)'h'][mk_ALT].id =       DO_OPENFILE;
-    keyaction[(int)'h'][mk_ALT].file =     wxT("Rules/LifeHistory.rule");
+    keyaction[(int)'h'][mk_ALT].file =     wxT("Scripts/Lua/toHistory.lua");
     keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
-    keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts/Lua/toLife.lua");
+    keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts/Lua/toStandard.lua");
     keyaction[(int)'k'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'k'][mk_ALT].file =     wxT("Scripts/Lua/toChangeState.lua");
     keyaction[(int)'l'][mk_ALT].id =       DO_OPENFILE;

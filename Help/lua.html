@@ -149,12 +149,16 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
    <td> &mdash; tiles the selection with the clipboard pattern</td>
 </tr>
 <tr>
-   <td><b>toLife.lua</b></td><td width=10> </td>
-   <td> &mdash; converts LifeHistory patterns to plain Life</td>
+   <td><b>toHistory.lua</b></td><td width=10> </td>
+   <td> &mdash; converts [Rule]Super or plain [Rule] patterns to [Rule]History, switches to Super algo</td>
 </tr>
 <tr>
-   <td><b>toLifeHistory.lua</b></td><td width=10> </td>
-   <td> &mdash; converts Life patterns to LifeHistory</td>
+   <td><b>toStandard.lua</b></td><td width=10> </td>
+   <td> &mdash; converts [Rule]History or [Rule]Super patterns to plain [Rule], switches to HashLife algo</td>
+</tr>
+<tr>
+   <td><b>toSuper.lua</b></td><td width=10> </td>
+   <td> &mdash; converts [Rule]History or plain [Rule] patterns to [Rule]Super, switches to Super algo</td>
 </tr>
 <tr>
    <td><b>update-viewer.lua</b></td><td width=10> </td>
@@ -1726,43 +1730,43 @@ to create a .lua file that looks something like this:
 <dd><table border=0><pre>
 local g = golly()
 require "gplus.NewCA"
- 
+
 SCRIPT_NAME = "MyCA"    -- must match the name of your .lua file
 DEFAULT_RULE = "XXX"    -- must be a valid rule in your CA
 RULE_HELP = "HTML code describing the rules allowed by your CA."
- 
+
 function ParseRule(newrule)
     -- Parse the given rule string.
     -- If valid then return nil, the canonical rule string,
     -- the width and height of the grid, and the number of states.
     -- If not valid then just return an appropriate error message.
-    
+
     ... parsing code for your rule syntax ...
-    
+
     return nil, canonrule, wd, ht, numstates
     -- Note that wd and ht must be from 4 to 4000,
     -- and numstates must be from 2 to 256.
 end
- 
+
 function NextPattern(currcells, minx, miny, maxx, maxy)
     -- Create the next pattern using the given parameters:
     -- currcells is a non-empty cell array containing the current pattern.
     -- minx, miny, maxx, maxy are the cell coordinates of the grid edges.
     -- This function must return the new pattern as a cell array.
-    
+
     local newcells = {}
-    
+
     ... code to create the next pattern in newcells ...
-    
+
     -- delete the current pattern and add the new pattern
     g.putcells(currcells, 0, 0, 1, 0, 0, 1, "xor")
     g.putcells(newcells)
-    
+
     return newcells
     -- Note that currcells and newcells are one-state cell arrays if
     -- g.numstates() == 2, otherwise they are both multi-state.
 end
- 
+
 StartNewCA()</pre></table></dd>
 
 <p>
