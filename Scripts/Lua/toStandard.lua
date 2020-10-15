@@ -11,8 +11,12 @@ local rule = g.getrule()
 
 -- deal with bounded-universe syntax appropriately
 ind = string.find(rule, ":")
-suffix = rule:sub(ind) or ""
-baserule = rule:sub(1,ind-1) or rule
+suffix = ""
+baserule = rule
+if ind then
+    suffix = rule:sub(ind)
+    baserule = rule:sub(1,ind-1)
+end
 
 -- No effect if the current rule does not end with "History" or "Super"
 if baserule:sub(-5) ~= "Super" and baserule:sub(-7) ~= "History" then g.exit("The current rulestring does not end with 'History' or 'Super'.") end

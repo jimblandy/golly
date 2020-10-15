@@ -10,9 +10,13 @@ local g = golly()
 local rule = g.getrule()
 
 -- deal with bounded-universe syntax appropriately
+suffix = ""
+baserule = rule
 ind = string.find(rule, ":")
-suffix = rule:sub(ind) or ""
-baserule = rule:sub(1,ind-1) or rule
+if ind then
+    suffix = rule:sub(ind)
+    baserule = rule:sub(1,ind-1)
+end
 
 -- No effect if the current rule ends with "History"
 if baserule:sub(-7) == "History" then g.exit("The current rulestring already ends with 'History'.") end
