@@ -2,7 +2,7 @@ audio files
 
 Sound effects and music are available for breakout.lua and overlay-demo.lua. You need two things:
 1. A build of Golly that is compiled with sound support (see the Makefiles for ENABLE_SOUND)
-2. The audio files which can be downloaded as zip file from: http://lazyslug.no-ip.biz/lifeview/audio/audio.zip
+2. The audio files which can be downloaded as zip file from: https://lazyslug.com/lifeview/audio/audio.zip
 
 The zip file contains the following:
 
