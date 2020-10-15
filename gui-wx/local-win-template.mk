@@ -8,10 +8,6 @@ WX_DIR = C:\wxWidgets-3.1.1
 # Change the next line to match your wxWidgets version (first two digits):
 WX_RELEASE = 31
 
-LUA_DEFS = -DLUA_COMPAT_5_2
-# Uncomment the next line if building a 32-bit version of Golly:
-# LUA_DEFS = -DLUA_COMPAT_5_2 -DLUA_32BITS
-
 # Change the next line depending on where you installed Python:
 PYTHON_INCLUDE = -I"C:\Python39-64\include"
 
