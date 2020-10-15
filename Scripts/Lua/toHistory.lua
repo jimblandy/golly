@@ -1,5 +1,5 @@
 -- Fast [Rule] or [Rule]Super to [Rule]History converter,
---   intended to be mapped to a keyboard shortcut, e.g., Alt+J
+--   intended to be mapped to a keyboard shortcut, e.g., Alt+H
 -- Sanity checks and Lua translation by Dave Greene, May 2017
 -- Creates special rule and runs it for one generation, then switches to Life 
 -- Replace 2k + 1-> 1 and 2k -> 0
