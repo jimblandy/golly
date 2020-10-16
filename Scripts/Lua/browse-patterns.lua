@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 27   -- build number
+local build = 28   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -42,6 +42,7 @@ local settingsfile = g.getdir("data").."browse-patterns.ini"
 local prevbutton      -- Previous button
 local nextbutton      -- Next button
 local folderbutton    -- Folder button
+local viewerbutton    -- Viewer buttn
 local exitbutton      -- Exit button
 local helpbutton      -- Help button
 local startcheck      -- AutoStart checkbox
@@ -80,6 +81,7 @@ local subdirs      = 1   -- whether to include subdirectories
 local looping      = 1   -- whether to loop pattern list
 local advancespeed = 10  -- advance speed (0 for manual)
 local showinfo     = 1   -- show info if present
+local firsttime    = 0   -- whether first time help has been displayed
 
 local currentstep     = g.getstep()  -- current step
 local patternloadtime = 0            -- pattern load time (ms)
@@ -129,6 +131,7 @@ local function savesettings()
         f:write(tostring(looping).."\n")
         f:write(tostring(advancespeed).."\n")
         f:write(tostring(showinfo).."\n")
+        f:write(tostring(firsttime).."\n")
         f:close()
     end
 end
@@ -145,6 +148,7 @@ local function loadsettings()
         looping      = tonumber(f:read("*l")) or 1
         advancespeed = tonumber(f:read("*l")) or 0
         showinfo     = tonumber(f:read("*l")) or 0
+        firsttime    = tonumber(f:read("*l")) or 0
         f:close()
     end
 end
@@ -344,6 +348,8 @@ local function drawgui()
         x = x + folderbutton.wd + gapx
         optionsbutton.show(x, y)
         x = x + optionsbutton.wd + gapx
+        viewerbutton.show(x, y)
+        x = x + viewerbutton.wd + gapx
         helpbutton.show(x, y)
         x = x + helpbutton.wd + gapx
         exitbutton.show(x, y)
@@ -419,44 +425,31 @@ end
 --------------------------------------------------------------------------------
 
 local function showhelp()
-    local helptext = "Pattern Browser                                 build "..build.."\n"
+    local helptext = "Pattern Browser                                                              build "..build.."\n"
     helptext = helptext..
 [[
 
-Features:
+Overview:
 
-- Browse through patterns in a folder manually by
-  clicking the "Next" or "Previous" buttons.
-- Select a new folder to browse by clicking the
-  "Folder" button.
-- Starts in the current pattern's folder or prompts
-  for a starting folder.
+The Pattern Browser displays a slideshow of patterns in the current pattern's folder.
 
-Options:
+You can change folder, include subfolders, adjust slideshow speed and other settings
+with the controls and options below.
 
-- Automatically advance to the next pattern after
-  a given amount of time.
-- Start running each pattern as it loads.
-- Fit the pattern to the display while it runs.
-- Show scrolling pattern information.
-- Include patterns in subdirectories.
-- Loop back to the first pattern after the last pattern.
-- Maintain the step speed across patterns.
+Controls:
 
-Note that options are saved across sessions.
+Button    Key        Function
+Next      Page Down  go to next pattern.
+Previous  Page Up    go to previous pattern.
+Folder    Home       choose a new folder to browse.
+Options   O          toggle options panel to set slideshow speed and other settings.
+Viewer    V          switch to viewing the current pattern in LifeViewer.
+?         ?          display this help.
+X         Esc        exit Pattern Browser.
+          Ctrl-I     toggle scrolling pattern information.
+          Ctrl-T     toggle autofit during playback.
 
-Special keys and their actions:
-
-Page Down - next pattern
-Page Up   - previous pattern
-Home      - select new folder to browse
-O         - toggle options display
-?         - display this help information
-Esc       - exit pattern browser
-Ctrl-I    - toggle scrolling pattern information
-Ctrl-T    - toggle autofit during playback
-
-          (click or hit any key to close help) ]]
+                          (click or hit any key to close help) ]]
 
     -- draw help text
     ov("font 11 mono-bold")
@@ -561,6 +554,13 @@ end
 
 --------------------------------------------------------------------------------
 
+local function showinviewer()
+    dofile("showinviewer.lua")
+    g.exit()
+end
+
+--------------------------------------------------------------------------------
+
 local function selectfolder()
     -- remove the filename from the supplied path
     local current = patterns[whichpattern]
@@ -655,6 +655,7 @@ local function createoverlay()
     exitbutton = op.button("X", exitbrowser)
     helpbutton = op.button("?", showhelp)
     folderbutton = op.button("Folder", selectfolder)
+    viewerbutton = op.button("Viewer", showinviewer)
     startcheck = op.checkbox("Start playback on pattern load", op.white, toggleautostart)
     fitcheck = op.checkbox("Fit pattern to display", op.white, toggleautofit)
     speedslider = op.slider("Advance: ", op.white, 81, 0, maxsliderval, updatespeed)
@@ -667,7 +668,7 @@ local function createoverlay()
     -- get the size of the gui controls
     optht = startcheck.ht + fitcheck.ht + infocheck.ht + subdircheck.ht + speedslider.ht
     optht = optht + loopcheck.ht + keepspeedcheck.ht + 8 * gapy
-    guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + optionsbutton.wd + helpbutton.wd + exitbutton.wd + 7 * gapx
+    guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + viewerbutton.wd + optionsbutton.wd + helpbutton.wd + exitbutton.wd + 8 * gapx
 
     -- create the clip for clipping info text
     ov("create "..guiwd.." "..guiht.." "..textrect)
@@ -682,6 +683,7 @@ local function loadinfo()
      -- clear pattern info
      infowdtotal = 0
      refreshgui = true
+     local lvcommands = false
 
      -- load pattern info
      local info = g.getinfo()
@@ -689,6 +691,12 @@ local function loadinfo()
          -- format into a single line
          local clean = info:gsub("#CXRLE.-\n", ""):gsub("#[CDNO ]? *", ""):gsub(" +", " "):gsub(" *\n", " ")
          if clean ~= "" then
+             -- check for LifeViewer comments
+             if clean:find(" %[%[ ") then
+                lvcommands = true
+                clean = clean:gsub(" %[%[.*%]%] ", "")
+             end
+
              -- split into a number of clips due to bitmap width limits
              infonum = floor((clean:len() - 1) / infochunk) + 1
              ov("blend 0")
@@ -703,6 +711,14 @@ local function loadinfo()
              infox = guiwd
          end
      end
+
+     -- set viewer button colour based on script commands being present
+     if lvcommands then
+        viewerbutton.customcolor = "rgba 40 128 128 255"
+     else
+        viewerbutton.customcolor = nil
+     end
+     viewerbutton.setlabel("Viewer", false)
      infotime = g.millisecs()
 end
 
@@ -714,6 +730,7 @@ local function checkforresize()
         -- hide controls so show draws correct background
         prevbutton.hide()
         nextbutton.hide()
+        viewerbutton.hide()
         folderbutton.hide()
         exitbutton.hide()
         helpbutton.hide()
@@ -777,6 +794,13 @@ local function browsepatterns(startpattern)
         -- restore playback speed if requested
         if keepspeed == 1 then
             g.setstep(currentstep)
+        end
+
+        -- display first time help if needed
+        if firsttime == 0 then
+            firsttime = 1
+            savesettings()
+            showhelp()
         end
 
         -- decode key presses
