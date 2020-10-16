@@ -47,7 +47,6 @@ end
 if #extent > 0 then
     g.setrule(rule)
     g.setalgo(algo)
-    g.show(extent[1].." "..extent[2])
     g.paste(extent[1], extent[2], "copy")
 end
 
