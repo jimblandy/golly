@@ -25,6 +25,15 @@ if algo == "Super" and baserule:sub(-7) == "History" then g.exit("The current ru
 -- If rulestring contains "Super" suffix, remove it and continue
 if algo == "Super" and baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
 
+-- copy the current pattern to the clipboard
+local extent = g.getrect()
+local savedselrect = g.getselrect()
+if #extent > 0 then
+    g.select(extent)
+    g.copy()
+    g.select({})
+end
+
 -- attempt to set the rule before pattern conversion to see if it is valid
 local function tryrule()
     g.setrule(baserule.."History"..suffix)
@@ -32,6 +41,15 @@ end
 local status, err = pcall(tryrule)
 if err then
     g.exit("The current rule is not supported by the Super algo.")
+end
+
+-- restore pattern
+if #extent > 0 then
+    g.setrule(rule)
+    g.setalgo(algo)
+    g.show(extent[1].." "..extent[2])
+    g.paste(extent[1], extent[2], "copy")
+    g.select(savedselrect)
 end
 
 ruletext = [[@RULE SuperToHistory
