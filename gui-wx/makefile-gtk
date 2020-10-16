@@ -38,7 +38,7 @@ EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
 DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
-    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
+    golly.rc Info.plist.in wx*.h wx*.cpp bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
 LUALIB = $(LUADIR)/liblua.a -ldl

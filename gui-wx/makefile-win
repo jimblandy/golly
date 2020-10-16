@@ -58,7 +58,7 @@ IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlangPro.lib
 RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
-GUIDIRS = configure bitmaps icons
+GUIDIRS = bitmaps icons
 LUAFILES = $(LUADIR)\*.h $(LUADIR)\*.c $(LUADIR)\*.hpp $(LUADIR)\Makefile $(LUADIR)\ReadMe.html
 BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
 
@@ -506,7 +506,6 @@ srcdist:
 	xcopy /S /I $(EXEDIR)\cmdline $(RELEASENAME)-src\cmdline	
 	mkdir $(RELEASENAME)-src\lua
 	mkdir $(RELEASENAME)-src\gui-wx
-	mkdir $(RELEASENAME)-src\gui-wx\configure
 	mkdir $(RELEASENAME)-src\gui-wx\bitmaps
 	mkdir $(RELEASENAME)-src\gui-wx\icons
 	for %%F IN ($(LUAFILES)) do xcopy %F $(RELEASENAME)-src\lua

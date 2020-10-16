@@ -19,7 +19,6 @@ This document contains instructions for how to build the desktop version of Goll
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gwin"><b>On Windows</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac OS X</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#glin"><b>On Linux</b></a><br>
-<a href="#configure"><b>Building Golly using configure</b></a><br>
 <a href="#sound"><b>How to install optional sound with irrKlang</b></a><br>
 <a href="#bgolly"><b>How to build bgolly</b></a><br>
 <a href="#source"><b>Source code road map</b></a><br>
@@ -234,58 +233,6 @@ Additionally, GOLLYDIR specifies an absolute directory path to look
 for the application data files.  For system-wide installation, it
 probably makes sense to set GOLLYDIR to /usr/share/golly and install
 the Help, Patterns, Scripts and Rules directories in there.
-
-
-<a name="configure"></a>
-<h2>Building Golly using configure</h2>
-
-<p>
-Golly can be built using the standard GNU build tools.
-If you obtained the Golly source code from the Git repository instead of a
-source release, you need to generate the configure script first:
-
-<pre>
-   cd /path/to/golly/gui-wx/configure
-   ./autogen.sh
-</pre>
-
-<p>
-This requires that autoconf and automake are installed.
-
-<p>
-The configure script offers various options to customize building and
-installation. For an overview of the available options, run:
-
-<pre>
-   ./configure --help
-</pre>
-
-<p>
-Run the configure script to create an appropriate Makefile for your
-operating system and then run <code>make</code> to build Golly.
-For example, for a system-wide installation, you could do this:
-
-<pre>
-   cd /path/to/golly/gui-wx/configure
-   ./configure
-   make
-   make install
-</pre>
-
-<p>
-To avoid mixing the source code with the build artifacts, you can create a
-separate build directory and call the configure script from there:
-
-<pre>
-   mkdir golly-build
-   cd golly-build
-   /path/to/golly/gui-wx/configure
-   make
-   # etc.
-</pre>
-
-To clean up the build artifacts after installation, simply remove the build
-directory (e.g., with <code>rm -R golly-build</code>).
 
 
 <a name="sound"></a>

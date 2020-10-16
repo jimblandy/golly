@@ -40,7 +40,7 @@ BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly \
    $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
-   golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
+   golly.rc Info.plist.in wx*.h wx*.cpp bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
 # uncomment the next line to allow Golly to run Perl scripts:
