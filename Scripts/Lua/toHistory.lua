@@ -27,11 +27,11 @@ if algo == "Super" and baserule:sub(-5) == "Super" then baserule = baserule:sub(
 
 -- copy the current pattern to the clipboard
 local extent = g.getrect()
-local savedselrect = g.getselrect()
 if #extent > 0 then
+    local savedselrect = g.getselrect()
     g.select(extent)
     g.copy()
-    g.select({})
+    g.select(savedselrect)
 end
 
 -- attempt to set the rule before pattern conversion to see if it is valid
@@ -49,7 +49,6 @@ if #extent > 0 then
     g.setalgo(algo)
     g.show(extent[1].." "..extent[2])
     g.paste(extent[1], extent[2], "copy")
-    g.select(savedselrect)
 end
 
 ruletext = [[@RULE SuperToHistory
