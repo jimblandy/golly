@@ -42,7 +42,7 @@ local settingsfile = g.getdir("data").."browse-patterns.ini"
 local prevbutton      -- Previous button
 local nextbutton      -- Next button
 local folderbutton    -- Folder button
-local viewerbutton    -- Viewer buttn
+local viewerbutton    -- Viewer button
 local exitbutton      -- Exit button
 local helpbutton      -- Help button
 local startcheck      -- AutoStart checkbox
