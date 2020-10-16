@@ -8,6 +8,7 @@
 local g = golly()
 
 local rule = g.getrule()
+local algo = g.getalgo()
 
 -- deal with bounded-universe syntax appropriately
 suffix = ""
@@ -19,10 +20,10 @@ if ind then
 end
 
 -- No effect if the current rule ends with "History"
-if baserule:sub(-7) == "History" then g.exit("The current rulestring already ends with 'History'.") end
+if algo == "Super" and baserule:sub(-7) == "History" then g.exit("The current rule is already a [Rule]History rule.") end
 
 -- If rulestring contains "Super" suffix, remove it and continue
-if baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
+if algo == "Super" and baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
 
 ruletext = [[@RULE SuperToHistory
 @TABLE

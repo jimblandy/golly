@@ -8,6 +8,7 @@
 local g = golly()
 
 local rule = g.getrule()
+local algo = g.getalgo()
 
 -- deal with bounded-universe syntax appropriately
 ind = string.find(rule, ":")
@@ -18,8 +19,8 @@ if ind then
     baserule = rule:sub(1,ind-1)
 end
 
--- No effect if the current rule does not end with "History" or "Super"
-if baserule:sub(-5) ~= "Super" and baserule:sub(-7) ~= "History" then g.exit("The current rulestring does not end with 'History' or 'Super'.") end
+-- No effect if the current rule is not a Super algo rule
+if algo ~= "Super" then g.exit("The current rule is not a [Rule]History or [Rule]Super rule.") end
 
 -- If rulestring contains "Super" suffix, remove it and continue
 if baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end

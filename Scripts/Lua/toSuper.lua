@@ -4,6 +4,7 @@
 local g = golly()
 
 local rule = g.getrule()
+local algo = g.getalgo()
 
 -- deal with bounded-universe syntax appropriately
 suffix = ""
@@ -15,10 +16,10 @@ if (ind) then
 end
 
 -- No effect if the current rule ends with "Super"
-if baserule:sub(-5) == "Super" then g.exit("The current rulestring already ends with 'Super'.") end
+if algo == "Super" and baserule:sub(-5) == "Super" then g.exit("The current rule is already a [Rule]Super rule.") end
 
 -- If rulestring contains "History" suffix, remove it and continue
-if baserule:sub(-7) == "History" then baserule = baserule:sub(1, #baserule-7) end
+if algo == "Super" and baserule:sub(-7) == "History" then baserule = baserule:sub(1, #baserule-7) end
 
 g.setrule(baserule.."Super"..suffix)
 g.setalgo("Super")
