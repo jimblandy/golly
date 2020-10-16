@@ -21,5 +21,11 @@ if algo == "Super" and baserule:sub(-5) == "Super" then g.exit("The current rule
 -- If rulestring contains "History" suffix, remove it and continue
 if algo == "Super" and baserule:sub(-7) == "History" then baserule = baserule:sub(1, #baserule-7) end
 
-g.setrule(baserule.."Super"..suffix)
-g.setalgo("Super")
+local function setnewrule()
+    g.setrule(baserule.."Super"..suffix)
+    g.setalgo("Super")
+end
+local status, err = pcall(setnewrule)
+if err then
+    g.exit("The current rule is not supported by the Super algo.")
+end

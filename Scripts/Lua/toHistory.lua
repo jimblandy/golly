@@ -25,6 +25,15 @@ if algo == "Super" and baserule:sub(-7) == "History" then g.exit("The current ru
 -- If rulestring contains "Super" suffix, remove it and continue
 if algo == "Super" and baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
 
+-- attempt to set the rule before pattern conversion to see if it is valid
+local function tryrule()
+    g.setrule(baserule.."History"..suffix)
+end
+local status, err = pcall(tryrule)
+if err then
+    g.exit("The current rule is not supported by the Super algo.")
+end
+
 ruletext = [[@RULE SuperToHistory
 @TABLE
 n_states:26
@@ -67,10 +76,7 @@ g.setrule("SuperToHistory")
 g.run(1)
 step = g.getstep()
 
--- if you get the error "Given rule is not valid in any algorithm" on this next line
---   you might be attempting to run this script in a version of Golly before 4.0.
 g.setrule(baserule.."History"..suffix)
-
 g.setalgo("Super")
 g.setstep(step)
 g.setgen("-1")
