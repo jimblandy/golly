@@ -844,6 +844,8 @@ local function browsepatterns(startpattern)
                 end
             elseif event == "key ? none" then
                 showhelp()
+            elseif event == "key v none" then
+                showinviewer()
             else
                -- pass event to Golly for processing
                g.doevent(event)
