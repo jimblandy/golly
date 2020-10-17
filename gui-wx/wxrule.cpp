@@ -295,16 +295,7 @@ void AlgoHelp::DisplayFile(const wxString& filepath)
         SetPage(contents);
         
     } else {
-        #if defined(__WXMSW__) && wxCHECK_VERSION(3,1,0)
-        if (filepath.StartsWith("file:")) {
-            LoadFile(filepath.Mid(8));
-        }
-        else {
-            LoadFile(filepath);
-        }
-        #else
         LoadPage(filepath);
-        #endif
     }
 }
 
