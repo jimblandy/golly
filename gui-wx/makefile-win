@@ -47,11 +47,19 @@ BASEDIR = ..\gollybase
 CMDDIR = ..\cmdline
 LUADIR = ..\lua
 
+COPYSOUNDLIB =
+IRRKLANG_DLL =
 !if "$(ENABLE_SOUND)" == "1"
 # sound library
 IRRKLANG_INCLUDE = $(IRRKLANGDIR)\include
-IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND /DIRRKLANG_STATIC
+IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND $(IRRKLANGSTATIC)
+!if "$(IRRKLANGSTATIC)" == ""
+IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlang.lib
+IRRKLANG_DLL = $(IRRKLANGDIR)\bin\winx64-visualStudio\irrKlang.dll
+COPYSOUNDLIB = copy $(IRRKLANG_DLL) $(EXEDIR)
+!else
 IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlangPro.lib
+!endif
 !endif
 
 # for building binary and source distributions:
@@ -60,7 +68,7 @@ GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gt
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = bitmaps icons
 LUAFILES = $(LUADIR)\*.h $(LUADIR)\*.c $(LUADIR)\*.hpp $(LUADIR)\Makefile $(LUADIR)\ReadMe.html
-BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
+BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html $(IRRKLANG_DLL)
 
 !if "$(TARGET_CPU)" == "X64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_x64_$(LIBTYPE_SUFFIX)$(CFG)
@@ -395,6 +403,7 @@ clean:
 	-if exist *.res del *.res
 	-if exist $(EXEDIR)\Golly.exe del $(EXEDIR)\Golly.exe
 	-if exist $(EXEDIR)\bgolly.exe del $(EXEDIR)\bgolly.exe
+	-if exist $(EXEDIR)\irrKlang.dll del $(EXEDIR)\irrKlang.dll
 	-if exist $(EXEDIR)\RuleTableToTree.exe del $(EXEDIR)\RuleTableToTree.exe
 	-if exist golly.pdb del golly.pdb
 	-if exist $(LUADIR)\*.obj del $(LUADIR)\*.obj
@@ -409,6 +418,7 @@ $(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res
 	$(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib \
 	winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib \
 	rpcrt4.lib advapi32.lib wsock32.lib wininet.lib opengl32.lib $(IRRKLANG_LIBS)
+	$(COPYSOUNDLIB)
 
 golly.res: golly.rc
 	rc /fo$@ /d $(WX_CPU_DEF) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \

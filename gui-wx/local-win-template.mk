@@ -2,8 +2,8 @@
 # and call it local-win.mk, then make any desired changes.
 
 # Change the next 2 lines to specify where you installed wxWidgets:
-!include <C:/wxWidgets-3.1.1/build/msw/config.vc>
-WX_DIR = C:\wxWidgets-3.1.1
+!include <C:/wxWidgets-3.1.4/build/msw/config.vc>
+WX_DIR = C:\wxWidgets-3.1.4
 
 # Change the next line to match your wxWidgets version (first two digits):
 WX_RELEASE = 31
@@ -22,6 +22,9 @@ PYTHON_INCLUDE = -I"C:\Python39-64\include"
 
 # Change the next line to specify where you installed IrrKLang
 IRRKLANGDIR = C:\irrKlang-64bit-1.6.0
+
+# If you have the static (Pro) IrrKLang library then uncomment the next line
+#IRRKLANG_STATIC = /DIRRKLANG_STATIC
 
 # Add any extra CXX flags here
 EXTRACXXFLAGS =
