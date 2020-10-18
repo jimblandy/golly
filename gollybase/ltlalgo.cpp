@@ -3742,7 +3742,8 @@ const char *ltlalgo::setrule(const char *s)
             break;
 
         case 'C':
-            // Circular
+        case '2':
+            // Circular or L2/Euclidean
             gridt = CIRC_GRID;
             break;
 
