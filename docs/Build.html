@@ -12,6 +12,8 @@ This document contains instructions for how to build the desktop version of Goll
 <p>
 <a href="#wxinstall"><b>How to install wxWidgets</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxwin"><b>On Windows</b></a><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#commandprompt"><b>Command prompt details</b></a><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#commandprompt"><b>Optional sanity check</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxmac"><b>On Mac OS X</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxlin"><b>On Linux</b></a><br>
 <a href="#python"><b>How to install Python</b></a><br>
@@ -19,6 +21,7 @@ This document contains instructions for how to build the desktop version of Goll
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gwin"><b>On Windows</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac OS X</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#glin"><b>On Linux</b></a><br>
+<a href="#rebuilding"><b>Rebuilding wxWidgets and/or Golly</b><br>
 <a href="#sound"><b>How to install optional sound with irrKlang</b></a><br>
 <a href="#bgolly"><b>How to build bgolly</b></a><br>
 <a href="#source"><b>Source code road map</b></a><br>
@@ -44,6 +47,11 @@ and grab the appropriate source archive for your platform:
 Golly should compile with wxWidgets 3.0 or later, but it's best to
 use the latest stable version (3.0.5 at time of writing).
 Mac users should definitely get 3.1.5 or later if you have Mac OS 10.10+.
+
+<p>
+<b>Note</b>: in the discussion that follows, if you install wxWidgets to a directory other than
+<b>"wxWidgets"</b>, then replace that path with whatever is correct for your system. For example,
+for the current wxWidgets installer on Windows, the default installation directory is <b>"C:\wxWidgets-3.1.4\"</b>.
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
@@ -72,16 +80,38 @@ If you only want to build one wxWidgets configuration then it's a good idea to e
 </pre>
 
 <p>
-Then you can build wxWidgets very simply:
+Then you can build wxWidgets very simply, starting from the correct command prompt.
 
+<a name="commandprompt"></a>
+<h4>Command prompt details</h4>
+<p>
+If you have Visual Studio 2019 Community Edition installed, for example, do a Start-bar search
+for "<b>x64 Native Tools Command Prompt for VS 2019</b>". When this command prompt starts up,
+you should see a message like the following printed, indicating that environment variables
+have been set correctly to build 64-bit binaries:
+
+<pre>
+   [vcvarsall.bat] Environment initialized for: 'x64'".
+</pre>
+
+<p>
+If you're not particularly familiar with C++ build tools, be very careful here!
+There are other command prompts available for VS2019, such as the
+"<b>Developer Command Prompt for VS2019</b>". But building wxWidgets and Golly using
+that command prompt will produce 32-bit binaries by default. The end result will be that
+both the wxWidgets libraries and the Golly executable will compile, but will then
+mysteriously fail to open successfully.
+
+<p>
+From the correct command prompt, type:
 <pre>
    cd \wxWidgets\build\msw
    nmake -f makefile.vc
 </pre>
 
 <p>
-If you don't edit config.vc then you'll need to pass all the options to nmake.
-Open a Visual Studio command prompt (e.g. VS2012 x64 Cross Tools Command Prompt) and type:
+If you don't edit <tt>config.vc</tt> then you'll need to pass all the options to nmake. Again,
+open the correct Visual Studio command prompt and type:
 
 <pre>
    cd \wxWidgets\build\msw
@@ -89,6 +119,22 @@ Open a Visual Studio command prompt (e.g. VS2012 x64 Cross Tools Command Prompt)
                         UNICODE=1 USE_OPENGL=1
 </pre>
 
+
+<a name="sanitycheck"></a>
+<h4>Optional sanity check</h4>
+<p>
+If you want to double-check that wxWidgets has built successfully, you can compile and run a minimal example,
+as follows:
+
+<pre>
+   cd \wxWidgets\samples\minimal
+   nmake -f makefile.vc
+   cd vc_mswu_x64
+   minimal
+</pre>
+
+A small sample application window should appear, with <b>File > Exit</b> and <b>Help > About</b> menu options. If errors occur,
+re-check the build instructions above, and see the section on <a href="#rebuilding"><b>Rebuilding wxWidgets and/or Golly</b>.
 
 <a name="wxmac"></a>
 <h3>On Mac OS X</h3>
@@ -163,16 +209,19 @@ Once wxWidgets and Python are installed, building Golly should be relatively eas
 <h3>On Windows</h3>
 
 <p>
-First, locate local-win-template.mk in the <b>gui-wx</b> folder and copy it
-to a new file called local-win.mk.  This file is included by makefile-win.
-Edit local-win.mk and specify where wxWidgets is installed by changing the
+First, locate <tt>local-win-template.mk</tt> in the <b>gui-wx</b> folder and copy it
+to a new file called <tt>local-win.mk</tt>.  This file is included by makefile-win.
+Edit <tt>local-win.mk</tt> and specify where wxWidgets is installed by changing the
 WX_DIR path near the start of the file.  Also make sure WX_RELEASE specifies
 the first two digits of your wxWidgets version.
 The headers for Python must also be included, so change the path for
-PYTHON_INCLUDE if necessary.  Now you're ready to build Golly.
+PYTHON_INCLUDE if necessary.
+
+<p>Now you're ready to build Golly. If you edited <tt>config.vc</tt> to set all the options then it's simple.
+Again, start by opening an appropriate command prompt such as "<b>x64 Native Tools Command Prompt for VS 2019</b>".
 
 <p>
-If you edited config.vc to set all the options then it's simple:
+From the correct command prompt, if you edited <tt>config.vc</tt> to set all the options then it's simple.
 
 <pre>
    cd \path\to\golly\gui-wx
@@ -191,8 +240,8 @@ Otherwise you'll need to specify all the same options that were used to build wx
 <h3>On Mac OS X</h3>
 
 <p>
-Go to the <b>gui-wx</b> folder and make a copy of makefile-mac called makefile.
-Edit makefile and specify where wxWidgets is installed by changing the WX_DIR
+Go to the <b>gui-wx</b> folder and make a copy of <tt>makefile-mac</tt> called <tt>makefile</tt>.
+Edit <tt>makefile</tt> and specify where wxWidgets is installed by changing the WX_DIR
 path near the start of the file.  Also make sure WX_RELEASE specifies the first
 two digits of your wxWidgets version.
 You can then build Golly.app by opening a Terminal window and doing:
@@ -206,9 +255,9 @@ You can then build Golly.app by opening a Terminal window and doing:
 <h3>On Linux</h3>
 
 <p>
-First, locate local-gtk-template.mk in the <b>gui-wx</b> folder and copy it
-to a new file called local-gtk.mk.  This file is included by makefile-gtk.
-Edit local-gtk.mk and make any desired changes to the supplied default settings.
+First, locate <tt>local-gtk-template.mk</tt> in the <b>gui-wx</b> folder and copy it
+to a new file called <tt>local-gtk.mk</tt>.  This file is included by <tt>makefile-gtk</tt>.
+Edit <tt>local-gtk.mk</tt> and make any desired changes to the supplied default settings.
 
 <p>
 You will probably need to add the development package for Python 3 (version > 3.3).<br>
@@ -220,7 +269,7 @@ For example, on Ubuntu:
 
 <p>
 Then you can build the golly executable:
-   
+
 <pre>
    cd /path/to/golly/gui-wx
    make -f makefile-gtk
@@ -234,6 +283,24 @@ for the application data files.  For system-wide installation, it
 probably makes sense to set GOLLYDIR to /usr/share/golly and install
 the Help, Patterns, Scripts and Rules directories in there.
 
+<a name="rebuilding"></a>
+<h2>Rebuilding wxWidgets and/or Golly</h2>
+<p>
+If for any reason wxWidgets and/or Golly may have been built incorrectly, it's very easy for confusion to persist
+even after a rebuild. Object files are often not rebuilt by default if they are already present, so it's very easy
+to <i>think</i> that you have completed a rebuild, but actually still have unwanted pieces left over from
+earlier build attempts.
+
+<p>
+The safe way to make sure that a call to nmake rebuilds everything that it needs to rebuild, is to append the word
+"<b>clean</b>" to the command:
+
+<pre>
+   nmake -f makefile.vc clean
+</pre>
+
+<p>
+Run the above immediately before the standard <tt>nmake -f makefile.vc</tt> to ensure a completely fresh new build.
 
 <a name="sound"></a>
 <h2>How to install optional sound with irrKlang</h2>
@@ -241,6 +308,7 @@ the Help, Patterns, Scripts and Rules directories in there.
 <p>
 Golly can use the irrKlang library to play sounds. The Overlay has a sound command that can be used
 in Lua scripts to do this.
+
 <p>
 You can download the irrKlang library from
 <a href="http://www.ambiera.com/irrklang/downloads.html">http://www.ambiera.com/irrklang/downloads.html</a>.
@@ -253,21 +321,21 @@ Unzip the download file.  You then need to edit the makefile for your platform t
 <a href="#golly">build Golly</a>.
 
 <h3>On Windows</h3>
-Edit local-win.mk and uncomment the line:
+Edit <tt>local-win.mk</tt> and uncomment the line:
 <pre>
 ENABLE_SOUND = 1
 </pre>
 Change the path for IRRKLANGDIR to the full path of where you unzipped the irrKlang zip file.
 
 <h3>On Mac OS X</h3>
-Edit makefile-mac and uncomment the line:
+Edit <tt>makefile-mac</tt> and uncomment the line:
 <pre>
 ENABLE_SOUND = 1
 </pre>
 Change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
 
 <h3>On Linux</h3>
-Edit local-gtk.mk and uncomment the line:
+Edit <tt>local-gtk.mk</tt> and uncomment the line:
 <pre>
 ENABLE_SOUND = 1
 </pre>
