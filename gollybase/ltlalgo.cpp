@@ -3710,6 +3710,7 @@ const char *ltlalgo::setrule(const char *s)
     if (survivals) free(survivals);
     survivals = ss;
     if (shape) free(shape);
+    shape = NULL;
     if (n == 'C' || n == '2' || n == 'L') {
         shape = (int*) calloc(2 * r + 1, sizeof(int));
         memcpy(shape, tshape, (2 * r + 1) * sizeof(int));
