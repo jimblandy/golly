@@ -54,7 +54,9 @@ State 5 is more often used as an alternate color to differentiate one type of hi
 
 <p>State 6 is another cell type that is seldom used for its original purpose.  State-6 cells can never turn on,
 so lines of them can be used as barriers to prevent subpatterns in a stamp collection from ever influencing each other.
-This can be helpful for collections of Herschel conduits, for example, or any set of subpatterns that releases a lot of gliders.</p>
+This can be helpful for collections of Herschel conduits, for example, or any set of subpatterns that releases a lot of gliders.
+For technical reasons having to do with the behavior of incoming gliders and spaceships at orthogonal gray-cell boundaries,
+gray cells are not just passive boundaries; any ON cells that they come in contact with will turn OFF On the next tick.</p>
 
 <p>State-6 "gray cells" are the only one of these cell types that can potentially make the History version of a rule
 behave radically differently from the base non-History version.  The other five cell types can only alter the colors of ON and OFF cells,
