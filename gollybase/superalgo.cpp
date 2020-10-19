@@ -867,7 +867,7 @@ void superalgo::createCanonicalName(const char *base64, const char *postfix) {
                // check for non-totalistic
                if (!totalistic) {
                   // add any defined letters
-                  np = addLetters(survival_offset + i, p) ;
+                  np = addLetters(i, p) ;
       
                   // check if letters were added
                   if (np != p) {
@@ -892,7 +892,7 @@ void superalgo::createCanonicalName(const char *base64, const char *postfix) {
                // check for non-totalistic
                if (!totalistic) {
                   // add any defined letters
-                  np = addLetters(i, p) ;
+                  np = addLetters(survival_offset + i, p) ;
          
                   // check if letters were added
                   if (np != p) {
