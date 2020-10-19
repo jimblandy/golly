@@ -2987,6 +2987,7 @@ const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGr
             weightslist = (int*) malloc(needed1 * sizeof(int));
             if (weightslist == NULL) lifefatal("Not enough memory for weights!");
             i = 0;
+            int j = 0;
             while (i < needed2) {
                 // the character is guaranteed to exist since we validated above
                 next = (strchr(HEXCHARACTERS, n[i]) - HEXCHARACTERS) << 4;
@@ -2995,7 +2996,8 @@ const char* ltlalgo::read_weighted(const char *n, int r, int states, int &c, TGr
                 if ((next & 128) != 0) {
                     next = -(next & 127);
                 }
-                weightslist[i] = (int) next;
+                i++;
+                weightslist[j++] = (int) next;
             }
         } else {
             // invalid number of digits
