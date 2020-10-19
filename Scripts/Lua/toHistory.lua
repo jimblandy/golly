@@ -10,46 +10,6 @@ local g = golly()
 local rule = g.getrule()
 local algo = g.getalgo()
 
--- deal with bounded-universe syntax appropriately
-suffix = ""
-baserule = rule
-ind = string.find(rule, ":")
-if ind then
-    suffix = rule:sub(ind)
-    baserule = rule:sub(1,ind-1)
-end
-
--- No effect if the current rule ends with "History"
-if algo == "Super" and baserule:sub(-7) == "History" then g.exit("The current rule is already a [Rule]History rule.") end
-
--- If rulestring contains "Super" suffix, remove it and continue
-if algo == "Super" and baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
-
--- copy the current pattern to the clipboard
-local extent = g.getrect()
-if #extent > 0 then
-    local savedselrect = g.getselrect()
-    g.select(extent)
-    g.copy()
-    g.select(savedselrect)
-end
-
--- attempt to set the rule before pattern conversion to see if it is valid
-local function tryrule()
-    g.setrule(baserule.."History"..suffix)
-end
-local status, err = pcall(tryrule)
-if err then
-    g.exit("The current rule is not supported by the Super algo.")
-end
-
--- restore pattern
-if #extent > 0 then
-    g.setrule(rule)
-    g.setalgo(algo)
-    g.paste(extent[1], extent[2], "copy")
-end
-
 ruletext = [[@RULE SuperToHistory
 @TABLE
 n_states:26
@@ -70,7 +30,7 @@ notrailON   ,a,b,1
 withtrailOFF,a,b,2
 markedON    ,a,b,3
 markedOFF   ,a,b,4]]
-   
+
 local function CreateRule()
     local fname = g.getdir("rules").."SuperToHistory.rule"
     local f=io.open(fname,"r")
@@ -86,13 +46,40 @@ local function CreateRule()
         end
     end
 end
-      
+
+local function tryrule()
+    g.setrule(baserule.."History"..suffix)
+end
+
+-- deal with bounded-universe syntax appropriately
+suffix = ""
+baserule = rule
+ind = string.find(rule, ":")
+if ind then
+    suffix = rule:sub(ind)
+    baserule = rule:sub(1,ind-1)
+end
+
+-- No effect if the current rule ends with "History"
+if algo == "Super" and baserule:sub(-7) == "History" then g.exit("The current rule is already a [Rule]History rule.") end
+
+-- If rulestring contains "Super" suffix, remove it and continue
+if algo == "Super" and baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
+
+step = g.getstep()
+
 CreateRule()
 g.setrule("SuperToHistory")
 g.run(1)
-step = g.getstep()
 
-g.setrule(baserule.."History"..suffix)
+-- attempt to set the new History rule to see if it is valid
+local status, err = pcall(tryrule)
+if err then
+    g.note("Conversion failed. This '"..baserule.."' rule is not supported by the Super algo.\n"
+           .. "To revert to the original rule, please click OK, then press Z to undo the rule change.")
+    g.exit("Press Z to revert to the original rule.")
+end
+
 g.setalgo("Super")
 g.setstep(step)
 g.setgen("-1")
