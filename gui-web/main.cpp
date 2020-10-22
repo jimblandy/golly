@@ -9,6 +9,7 @@
 #include "generationsalgo.h"
 #include "ltlalgo.h"
 #include "jvnalgo.h"
+#include "superalgo.h"
 #include "ruleloaderalgo.h"
 
 // gui-common
@@ -957,7 +958,7 @@ void StorePrefs()
             if (algoinfo[layer->algtype]->canhash) {
                 layer->algo->setMaxMemory(maxhashmem);
             }
-            // non-hashing algos (QuickLife) use their default memory setting
+            // non-hashing algos (QuickLife and LtL) use their default memory setting
         }
     }
 
@@ -1408,6 +1409,7 @@ void UpdateMenuItems(const char* id)
         jsTickMenuItem("algo3", currlayer->algtype == 3);
         jsTickMenuItem("algo4", currlayer->algtype == 4);
         jsTickMenuItem("algo5", currlayer->algtype == 5);
+        jsTickMenuItem("algo6", currlayer->algtype == 6);
     
     } else if (menu == "View_menu") {
         if (SelectionExists()) {
@@ -1501,6 +1503,7 @@ void DoMenuItem(const char* id)
     if (item == "algo3") SetAlgo(3); else
     if (item == "algo4") SetAlgo(4); else
     if (item == "algo5") SetAlgo(5); else
+    if (item == "algo6") SetAlgo(6); else
     if (item == "control_setrule") SetRule(); else
     
     // items in View menu:

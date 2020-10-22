@@ -2453,7 +2453,6 @@ void UpdateCurrentColors()
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
     
-    // get the algorithm name
     wxString rulename = wxString(currlayer->algo->getrule(), wxConvLocal);
     // replace any '\' and '/' chars with underscores;
     // ie. given 12/34/6 we look for 12_34_6.rule

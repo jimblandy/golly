@@ -21,6 +21,7 @@ SOURCES = main.cpp webcalls.cpp \
     ../gollybase/ruleloaderalgo.cpp \
     ../gollybase/ruletable_algo.cpp \
     ../gollybase/ruletreealgo.cpp \
+    ../gollybase/superalgo.cpp \
     ../gollybase/util.cpp \
     ../gollybase/viewport.cpp \
     ../gollybase/writepattern.cpp \
@@ -74,6 +75,7 @@ OBJECTS = main.o webcalls.o \
     ../gollybase/ruleloaderalgo.o \
     ../gollybase/ruletable_algo.o \
     ../gollybase/ruletreealgo.o \
+    ../gollybase/superalgo.o \
     ../gollybase/util.o \
     ../gollybase/viewport.o \
     ../gollybase/writepattern.o \
@@ -152,7 +154,7 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
 # (note that newer versions of Emscripten require TOTAL_MEMORY to be multiple of 16MB)
 
 clean:
-	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data
+	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data golly.html.mem
 
 depend:
 	@$(CXX) $(CXXFLAGS) -MM $(SOURCES)
@@ -163,7 +165,7 @@ main.o: main.cpp ../gollybase/bigint.h ../gollybase/lifealgo.h \
   ../gollybase/viewport.h ../gollybase/liferender.h \
   ../gollybase/lifepoll.h ../gollybase/readpattern.h \
   ../gollybase/platform.h ../gollybase/qlifealgo.h \
-  ../gollybase/liferules.h ../gollybase/hlifealgo.h \
+  ../gollybase/liferules.h ../gollybase/hlifealgo.h ../gollybase/util.h \
   ../gollybase/generationsalgo.h ../gollybase/ghashbase.h \
   ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h \
   ../gollybase/ruleloaderalgo.h ../gollybase/ruletable_algo.h \
@@ -188,7 +190,7 @@ generationsalgo.o: ../gollybase/generationsalgo.cpp \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
-  ../gollybase/liferules.h
+  ../gollybase/liferules.h ../gollybase/util.h
 ghashbase.o: ../gollybase/ghashbase.cpp ../gollybase/ghashbase.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
@@ -208,19 +210,20 @@ hlifedraw.o: ../gollybase/hlifedraw.cpp ../gollybase/hlifealgo.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
-  ../gollybase/liferules.h
+  ../gollybase/liferules.h ../gollybase/util.h
 jvnalgo.o: ../gollybase/jvnalgo.cpp ../gollybase/jvnalgo.h \
   ../gollybase/ghashbase.h ../gollybase/lifealgo.h ../gollybase/bigint.h \
   ../gollybase/viewport.h ../gollybase/liferender.h \
   ../gollybase/lifepoll.h ../gollybase/readpattern.h \
-  ../gollybase/platform.h ../gollybase/liferules.h
+  ../gollybase/platform.h ../gollybase/liferules.h ../gollybase/util.h
 lifealgo.o: ../gollybase/lifealgo.cpp ../gollybase/lifealgo.h \
   ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h ../gollybase/util.h
 lifepoll.o: ../gollybase/lifepoll.cpp ../gollybase/lifepoll.h \
   ../gollybase/util.h
-liferender.o: ../gollybase/liferender.cpp ../gollybase/liferender.h
+liferender.o: ../gollybase/liferender.cpp ../gollybase/liferender.h \
+  ../gollybase/util.h
 liferules.o: ../gollybase/liferules.cpp ../gollybase/liferules.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
@@ -255,8 +258,8 @@ ruleloaderalgo.o: ../gollybase/ruleloaderalgo.cpp \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
-  ../gollybase/liferules.h ../gollybase/ruletable_algo.h \
-  ../gollybase/ruletreealgo.h ../gollybase/util.h
+  ../gollybase/liferules.h ../gollybase/util.h \
+  ../gollybase/ruletable_algo.h ../gollybase/ruletreealgo.h
 ruletable_algo.o: ../gollybase/ruletable_algo.cpp \
   ../gollybase/ruletable_algo.h ../gollybase/ghashbase.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
@@ -264,6 +267,11 @@ ruletable_algo.o: ../gollybase/ruletable_algo.cpp \
   ../gollybase/readpattern.h ../gollybase/platform.h \
   ../gollybase/liferules.h ../gollybase/util.h
 ruletreealgo.o: ../gollybase/ruletreealgo.cpp ../gollybase/ruletreealgo.h \
+  ../gollybase/ghashbase.h ../gollybase/lifealgo.h ../gollybase/bigint.h \
+  ../gollybase/viewport.h ../gollybase/liferender.h \
+  ../gollybase/lifepoll.h ../gollybase/readpattern.h \
+  ../gollybase/platform.h ../gollybase/liferules.h ../gollybase/util.h
+superalgo.o: ../gollybase/superalgo.cpp ../gollybase/superalgo.h \
   ../gollybase/ghashbase.h ../gollybase/lifealgo.h ../gollybase/bigint.h \
   ../gollybase/viewport.h ../gollybase/liferender.h \
   ../gollybase/lifepoll.h ../gollybase/readpattern.h \
@@ -283,8 +291,9 @@ algos.o: ../gui-common/algos.cpp ../gollybase/bigint.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
   ../gollybase/qlifealgo.h ../gollybase/liferules.h \
-  ../gollybase/hlifealgo.h ../gollybase/generationsalgo.h \
-  ../gollybase/ghashbase.h ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h \
+  ../gollybase/hlifealgo.h ../gollybase/util.h \
+  ../gollybase/generationsalgo.h ../gollybase/ghashbase.h \
+  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h \
   ../gollybase/ruleloaderalgo.h ../gollybase/ruletable_algo.h \
   ../gollybase/ruletreealgo.h ../gui-common/utils.h \
   ../gui-common/prefs.h ../gui-common/layer.h ../gui-common/algos.h \
@@ -294,11 +303,12 @@ control.o: ../gui-common/control.cpp ../gollybase/bigint.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
   ../gollybase/qlifealgo.h ../gollybase/liferules.h \
-  ../gollybase/hlifealgo.h ../gollybase/writepattern.h \
-  ../gollybase/util.h ../gui-common/utils.h ../gui-common/prefs.h \
-  ../gui-common/status.h ../gui-common/file.h ../gui-common/algos.h \
-  ../gui-common/layer.h ../gui-common/select.h ../gui-common/view.h \
-  ../gui-common/undo.h ../gui-common/control.h webcalls.h
+  ../gollybase/hlifealgo.h ../gollybase/util.h \
+  ../gollybase/writepattern.h ../gui-common/utils.h \
+  ../gui-common/prefs.h ../gui-common/status.h ../gui-common/file.h \
+  ../gui-common/algos.h ../gui-common/layer.h ../gui-common/select.h \
+  ../gui-common/view.h ../gui-common/undo.h ../gui-common/control.h \
+  webcalls.h
 file.o: ../gui-common/file.cpp webcalls.h ../gui-common/MiniZip/zip.h \
   zlib/zlib.h zlib/zconf.h ../gui-common/MiniZip/ioapi.h \
   ../gui-common/MiniZip/unzip.h ../gollybase/bigint.h \
@@ -306,13 +316,13 @@ file.o: ../gui-common/file.cpp webcalls.h ../gui-common/MiniZip/zip.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
   ../gollybase/qlifealgo.h ../gollybase/liferules.h \
-  ../gollybase/hlifealgo.h ../gollybase/ruleloaderalgo.h \
-  ../gollybase/ghashbase.h ../gollybase/ruletable_algo.h \
-  ../gollybase/ruletreealgo.h ../gollybase/writepattern.h \
-  ../gui-common/utils.h ../gui-common/prefs.h ../gui-common/status.h \
-  ../gui-common/algos.h ../gui-common/layer.h ../gui-common/select.h \
-  ../gui-common/control.h ../gui-common/view.h ../gui-common/undo.h \
-  ../gui-common/file.h
+  ../gollybase/hlifealgo.h ../gollybase/util.h \
+  ../gollybase/ruleloaderalgo.h ../gollybase/ghashbase.h \
+  ../gollybase/ruletable_algo.h ../gollybase/ruletreealgo.h \
+  ../gollybase/writepattern.h ../gui-common/utils.h \
+  ../gui-common/prefs.h ../gui-common/status.h ../gui-common/algos.h \
+  ../gui-common/layer.h ../gui-common/select.h ../gui-common/control.h \
+  ../gui-common/view.h ../gui-common/undo.h ../gui-common/file.h
 layer.o: ../gui-common/layer.cpp ../gollybase/bigint.h \
   ../gollybase/lifealgo.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
@@ -368,10 +378,10 @@ view.o: ../gui-common/view.cpp ../gollybase/bigint.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
   ../gollybase/qlifealgo.h ../gollybase/liferules.h \
-  ../gollybase/hlifealgo.h ../gui-common/utils.h ../gui-common/prefs.h \
-  ../gui-common/status.h ../gui-common/render.h ../gui-common/undo.h \
-  ../gui-common/select.h ../gui-common/algos.h ../gui-common/layer.h \
-  ../gui-common/control.h ../gui-common/file.h \
+  ../gollybase/hlifealgo.h ../gollybase/util.h ../gui-common/utils.h \
+  ../gui-common/prefs.h ../gui-common/status.h ../gui-common/render.h \
+  ../gui-common/undo.h ../gui-common/select.h ../gui-common/algos.h \
+  ../gui-common/layer.h ../gui-common/control.h ../gui-common/file.h \
   ../gollybase/writepattern.h ../gui-common/view.h webcalls.h
 ioapi.o: ../gui-common/MiniZip/ioapi.c zlib/zlib.h zlib/zconf.h \
   ../gui-common/MiniZip/ioapi.h

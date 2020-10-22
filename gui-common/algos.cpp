@@ -8,6 +8,7 @@
 #include "generationsalgo.h"
 #include "ltlalgo.h"
 #include "jvnalgo.h"
+#include "superalgo.h"
 #include "ruleloaderalgo.h"
 
 #include "utils.h"      // for Fatal, Warning, SetColor, Poller
@@ -883,6 +884,7 @@ void InitAlgorithms()
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
     ltlalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
+    superalgo::doInitializeAlgoInfo(AlgoData::tick());
     
     // RuleLoader must be last so we can display detailed error messages
     // (see LoadRule in file.cpp)
