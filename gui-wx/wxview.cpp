@@ -511,6 +511,9 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         // setrule can fail if readclipboard loaded clipboard pattern into
         // a different type of algo
         if (err) {
+            // ChangeAlgorithm will call currlayer->algo->getrule() which can return an empty string
+            // for some algos after currlayer->algo->setrule fails, so we need to restore oldrule now
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
             // allow rule change to cause algo change
             mainptr->ChangeAlgorithm(pastelayer->algtype, newrule);
         } else {

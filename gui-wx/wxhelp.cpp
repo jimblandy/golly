@@ -457,6 +457,9 @@ void LoadRule(const wxString& rulestring, bool fromfile)
         if (err) {
             // RuleLoader algo found some sort of error
             if (strcmp(err, noTABLEorTREE) == 0) {
+                // ChangeAlgorithm will call currlayer->algo->getrule() which can return an empty string
+                // for some algos after currlayer->algo->setrule fails, so we need to restore oldrule now
+                currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
                 // .rule file has no TABLE or TREE section but it might be used
                 // to override a built-in rule, so try each algo
                 wxString temprule = rulestring;
@@ -491,6 +494,9 @@ void LoadRule(const wxString& rulestring, bool fromfile)
         
         err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
         if (err) {
+            // ChangeAlgorithm will call currlayer->algo->getrule() which can return an empty string
+            // for some algos after currlayer->algo->setrule fails, so we need to restore oldrule now
+            currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
             // try to find another algorithm that supports the given rule
             for (int i = 0; i < NumAlgos(); i++) {
                 if (i != currlayer->algtype) {
