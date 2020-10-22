@@ -23,7 +23,6 @@ if algo == "Super" and baserule:sub(-7) == "History" then baserule = baserule:su
 
 local function setnewrule()
     g.setrule(baserule.."Super"..suffix)
-    g.setalgo("Super")
 end
 local status, err = pcall(setnewrule)
 if err then

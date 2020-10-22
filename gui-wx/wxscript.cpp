@@ -301,6 +301,9 @@ const char* GSF_setrule(const char* rulestring)
         err = currlayer->algo->setrule(rulestring);
     }
     if (err) {
+        // ChangeAlgorithm will call currlayer->algo->getrule() which can return an empty string
+        // for some algos after currlayer->algo->setrule fails, so we need to restore oldrule now
+        currlayer->algo->setrule( oldrule.mb_str(wxConvLocal) );
         // try to find another algorithm that supports the new rule
         for (int i = 0; i < NumAlgos(); i++) {
             if (i != currlayer->algtype) {
