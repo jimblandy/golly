@@ -6,7 +6,7 @@
 #C
 #C Run showinviewer.lua to activate the LifeViewer scripting commands.
 #C Run update-viewer.lua to retrieve the latest version of LifeViewer.
-#C For other examples of LifeViewer commands, see the Rakes folder.
+#C For more examples of LifeViewer commands see the Life/Rakes folder.
 x = 358, y = 357, rule = LifeSuper
 353.W$12.W338.2W$13.2W337.2W$.W10.2W$2.W$3W2$22.W$20.W.W$21.2W9$17.S$
 18.2S320.S$17.2S319.2S$339.2S10.S$350.S$350.3S2$330.S$330.S.S$330.2S
