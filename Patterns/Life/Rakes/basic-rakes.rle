@@ -20,7 +20,7 @@ o$168bo5bo75booboo3bo3bo$174bo77boo5b4o$173bo3$182boo74bo$178b4oboo74b
 oo$179b5o76bo$180b3o77bo$259bo$$180b4o$179bo3bo77bo$183bo78bo$174boo6b
 o60bo14bo3bo$170b4oboo67bo14b4o$170b6o64bo3bo$171b4o66b4o!
 #C Script commands for showinviewer.lua:
-#C [[ AUTOSTART GPS 30 TRACK 1/2 0 THEME 2 "Zoom in to see labels for individual rakes.\nSource: rakes.lif (Alan Hensel's collection)" ]]
+#C [[ AUTOSTART ZOOM 2.5 GPS 30 TRACK 1/2 0 THEME 2 "Zoom in to see labels for individual rakes.\nSource: rakes.lif (Alan Hensel's collection)" ]]
 #C [[ LABELSIZE 48 ]]
 #C [[ COLOR LABEL Red ]]
 #C [[ LABEL 256 0 9 "P20 c/2 forerake\n('space rake', circa 1971)" ]]
