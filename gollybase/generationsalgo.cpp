@@ -912,7 +912,6 @@ const char *generationsalgo::setrule(const char *rulestring) {
                return "Only one neighborhood allowed." ;
             }
             neighbormask = HEXAGONAL ;
-            grid_type = HEX_GRID ;
             neighbors = 6 ;
             *t = c ;
             t++ ;
@@ -925,7 +924,6 @@ const char *generationsalgo::setrule(const char *rulestring) {
                return "Only one neighborhood allowed." ;
             }
             neighbormask = VON_NEUMANN ;
-            grid_type = VN_GRID ;
             neighbors = 4 ;
             *t = c ;
             t++ ;
@@ -1163,6 +1161,14 @@ const char *generationsalgo::setrule(const char *rulestring) {
 
    // save the canonical rule name
    createCanonicalName(bpos) ;
+
+   // set grid_type
+   if (neighbormask == HEXAGONAL)
+      grid_type = HEX_GRID;
+   else if (neighbormask == VON_NEUMANN)
+      grid_type = VN_GRID;
+   else // neighbormask == MOORE
+      grid_type = SQUARE_GRID;
 
    // exit with success
    return 0 ;

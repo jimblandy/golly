@@ -2523,7 +2523,7 @@ void UpdateCurrentColors()
         loadedcolors = LoadRuleColors(rulename, maxstate);
         loadedicons = LoadRuleIcons(rulename, maxstate);
         if (!loadedicons) UseDefaultIcons(maxstate);
-            
+        
         // if rulename.colors wasn't supplied and icons are multi-color then we set
         // non-icon colors to the average of the non-black pixels in each icon
         // (note that we use the 7x7 icons because they are faster to scan)
