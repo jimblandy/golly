@@ -1640,23 +1640,7 @@ end
 
 function m.hexrule()
     -- return true if the current rule uses a hexagonal neighborhood
-    local rule = g.getrule()
-    rule = rule:match("^(.+):") or rule     -- remove any ":*" suffix
-
-    local algo = g.getalgo()
-    if algo == "QuickLife" or algo == "HashLife" or algo == "Generations" then
-        return (rule:sub(1, 3) == "MAP" and rule:len() == 25) or rule:sub(-1) == "H"
-    elseif algo == "RuleLoader" then
-        return rule:lower():find("hex") ~= nil
-        -- or maybe look in the .rule file and see if the TABLE section specifies
-        -- neighborhood:hexagonal or the ICONS section specifies hexagons???
-    elseif algo == "Larger than Life" then
-        return rule:sub(-1) == "H" or rule:sub(-2) == "NA" or rule:sub(-2) == "N3"
-    elseif algo == "Super" then
-        return rule:sub(-8) == "HHistory" or rule:sub(-6) == "HSuper"
-    end
-
-    return false
+    return g.getgridtype() == "Hexagonal"
 end
 
 --------------------------------------------------------------------------------

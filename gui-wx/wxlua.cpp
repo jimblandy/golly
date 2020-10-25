@@ -1865,6 +1865,36 @@ static int g_getheight(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_getgridtype(lua_State* L)
+{
+    AUTORELEASE_POOL
+    CheckEvents(L);
+    
+    lifealgo::TGridType gridtype = currlayer->algo->getgridtype();
+    switch (gridtype) {
+        case lifealgo::TRI_GRID:
+            lua_pushstring(L, "Triangular");
+            break;
+
+        case lifealgo::HEX_GRID:
+            lua_pushstring(L, "Hexagonal");
+            break;
+
+        case lifealgo::VN_GRID:
+            lua_pushstring(L, "von Neumann");
+            break;
+
+        default:
+            // use Square as default
+            lua_pushstring(L, "Square");
+            break;
+    }
+
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_setpos(lua_State* L)
 {
     AUTORELEASE_POOL
@@ -2981,6 +3011,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getrule",      g_getrule },      // return current rule
     { "getwidth",     g_getwidth },     // return width of universe (0 if unbounded)
     { "getheight",    g_getheight },    // return height of universe (0 if unbounded)
+    { "getgridtype",  g_getgridtype },  // return grid type ("Square", "Triangular", "Hexagonal" or "von Neumann")
     // viewing
     { "setpos",       g_setpos },       // move given cell to middle of viewport
     { "getpos",       g_getpos },       // return x,y position of cell in middle of viewport
