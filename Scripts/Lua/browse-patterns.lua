@@ -12,10 +12,9 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 28   -- build number
-
 local g = golly()
 local gp = require "gplus"
+local gpl = require "gplus.lifeviewer"
 local floor = math.floor
 local op = require "oplus"
 -- require "gplus.strict"
@@ -425,9 +424,9 @@ end
 --------------------------------------------------------------------------------
 
 local function showhelp()
-    local helptext = "Pattern Browser                                                              build "..build.."\n"
-    helptext = helptext..
+    local helptext =
 [[
+Pattern Browser
 
 Overview:
 
@@ -443,7 +442,7 @@ Next      Page Down  go to next pattern.
 Previous  Page Up    go to previous pattern.
 Folder    Home       choose a new folder to browse.
 Options   O          toggle options panel to set slideshow speed and other settings.
-Viewer    V          switch to viewing the current pattern in LifeViewer.
+Viewer    V          view the current pattern in LifeViewer.
 ?         ?          display this help.
 X         Esc        exit Pattern Browser.
           Ctrl-I     toggle scrolling pattern information.
@@ -555,8 +554,7 @@ end
 --------------------------------------------------------------------------------
 
 local function showinviewer()
-    dofile("showinviewer.lua")
-    g.exit()
+    gpl.launch()
 end
 
 --------------------------------------------------------------------------------
