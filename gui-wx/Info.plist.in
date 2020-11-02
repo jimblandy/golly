@@ -26,6 +26,8 @@
 	<string>Golly version VERSION, Copyright 2005-2020 The Golly Gang</string>
 	<key>LSRequiresCarbon</key>
 	<true/>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>CFBundleDocumentTypes</key>
