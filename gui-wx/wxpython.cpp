@@ -186,7 +186,7 @@ static bool LoadPythonLib()
 #ifdef __WXMSW__
     prompt += _(
         "\n\n"
-        "If that fails, search your system for a python3.dll file\n"
+        "If that fails, search your system for a python3*.dll file\n"
         "and enter the full path to that file."
     );
 #endif
