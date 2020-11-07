@@ -174,10 +174,13 @@ static bool LoadPythonLib()
     // load the Python library
     wxDynamicLibrary dynlib;
     
-    // don't log errors in here
+    // if dynlib.Load fails then only see the detailed log error if GollyPrefs sets debug_level=2
     wxLogNull noLog;
+    if (debuglevel == 2) {
+        noLog.~wxLogNull();
+    }
 
-    // The prompt message for loading python DLL lib.
+    // the prompt message for loading the Python library
     wxString prompt = _(
         "If Python 3 isn't installed then you'll have to Cancel,\n"
         "otherwise change the version numbers to match the\n"
@@ -191,13 +194,13 @@ static bool LoadPythonLib()
     );
 #endif
 
-    // wxDL_GLOBAL corresponds to RTLD_GLOBAL on Linux (ignored on Windows) and
+    // wxDL_GLOBAL corresponds to RTLD_GLOBAL on macOS/Linux (ignored on Windows) and
     // is needed to avoid an ImportError when importing some modules (eg. time)
     while ( !dynlib.Load(pythonlib, wxDL_NOW | wxDL_VERBATIM | wxDL_GLOBAL) ) {
         // prompt user for a different Python library;
-        // on Windows pythonlib should be something like "python38.dll"
-        // on Linux it's something like "libpython3.8.so"
-        // on Mac OS it's something like "/Library/Frameworks/Python.framework/Versions/3.8/Python"
+        // on Windows pythonlib should be something like "python39.dll"
+        // on Linux it's something like "libpython3.9.so"
+        // on Mac OS it's something like "/Library/Frameworks/Python.framework/Versions/3.9/Python"
         Beep();
         wxTextEntryDialog dialog(
             wxGetActiveWindow(),
