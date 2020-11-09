@@ -809,6 +809,15 @@ node *hlifealgo::pushroot(node *n) {
                     find_node(z, n->sw, z, z),
                     find_node(n->se, z, z, z)) ;
 }
+/* Returns an internal (i.e. non-leaf) node containing the given node. */
+node *hlifealgo::make_internal_node(node *n) {
+   if (is_node(n)) return n ;
+   leaf *l=(leaf *)n ;
+   return find_node((node *)find_leaf(0, 0, 0, l->nw),
+                    (node *)find_leaf(0, 0, l->ne, 0),
+                    (node *)find_leaf(0, l->sw, 0, 0),
+                    (node *)find_leaf(l->se, 0, 0, 0));
+}
 /*
  *   Here is our recursive routine to set a bit in our universe.  We
  *   pass in a depth, and walk the space.  Again, a lot of bit twiddling,
@@ -1627,6 +1636,10 @@ node *hlifealgo::runpattern() {
    generation += pow2step ;
    return n ;
 }
+/* Returns the center 4-square of an 8x8 leaf node. */
+static unsigned short unpack4x4center(leaf *leaf) {
+   return combine4(leaf->nw, leaf->ne, leaf->sw, leaf->se);
+}
 const char *hlifealgo::readmacrocell(char *line) {
    int n=0 ;
    g_uintptr_t i=1, nw=0, ne=0, sw=0, se=0, indlen=0 ;
@@ -1670,7 +1683,8 @@ default:       return "Illegal character in readmacrocell." ;
             }
          }
          clearstack() ;
-         ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
+         root = ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
+         depth = 2;
       } else if (line[0] == '#') {
          char *p, *pp ;
          const char *err ;
@@ -1760,7 +1774,7 @@ default:       return "Illegal character in readmacrocell." ;
 	       if (n != 2 || frameind > MAX_FRAME_COUNT || frameind < 0 ||
 		   nodeind > i || timeline.framecount != frameind)
 		  return "Bad FRAME line" ;
-	       timeline.frames.push_back(ind[nodeind]) ;
+	       timeline.frames.push_back(make_internal_node(ind[nodeind])) ;
 	       timeline.framecount++ ;
 	       timeline.end = timeline.next ;
 	       timeline.next += timeline.inc ;
@@ -1785,15 +1799,49 @@ default:       return "Illegal character in readmacrocell." ;
             // AKT: best not to use lifefatal here because user won't see any
             // error message when reading clipboard data starting with "[..."
             return "Parse error in readmacrocell." ;
-         if (d < 4)
+         if (d < 1)
             return "Oops; bad depth in readmacrocell." ;
-         ind[0] = zeronode(d-2) ; /* allow zeros to work right */
-         if (nw >= i || ind[nw] == 0 || ne >= i || ind[ne] == 0 ||
-             sw >= i || ind[sw] == 0 || se >= i || ind[se] == 0) {
-            return "Node out of range in readmacrocell." ;
+         if (d > 1) {
+            ind[0] = zeronode(d <= 4 ? 2 : d-2) ; /* allow zeros to work right */
+            if (nw >= i || ind[nw] == 0 || ne >= i || ind[ne] == 0 ||
+               sw >= i || ind[sw] == 0 || se >= i || ind[se] == 0) {
+               return "Node out of range in readmacrocell." ;
+            }
          }
-         clearstack() ;
-         root = ind[i++] = find_node(ind[nw], ind[ne], ind[sw], ind[se]) ;
+         if (d < 4) {
+            /* Support macrocell nodes in multicell format (i.e. with 2-square
+               leaf nodes) for compatibility. Cell values must be 0 or 1! */
+            unsigned short lnw=0, lne=0, lsw=0, lse=0 ;
+            if (d == 1) {
+               if (nw > 1 || ne > 1 || sw > 1 || se > 1) {
+                  return "Cell value out of range in readmacrocell." ;
+               }
+               lnw = nw ? 1 <<  0 : 0 ;
+               lne = ne ? 1 <<  3 : 0 ;
+               lsw = sw ? 1 << 12 : 0 ;
+               lse = se ? 1 << 15 : 0 ;
+            } else { // d == 2 || d == 3
+               node *pnw=ind[nw], *pne=ind[ne], *psw=ind[sw], *pse=ind[se] ;
+               if (is_node(pnw) || is_node(pne) || is_node(psw) || is_node(pse)) {
+                  return "Invalid leaf node reference in readmacrocell." ;
+               }
+               lnw = unpack4x4center((leaf *)pnw) ;
+               lne = unpack4x4center((leaf *)pne) ;
+               lsw = unpack4x4center((leaf *)psw) ;
+               lse = unpack4x4center((leaf *)pse) ;
+               if (d == 2) {
+                  lnw >>= 5 ;
+                  lne >>= 3 ;
+                  lsw <<= 3 ;
+                  lse <<= 5 ;
+               }
+            }
+            clearstack() ;
+            root = ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
+         } else {  // d >= 4
+            clearstack() ;
+            root = ind[i++] = find_node(ind[nw], ind[ne], ind[sw], ind[se]) ;
+         }
          depth = d - 1 ;
       }
    }
@@ -1804,6 +1852,10 @@ default:       return "Illegal character in readmacrocell." ;
       // will be called soon so don't set hashed here
       // return "Invalid macrocell file: no nodes." ;
       return 0 ;
+   }
+   if (depth < 3) {
+      root = make_internal_node(root) ;
+      depth = 3;
    }
    hashed = 1 ;
    return 0 ;
