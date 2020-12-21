@@ -75,6 +75,7 @@
 		0DA5B35815F03654005EBBE8 /* viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34315F03654005EBBE8 /* viewport.cpp */; };
 		0DA5B35915F03654005EBBE8 /* writepattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34515F03654005EBBE8 /* writepattern.cpp */; settings = {COMPILER_FLAGS = "-DZLIB"; }; };
 		0DB7062E1C1C163D008A57C8 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0DB7062D1C1C163D008A57C8 /* Help */; };
+		0DB7885E25907A3E0088EF24 /* superalgo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DB7885D25907A3E0088EF24 /* superalgo.cpp */; };
 		0DBD205B1C131D9E007A70EF /* PatternViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0DBD205A1C131D9E007A70EF /* PatternViewController.xib */; };
 		0DBFA9121F8754E40004D7E3 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DBFA9101F8754E40004D7E3 /* Icon.png */; };
 		0DBFA9131F8754E40004D7E3 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DBFA9111F8754E40004D7E3 /* Icon@2x.png */; };
@@ -202,6 +203,8 @@
 		0DA5B34515F03654005EBBE8 /* writepattern.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = writepattern.cpp; sourceTree = "<group>"; };
 		0DA5B34615F03654005EBBE8 /* writepattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = writepattern.h; sourceTree = "<group>"; };
 		0DB7062D1C1C163D008A57C8 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Help; path = "../gui-common/Help"; sourceTree = "<group>"; };
+		0DB7885D25907A3E0088EF24 /* superalgo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = superalgo.cpp; sourceTree = "<group>"; };
+		0DB7885F25907A4C0088EF24 /* superalgo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = superalgo.h; sourceTree = "<group>"; };
 		0DBD205A1C131D9E007A70EF /* PatternViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PatternViewController.xib; sourceTree = "<group>"; };
 		0DBFA9101F8754E40004D7E3 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		0DBFA9111F8754E40004D7E3 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
@@ -378,6 +381,8 @@
 		0DA5B32215F03654005EBBE8 /* gollybase */ = {
 			isa = PBXGroup;
 			children = (
+				0DB7885F25907A4C0088EF24 /* superalgo.h */,
+				0DB7885D25907A3E0088EF24 /* superalgo.cpp */,
 				0DCABC1A1F77319200C91FE0 /* ltlalgo.cpp */,
 				0DCABC1B1F77319200C91FE0 /* ltlalgo.h */,
 				0DCABC1C1F77319200C91FE0 /* ltldraw.cpp */,
@@ -482,7 +487,7 @@
 		0D07871A156881080051973C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0810;
+				LastUpgradeCheck = 1160;
 				TargetAttributes = {
 					0D078722156881080051973C = {
 						DevelopmentTeam = UQZQF2G54F;
@@ -492,10 +497,11 @@
 			};
 			buildConfigurationList = 0D07871D156881080051973C /* Build configuration list for PBXProject "Golly" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 0D078718156881080051973C;
 			productRefGroup = 0D078724156881080051973C /* Products */;
@@ -611,6 +617,7 @@
 				0DD0EF9B178017020061E9A1 /* prefs.cpp in Sources */,
 				0DD0EF9C178017020061E9A1 /* render.cpp in Sources */,
 				0DD0EF9D178017020061E9A1 /* select.cpp in Sources */,
+				0DB7885E25907A3E0088EF24 /* superalgo.cpp in Sources */,
 				0DD0EF9E178017020061E9A1 /* status.cpp in Sources */,
 				0DD0EF9F178017020061E9A1 /* undo.cpp in Sources */,
 				0DD0EFA0178017020061E9A1 /* utils.cpp in Sources */,
@@ -640,12 +647,20 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -682,12 +697,20 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -768,12 +791,20 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;

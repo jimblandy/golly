@@ -952,7 +952,7 @@ G_INT64 qlifealgo::find_set_bits(supertile *p, int lev, int gm1) {
                }
             }
          }
-         pp->flags = (long)((pp->flags & ~(0xfff << b)) | (pop << b)) ;
+         pp->flags = (int)((pp->flags & ~(0xfff << b)) | (pop << b)) ;
       }
    } else {
       if (p->flags & (0x20000000 << gm1)) {
