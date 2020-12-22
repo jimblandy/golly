@@ -5,7 +5,7 @@ CC = cc
 
 PLATFORM = $(shell uname)
 ifeq "$(PLATFORM)" "Darwin"
-CFLAGS = -O2 -Wall -Wextra -DLUA_USE_MACOSX -arch x86_64
+CFLAGS = -O2 -Wall -Wextra -DLUA_USE_MACOSX -arch arm64 -arch x86_64
 
 # determine macOS version (eg. 6 for Snow Leopard, 11 for El Capitan)
 OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')

@@ -14,12 +14,12 @@ This document contains instructions for how to build the desktop version of Goll
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxwin"><b>On Windows</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#commandprompt"><b>Command prompt details</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#commandprompt"><b>Optional sanity check</b></a><br>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxmac"><b>On Mac OS X</b></a><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxmac"><b>On Mac</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxlin"><b>On Linux</b></a><br>
 <a href="#python"><b>How to install Python</b></a><br>
 <a href="#golly"><b>How to build Golly</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gwin"><b>On Windows</b></a><br>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac OS X</b></a><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#glin"><b>On Linux</b></a><br>
 <a href="#rebuilding"><b>Rebuilding wxWidgets and/or Golly</b><br>
 <a href="#sound"><b>How to install optional sound with irrKlang</b></a><br>
@@ -40,13 +40,13 @@ and grab the appropriate source archive for your platform:
 
 <ul>
 <li> On Windows, get the wxMSW source installer.
-<li> On Mac OS X or Linux, get the source archive for the latest stable release.
+<li> On Mac or Linux, get the source archive for the latest stable release.
 </ul>
 
 <p>
 Golly should compile with wxWidgets 3.0 or later, but it's best to
 use the latest stable version (3.0.5 at time of writing).
-Mac users should definitely get 3.1.5 or later if you have Mac OS 10.10+.
+Mac users should definitely get 3.1.5 or later if you have macOS 10.10+.
 
 <p>
 <b>Note</b>: in the discussion that follows, if you install wxWidgets to a directory other than
@@ -137,18 +137,19 @@ A small sample application window should appear, with <b>File > Exit</b> and <b>
 re-check the build instructions above, and see the section on <a href="#rebuilding"><b>Rebuilding wxWidgets and/or Golly</b>.
 
 <a name="wxmac"></a>
-<h3>On Mac OS X</h3>
+<h3>On Mac</h3>
 
 <p>
 Unpack the wxWidgets source archive wherever you like.
-If you're using Mac OS 10.10 or later then start up Terminal and type these commands
+If you're using macOS 10.10 or later then start up Terminal and type these commands
 (using the correct path and version number):
 
 <pre>
    cd /path/to/wxWidgets-3.1.5
    mkdir build-osx
    cd build-osx
-   ../configure --with-osx_cocoa --disable-shared --disable-sys-libs --with-macosx-version-min=10.10
+   ../configure --with-osx_cocoa --disable-shared --disable-sys-libs
+                --with-macosx-version-min=10.10 --enable-universal_binary=arm64,x86_64
    make
 </pre>
 
@@ -237,7 +238,7 @@ Otherwise you'll need to specify all the same options that were used to build wx
 </pre>
 
 <a name="gmac"></a>
-<h3>On Mac OS X</h3>
+<h3>On Mac</h3>
 
 <p>
 Go to the <b>gui-wx</b> folder and make a copy of <tt>makefile-mac</tt> called <tt>makefile</tt>.
@@ -313,7 +314,7 @@ in Lua scripts to do this.
 You can download the irrKlang library from
 <a href="http://www.ambiera.com/irrklang/downloads.html">http://www.ambiera.com/irrklang/downloads.html</a>.
 Make sure you get the 64-bit version.
-The download is a zip file containing the libraries for Windows, Mac OS and Linux.
+The download is a zip file containing the libraries for Windows, Mac and Linux.
 Golly has been tested with irrKlang 1.5 and 1.6.
 
 <p>
@@ -327,7 +328,7 @@ ENABLE_SOUND = 1
 </pre>
 Change the path for IRRKLANGDIR to the full path of where you unzipped the irrKlang zip file.
 
-<h3>On Mac OS X</h3>
+<h3>On Mac</h3>
 Edit <tt>makefile-mac</tt> and uncomment the line:
 <pre>
 ENABLE_SOUND = 1

@@ -308,10 +308,18 @@ bool GollyApp::OnInit()
     wxString banner = _("This is Golly version ");
     banner +=         _(STRINGIFY(VERSION)); 
     banner +=         _(" (");
-#ifdef GOLLY64BIT
-    banner +=         _("64-bit");
+#ifdef __WXMAC__
+    #ifdef __arm64__
+        banner +=     _("Silicon");
+    #else
+        banner +=     _("Intel");
+    #endif
 #else
-    banner +=         _("32-bit");
+    #ifdef GOLLY64BIT
+        banner +=     _("64-bit");
+    #else
+        banner +=     _("32-bit");
+    #endif
 #endif
 #ifdef ENABLE_SOUND
     banner +=         _(", Sound");

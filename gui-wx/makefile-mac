@@ -4,7 +4,7 @@
 # cd /path/to/wxWidgets/wxWidgets-3.1.5  (use 3.1.5+ on Mac OS 10.10+)
 # mkdir build-osx
 # cd build-osx
-# ../configure --disable-sys-libs --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10
+# ../configure --disable-sys-libs --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10 --enable-universal_binary=arm64,x86_64
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
@@ -23,7 +23,7 @@ WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 4.0.1
+APP_VERSION = 4.1b1
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -76,9 +76,9 @@ CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
    -I$(BASEDIR) -I$(LUADIR)
 
-CXXFLAGS = -arch x86_64 \
+CXXFLAGS = -arch arm64 -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
-   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wno-c++11-extensions \
    -fno-strict-aliasing -fno-common
 
 CXXFLAGS += $(call osx_ge,11,"-Wno-potentially-evaluated-expression","")
@@ -106,15 +106,15 @@ ifdef ENABLE_SOUND
     COPY_IRRKLANG_DYLIB = cp -f $(IRRKLANG_DYLIB) $(EXEDIR)/$(APP_NAME).app/Contents/Libs
 endif
 
-LDFLAGS = -arch x86_64 \
+LDFLAGS = -arch arm64 -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
    -framework IOKit -framework Carbon -framework Cocoa -framework System 
 
 # for bgolly:
-CXXBASE = -arch x86_64 \
-   -DVERSION=$(APP_VERSION) -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+CXXBASE = -arch arm64 -arch x86_64 \
+   -DVERSION=$(APP_VERSION) -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wno-c++11-extensions \
    -fno-strict-aliasing -fno-common -I$(BASEDIR)
-LDBASE = -arch x86_64 -lz
+LDBASE = -arch arm64 -arch x86_64 -lz
 
 EXTRALIBS = -lz -lpthread -liconv
 EXTRALIBS_GUI = -framework WebKit -framework AudioToolbox -framework OpenGL -framework AGL
@@ -206,9 +206,10 @@ icons/app.icns icons/file-mc.icns icons/file-rle.icns
 	mv -f app.bin $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	
 	cp -f icons/*.icns $(EXEDIR)/$(APP_NAME).app/Contents/Resources
-	
-	echo "\nWARNING: If any of the following locations start with /usr/local you've picked up local stuff!\n"
-	otool -L -arch all $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/Golly
+
+### no need now that we use --disable-sys-libs
+### 	echo "\nWARNING: If any of the following locations start with /usr/local you've picked up local stuff!\n"
+### 	otool -L -arch all $(EXEDIR)/$(APP_NAME).app/Contents/MacOS/Golly
 
 app_bundle: $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo
 
