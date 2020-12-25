@@ -2778,8 +2778,9 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
             if (mainptr->generating) {
                 // we allow drawing while generating
                 mainptr->draw_pending = true;
-                mainptr->mouseevent.m_x = x;
-                mainptr->mouseevent.m_y = y;
+                // x and y have been multiplied by scalefactor in OnMouseDown
+                mainptr->mouseevent.m_x = x / int(scalefactor);
+                mainptr->mouseevent.m_y = y / int(scalefactor);
                 mainptr->Stop();
                 return;
             }
