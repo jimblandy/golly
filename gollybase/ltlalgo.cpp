@@ -505,7 +505,7 @@ void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
     unsigned char state = *(currgrid + xyoffset);
     if (state == 0) {
         // this cell is dead
-        if (births[ncount]) {
+        if (ncount >= 0 && births[ncount]) {
             // new cell is born in nextgrid
             unsigned char* nextcell = nextgrid + xyoffset;
             *nextcell = 1;
@@ -517,7 +517,7 @@ void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
         }
     } else if (state == 1) {
         // this cell is alive
-        if (survivals[ncount]) {
+        if (ncount >= 0 && survivals[ncount]) {
             // cell survives so copy into nextgrid
             unsigned char* nextcell = nextgrid + xyoffset;
             *nextcell = 1;
