@@ -572,16 +572,11 @@ wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
     
     wxImage image(xpmdata);
     
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || defined(__WXGTK__)
     if (!image.HasAlpha()) {
         // add alpha channel and set to opaque
         image.InitAlpha();
     }
-#endif
-
-#ifdef __WXGTK__
-    // need alpha channel on Linux
-    image.SetMaskColour(0, 0, 0);    // make black transparent
 #endif
     
     wxBitmap allicons(image, -1);    // RGBA
@@ -634,40 +629,10 @@ wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
             if (srcicons[i] == NULL) {
                 iconptr[i] = NULL;
             } else {
-                wxImage image = srcicons[i]->ConvertToImage();
-
-#ifdef __WXGTK__
-                // fix wxGTK bug when converting black-and-white bitmap (black pixels are 1,2,3 not 0,0,0)
-                if (image.CountColours(2) <= 2) {
-                    int numpixels = image.GetWidth() * image.GetHeight();
-                    unsigned char* newdata = (unsigned char*) malloc(numpixels * 3);
-                    if (newdata) {
-                        unsigned char* p = image.GetData();
-                        unsigned char* n = newdata;
-                        for (int j = 0; j < numpixels; j++) {
-                            unsigned char r = *p++;
-                            unsigned char g = *p++;
-                            unsigned char b = *p++;
-                            if (r == 1 && g == 2 && b == 3) {
-                                // change to black
-                                *n++ = 0;
-                                *n++ = 0;
-                                *n++ = 0;
-                            } else {
-                                // probably white
-                                *n++ = r;
-                                *n++ = g;
-                                *n++ = b;
-                            }
-                        }
-                        image.SetData(newdata);    // image now owns pointer
-                    }
-                }
-#endif
-                
+                wxImage image = srcicons[i]->ConvertToImage();                
                 // do NOT scale using wxIMAGE_QUALITY_HIGH (thin lines can disappear)
                 image.Rescale(size, size, wxIMAGE_QUALITY_NORMAL);
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || defined(__WXGTK__)
                 if (!image.HasAlpha()) {
                     // add alpha channel and set to opaque
                     image.InitAlpha();
@@ -941,16 +906,11 @@ bool LoadIconFile(const wxString& path, int maxstate,
     // check for multi-color icons
     currlayer->multicoloricons = MultiColorImage(image);
 
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || defined(__WXGTK__)
     if (!image.HasAlpha()) {
         // add alpha channel and set to opaque
         image.InitAlpha();
     }
-#endif
- 
-#ifdef __WXGTK__
-    // need alpha channel on Linux
-    image.SetMaskColour(0, 0, 0);    // make black transparent
 #endif
     
     wxBitmap allicons(image, -1);    // RGBA
