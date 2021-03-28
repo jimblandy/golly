@@ -125,6 +125,7 @@ bool scrollcross = true;         // scroll if cross cursor is dragged outside vi
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
 bool allowundo = true;           // allow undo/redo?
 bool allowbeep = true;           // okay to play beep sound?
+bool showselpop = false;         // should selection population be shown?
 bool restoreview = true;         // should reset/undo restore view?
 int controlspos = 1;             // position of translucent controls (1 is top left corner)
 int canchangerule = 0;           // if > 0 then paste can change rule
@@ -1472,6 +1473,7 @@ void SavePrefs()
 
     fprintf(f, "allow_undo=%d\n", allowundo ? 1 : 0);
     fprintf(f, "allow_beep=%d\n", allowbeep ? 1 : 0);
+    fprintf(f, "show_selpop=%d\n", showselpop ? 1 : 0);
     fprintf(f, "restore_view=%d\n", restoreview ? 1 : 0);
     fprintf(f, "paste_location=%s\n", GetPasteLocation());
     fprintf(f, "paste_mode=%s\n", GetPasteMode());
@@ -1933,6 +1935,9 @@ void GetPrefs()
 
         } else if (strcmp(keyword, "allow_beep") == 0) {
             allowbeep = value[0] == '1';
+
+        } else if (strcmp(keyword, "show_selpop") == 0) {
+            showselpop = value[0] == '1';
 
         } else if (strcmp(keyword, "restore_view") == 0) {
             restoreview = value[0] == '1';
@@ -2682,6 +2687,7 @@ enum {
     PREF_SCROLL_CROSS,
     PREF_SCROLL_HAND,
     PREF_BEEP,
+    PREF_SHOW_SEL_POP,
     // Control prefs
     PREF_ALGO_MENU1,
     PREF_MAX_MEM,
@@ -3477,6 +3483,10 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
 
     wxCheckBox* check4 = new wxCheckBox(panel, PREF_BEEP, _("Allow beep sound"));
 
+    // show_selpop
+
+    wxCheckBox* check5 = new wxCheckBox(panel, PREF_SHOW_SEL_POP, _("Show selection population"));
+
     vbox->AddSpacer(SVGAP);
     vbox->Add(hbox1, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(GROUPGAP);
@@ -3485,6 +3495,8 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     vbox->Add(ssizer2, 0, wxGROW | wxALL, 2);
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(check4, 0, wxLEFT | wxRIGHT, LRGAP);
+    vbox->AddSpacer(SVGAP);
+    vbox->Add(check5, 0, wxLEFT | wxRIGHT, LRGAP);
 
     // init control values
     spin1->SetRange(1, 100);
@@ -3498,6 +3510,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     check2->SetValue(scrollcross);
     check3->SetValue(scrollhand);
     check4->SetValue(allowbeep);
+    check5->SetValue(showselpop);
 
     topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
@@ -4759,6 +4772,7 @@ bool PrefsDialog::TransferDataFromWindow()
     scrollcross   = GetCheckVal(PREF_SCROLL_CROSS);
     scrollhand    = GetCheckVal(PREF_SCROLL_HAND);
     allowbeep     = GetCheckVal(PREF_BEEP);
+    showselpop    = GetCheckVal(PREF_SHOW_SEL_POP);
 
     // CONTROL_PAGE
     new_algomem[algopos1] = GetSpinVal(PREF_MAX_MEM);

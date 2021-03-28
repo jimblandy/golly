@@ -122,25 +122,25 @@ const char* GSF_open(const wxString& filename, int remember)
     // convert non-absolute filename to absolute path relative to scriptloc
     wxFileName fullname(filename);
     if (!fullname.IsAbsolute()) fullname = scriptloc + filename;
-    
+
     // return error message here if file doesn't exist
     wxString fullpath = fullname.GetFullPath();
     if (!wxFileName::FileExists(fullpath)) {
         return "open error: given file does not exist.";
     }
-    
+
     // temporarily set pass_file_events to false so OpenFile won't pass
     // a file event back to this script
     bool savepass = pass_file_events;
     pass_file_events = false;
-    
+
     // only add file to Open Recent submenu if remember flag is non-zero
     mainptr->OpenFile(fullpath, remember != 0);
     DoAutoUpdate();
-    
+
     // restore pass_file_events
     pass_file_events = savepass;
-    
+
     return NULL;
 }
 
@@ -151,7 +151,7 @@ const char* GSF_save(const wxString& filename, const char* format, int remember)
     // convert non-absolute filename to absolute path relative to scriptloc
     wxFileName fullname(filename);
     if (!fullname.IsAbsolute()) fullname = scriptloc + filename;
-    
+
     // only add file to Open Recent submenu if remember flag is non-zero
     return mainptr->SaveFile(fullname.GetFullPath(), wxString(format,wxConvLocal), remember != 0);
 }
@@ -165,31 +165,31 @@ const char* GSF_setdir(const char* dirname, const wxString& newdir)
     if (!wxFileName::DirExists(dirpath)) {
         return "New directory does not exist.";
     }
-    
+
     if (strcmp(dirname, "app") == 0) {
         return "Application directory cannot be changed.";
-        
+
     } else if (strcmp(dirname, "data") == 0) {
         return "Data directory cannot be changed.";
-        
+
     } else if (strcmp(dirname, "temp") == 0) {
         return "Temporary directory cannot be changed.";
-        
+
     } else if (strcmp(dirname, "rules") == 0) {
         userrules = dirpath;
-        
+
     } else if (strcmp(dirname, "files") == 0 ||
                strcmp(dirname, "patterns") == 0) {  // deprecated
         // change filedir and update panel if currently shown
         mainptr->SetFileDir(dirpath);
-        
+
     } else if (strcmp(dirname, "download") == 0) {
         downloaddir = dirpath;
-        
+
     } else {
         return "Unknown directory name.";
     }
-    
+
     return NULL;   // success
 }
 
@@ -198,7 +198,7 @@ const char* GSF_setdir(const char* dirname, const wxString& newdir)
 const char* GSF_getdir(const char* dirname)
 {
     wxString dirpath;
-    
+
     if      (strcmp(dirname, "app") == 0)        dirpath = gollydir;
     else if (strcmp(dirname, "data") == 0)       dirpath = datadir;
     else if (strcmp(dirname, "temp") == 0)       dirpath = tempdir;
@@ -210,10 +210,10 @@ const char* GSF_getdir(const char* dirname)
     else {
         return NULL;   // unknown directory name
     }
-    
+
     // make sure directory path ends with separator
     if (dirpath.Last() != wxFILE_SEP_PATH) dirpath += wxFILE_SEP_PATH;
-    
+
     // need to be careful converting Unicode wxString to char*
     static wxCharBuffer dirbuff;
     #ifdef __WXMAC__
@@ -255,7 +255,7 @@ const char* GSF_setalgo(const char* algostring)
         }
     }
     if (algoindex < 0) return "Unknown algorithm.";
-    
+
     if (algoindex != currlayer->algtype) {
         mainptr->ChangeAlgorithm(algoindex);
         if (algoindex != currlayer->algtype) {
@@ -271,7 +271,7 @@ const char* GSF_setalgo(const char* algostring)
             }
         }
     }
-    
+
     return NULL;
 }
 
@@ -281,18 +281,18 @@ const char* GSF_setrule(const char* rulestring)
 {
     wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
-    
+
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     viewptr->SaveCurrentSelection();
-    
+
     // inscript should be true but play safe
     if (allowundo && !currlayer->stayclean && inscript) {
         // note that we must save pending gen changes BEFORE changing rule
         // otherwise temporary files will store incorrect rule info
         SavePendingChanges();
     }
-    
+
     const char* err;
     if (rulestring == NULL || rulestring[0] == 0) {
         // set normal Life
@@ -327,7 +327,7 @@ const char* GSF_setrule(const char* rulestring)
         RestoreRule(oldrule);
         return "Given rule is not valid in any algorithm.";
     }
-    
+
     // check if the rule string changed, or the number of states changed
     // (the latter might happen if user edited a .rule file)
     wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
@@ -335,37 +335,37 @@ const char* GSF_setrule(const char* rulestring)
     if (oldrule != newrule || oldmaxstate != newmaxstate) {
         // show new rule in main window's title but don't change name
         ChangeWindowTitle(wxEmptyString);
-        
+
 		// if pattern exists and is at starting gen then ensure savestart is true
 		// so that SaveStartingPattern will save pattern to suitable file
 		// (and thus undo/reset will work correctly)
 		if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
 			currlayer->savestart = true;
 		}
-        
+
         // if grid is bounded then remove any live cells outside grid edges
         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             mainptr->ClearOutsideGrid();
         }
-        
+
         // rule change might have changed the number of cell states;
         // if there are fewer states then pattern might change
         if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
             mainptr->ReduceCellStates(newmaxstate);
         }
-        
+
         if (allowundo && !currlayer->stayclean) {
             currlayer->undoredo->RememberRuleChange(oldrule);
         }
     }
-    
+
     // switch to default colors and icons for new rule (we need to do this even if
     // oldrule == newrule in case there's a new/changed .rule file)
     UpdateLayerColors();
-    
+
     // pattern or colors or icons might have changed
     DoAutoUpdate();
-    
+
     return NULL;
 }
 
@@ -375,7 +375,7 @@ const char* GSF_setgen(const char* genstring)
 {
     const char* err = mainptr->ChangeGenCount(genstring);
     if (!err) DoAutoUpdate();
-    
+
     return err;
 }
 
@@ -389,15 +389,15 @@ const char* GSF_setpos(const char* x, const char* y)
     for (i = 0; i < xlen; i++)
         if ( (x[i] >= 'a' && x[i] <= 'z') || (x[i] >= 'A' && x[i] <= 'Z') )
             return "Illegal character in x value.";
-    
+
     int ylen = (int)strlen(y);
     for (i = 0; i < ylen; i++)
         if ( (y[i] >= 'a' && y[i] <= 'z') || (y[i] >= 'A' && y[i] <= 'Z') )
             return "Illegal character in y value.";
-    
+
     bigint bigx(x);
     bigint bigy(y);
-    
+
     // check if x,y is outside bounded grid
     if ( (currlayer->algo->gridwd > 0 &&
             (bigx < currlayer->algo->gridleft || bigx > currlayer->algo->gridright)) ||
@@ -405,10 +405,10 @@ const char* GSF_setpos(const char* x, const char* y)
             (bigy < currlayer->algo->gridtop || bigy > currlayer->algo->gridbottom)) ) {
         return "Given position is outside grid boundary.";
     }
-    
+
     viewptr->SetPosMag(bigx, bigy, viewptr->GetMag());
     DoAutoUpdate();
-    
+
     return NULL;
 }
 
@@ -417,19 +417,19 @@ const char* GSF_setpos(const char* x, const char* y)
 void GSF_setname(const wxString& name, int index)
 {
     if (name.length() == 0) return;
-    
+
     // inscript should be true but play safe
     if (allowundo && !currlayer->stayclean && inscript)
         SavePendingChanges();
-    
+
     if (index == currindex) {
         // save old name for RememberNameChange
         wxString oldname = currlayer->currname;
-        
+
         // show new name in main window's title;
         // also sets currlayer->currname and updates menu item
         ChangeWindowTitle(name);
-        
+
         if (allowundo && !currlayer->stayclean) {
             // note that startfile and savestart/dirty flags don't change
             currlayer->undoredo->RememberNameChange(oldname, currlayer->startfile,
@@ -440,18 +440,18 @@ void GSF_setname(const wxString& name, int index)
         Layer* savelayer = currlayer;
         currlayer = GetLayer(index);
         wxString oldname = currlayer->currname;
-        
+
         currlayer->currname = name;
-        
+
         if (allowundo && !currlayer->stayclean) {
             // note that startfile and savestart/dirty flags don't change
             currlayer->undoredo->RememberNameChange(oldname, currlayer->startfile,
                                                     currlayer->savestart, currlayer->dirty);
         }
-        
+
         // restore currlayer
         currlayer = savelayer;
-        
+
         // show name in given layer's menu item
         mainptr->UpdateLayerItem(index);
     }
@@ -470,7 +470,7 @@ const char* GSF_setcell(int x, int y, int newstate)
              y > currlayer->algo->gridbottom.toint())) ) {
         return "Given cell is outside grid boundary.";
     }
-    
+
     int oldstate = currlayer->algo->getcell(x, y);
     if (newstate != oldstate) {
         if (currlayer->algo->setcell(x, y, newstate) < 0) {
@@ -499,30 +499,30 @@ const char* GSF_paste(int x, int y, const char* mode)
              y > currlayer->algo->gridbottom.toint())) ) {
         return "Given cell is outside grid boundary.";
     }
-    
+
     if (!mainptr->ClipboardHasText())
         return "No pattern in clipboard.";
-    
+
     // temporarily change selection and paste mode
     Selection oldsel = currlayer->currsel;
     const char* oldmode = GetPasteMode();
-    
+
     wxString modestr = wxString(mode, wxConvLocal);
     if      (modestr.IsSameAs(wxT("and"), false))  SetPasteMode("And");
     else if (modestr.IsSameAs(wxT("copy"), false)) SetPasteMode("Copy");
     else if (modestr.IsSameAs(wxT("or"), false))   SetPasteMode("Or");
     else if (modestr.IsSameAs(wxT("xor"), false))  SetPasteMode("Xor");
     else return "Unknown mode.";
-    
+
     // create huge selection rect so no possibility of error message
     currlayer->currsel.SetRect(x, y, INT_MAX, INT_MAX);
-    
+
     viewptr->PasteClipboard(true);      // true = paste to selection
-    
+
     // restore selection and paste mode
     currlayer->currsel = oldsel;
     SetPasteMode(oldmode);
-    
+
     DoAutoUpdate();
     return NULL;
 }
@@ -547,7 +547,7 @@ const char* GSF_checkrect(int x, int y, int wd, int ht)
 {
     if (wd <= 0) return "Rectangle width must be > 0.";
     if (ht <= 0) return "Rectangle height must be > 0.";
-    
+
     // check that rect is completely within bounded grid
     if ( (currlayer->algo->gridwd > 0 &&
             (x < currlayer->algo->gridleft.toint() ||
@@ -576,7 +576,7 @@ int GSF_hash(int x, int y, int wd, int ht)
     int v = 0;
     lifealgo* curralgo = currlayer->algo;
     bool multistate = curralgo->NumCellStates() > 2;
-    
+
     for ( cy=y; cy<=bottom; cy++ ) {
         int yshift = cy - y;
         for ( cx=x; cx<=right; cx++ ) {
@@ -595,7 +595,7 @@ int GSF_hash(int x, int y, int wd, int ht)
             }
         }
     }
-    
+
     return hash;
 }
 
@@ -627,7 +627,7 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             // autofit option only applies to a generating pattern
             // DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "boldspacing") == 0) {
         *oldval = boldspacing;
         if (newval < 2) newval = 2;
@@ -636,7 +636,7 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             boldspacing = newval;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "drawingstate") == 0) {
         *oldval = currlayer->drawingstate;
         if (newval < 0) newval = 0;
@@ -652,19 +652,19 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
                 updateedit = true;
             }
         }
-        
+
     } else if (strcmp(optname, "fullscreen") == 0) {
         *oldval = mainptr->fullscreen ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleFullScreen();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "hyperspeed") == 0) {
         *oldval = currlayer->hyperspeed ? 1 : 0;
         if (*oldval != newval)
             mainptr->ToggleHyperspeed();
-        
+
     } else if (strcmp(optname, "mindelay") == 0) {
         *oldval = mindelay;
         if (newval < 0) newval = 0;
@@ -674,7 +674,7 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             mainptr->UpdateStepExponent();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "maxdelay") == 0) {
         *oldval = maxdelay;
         if (newval < 0) newval = 0;
@@ -684,7 +684,7 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             mainptr->UpdateStepExponent();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "opacity") == 0) {
         *oldval = opacity;
         if (newval < 1) newval = 1;
@@ -693,35 +693,35 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             opacity = newval;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "restoreview") == 0) {
         *oldval = restoreview ? 1 : 0;
         if (*oldval != newval) {
             restoreview = !restoreview;
             // no need for DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "savexrle") == 0) {
         *oldval = savexrle ? 1 : 0;
         if (*oldval != newval) {
             savexrle = !savexrle;
             // no need for DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showallstates") == 0) {
         *oldval = showallstates ? 1 : 0;
         if (*oldval != newval) {
             ToggleAllStates();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showboldlines") == 0) {
         *oldval = showboldlines ? 1 : 0;
         if (*oldval != newval) {
             showboldlines = !showboldlines;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showbuttons") == 0) {
         *oldval = controlspos;
         if (newval < 0) newval = 0;
@@ -736,68 +736,75 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             viewptr->SetViewSize(wd, ht);
             DoAutoUpdate();
         }
-        
+
+    } else if (strcmp(optname, "showcellborders") == 0) {
+        *oldval = cellborders ? 1 : 0;
+        if (*oldval != newval) {
+            cellborders = !cellborders;
+            DoAutoUpdate();
+        }
+
     } else if (strcmp(optname, "showeditbar") == 0) {
         *oldval = showedit ? 1 : 0;
         if (*oldval != newval) {
             ToggleEditBar();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showexact") == 0) {
         *oldval = showexact ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleExactNumbers();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showgrid") == 0) {
         *oldval = showgridlines ? 1 : 0;
         if (*oldval != newval) {
             showgridlines = !showgridlines;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showhashinfo") == 0) {
         *oldval = currlayer->showhashinfo ? 1 : 0;
         if (*oldval != newval)
             mainptr->ToggleHashInfo();
-        
+
     } else if (strcmp(optname, "showpopulation") == 0) {
         *oldval = showpopulation ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleShowPopulation();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showicons") == 0) {
         *oldval = showicons ? 1 : 0;
         if (*oldval != newval) {
             viewptr->ToggleCellIcons();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showlayerbar") == 0) {
         *oldval = showlayer ? 1 : 0;
         if (*oldval != newval) {
             ToggleLayerBar();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showoverlay") == 0) {
         *oldval = showoverlay ? 1 : 0;
         if (*oldval != newval) {
             showoverlay = !showoverlay;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showprogress") == 0) {
         *oldval = showprogress ? 1 : 0;
         if (*oldval != newval) {
             showprogress = !showprogress;
             // no need for DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showfiles") == 0 ||
                strcmp(optname, "showpatterns") == 0) {      // deprecated
         *oldval = showfiles ? 1 : 0;
@@ -805,91 +812,91 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             mainptr->ToggleShowFiles();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showscripts") == 0) {
         *oldval = 0;
         if (*oldval != newval) {
             // deprecated so do nothing
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showscrollbars") == 0) {
         *oldval = showscrollbars ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleScrollBars();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showstatusbar") == 0) {
         *oldval = showstatus ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleStatusBar();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showtimeline") == 0) {
         *oldval = showtimeline ? 1 : 0;
         if (*oldval != newval) {
             ToggleTimelineBar();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "showtoolbar") == 0) {
         *oldval = showtool ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleToolBar();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "smartscale") == 0) {
         *oldval = smartscale ? 1 : 0;
         if (*oldval != newval) {
             viewptr->ToggleSmarterScaling();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "swapcolors") == 0) {
         *oldval = swapcolors ? 1 : 0;
         if (*oldval != newval) {
             viewptr->ToggleCellColors();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "synccursors") == 0) {
         *oldval = synccursors ? 1 : 0;
         if (*oldval != newval) {
             ToggleSyncCursors();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "syncviews") == 0) {
         *oldval = syncviews ? 1 : 0;
         if (*oldval != newval) {
             ToggleSyncViews();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "switchlayers") == 0) {
         *oldval = canswitch ? 1 : 0;
         if (*oldval != newval) {
             canswitch = !canswitch;
             // no need for DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "stacklayers") == 0) {
         *oldval = stacklayers ? 1 : 0;
         if (*oldval != newval) {
             ToggleStackLayers();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(optname, "tilelayers") == 0) {
         *oldval = tilelayers ? 1 : 0;
         if (*oldval != newval) {
             ToggleTileLayers();
             DoAutoUpdate();
         }
-        
+
         // this option is deprecated (use setalgo command)
     } else if (strcmp(optname, "hashing") == 0) {
         *oldval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;
@@ -897,16 +904,16 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             mainptr->ChangeAlgorithm(newval ? HLIFE_ALGO : QLIFE_ALGO);
             DoAutoUpdate();
         }
-        
+
     } else {
         // unknown option
         return false;
     }
-    
+
     if (*oldval != newval) {
         mainptr->UpdateMenuItems();
     }
-    
+
     return true;
 }
 
@@ -975,7 +982,7 @@ bool GSF_setcolor(const char* colname, wxColor& newcol, wxColor& oldcol)
             UpdateCloneColors();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(colname, "deadcells") == 0) {
         // deprecated; can now use setcolors([0,r,g,b])
         oldcol.Set(currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0]);
@@ -987,28 +994,28 @@ bool GSF_setcolor(const char* colname, wxColor& newcol, wxColor& oldcol)
             UpdateCloneColors();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(colname, "border") == 0) {
         oldcol = *borderrgb;
         if (oldcol != newcol) {
             *borderrgb = newcol;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(colname, "paste") == 0) {
         oldcol = *pastergb;
         if (oldcol != newcol) {
             *pastergb = newcol;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(colname, "select") == 0) {
         oldcol = *selectrgb;
         if (oldcol != newcol) {
             *selectrgb = newcol;
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(colname, "hashing") == 0) {      // deprecated
         oldcol = algoinfo[HLIFE_ALGO]->statusrgb;
         if (oldcol != newcol) {
@@ -1016,7 +1023,7 @@ bool GSF_setcolor(const char* colname, wxColor& newcol, wxColor& oldcol)
             UpdateStatusBrushes();
             DoAutoUpdate();
         }
-        
+
     } else if (strcmp(colname, "nothashing") == 0) {   // deprecated
         oldcol = algoinfo[QLIFE_ALGO]->statusrgb;
         if (oldcol != newcol) {
@@ -1024,7 +1031,7 @@ bool GSF_setcolor(const char* colname, wxColor& newcol, wxColor& oldcol)
             UpdateStatusBrushes();
             DoAutoUpdate();
         }
-        
+
     } else {
         // look for algo name
         char* algoname = ReplaceDeprecatedAlgo((char*) colname);
@@ -1086,14 +1093,14 @@ void GSF_getevent(wxString& event, int get)
         pass_key_events = true;     // future keyboard events will call PassKeyToScript
         pass_mouse_events = true;   // future mouse events will call PassClickToScript
         pass_file_events = true;    // future open file events will call PassFileToScript
-        
+
         // rle3path is non-empty if Golly has just seen a .rle3 file and started up 3D.lua
         if (!rle3path.IsEmpty()) {
             event = wxT("file ") + rle3path;
             rle3path = wxEmptyString;
             return;
         }
-        
+
     } else {
         // tell Golly to handle future keyboard/mouse/file events
         pass_key_events = false;
@@ -1102,7 +1109,7 @@ void GSF_getevent(wxString& event, int get)
         // clear any pending events so event is set to empty string below
         eventqueue.Clear();
     }
-    
+
     if (eventqueue.IsEmpty()) {
         event = wxEmptyString;
     } else {
@@ -1195,9 +1202,9 @@ const char* GSF_doevent(const wxString& event)
                 if (event.Contains(wxT("down")))       key = WXK_DOWN; else
                 return "Unknown key.";
             }
-            
+
             viewptr->ProcessKey(key, GetModifiers(event.AfterLast(' ')));
-            
+
             if (showtitle) {
                 // update window title
                 inscript = false;
@@ -1205,7 +1212,7 @@ const char* GSF_doevent(const wxString& event)
                 inscript = true;
                 showtitle = false;
             }
-            
+
         } else if (event.StartsWith(wxT("zoom"))) {
             // parse event string like "zoomin 10 20" or "zoomout 10 20"
             wxString xstr = event.AfterFirst(' ');
@@ -1215,7 +1222,7 @@ const char* GSF_doevent(const wxString& event)
             if (!ystr.IsNumber()) return "Bad y value.";
             int x = wxAtoi(xstr);
             int y = wxAtoi(ystr);
-            
+
             // hack for scripts like NewCA.lua that use an overlay covering the viewport
             // and convert an ozoom* event to zoom*
             if (int(scalefactor) > 1 && showoverlay &&
@@ -1242,7 +1249,7 @@ const char* GSF_doevent(const wxString& event)
             bigview->UpdateScrollBars();
             inscript = true;
             mainptr->UpdateUserInterface();
-            
+
         } else if (event.StartsWith(wxT("click "))) {
             // parse event string like "click 10 20 left altshift"
             wxString xstr = event.AfterFirst(' ');
@@ -1253,20 +1260,20 @@ const char* GSF_doevent(const wxString& event)
             if (!ystr.IsNumber()) return "Bad y value.";
             bigint x(xstr.mb_str(wxConvLocal));
             bigint y(ystr.mb_str(wxConvLocal));
-            
+
             int button;
             if (event.Contains(wxT(" left "))) button = wxMOUSE_BTN_LEFT; else
                 if (event.Contains(wxT(" middle "))) button = wxMOUSE_BTN_MIDDLE; else
                     if (event.Contains(wxT(" right "))) button = wxMOUSE_BTN_RIGHT; else
                         return "Unknown button.";
-            
+
             if (viewptr->CellVisible(x, y) && viewptr->CellInGrid(x, y)) {
                 // convert x,y cell position to pixel position in viewport
                 pair<int,int> xy = currlayer->view->screenPosOf(x, y, currlayer->algo);
                 int mods = GetModifiers(event.AfterLast(' '));
-                
+
                 viewptr->ProcessClick(xy.first, xy.second, button, mods);
-                
+
                 if (showtitle) {
                     // update window title
                     inscript = false;
@@ -1309,7 +1316,7 @@ const char* GSF_doevent(const wxString& event)
 char GSF_getkey()
 {
     pass_key_events = true;   // future keyboard events will call PassKeyToScript
-    
+
     if (scriptchars.length() == 0) {
         // return empty string
         return '\0';
@@ -1343,10 +1350,10 @@ void GSF_dokey(const char* ascii)
             case 31:    key = WXK_DOWN;   break;
             default:    key = *ascii;
         }
-        
+
         // we can't handle modifiers here
         viewptr->ProcessKey(key, wxMOD_NONE);
-        
+
         if (showtitle) {
             // update window title
             inscript = false;
@@ -1366,20 +1373,20 @@ void GSF_update()
     // update viewport, status bar, and possibly other bars
     view_painted = false;
     inscript = false;
-    
+
     // pass in true so that Update() is called
     mainptr->UpdatePatternAndStatus(true);
-    
+
     if (showtitle) {
         mainptr->SetWindowTitle(wxEmptyString);
         showtitle = false;
     }
-    
+
     if (updateedit) {
         UpdateEditBar();
         updateedit = false;
     }
-    
+
     inscript = true;
 
     #if defined(__WXGTK__) || (defined(__WXMAC__) && wxCHECK_VERSION(3,1,3))
@@ -1405,7 +1412,7 @@ void GSF_exit(const wxString& errmsg)
         // make sure status bar is visible
         if (!showstatus) mainptr->ToggleStatusBar();
     }
-    
+
     exitcalled = true;   // prevent CheckScriptError changing message
 }
 
@@ -1455,7 +1462,7 @@ const char* GSF_getinfo()
 void CheckScriptError(const wxString& ext)
 {
     if (scripterr.IsEmpty()) return;    // no error
-    
+
     if (scripterr.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
         // error was caused by AbortLuaScript/AbortPerlScript/AbortPythonScript
         // so don't display scripterr
@@ -1473,7 +1480,7 @@ void CheckScriptError(const wxString& ext)
         Beep();
         wxMessageBox(scripterr, errtype, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
     }
-    
+
     // don't change status message if GSF_exit was used to stop script
     if (!exitcalled) statusptr->DisplayMessage(_("Script aborted."));
 }
@@ -1487,7 +1494,7 @@ void ChangeCell(int x, int y, int oldstate, int newstate)
         currlayer->undoredo->savegenchanges = false;
         currlayer->undoredo->RememberGenFinish();
     }
-    
+
     // setcell/putcells command is changing state of cell at x,y
     currlayer->undoredo->SaveCellChange(x, y, oldstate, newstate);
     if (!currlayer->undoredo->savecellchanges) {
@@ -1504,14 +1511,14 @@ void SavePendingChanges(bool checkgenchanges)
     // this should only be called if inscript && allowundo && !currlayer->stayclean
     if ( !(inscript && allowundo && !currlayer->stayclean) )
         Warning(_("Bug detected in SavePendingChanges!"));
-    
+
     if (currlayer->undoredo->savecellchanges) {
         currlayer->undoredo->savecellchanges = false;
         // remember accumulated cell changes
         currlayer->undoredo->RememberCellChanges(_("bug1"), currlayer->savedirty);
         // action string should never be seen
     }
-    
+
     if (checkgenchanges && currlayer->undoredo->savegenchanges) {
         currlayer->undoredo->savegenchanges = false;
         // remember accumulated gen changes
@@ -1527,19 +1534,19 @@ void RunScript(const wxString& filename)
         statusptr->ErrorMessage(_("You can't run a script if there is a timeline."));
         return;
     }
-    
+
     // use these flags to allow re-entrancy
     bool already_inscript = inscript;
     bool in_luascript = luascript;
     bool in_plscript = plscript;
     bool in_pyscript = pyscript;
     wxString savecwd;
-    
+
     if (!wxFileName::FileExists(filename)) {
         Warning(_("The script file does not exist:\n") + filename);
         return;
     }
-    
+
     if (already_inscript) {
         // save current directory so we can restore it below
         savecwd = scriptloc;
@@ -1563,20 +1570,20 @@ void RunScript(const wxString& filename)
         pass_file_events = false;
         wxGetApp().PollerReset();
     }
-    
+
     // temporarily change current directory to location of script
     wxFileName fullname(filename);
     fullname.Normalize();
     scriptloc = fullname.GetPath();
     if ( scriptloc.Last() != wxFILE_SEP_PATH ) scriptloc += wxFILE_SEP_PATH;
     wxSetWorkingDirectory(scriptloc);
-    
+
     wxString fpath = fullname.GetFullPath();
     #ifdef __WXMAC__
         // use decomposed UTF8 so interpreter can open names with non-ASCII chars
         fpath = wxString(fpath.fn_str(),wxConvLocal);
     #endif
-    
+
     if (!already_inscript) {
         if (allowundo) {
             // save each layer's dirty state for use by next RememberCellChanges call
@@ -1594,16 +1601,16 @@ void RunScript(const wxString& filename)
                 layer->undoredo->RememberScriptStart();
             }
         }
-        
+
         inscript = true;
-        
+
         mainptr->UpdateUserInterface();
-        
+
         // temporarily remove accelerators from all menu items
         // so keyboard shortcuts can be passed to script
         mainptr->UpdateMenuAccelerators();
     }
-    
+
     wxString ext = filename.AfterLast('.');
     if (ext.IsSameAs(wxT("lua"), false)) {
         luascript = true;
@@ -1621,12 +1628,12 @@ void RunScript(const wxString& filename)
         pyscript = false;
         Warning(_("Unexpected extension in script file:\n") + filename);
     }
-    
+
     if (already_inscript) {
         // restore current directory saved above
         scriptloc = savecwd;
         wxSetWorkingDirectory(scriptloc);
-        
+
         // display any Lua/Perl/Python error message
         CheckScriptError(ext);
         if (!scripterr.IsEmpty()) {
@@ -1641,14 +1648,14 @@ void RunScript(const wxString& filename)
                 AbortPerlScript();
             }
         }
-        
+
         luascript = in_luascript;
         plscript = in_plscript;
         pyscript = in_pyscript;
-        
+
     } else {
         // already_inscript is false
-        
+
         // tidy up the undo/redo history for each layer; note that some calls
         // use currlayer (eg. RememberGenFinish) so we temporarily set currlayer
         // to each layer -- this is a bit yukky but should be safe as long as we
@@ -1683,32 +1690,32 @@ void RunScript(const wxString& filename)
             currlayer->stayclean = false;
         }
         currlayer = savelayer;
-        
+
         // must reset inscript AFTER RememberGenFinish
         inscript = false;
-        
+
         // restore current directory to location of Golly app
         wxSetWorkingDirectory(gollydir);
-        
+
         luascript = false;
         plscript = false;
         pyscript = false;
-        
+
         // update Undo/Redo items based on current layer's history
         if (allowundo) currlayer->undoredo->UpdateUndoRedoItems();
-        
+
         // display any error message
         CheckScriptError(ext);
-        
+
         if (!scripttitle.IsEmpty()) {
             scripttitle.Clear();
             showtitle = true;
         }
-        
+
         // update title, menu bar, cursor, viewport, status bar, tool bar, etc
         if (showtitle) mainptr->SetWindowTitle(wxEmptyString);
         mainptr->UpdateEverything();
-        
+
         // restore accelerators that were cleared above
         mainptr->UpdateMenuAccelerators();
     }
@@ -1770,7 +1777,7 @@ void PassZoomInToScript(int x, int y)
         wxString zinfo;
         zinfo.Printf(wxT("ozoomin %d %d"), ox, oy);
         eventqueue.Add(zinfo);
-    
+
     } else {
         // zoom in to the viewport pixel at x,y (note that it's best not to
         // pass the corresponding cell position because a doevent call will result
@@ -1792,7 +1799,7 @@ void PassZoomOutToScript(int x, int y)
         wxString zinfo;
         zinfo.Printf(wxT("ozoomout %d %d"), ox, oy);
         eventqueue.Add(zinfo);
-    
+
     } else {
         // zoom out from the viewport pixel at x,y
         wxString zinfo;
@@ -1898,9 +1905,9 @@ void PassKeyToScript(int key, int modifiers)
         keyinfo += wxT(" ");
         AppendModifiers(modifiers, keyinfo);
         eventqueue.Add(keyinfo);
-        
+
         // NOTE: following code is for deprecated getkey() command
-        
+
         // convert wx key code to corresponding ascii char (if possible)
         // so that scripts can be platform-independent;
         // note that GSF_dokey does the reverse conversion
@@ -1961,7 +1968,7 @@ void FinishScripting()
         wxSetWorkingDirectory(gollydir);
         inscript = false;
     }
-    
+
     FinishLuaScripting();
     FinishPerlScripting();
     FinishPythonScripting();

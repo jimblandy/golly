@@ -8,6 +8,12 @@
 <p>
 <ul>
 <li> The Mac app is a universal binary that runs natively on Intel or Silicon.
+<li> The cell population inside and outside of a selection can now be displayed in the status bar.
+     Use <a href="prefs:edit">Edit Preference</a>: "Show selection population" to enable (default is disabled).
+     To prevent lag the population is only displayed if the calculation takes less than 5ms while selecting or
+     less than 500ms when the selection is complete.
+<li> The Lua <a href="lua.html#setoption">setoption</a> command and Python <a href="python.html#setoption">setoption</a>
+     command now recognize "showcellborders" for showing or hiding cell borders when zoomed in &gt; 2x.
 <li> Fixed a bug in Mac app when drawing while a pattern is generating (only on Retina screens).
 <li> Fixed a bug in Larger than Life weighted neighborhoods with negative counts.</li>
 </ul>

@@ -99,6 +99,51 @@ bool Selection::TooBig()
 
 // -----------------------------------------------------------------------------
 
+bool Selection::CalculatePopulation(long timeout)
+{
+    // compute selection population
+    int leftx = selleft.toint();
+    int rightx = selright.toint();
+    int bottomy = selbottom.toint();
+    int topy = seltop.toint();
+    lifealgo* curralgo = currlayer->algo;
+    int nstates = curralgo->NumCellStates();
+    int v = 0;
+
+    // bail out if population count takes longer than supplied timeout (in milliseconds)
+    long starttime = stopwatch->Time();
+    long maxtime = starttime + timeout;
+
+    // clear previous results
+    for (int i = 0; i < nstates; i++) {
+        selpop[i] = 0;
+    }
+
+    // count live cells
+    for (int cy = topy; cy <= bottomy; cy++) {
+        for (int cx = leftx; cx <= rightx; cx++) {
+            int skip = curralgo->nextcell(cx, cy, v);
+            if (skip + cx > rightx)
+                skip = -1;           // pretend we found no more live cells
+            if (skip >= 0) {
+                // found next live cell
+                cx += skip;
+                selpop[v]++;
+            } else {
+                cx = rightx + 1;     // done this row
+            }
+        }
+
+        // bail out if calculation time exceeded
+        if (stopwatch->Time() > maxtime) return false;
+    }
+
+    // calculation completed successfully on time
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
 void Selection::DisplaySize()
 {
     bigint wd = selright;    wd -= selleft;   wd += bigint::one;
@@ -107,6 +152,65 @@ void Selection::DisplaySize()
     msg += statusptr->Stringify(wd);
     msg += _(" x ");
     msg += statusptr->Stringify(ht);
+
+    // check if the selection population is enabled and is small enough to calculate population
+    if (showselpop && !TooBig()) {
+        // set a smaller timeout if currently selecting cells to keep UI responsive
+        int timeout = viewptr->selectingcells ? 5 : 500;
+
+        // attempt to calculate the selection population
+        if (CalculatePopulation(timeout)) {
+            // if calculation was successful then update the status message
+            msg += _("    Inside=");
+            int nstates = currlayer->algo->NumCellStates();
+            int nactive = 0;
+            int totalpop = 0;
+
+            if (nstates == 2) {
+                // for 2 state patterns just output the population
+                totalpop = selpop[1];
+                nactive = 1;
+            } else {
+                // for >2 state patterns compute and display the total population from the states
+                for (int i = 1; i < nstates; i++) {
+                    int pop = selpop[i];
+                    if (pop) {
+                        totalpop += pop;
+                        nactive++;
+                    }
+                }
+            }
+
+            msg += statusptr->Stringify(totalpop);
+
+            // if there is more than one active state display the population for each active state
+            if (nactive > 1) {
+                // output the individual state populations
+                for (int i = 1; i < nstates; i++) {
+                    int pop = selpop[i];
+                    if (pop > 0) {
+                        msg += _("   ");
+                        msg += statusptr->Stringify(i);
+                        msg += _(": ");
+                        msg += statusptr->Stringify(pop);
+                    }
+                }
+            }
+
+            // check if total population is available
+            bigint popcount = currlayer->algo->getPopulation();
+            if (popcount.sign() >= 0) {
+                popcount -= totalpop;
+
+                // display the population outside the selection if non-zero
+                if (popcount > 0) {
+                    msg += _("    Outside=");
+                    msg += wxString(popcount.tostring(), wxConvLocal);
+                }
+            }
+        }
+    }
+
     statusptr->SetMessage(msg);
 }
 
@@ -208,7 +312,7 @@ bool Selection::SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
     double maxcount = (double)wd * (double)ht;
     int cntr = 0;
     bool abort = false;
-    
+
     // compare patterns in given algos and call SaveCellChange for each different cell
     BeginProgress(_("Saving cell changes"));
     for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -228,7 +332,7 @@ bool Selection::SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
         if (abort) break;
     }
     EndProgress();
-    
+
     return !abort;
 }
 
@@ -237,39 +341,39 @@ bool Selection::SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
 void Selection::Advance()
 {
     if (mainptr->generating || viewptr->drawingcells || viewptr->waitingforclick) return;
-    
+
     if (!exists) {
         statusptr->ErrorMessage(no_selection);
         return;
     }
-    
+
     if (currlayer->algo->isEmpty()) {
         statusptr->ErrorMessage(empty_selection);
         return;
     }
-    
+
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
-    
+
     // check if selection is completely outside pattern edges
     if (Outside(top, left, bottom, right)) {
         statusptr->ErrorMessage(empty_selection);
         return;
     }
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     if (savecells && inscript) SavePendingChanges();
-    
+
     bool boundedgrid = currlayer->algo->unbounded && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
-    
+
     // check if selection encloses entire pattern;
     // can't do this if qlife because it uses gen parity to decide which bits to draw;
     // also avoid this if undo/redo is enabled (too messy to remember cell changes)
     if ( currlayer->algtype != QLIFE_ALGO && !savecells && Contains(top, left, bottom, right) ) {
         mainptr->generating = true;
         wxGetApp().PollerReset();
-        
+
         // step by one gen without changing gen count
         bigint savegen = currlayer->algo->getGeneration();
         bigint saveinc = currlayer->algo->getIncrement();
@@ -279,46 +383,46 @@ void Selection::Advance()
         if (boundedgrid) currlayer->algo->DeleteBorderCells();
         currlayer->algo->setIncrement(saveinc);
         currlayer->algo->setGeneration(savegen);
-        
+
         mainptr->generating = false;
-        
+
         // clear 1-cell thick strips just outside selection
         ClearOutside();
         MarkLayerDirty();
         mainptr->UpdateEverything();
         return;
     }
-    
+
     // find intersection of selection and pattern to minimize work
     if (seltop > top) top = seltop;
     if (selleft > left) left = selleft;
     if (selbottom < bottom) bottom = selbottom;
     if (selright < right) right = selright;
-    
+
     // check that intersection is within setcell/getcell limits
     if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
         statusptr->ErrorMessage(selection_too_big);
         return;
     }
-    
+
     // create a temporary universe of same type as current universe
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype);
     if (tempalgo->setrule(currlayer->algo->getrule()))
         tempalgo->setrule(tempalgo->DefaultRule());
-    
+
     // copy live cells in selection to temporary universe
     if ( !viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                             currlayer->algo, tempalgo, false, _("Saving selection")) ) {
         delete tempalgo;
         return;
     }
-    
+
     if ( tempalgo->isEmpty() ) {
         statusptr->ErrorMessage(empty_selection);
         delete tempalgo;
         return;
     }
-    
+
     // advance temporary universe by one gen
     mainptr->generating = true;
     wxGetApp().PollerReset();
@@ -327,7 +431,7 @@ void Selection::Advance()
     tempalgo->step();
     if (boundedgrid) tempalgo->DeleteBorderCells();
     mainptr->generating = false;
-    
+
     if ( !tempalgo->isEmpty() ) {
         // temporary pattern might have expanded
         bigint temptop, templeft, tempbottom, tempright;
@@ -336,14 +440,14 @@ void Selection::Advance()
         if (templeft < left) left = templeft;
         if (tempbottom > bottom) bottom = tempbottom;
         if (tempright > right) right = tempright;
-        
+
         // but ignore live cells created outside selection edges
         if (top < seltop) top = seltop;
         if (left < selleft) left = selleft;
         if (bottom > selbottom) bottom = selbottom;
         if (right > selright) right = selright;
     }
-    
+
     if (savecells) {
         // compare selection rect in currlayer->algo and tempalgo and call SaveCellChange
         // for each cell that has a different state
@@ -360,11 +464,11 @@ void Selection::Advance()
             return;
         }
     }
-    
+
     // copy all cells in new selection from tempalgo to currlayer->algo
     viewptr->CopyAllRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                          tempalgo, currlayer->algo, _("Copying advanced selection"));
-    
+
     delete tempalgo;
     MarkLayerDirty();
     mainptr->UpdateEverything();   
@@ -375,39 +479,39 @@ void Selection::Advance()
 void Selection::AdvanceOutside()
 {
     if (mainptr->generating || viewptr->drawingcells || viewptr->waitingforclick) return;
-    
+
     if (!exists) {
         statusptr->ErrorMessage(no_selection);
         return;
     }
-    
+
     if (currlayer->algo->isEmpty()) {
         statusptr->ErrorMessage(empty_outside);
         return;
     }
-    
+
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
-    
+
     // check if selection encloses entire pattern
     if (Contains(top, left, bottom, right)) {
         statusptr->ErrorMessage(empty_outside);
         return;
     }
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     if (savecells && inscript) SavePendingChanges();
-    
+
     bool boundedgrid = currlayer->algo->unbounded && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
-    
+
     // check if selection is completely outside pattern edges;
     // can't do this if qlife because it uses gen parity to decide which bits to draw;
     // also avoid this if undo/redo is enabled (too messy to remember cell changes)
     if ( currlayer->algtype != QLIFE_ALGO && !savecells && Outside(top, left, bottom, right) ) {
         mainptr->generating = true;
         wxGetApp().PollerReset();
-        
+
         // step by one gen without changing gen count
         bigint savegen = currlayer->algo->getGeneration();
         bigint saveinc = currlayer->algo->getIncrement();
@@ -417,22 +521,22 @@ void Selection::AdvanceOutside()
         if (boundedgrid) currlayer->algo->DeleteBorderCells();
         currlayer->algo->setIncrement(saveinc);
         currlayer->algo->setGeneration(savegen);
-        
+
         mainptr->generating = false;
-        
+
         // clear selection in case pattern expanded into it
         Clear();
         MarkLayerDirty();
         mainptr->UpdateEverything();
         return;
     }
-    
+
     // check that pattern is within setcell/getcell limits
     if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
         statusptr->ErrorMessage(_("Pattern is outside +/- 10^9 boundary."));
         return;
     }
-    
+
     lifealgo* oldalgo = NULL;
     if (savecells) {
         // copy current pattern to oldalgo, using same type and gen count
@@ -447,13 +551,13 @@ void Selection::AdvanceOutside()
             return;
         }
     }
-    
+
     // create a new universe of same type
     lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
     if (newalgo->setrule(currlayer->algo->getrule()))
         newalgo->setrule(newalgo->DefaultRule());
     newalgo->setGeneration( currlayer->algo->getGeneration() );
-    
+
     // copy (and kill) live cells in selection to new universe
     int iseltop    = seltop.toint();
     int iselleft   = selleft.toint();
@@ -474,7 +578,7 @@ void Selection::AdvanceOutside()
         mainptr->UpdateEverything();
         return;
     }
-    
+
     // advance current universe by 1 generation
     mainptr->generating = true;
     wxGetApp().PollerReset();
@@ -483,7 +587,7 @@ void Selection::AdvanceOutside()
     currlayer->algo->step();
     if (boundedgrid) currlayer->algo->DeleteBorderCells();
     mainptr->generating = false;
-    
+
     if ( !currlayer->algo->isEmpty() ) {
         // find new edges and copy current pattern to new universe,
         // except for any cells that were created in selection
@@ -496,7 +600,7 @@ void Selection::AdvanceOutside()
         int iright = r.toint();
         int ht = ibottom - itop + 1;
         int cx, cy;
-        
+
         // for showing accurate progress we need to add pattern height to pop count
         // in case this is a huge pattern with many blank rows
         double maxcount = currlayer->algo->getPopulation().todouble() + ht;
@@ -505,7 +609,7 @@ void Selection::AdvanceOutside()
         int v = 0;
         bool abort = false;
         BeginProgress(_("Copying advanced pattern"));
-        
+
         lifealgo* curralgo = currlayer->algo;
         for ( cy=itop; cy<=ibottom; cy++ ) {
             currcount++;
@@ -514,13 +618,13 @@ void Selection::AdvanceOutside()
                 if (skip >= 0) {
                     // found next live cell in this row
                     cx += skip;
-                    
+
                     // only copy cell if outside selection
                     if ( cx < iselleft || cx > iselright ||
                         cy < iseltop || cy > iselbottom ) {
                         newalgo->setcell(cx, cy, v);
                     }
-                    
+
                     currcount++;
                 } else {
                     cx = iright;  // done this row
@@ -534,10 +638,10 @@ void Selection::AdvanceOutside()
             }
             if (abort) break;
         }
-        
+
         newalgo->endofpattern();
         EndProgress();
-        
+
         if (abort && savecells) {
             // revert back to pattern saved in oldalgo
             delete newalgo;
@@ -548,12 +652,12 @@ void Selection::AdvanceOutside()
             return;
         }
     }
-    
+
     // switch to new universe (best to do this even if aborted)
     delete currlayer->algo;
     currlayer->algo = newalgo;
     mainptr->SetGenIncrement();
-    
+
     if (savecells) {
         // compare patterns in oldalgo and currlayer->algo and call SaveCellChange
         // for each cell that has a different state; note that we need to compare
@@ -590,7 +694,7 @@ void Selection::AdvanceOutside()
             return;
         }
     }
-    
+
     MarkLayerDirty();
     mainptr->UpdateEverything();
 }
@@ -609,52 +713,52 @@ void Selection::Modify(const bigint& xclick, const bigint& yclick,
         selleft = xclick;
         anchory = selbottom;
         anchorx = selright;
-        
+
     } else if ( yclick <= seltop && xclick >= selright ) {
         // click is in or outside top right corner
         seltop = yclick;
         selright = xclick;
         anchory = selbottom;
         anchorx = selleft;
-        
+
     } else if ( yclick >= selbottom && xclick >= selright ) {
         // click is in or outside bottom right corner
         selbottom = yclick;
         selright = xclick;
         anchory = seltop;
         anchorx = selleft;
-        
+
     } else if ( yclick >= selbottom && xclick <= selleft ) {
         // click is in or outside bottom left corner
         selbottom = yclick;
         selleft = xclick;
         anchory = seltop;
         anchorx = selright;
-        
+
     } else if (yclick <= seltop) {
         // click is in or above top edge
         *forcev = true;
         seltop = yclick;
         anchory = selbottom;
-        
+
     } else if (yclick >= selbottom) {
         // click is in or below bottom edge
         *forcev = true;
         selbottom = yclick;
         anchory = seltop;
-        
+
     } else if (xclick <= selleft) {
         // click is in or left of left edge
         *forceh = true;
         selleft = xclick;
         anchorx = selright;
-        
+
     } else if (xclick >= selright) {
         // click is in or right of right edge
         *forceh = true;
         selright = xclick;
         anchorx = selleft;
-        
+
     } else {
         // click is somewhere inside selection
         double wd = selright.todouble() - selleft.todouble() + 1.0;
@@ -666,53 +770,53 @@ void Selection::Modify(const bigint& xclick, const bigint& yclick,
         double midy = seltop.todouble() + ht / 2.0;
         double x = xclick.todouble();
         double y = yclick.todouble();
-        
+
         if ( y < onethirdy && x < onethirdx ) {
             // click is near top left corner
             seltop = yclick;
             selleft = xclick;
             anchory = selbottom;
             anchorx = selright;
-            
+
         } else if ( y < onethirdy && x > twothirdx ) {
             // click is near top right corner
             seltop = yclick;
             selright = xclick;
             anchory = selbottom;
             anchorx = selleft;
-            
+
         } else if ( y > twothirdy && x > twothirdx ) {
             // click is near bottom right corner
             selbottom = yclick;
             selright = xclick;
             anchory = seltop;
             anchorx = selleft;
-            
+
         } else if ( y > twothirdy && x < onethirdx ) {
             // click is near bottom left corner
             selbottom = yclick;
             selleft = xclick;
             anchory = seltop;
             anchorx = selright;
-            
+
         } else if ( x < onethirdx ) {
             // click is near middle of left edge
             *forceh = true;
             selleft = xclick;
             anchorx = selright;
-            
+
         } else if ( x > twothirdx ) {
             // click is near middle of right edge
             *forceh = true;
             selright = xclick;
             anchorx = selleft;
-            
+
         } else if ( y < midy ) {
             // click is below middle section of top edge
             *forcev = true;
             seltop = yclick;
             anchory = selbottom;
-            
+
         } else {
             // click is above middle section of bottom edge
             *forcev = true;
@@ -759,13 +863,13 @@ void Selection::Fit()
     newx += bigint::one;
     newx.div2();
     newx += selleft;
-    
+
     bigint newy = selbottom;
     newy -= seltop;
     newy += bigint::one;
     newy.div2();
     newy += seltop;
-    
+
     int mag = MAX_MAG;
     while (true) {
         currlayer->view->setpositionmag(newx, newy, mag);
@@ -781,14 +885,14 @@ void Selection::Fit()
 void Selection::Shrink(bool fit, bool remove_if_empty)
 {
     if (!exists) return;
-    
+
     if (mainptr->generating) {
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(fit ? ID_SHRINKFIT : ID_SHRINK);
         mainptr->Stop();
         return;
     }
-    
+
     // check if there is no pattern
     if (currlayer->algo->isEmpty()) {
         if (remove_if_empty) {
@@ -799,7 +903,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
         }
         return;
     }
-    
+
     // check if selection encloses entire pattern
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
@@ -818,7 +922,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
             mainptr->UpdatePatternAndStatus();
         return;
     }
-    
+
     // check if selection is completely outside pattern edges
     if (Outside(top, left, bottom, right)) {
         if (remove_if_empty) {
@@ -829,20 +933,20 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
         }
         return;
     }
-    
+
     // find intersection of selection and pattern to minimize work
     if (seltop > top) top = seltop;
     if (selleft > left) left = selleft;
     if (selbottom < bottom) bottom = selbottom;
     if (selright < right) right = selright;
-    
+
     // check that selection is small enough to save
     if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
         statusptr->ErrorMessage(selection_too_big);
         if (fit) viewptr->FitSelection();
         return;
     }
-    
+
     if ( insideYield > 0 ) {
         // we've been called from checkevents() so we don't attempt to shrink a very
         // large selection because the progress dialog can't be cancelled, presumably
@@ -855,7 +959,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
             return;
         }
     }
-    
+
     // the easy way to shrink selection is to create a new temporary universe,
     // copy selection into new universe and then call findedges;
     // if only 2 cell states then use qlife because its findedges call is faster
@@ -866,7 +970,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
     if (currlayer->algo->NumCellStates() > 2)
         if (tempalgo->setrule(currlayer->algo->getrule()))
             tempalgo->setrule(tempalgo->DefaultRule());
-    
+
     // copy live cells in selection to temporary universe
     if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                            currlayer->algo, tempalgo, false, _("Copying selection")) ) {
@@ -886,7 +990,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
             if (!fit) mainptr->UpdatePatternAndStatus();
         }
     }
-    
+
     delete tempalgo;
     if (fit) viewptr->FitSelection();
 }
@@ -896,16 +1000,16 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
 bool Selection::Visible(wxRect* visrect)
 {
     if (!exists) return false;
-    
+
     pair<int,int> lt = currlayer->view->screenPosOf(selleft, seltop, currlayer->algo);
     pair<int,int> rb = currlayer->view->screenPosOf(selright, selbottom, currlayer->algo);
-    
+
     if (lt.first > currlayer->view->getxmax() || rb.first < 0 ||
         lt.second > currlayer->view->getymax() || rb.second < 0) {
         // no part of selection is visible
         return false;
     }
-    
+
     // all or some of selection is visible in viewport;
     // only set visible rectangle if requested
     if (visrect) {
@@ -914,7 +1018,7 @@ bool Selection::Visible(wxRect* visrect)
         if (lt.second < 0) lt.second = 0;
         if (rb.first > currlayer->view->getxmax()) rb.first = currlayer->view->getxmax();
         if (rb.second > currlayer->view->getymax()) rb.second = currlayer->view->getymax();
-        
+
         if (currlayer->view->getmag() > 0) {
             // move rb to pixel at bottom right corner of cell
             rb.first += (1 << currlayer->view->getmag()) - 1;
@@ -928,7 +1032,7 @@ bool Selection::Visible(wxRect* visrect)
             if (rb.first > currlayer->view->getxmax()) rb.first = currlayer->view->getxmax();
             if (rb.second > currlayer->view->getymax()) rb.second = currlayer->view->getymax();
         }
-        
+
         visrect->SetX(lt.first);
         visrect->SetY(lt.second);
         visrect->SetWidth(rb.first - lt.first + 1);
@@ -948,18 +1052,18 @@ void Selection::EmptyUniverse()
     bigint savex = currlayer->view->x;
     bigint savey = currlayer->view->y;
     bigint savegen = currlayer->algo->getGeneration();
-    
+
     // kill all live cells by replacing the current universe with a
     // new, empty universe which also uses the same rule
     mainptr->CreateUniverse();
-    
+
     // restore step, scale, position and gen count
     currlayer->currbase = savebase;
     mainptr->SetStepExponent(saveexpo);
     // SetStepExponent calls SetGenIncrement
     currlayer->view->setpositionmag(savex, savey, savemag);
     currlayer->algo->setGeneration(savegen);
-    
+
     mainptr->UpdatePatternAndStatus();
 }
 
@@ -968,48 +1072,48 @@ void Selection::EmptyUniverse()
 void Selection::Clear()
 {
     if (!exists) return;
-    
+
     // no need to do anything if there is no pattern
     if (currlayer->algo->isEmpty()) return;
-    
+
     if (mainptr->generating) {
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_CLEAR);
         mainptr->Stop();
         return;
     }
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     if (savecells && inscript) SavePendingChanges();
-    
+
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
-    
+
     if ( !savecells && Contains(top, left, bottom, right) ) {
         // selection encloses entire pattern so just create empty universe
         EmptyUniverse();
         MarkLayerDirty();
         return;
     }
-    
+
     // no need to do anything if selection is completely outside pattern edges
     if (Outside(top, left, bottom, right)) {
         return;
     }
-    
+
     // find intersection of selection and pattern to minimize work
     if (seltop > top) top = seltop;
     if (selleft > left) left = selleft;
     if (selbottom < bottom) bottom = selbottom;
     if (selright < right) right = selright;
-    
+
     // can only use setcell in limited domain
     if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
         statusptr->ErrorMessage(selection_too_big);
         return;
     }
-    
+
     // clear all live cells in selection
     int itop = top.toint();
     int ileft = left.toint();
@@ -1051,7 +1155,7 @@ void Selection::Clear()
     }
     if (selchanged) curralgo->endofpattern();
     EndProgress();
-    
+
     if (selchanged) {
         if (savecells) currlayer->undoredo->RememberCellChanges(_("Clear"), currlayer->dirty);
         MarkLayerDirty();
@@ -1067,15 +1171,15 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
         statusptr->ErrorMessage(pattern_too_big);
         return false;
     }
-    
+
     int itop = t.toint();
     int ileft = l.toint();
     int ibottom = b.toint();
     int iright = r.toint();
-    
+
     // save ALL cells if selection is completely outside pattern edges
     bool saveall = Outside(t, l, b, r);
-    
+
     // integer selection edges must not be outside pattern edges
     int stop = itop;
     int sleft = ileft;
@@ -1087,7 +1191,7 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
         if (selbottom < b) sbottom = selbottom.toint();
         if (selright < r)  sright = selright.toint();
     }
-    
+
     int wd = iright - ileft + 1;
     int ht = ibottom - itop + 1;
     int cx, cy;
@@ -1123,7 +1227,7 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
         if (abort) break;
     }
     EndProgress();
-    
+
     if (abort) currlayer->undoredo->ForgetCellChanges();
     return !abort;
 }
@@ -1133,28 +1237,28 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
 void Selection::ClearOutside()
 {
     if (!exists) return;
-    
+
     // no need to do anything if there is no pattern
     if (currlayer->algo->isEmpty()) return;
-    
+
     // no need to do anything if selection encloses entire pattern
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
     if (Contains(top, left, bottom, right)) {
         return;
     }
-    
+
     if (mainptr->generating) {
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_OUTSIDE);
         mainptr->Stop();
         return;
     }
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     if (savecells && inscript) SavePendingChanges();
-    
+
     if (savecells) {
         // save live cells outside selection
         if ( !SaveOutside(top, left, bottom, right) ) {
@@ -1168,27 +1272,27 @@ void Selection::ClearOutside()
             return;
         }
     }
-    
+
     // find intersection of selection and pattern to minimize work
     if (seltop > top) top = seltop;
     if (selleft > left) left = selleft;
     if (selbottom < bottom) bottom = selbottom;
     if (selright < right) right = selright;
-    
+
     // check that selection is small enough to save
     if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
         statusptr->ErrorMessage(selection_too_big);
         return;
     }
-    
+
     // create a new universe of same type
     lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
     if (newalgo->setrule(currlayer->algo->getrule()))
         newalgo->setrule(newalgo->DefaultRule());
-    
+
     // set same gen count
     newalgo->setGeneration( currlayer->algo->getGeneration() );
-    
+
     // copy live cells in selection to new universe
     if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                            currlayer->algo, newalgo, false, _("Saving selection")) ) {
@@ -1240,7 +1344,7 @@ void Selection::AddRun(int state,                // in: state of cell to write
     const unsigned int maxrleline = 70;
     unsigned int i, numlen;
     char numstr[32];
-    
+
     if ( run > 1 ) {
         sprintf(numstr, "%u", run);
         numlen = (unsigned int)strlen(numstr);
@@ -1287,26 +1391,26 @@ void Selection::CopyToClipboard(bool cut)
         statusptr->ErrorMessage(selection_too_big);
         return;
     }
-    
+
     int itop = seltop.toint();
     int ileft = selleft.toint();
     int ibottom = selbottom.toint();
     int iright = selright.toint();
     unsigned int wd = iright - ileft + 1;
     unsigned int ht = ibottom - itop + 1;
-    
+
     // convert cells in selection to RLE data in textptr
     char* textptr;
     char* etextptr;
     int cursize = 4096;
-    
+
     textptr = (char*)malloc(cursize);
     if (textptr == NULL) {
         statusptr->ErrorMessage(_("Not enough memory for clipboard data!"));
         return;
     }
     etextptr = textptr + cursize;
-    
+
     // add RLE header line
     sprintf(textptr, "x = %u, y = %u, rule = %s", wd, ht, currlayer->algo->getrule());
     char* chptr = textptr;
@@ -1314,7 +1418,7 @@ void Selection::CopyToClipboard(bool cut)
     AddEOL(chptr);
     // save start of data in case livecount is zero
     int datastart = chptr - textptr;
-    
+
     // add RLE pattern data
     unsigned int livecount = 0;
     unsigned int linelen = 0;
@@ -1324,11 +1428,11 @@ void Selection::CopyToClipboard(bool cut)
     int laststate;
     int cx, cy;
     int v = 0;
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     if (savecells && inscript) SavePendingChanges();
-    
+
     double maxcount = (double)wd * (double)ht;
     int cntr = 0;
     bool abort = false;
@@ -1336,7 +1440,7 @@ void Selection::CopyToClipboard(bool cut)
         BeginProgress(_("Cutting selection"));
     else
         BeginProgress(_("Copying selection"));
-    
+
     lifealgo* curralgo = currlayer->algo;
     int multistate = curralgo->NumCellStates() > 2;
     for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -1417,7 +1521,7 @@ void Selection::CopyToClipboard(bool cut)
             AddRun(laststate, multistate, orun, linelen, chptr);
         dollrun++;
     }
-    
+
     if (livecount == 0) {
         // no live cells in selection so simplify RLE data to "!"
         chptr = textptr + datastart;
@@ -1431,16 +1535,16 @@ void Selection::CopyToClipboard(bool cut)
     }
     AddEOL(chptr);
     *chptr = 0;
-    
+
     EndProgress();
-    
+
     if (cut && livecount > 0) {
         if (savecells) currlayer->undoredo->RememberCellChanges(_("Cut"), currlayer->dirty);
         // update currlayer->dirty AFTER RememberCellChanges
         MarkLayerDirty();
         mainptr->UpdatePatternAndStatus();
     }
-    
+
     wxString text = wxString(textptr,wxConvLocal);
     mainptr->CopyTextToClipboard(text);
     free(textptr);
@@ -1453,11 +1557,11 @@ bool Selection::CanPaste(const bigint& wd, const bigint& ht, bigint& top, bigint
     bigint selht = selbottom;  selht -= seltop;   selht += 1;
     bigint selwd = selright;   selwd -= selleft;  selwd += 1;
     if ( ht > selht || wd > selwd ) return false;
-    
+
     // set paste rectangle's top left cell coord
     top = seltop;
     left = selleft;
-    
+
     return true;
 }
 
@@ -1466,24 +1570,24 @@ bool Selection::CanPaste(const bigint& wd, const bigint& ht, bigint& top, bigint
 void Selection::RandomFill()
 {
     if (!exists) return;
-    
+
     // can only use getcell/setcell in limited domain
     if (TooBig()) {
         statusptr->ErrorMessage(selection_too_big);
         return;
     }
-    
+
     if (mainptr->generating) {
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_RANDOM);
         mainptr->Stop();
         return;
     }
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     if (savecells && inscript) SavePendingChanges();
-    
+
     // no need to kill cells if selection is empty
     bool killcells = !currlayer->algo->isEmpty();
     if ( killcells ) {
@@ -1503,7 +1607,7 @@ void Selection::RandomFill()
             killcells = false;
         }
     }
-    
+
     int itop = seltop.toint();
     int ileft = selleft.toint();
     int ibottom = selbottom.toint();
@@ -1517,7 +1621,7 @@ void Selection::RandomFill()
     int cx, cy;
     lifealgo* curralgo = currlayer->algo;
     int livestates = curralgo->NumRandomizedCellStates() - 1;    // don't count dead state
-    
+
     for ( cy=itop; cy<=ibottom; cy++ ) {
         for ( cx=ileft; cx<=iright; cx++ ) {
             // randomfill is from 1..100
@@ -1553,12 +1657,12 @@ void Selection::RandomFill()
         }
         if (abort) break;
     }
-    
+
     currlayer->algo->endofpattern();
     EndProgress();
-    
+
     if (savecells) currlayer->undoredo->RememberCellChanges(_("Random Fill"), currlayer->dirty);
-    
+
     // update currlayer->dirty AFTER RememberCellChanges
     MarkLayerDirty();
     mainptr->UpdatePatternAndStatus();
@@ -1576,7 +1680,7 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
     bool abort = false;
     int v = 0;
     int cx, cy, newx, newy, newxinc, newyinc;
-    
+
     if (topbottom) {
         BeginProgress(_("Flipping top-bottom"));
         newy = ibottom;
@@ -1588,7 +1692,7 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
         newyinc = 1;
         newxinc = -1;
     }
-    
+
     for ( cy=itop; cy<=ibottom; cy++ ) {
         newx = topbottom ? ileft : iright;
         for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1616,11 +1720,11 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
         if (abort) break;
         newy += newyinc;
     }
-    
+
     if (erasesrc) srcalgo->endofpattern();
     destalgo->endofpattern();
     EndProgress();
-    
+
     return !abort;
 }
 
@@ -1629,30 +1733,30 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
 bool Selection::Flip(bool topbottom, bool inundoredo)
 {
     if (!exists) return false;
-    
+
     if (mainptr->generating) {
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(topbottom ? ID_FLIPTB : ID_FLIPLR);
         mainptr->Stop();
         return true;
     }
-    
+
     if (topbottom) {
         if (seltop == selbottom) return true;
     } else {
         if (selleft == selright) return true;
     }
-    
+
     if (currlayer->algo->isEmpty()) return true;
-    
+
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
-    
+
     bigint stop = seltop;
     bigint sleft = selleft;
     bigint sbottom = selbottom;
     bigint sright = selright;
-    
+
     bool simpleflip;
     if (Contains(top, left, bottom, right)) {
         // selection encloses entire pattern so we may only need to flip a smaller rectangle
@@ -1688,18 +1792,18 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
         }
         simpleflip = false;
     }
-    
+
     // can only use getcell/setcell in limited domain
     if ( viewptr->OutsideLimits(stop, sbottom, sleft, sright) ) {
         statusptr->ErrorMessage(selection_too_big);
         return false;
     }
-    
+
     int itop = stop.toint();
     int ileft = sleft.toint();
     int ibottom = sbottom.toint();
     int iright = sright.toint();
-    
+
     if (simpleflip) {
         // selection encloses all of pattern so we can flip into new universe
         // (must be same type) without killing live cells in selection
@@ -1707,7 +1811,7 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
         if (newalgo->setrule(currlayer->algo->getrule()))
             newalgo->setrule(newalgo->DefaultRule());
         newalgo->setGeneration( currlayer->algo->getGeneration() );
-        
+
         if ( FlipRect(topbottom, currlayer->algo, newalgo, false, itop, ileft, ibottom, iright) ) {
             // switch to newalgo
             delete currlayer->algo;
@@ -1728,7 +1832,7 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
         if (currlayer->algo->NumCellStates() > 2)
             if (tempalgo->setrule(currlayer->algo->getrule()))
                 tempalgo->setrule(tempalgo->DefaultRule());
-        
+
         if ( FlipRect(topbottom, currlayer->algo, tempalgo, true, itop, ileft, ibottom, iright) ) {
             // find pattern edges in temporary universe (could be much smaller)
             // and copy temporary pattern into current universe
@@ -1743,17 +1847,17 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
             return false;
         }
     }
-    
+
     // flips are always reversible so no need to use SaveCellChange and RememberCellChanges
     if (allowundo && !currlayer->stayclean && !inundoredo) {
         if (inscript) SavePendingChanges();
         currlayer->undoredo->RememberFlip(topbottom, currlayer->dirty);
     }
-    
+
     // update currlayer->dirty AFTER RememberFlip
     if (!inundoredo) MarkLayerDirty();
     mainptr->UpdatePatternAndStatus();
-    
+
     return true;
 }
 
@@ -1773,7 +1877,7 @@ bool Selection::RotateRect(bool clockwise,
     int cntr = 0;
     bool abort = false;
     int cx, cy, newx, newy, newxinc, newyinc, v=0;
-    
+
     if (clockwise) {
         BeginProgress(rotate_clockwise);
         newx = nright;
@@ -1785,7 +1889,7 @@ bool Selection::RotateRect(bool clockwise,
         newyinc = -1;
         newxinc = 1;
     }
-    
+
     for ( cy=itop; cy<=ibottom; cy++ ) {
         newy = clockwise ? ntop : nbottom;
         for ( cx=ileft; cx<=iright; cx++ ) {
@@ -1813,11 +1917,11 @@ bool Selection::RotateRect(bool clockwise,
         if (abort) break;
         newx += newxinc;
     }
-    
+
     if (erasesrc) srcalgo->endofpattern();
     destalgo->endofpattern();
     EndProgress();
-    
+
     return !abort;
 }
 
@@ -1832,10 +1936,10 @@ bool Selection::RotatePattern(bool clockwise,
     lifealgo* newalgo = CreateNewUniverse(currlayer->algtype);
     if (newalgo->setrule(currlayer->algo->getrule()))
         newalgo->setrule(newalgo->DefaultRule());
-    
+
     // set same gen count
     newalgo->setGeneration( currlayer->algo->getGeneration() );
-    
+
     // copy all live cells to new universe, rotating the coords by +/- 90 degrees
     int itop    = seltop.toint();
     int ileft   = selleft.toint();
@@ -1847,7 +1951,7 @@ bool Selection::RotatePattern(bool clockwise,
     int cntr = 0;
     bool abort = false;
     int cx, cy, newx, newy, newxinc, newyinc, firstnewy, v=0;
-    
+
     if (clockwise) {
         BeginProgress(rotate_clockwise);
         firstnewy = newtop.toint();
@@ -1861,7 +1965,7 @@ bool Selection::RotatePattern(bool clockwise,
         newyinc = -1;
         newxinc = 1;
     }
-    
+
     lifealgo* curralgo = currlayer->algo;
     for ( cy=itop; cy<=ibottom; cy++ ) {
         newy = firstnewy;
@@ -1889,10 +1993,10 @@ bool Selection::RotatePattern(bool clockwise,
         if (abort) break;
         newx += newxinc;
     }
-    
+
     newalgo->endofpattern();
     EndProgress();
-    
+
     if (abort) {
         delete newalgo;
     } else {
@@ -1901,25 +2005,25 @@ bool Selection::RotatePattern(bool clockwise,
         selbottom = newbottom;
         selleft   = newleft;
         selright  = newright;
-        
+
         // switch to new universe and display results
         delete currlayer->algo;
         currlayer->algo = newalgo;
         mainptr->SetGenIncrement();
         viewptr->DisplaySelectionSize();
-        
+
         // rotating entire pattern is easily reversible so no need to use
         // SaveCellChange and RememberCellChanges in this case
         if (allowundo && !currlayer->stayclean && !inundoredo) {
             if (inscript) SavePendingChanges();
             currlayer->undoredo->RememberRotation(clockwise, currlayer->dirty);
         }
-        
+
         // update currlayer->dirty AFTER RememberRotation
         if (!inundoredo) MarkLayerDirty();
         mainptr->UpdatePatternAndStatus();
     }
-    
+
     return !abort;
 }
 
@@ -1928,14 +2032,14 @@ bool Selection::RotatePattern(bool clockwise,
 bool Selection::Rotate(bool clockwise, bool inundoredo)
 {
     if (!exists) return false;
-    
+
     if (mainptr->generating) {
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(clockwise ? ID_ROTATEC : ID_ROTATEA);
         mainptr->Stop();
         return true;
     }
-    
+
     // determine rotated selection edges
     bigint halfht = selbottom;   halfht -= seltop;    halfht.div2();
     bigint halfwd = selright;    halfwd -= selleft;   halfwd.div2();
@@ -1945,7 +2049,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
     bigint newbottom = midy;   newbottom += selright;    newbottom -= midx;
     bigint newleft   = midx;   newleft   += seltop;      newleft   -= midy;
     bigint newright  = midx;   newright  += selbottom;   newright  -= midy;
-    
+
     if (!inundoredo) {
         // check if rotated selection edges are outside bounded grid
         if ( (currlayer->algo->gridwd > 0 &&
@@ -1956,7 +2060,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
             return false;
         }
     }
-    
+
     // if there is no pattern then just rotate the selection edges
     if (currlayer->algo->isEmpty()) {
         viewptr->SaveCurrentSelection();
@@ -1969,7 +2073,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
         mainptr->UpdatePatternAndStatus();
         return true;
     }
-    
+
     // if the current selection and the rotated selection are both outside the
     // pattern edges (ie. both are empty) then just rotate the selection edges
     bigint top, left, bottom, right;
@@ -1986,45 +2090,45 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
         mainptr->UpdatePatternAndStatus();
         return true;
     }
-    
+
     // can only use nextcell/getcell/setcell in limited domain
     if (TooBig()) {
         statusptr->ErrorMessage(selection_too_big);
         return false;
     }
-    
+
     // make sure rotated selection edges are also within limits
     if ( viewptr->OutsideLimits(newtop, newbottom, newleft, newright) ) {
         statusptr->ErrorMessage(_("New selection would be outside +/- 10^9 boundary."));
         return false;
     }
-    
+
     // use faster method if selection encloses entire pattern
     if (Contains(top, left, bottom, right)) {
         return RotatePattern(clockwise, newtop, newbottom, newleft, newright, inundoredo);
     }
-    
+
     int itop    = seltop.toint();
     int ileft   = selleft.toint();
     int ibottom = selbottom.toint();
     int iright  = selright.toint();
-    
+
     int ntop    = newtop.toint();
     int nleft   = newleft.toint();
     int nbottom = newbottom.toint();
     int nright  = newright.toint();
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     // and we're not undoing/redoing an earlier rotation
     bool savecells = allowundo && !currlayer->stayclean && !inundoredo;
     if (savecells && inscript) SavePendingChanges();
-    
+
     lifealgo* oldalgo = NULL;
     int otop = itop;
     int oleft = ileft;
     int obottom = ibottom;
     int oright = iright;
-    
+
     if (savecells) {
         // copy current pattern to oldalgo using union of old and new selection rects
         if (otop > ntop) otop = ntop;
@@ -2044,7 +2148,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
             return false;
         }
     }
-    
+
     // create temporary universe; doesn't need to match current universe so
     // if only 2 cell states then use qlife because its setcell/getcell calls are faster
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
@@ -2054,7 +2158,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
     if (currlayer->algo->NumCellStates() > 2)
         if (tempalgo->setrule(currlayer->algo->getrule()))
             tempalgo->setrule(tempalgo->DefaultRule());
-    
+
     // copy (and kill) live cells in selection to temporary universe,
     // rotating the new coords by +/- 90 degrees
     if ( !RotateRect(clockwise, currlayer->algo, tempalgo, true,
@@ -2077,7 +2181,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
         mainptr->UpdatePatternAndStatus();
         return false;
     }
-    
+
     // copy rotated selection from temporary universe to current universe;
     // check if new selection rect is outside modified pattern edges
     currlayer->algo->findedges(&top, &left, &bottom, &right);
@@ -2092,13 +2196,13 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
     }
     // don't need temporary universe any more
     delete tempalgo;
-    
+
     // rotate the selection edges
     seltop    = newtop;
     selbottom = newbottom;
     selleft   = newleft;
     selright  = newright;
-    
+
     if (savecells) {
         // compare patterns in oldalgo and currlayer->algo and call SaveCellChange
         // for each cell that has a different state
@@ -2112,11 +2216,11 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
         }
         delete oldalgo;
     }
-    
+
     // display results
     viewptr->DisplaySelectionSize();
     if (!inundoredo) MarkLayerDirty();
     mainptr->UpdatePatternAndStatus();
-    
+
     return true;
 }

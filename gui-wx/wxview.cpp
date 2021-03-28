@@ -2176,6 +2176,8 @@ void PatternView::StopDraggingMouse()
         selectingcells = false;                // tested by CanUndo
         mainptr->UpdateMenuItems();            // enable various Edit menu items
         if (allowundo) UpdateEditBar();        // update Undo/Redo buttons
+        DisplaySelectionSize();
+        statusptr->Refresh(false);
     }
     
     if (drawingcells && allowundo) {

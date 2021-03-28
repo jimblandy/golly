@@ -105,6 +105,10 @@ public:
     // return true if selection was successfully rotated
     
 private:
+    bool CalculatePopulation(long timeout);
+    // updates the per-state selection population
+    // returns false if calculation takes longer than timeout milliseconds
+
     bool SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r);
     // remember live cells outside the selection
     
@@ -142,6 +146,9 @@ private:
     // called by Rotate when the selection encloses the entire pattern;
     // return false only if user aborts lengthy rotation
     
+    int selpop[256];
+    // selection population per state
+
     bigint seltop, selleft, selbottom, selright;
     // currently we only support a single rectangular selection
     // which is represented by these edges; eventually we might
