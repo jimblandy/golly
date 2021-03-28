@@ -2057,6 +2057,9 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
 
 void PatternView::SelectCells(int x, int y)
 {
+    // last time selection was changed
+    static long lastupdate = -1;
+
     // only select cells within view
     if (x < 0) x = 0;
     if (y < 0) y = 0;
@@ -2092,6 +2095,25 @@ void PatternView::SelectCells(int x, int y)
         inscript = false;
         mainptr->UpdatePatternAndStatus();
         inscript = saveinscript;
+
+        // save last update time
+        lastupdate = stopwatch->Time();
+    } else {
+        // selection has not changed so check how long it has been static
+        if  (lastupdate >= 0 && (stopwatch->Time() - lastupdate > 100)) {
+            // selection static for 100ms so compute selection population
+            // temporarily disable selectingcells since this will cause
+            // the long timeout to be used in the population calculation
+            selectingcells = false;
+            DisplaySelectionSize();
+
+            // enable selecting cells again
+            selectingcells = true;
+            mainptr->UpdatePatternAndStatus(false);
+
+            // mark no update pending
+            lastupdate = -1;
+        }
     }
 }
 
