@@ -189,9 +189,9 @@ void Selection::DisplaySize()
                 for (int i = 1; i < nstates; i++) {
                     int pop = selpop[i];
                     if (pop > 0) {
-                        msg += _("   ");
+                        msg += _("  ");
                         msg += statusptr->Stringify(i);
-                        msg += _(": ");
+                        msg += _("=");
                         msg += statusptr->Stringify(pop);
                     }
                 }
