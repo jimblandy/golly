@@ -1356,14 +1356,10 @@ local function create_overlay()
        if gridg + diff < 256 then gridg = gridg + diff else gridg = 255 end
        if gridb + diff < 256 then gridb = gridb + diff else gridb = 255 end
     end
-    show_grid_rgba = gridr.." "..gridg.." "..gridb.." 255"
-    if currcolors[2] > 0 then
-        -- hide_grid_rgba is the state 0 color with a slightly different red value
-        -- (this allows fill_hexagon to draw a hexagon with a flood command)
-        hide_grid_rgba = (currcolors[2]-1).." "..currcolors[3].." "..currcolors[4].." 255"
-    else
-        hide_grid_rgba = (currcolors[2]+1).." "..currcolors[3].." "..currcolors[4].." 255"
-    end
+    -- show_grid_rgba and hide_grid_rgba must not match any state colors, so we give them
+    -- an alpha value of 254 (this allows fill_hexagon to draw a hexagon with a flood command)
+    show_grid_rgba = gridr.." "..gridg.." "..gridb.." 254"
+    hide_grid_rgba = currcolors[2].." "..currcolors[3].." "..currcolors[4].." 254"
     if g.getoption("showgrid") == 1 then
         grid_rgba = show_grid_rgba
     else
@@ -1416,12 +1412,6 @@ function main()
 
     g.show("Hit escape key to abort script...")
     while true do
-        -- if size of layer has changed then resize the overlay
-        check_layer_size()
-
-        -- update cursor if mouse moves in/out of tool bar
-        check_cursor()
-
         -- check for user input
         local event = op.process( g.getevent() )
         -- event is empty if op.process handled the given event
@@ -1438,6 +1428,14 @@ function main()
                 -- eg. zoomin/zoomout event in current layer
                 g.doevent(event)
             end
+        else
+            if not generating then
+                g.sleep(5) -- don't hog the CPU when idle
+            end
+            -- if size of layer has changed then resize the overlay
+            check_layer_size()
+            -- update cursor if mouse moves in/out of tool bar
+            check_cursor()
         end
 
         if g.getoption("showoverlay") == 1 then
