@@ -167,7 +167,7 @@ main.o: main.cpp ../gollybase/bigint.h ../gollybase/lifealgo.h \
   ../gollybase/platform.h ../gollybase/qlifealgo.h \
   ../gollybase/liferules.h ../gollybase/hlifealgo.h ../gollybase/util.h \
   ../gollybase/generationsalgo.h ../gollybase/ghashbase.h \
-  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h \
+  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h ../gollybase/superalgo.h \
   ../gollybase/ruleloaderalgo.h ../gollybase/ruletable_algo.h \
   ../gollybase/ruletreealgo.h ../gui-common/algos.h \
   ../gui-common/utils.h ../gui-common/prefs.h ../gui-common/layer.h \
@@ -293,7 +293,7 @@ algos.o: ../gui-common/algos.cpp ../gollybase/bigint.h \
   ../gollybase/qlifealgo.h ../gollybase/liferules.h \
   ../gollybase/hlifealgo.h ../gollybase/util.h \
   ../gollybase/generationsalgo.h ../gollybase/ghashbase.h \
-  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h \
+  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h ../gollybase/superalgo.h \
   ../gollybase/ruleloaderalgo.h ../gollybase/ruletable_algo.h \
   ../gollybase/ruletreealgo.h ../gui-common/utils.h \
   ../gui-common/prefs.h ../gui-common/layer.h ../gui-common/algos.h \
