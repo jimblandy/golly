@@ -109,6 +109,7 @@ supertile *qlifealgo::newsupertile(int lev) {
    supertilelist = supertilelist->next ;
    r->d[0] = r->d[1] = r->d[2] = r->d[3] = r->d[4] = r->d[5] =
                                  r->d[6] = r->d[7] = nullroots[lev-1] ;
+   r->localdeltaforward = 0 ;
    STAT(supertiles++) ;
    return r ;
 }
@@ -348,9 +349,13 @@ int qlifealgo::doquad01(supertile *zis, supertile *edge,
  *   the supertile handler.  The return value is the changing indicators that
  *   should be propogated up.
  */
-         nchanging |= ((lev == 1) ? p01((tile *)p, (tile *)pf,
-                                        (tile *)pu, (tile *)pfu) :
-                                    doquad01(p, pu, pf, pfu, lev-1)) << x ;
+         if (lev == 1) {
+            nchanging |= p01((tile *)p, (tile *)pf, (tile *)pu, (tile *)pfu,
+                             zis->localdeltaforward | deltaforward) << x ;
+            zis->localdeltaforward = 0 ;
+         } else {
+            nchanging |= doquad01(p, pu, pf, pfu, lev-1) << x ;
+         }
          changing -= b ;
       } else if (changing == 0)
          break ;
@@ -392,9 +397,13 @@ int qlifealgo::doquad10(supertile *zis, supertile *edge,
          if (zis->d[x] == nullroots[lev-1])
             p = zis->d[x] = (lev == 1 ? (supertile *)newtile() :
                                                      newsupertile(lev-1)) ;
-         nchanging |= ((lev == 1) ? p10((tile *)pfu, (tile *)pu,
-                                       (tile *)pf, (tile *)p) :
-                                  doquad10(p, pu, pf, pfu, lev-1)) << (7-x) ;
+         if (lev == 1) {
+            nchanging |= p10((tile *)pfu, (tile *)pu, (tile *)pf, (tile *)p,
+                             zis->localdeltaforward | deltaforward) << (7-x) ;
+            zis->localdeltaforward = 0 ;
+         } else {
+            nchanging |= doquad10(p, pu, pf, pfu, lev-1) << (7-x) ;
+         }
          changing -= b ;
       } else if (changing == 0)
          break ;
@@ -412,7 +421,7 @@ int qlifealgo::doquad10(supertile *zis, supertile *edge,
  *   Passed in are the neighbor tiles:  pr (to the right), pd (down), and
  *   prd (down and to the right).
  */
-int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
+int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd, int deltaforward) {
    brick *db = pd->b[0], *rdb = prd->b[0] ;
 /*
  *   Do we need to recompute the fourth brick?  This happens here because its
@@ -552,7 +561,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
  *   This subroutine is the mirror of the one above, used for odd to even
  *   generations.
  */
-int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
+int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p, int deltaforward) {
    brick *ub = pu->b[3], *lub = plu->b[3] ;
    int i, recomp = (p->c[1] | pu->c[5] | (pl->c[1] >> 9) | (plu->c[5] >> 8)) & 0xff ;
    STAT(dq++) ;
@@ -732,7 +741,9 @@ int qlifealgo::setcell(int x, int y, int newstate) {
       root = newsupertile(rootlev) ;
    b = root ;
    lev = rootlev ;
+   supertile *st = b ;
    while (lev > 0) {
+      st = b ;
       int i, d = 1 ;
       if (lev & 1) {
          int s = (lev >> 1) + lev - 1 ;
@@ -792,7 +803,8 @@ int qlifealgo::setcell(int x, int y, int newstate) {
          p->b[(y >> 3) & 0x3]->d[(x >> 2) & 0x7]
                                   &= ~(1 << (31 - (y & 7) * 4 - (x & 3))) ;
    }
-   deltaforward = 0xffffffff ;
+   st->localdeltaforward = 0xffffffff ;
+// deltaforward = 0xffffffff ;
    return 0 ;
 }
 /*
