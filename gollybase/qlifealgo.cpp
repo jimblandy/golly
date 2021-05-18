@@ -94,6 +94,7 @@ tile *qlifealgo::newtile() {
    tilelist = tilelist->next ;
    r->b[0] = r->b[1] = r->b[2] = r->b[3] = emptybrick ;
    r->flags = -1 ;
+   r->localdeltaforward = 0 ;
    STAT(tiles++) ;
    return r ;
 }
@@ -109,7 +110,6 @@ supertile *qlifealgo::newsupertile(int lev) {
    supertilelist = supertilelist->next ;
    r->d[0] = r->d[1] = r->d[2] = r->d[3] = r->d[4] = r->d[5] =
                                  r->d[6] = r->d[7] = nullroots[lev-1] ;
-   r->localdeltaforward = 0 ;
    STAT(supertiles++) ;
    return r ;
 }
@@ -350,9 +350,7 @@ int qlifealgo::doquad01(supertile *zis, supertile *edge,
  *   should be propogated up.
  */
          if (lev == 1) {
-            nchanging |= p01((tile *)p, (tile *)pf, (tile *)pu, (tile *)pfu,
-                             zis->localdeltaforward | deltaforward) << x ;
-            zis->localdeltaforward = 0 ;
+            nchanging |= p01((tile *)p, (tile *)pf, (tile *)pu, (tile *)pfu) << x ;
          } else {
             nchanging |= doquad01(p, pu, pf, pfu, lev-1) << x ;
          }
@@ -398,9 +396,8 @@ int qlifealgo::doquad10(supertile *zis, supertile *edge,
             p = zis->d[x] = (lev == 1 ? (supertile *)newtile() :
                                                      newsupertile(lev-1)) ;
          if (lev == 1) {
-            nchanging |= p10((tile *)pfu, (tile *)pu, (tile *)pf, (tile *)p,
-                             zis->localdeltaforward | deltaforward) << (7-x) ;
-            zis->localdeltaforward = 0 ;
+            nchanging |= p10((tile *)pfu, (tile *)pu, (tile *)pf, (tile *)p)
+                          << (7-x) ;
          } else {
             nchanging |= doquad10(p, pu, pf, pfu, lev-1) << (7-x) ;
          }
@@ -421,7 +418,7 @@ int qlifealgo::doquad10(supertile *zis, supertile *edge,
  *   Passed in are the neighbor tiles:  pr (to the right), pd (down), and
  *   prd (down and to the right).
  */
-int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd, int deltaforward) {
+int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd) {
    brick *db = pd->b[0], *rdb = prd->b[0] ;
 /*
  *   Do we need to recompute the fourth brick?  This happens here because its
@@ -502,7 +499,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd, int deltaforward) {
  *   two columns, the lowest two rows, and the lowest rightmost 2x2 cell, into
  *   the maskprev int.  Do all of this without conditionals.
  */
-               int delta = (b->d[j + 8] ^ newv) | deltaforward ;
+               int delta = (b->d[j + 8] ^ newv) | deltaforward | p->localdeltaforward ;
                STAT(rcc++) ;
                b->d[j + 8] = newv ;
                maska = cdelta | (delta & 0x33333333) ;
@@ -552,6 +549,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd, int deltaforward) {
  */
    recomp = p->c[5] ;
    i = recomp | p->c[0] | p->c[1] | p->c[2] | p->c[3] | p->c[4] ;
+   p->localdeltaforward = 0 ;
    if (recomp)
       return 0x201 | ((recomp & 0x100) << 2) | ((i & 0x100) >> 7) ;
    else
@@ -561,7 +559,7 @@ int qlifealgo::p01(tile *p, tile *pr, tile *pd, tile *prd, int deltaforward) {
  *   This subroutine is the mirror of the one above, used for odd to even
  *   generations.
  */
-int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p, int deltaforward) {
+int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p) {
    brick *ub = pu->b[3], *lub = plu->b[3] ;
    int i, recomp = (p->c[1] | pu->c[5] | (pl->c[1] >> 9) | (plu->c[5] >> 8)) & 0xff ;
    STAT(dq++) ;
@@ -602,7 +600,7 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p, int deltaforward) {
                           (ruletable[zisdata >> 16] << 16) +
                           (ruletable[overdata & 0xffff] << 8) +
                            ruletable[zisdata & 0xffff] ;
-               int delta = (b->d[j] ^ newv) | deltaforward ;
+               int delta = (b->d[j] ^ newv) | deltaforward | p->localdeltaforward ;
                STAT(rcc++) ;
                maska = cdelta | (delta & 0xcccccccc) ;
                maskprev = (maskprev << 1) |
@@ -636,6 +634,7 @@ int qlifealgo::p10(tile *plu, tile *pu, tile *pl, tile *p, int deltaforward) {
    }
    recomp = p->c[0] ;
    i = recomp | p->c[1] | p->c[2] | p->c[3] | p->c[4] | p->c[5] ;
+   p->localdeltaforward = 0 ;
    if (recomp)
       return 0x201 | ((recomp & 0x100) << 2) | ((i & 0x100) >> 7) ;
    else
@@ -741,9 +740,7 @@ int qlifealgo::setcell(int x, int y, int newstate) {
       root = newsupertile(rootlev) ;
    b = root ;
    lev = rootlev ;
-   supertile *st = b ;
    while (lev > 0) {
-      st = b ;
       int i, d = 1 ;
       if (lev & 1) {
          int s = (lev >> 1) + lev - 1 ;
@@ -790,6 +787,7 @@ int qlifealgo::setcell(int x, int y, int newstate) {
       else
          p->b[(y >> 3) & 0x3]->d[8 + ((x >> 2) & 0x7)]
                                   &= ~(1 << (31 - (y & 7) * 4 - (x & 3))) ;
+      p->localdeltaforward |= (1 << (31 - (y & 7) * 4 - (x & 3))) ;
    } else {
       int mor = ((x & 2) ? 1 : 3) << (7 - ((x >> 2) & 0x7)) ;
       p->c[((y >> 3) & 0x3) + 1] |= mor ;
@@ -802,9 +800,8 @@ int qlifealgo::setcell(int x, int y, int newstate) {
       else
          p->b[(y >> 3) & 0x3]->d[(x >> 2) & 0x7]
                                   &= ~(1 << (31 - (y & 7) * 4 - (x & 3))) ;
+      p->localdeltaforward |= (1 << (31 - (y & 7) * 4 - (x & 3))) ;
    }
-   st->localdeltaforward = 0xffffffff ;
-// deltaforward = 0xffffffff ;
    return 0 ;
 }
 /*

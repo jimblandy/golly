@@ -90,7 +90,7 @@ struct brick { /* 64 bytes */
 struct tile { /* 32 bytes */
    struct brick *b[4] ;
    short c[6] ;
-   int flags ;
+   int flags, localdeltaforward ;
 } ;
 /*
  *   Supertiles hold pointers to eight subtiles, which can either be 
@@ -144,7 +144,6 @@ struct tile { /* 32 bytes */
  */
 struct supertile { /* 44 bytes */
    struct supertile *d[8] ;
-   int localdeltaforward ;
    int flags ;
    int pop[2] ;
 } ;
@@ -233,8 +232,8 @@ private:
                 supertile *par, supertile *cor, int lev) ;
    int doquad10(supertile *zis, supertile *edge,
                 supertile *par, supertile *cor, int lev) ;
-   int p01(tile *p, tile *pr, tile *pd, tile *prd, int deltaforward) ;
-   int p10(tile *plu, tile *pu, tile *pl, tile *p, int deltaforward) ;
+   int p01(tile *p, tile *pr, tile *pd, tile *prd) ;
+   int p10(tile *plu, tile *pu, tile *pl, tile *p) ;
    G_INT64 find_set_bits(supertile *p, int lev, int gm1) ;
    int isEmpty(supertile *p, int lev, int gm1) ;
    supertile *mdelete(supertile *p, int lev) ;
