@@ -101,7 +101,7 @@ endif
 
 LDFLAGS = -arch arm64 -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
-   -framework IOKit -framework Carbon -framework Cocoa -framework System 
+   -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuartzCore
 
 # for bgolly:
 CXXBASE = -arch arm64 -arch x86_64 \
