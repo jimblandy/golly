@@ -2449,13 +2449,7 @@ void CellBoxes::GetGradientColor(int state, unsigned char* r,
 void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
     wxPaintDC dc(this);
-
     dc.SetPen(*wxBLACK_PEN);
-
-#ifdef __WXMAC__
-    // fix DrawRectangle problem on Retina screens
-    if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
-#endif
 
 #ifdef __WXMSW__
     // we have to use theme background color on Windows
@@ -2474,13 +2468,13 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                               algoinfo[coloralgo]->algog[0],
                               algoinfo[coloralgo]->algob[0]);
                 dc.SetBrush(wxBrush(color));
-                dc.DrawRectangle(r);
+                DrawRect(dc, r);
                 dc.SetBrush(wxNullBrush);
             } else if (showicons) {
                 wxBitmap** iconmaps = algoinfo[coloralgo]->icons15x15;
                 if (iconmaps && iconmaps[state]) {
                     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-                    dc.DrawRectangle(r);
+                    DrawRect(dc, r);
                     dc.SetBrush(wxNullBrush);
                     if (algoinfo[coloralgo]->gradient) {
                         if (state > 0 && state < gradstates) {
@@ -2494,7 +2488,7 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                                         false);     // default icons are grayscale
                         } else {
                             dc.SetBrush(bgbrush);
-                            dc.DrawRectangle(r);
+                            DrawRect(dc, r);
                             dc.SetBrush(wxNullBrush);
                         }
                     } else {
@@ -2509,7 +2503,7 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                     }
                 } else {
                     dc.SetBrush(bgbrush);
-                    dc.DrawRectangle(r);
+                    DrawRect(dc, r);
                     dc.SetBrush(wxNullBrush);
                 }
             } else if (algoinfo[coloralgo]->gradient) {
@@ -2518,11 +2512,11 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                     GetGradientColor(state, &red, &green, &blue);
                     wxColor color(red, green, blue);
                     dc.SetBrush(wxBrush(color));
-                    dc.DrawRectangle(r);
+                    DrawRect(dc, r);
                     dc.SetBrush(wxNullBrush);
                 } else {
                     dc.SetBrush(bgbrush);
-                    dc.DrawRectangle(r);
+                    DrawRect(dc, r);
                     dc.SetBrush(wxNullBrush);
                 }
             } else {
@@ -2530,14 +2524,14 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                               algoinfo[coloralgo]->algog[state],
                               algoinfo[coloralgo]->algob[state]);
                 dc.SetBrush(wxBrush(color));
-                dc.DrawRectangle(r);
+                DrawRect(dc, r);
                 dc.SetBrush(wxNullBrush);
             }
 
         } else {
             // state >= maxstates
             dc.SetBrush(bgbrush);
-            dc.DrawRectangle(r);
+            DrawRect(dc, r);
             dc.SetBrush(wxNullBrush);
         }
 

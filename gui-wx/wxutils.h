@@ -53,6 +53,9 @@ bool AbortProgress(double fraction_done, const wxString& newmsg);
 void EndProgress();
 // Call when the task has finished (even if it was aborted).
 
+void DrawRect(wxDC& dc, wxRect& rect);
+// Draw given rectangle using the current brush and pen.
+
 void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush);
 // Fill given rectangle using given brush.
 

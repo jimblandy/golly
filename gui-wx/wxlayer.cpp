@@ -3021,13 +3021,7 @@ void CellPanel::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
     wxPaintDC dc(this);
-    
     dc.SetPen(*wxBLACK_PEN);
-    
-#ifdef __WXMAC__
-    // fix DrawRectangle problem on Retina screens
-    if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
-#endif
 
 #ifdef __WXMSW__
     // we have to use theme background color on Windows
@@ -3044,7 +3038,7 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
         if (state < currlayer->algo->NumCellStates()) {
             if (showicons && iconmaps && iconmaps[state]) {
                 dc.SetBrush(*wxTRANSPARENT_BRUSH);
-                dc.DrawRectangle(r);
+                DrawRect(dc, r);
                 dc.SetBrush(wxNullBrush);               
                 DrawOneIcon(dc, r.x + 1, r.y + 1, iconmaps[state],
                             currlayer->cellr[0],
@@ -3059,14 +3053,14 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
                               currlayer->cellg[state],
                               currlayer->cellb[state]);
                 dc.SetBrush(wxBrush(color));
-                dc.DrawRectangle(r);
+                DrawRect(dc, r);
                 dc.SetBrush(wxNullBrush);
             }
             
         } else {
             // state >= currlayer->algo->NumCellStates()
             dc.SetBrush(bgbrush);
-            dc.DrawRectangle(r);
+            DrawRect(dc, r);
             dc.SetBrush(wxNullBrush);
         }
         

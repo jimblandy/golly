@@ -398,14 +398,14 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
         wxColor color(currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i]);
         r = wxRect(x, BASELINE2 - BOXWD, BOXWD, BOXWD);
         dc.SetBrush(wxBrush(color));
-        dc.DrawRectangle(r);
+        DrawRect(dc, r);
         dc.SetBrush(wxNullBrush);
         
         // draw icon box
         r = wxRect(x, BASELINE3 - BOXWD, BOXWD, BOXWD);
         if (iconmaps && iconmaps[i]) {
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawRectangle(r);
+            DrawRect(dc, r);
             dc.SetBrush(wxNullBrush);
             DrawOneIcon(dc, x + 1, BASELINE3 - BOXWD + 1, iconmaps[i],
                         currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0],
@@ -413,7 +413,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
                         currlayer->multicoloricons);
         } else {
             dc.SetBrush(wxBrush(color));
-            dc.DrawRectangle(r);
+            DrawRect(dc, r);
             dc.SetBrush(wxNullBrush);
         }
     }
@@ -428,7 +428,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
         wxRect r(x, SMALLHT + 2, COLWD - 1, BIGHT - SMALLHT - 5);
 #endif
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.DrawRectangle(r);
+        DrawRect(dc, r);
         dc.SetBrush(wxNullBrush);
     }
     
@@ -442,9 +442,6 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     wxRect r = wxRect(0, 0, wd, ht);
     
 #ifdef __WXMAC__
-    // fix DrawRectangle problem on Retina screens
-    if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
-
     wxBrush brush(wxColor(202,202,202));
     FillRect(dc, r, brush);
 #endif
@@ -494,7 +491,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     x = xpos + 3*digitwd + BOXGAP;
     colorbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
     dc.SetBrush(wxBrush(cellcolor));
-    dc.DrawRectangle(colorbox);
+    DrawRect(dc, colorbox);
     dc.SetBrush(wxNullBrush);
     
     // draw icon box
@@ -503,7 +500,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     iconbox = wxRect(x, y - BOXSIZE, BOXSIZE, BOXSIZE);
     if (iconmaps && iconmaps[state]) {
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.DrawRectangle(iconbox);
+        DrawRect(dc, iconbox);
         dc.SetBrush(wxNullBrush);
         DrawOneIcon(dc, x + 1, y - BOXSIZE + 1, iconmaps[state],
                     currlayer->cellr[0],     currlayer->cellg[0],     currlayer->cellb[0],
@@ -511,7 +508,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
                     currlayer->multicoloricons);
     } else {
         dc.SetBrush(wxBrush(cellcolor));
-        dc.DrawRectangle(iconbox);
+        DrawRect(dc, iconbox);
         dc.SetBrush(wxNullBrush);
     }
     
@@ -519,11 +516,11 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     if (showicons) {
         iconbox.Inflate(2,2);
-        dc.DrawRectangle(iconbox);
+        DrawRect(dc, iconbox);
         iconbox.Inflate(-2,-2);
     } else {
         colorbox.Inflate(2,2);
-        dc.DrawRectangle(colorbox);
+        DrawRect(dc, colorbox);
         colorbox.Inflate(-2,-2);
     }
     dc.SetBrush(wxNullBrush);

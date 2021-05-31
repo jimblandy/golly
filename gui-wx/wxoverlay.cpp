@@ -6920,7 +6920,7 @@ const char *Overlay::DoText(const char *args)
 
     // fill the bitmap
     dc.SetBrush(brush);
-    dc.DrawRectangle(rect);
+    dc.DrawRectangle(rect);     // don't use DrawRect(dc,rect) here!
     dc.SetBrush(wxNullBrush);
     dc.SetPen(wxNullPen);
 

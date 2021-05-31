@@ -346,7 +346,7 @@ bool GetInteger(const wxString& title, const wxString& prompt,
 
 int SaveChanges(const wxString& query, const wxString& msg)
 {
-#if defined(__WXMAC__)
+#ifdef __WXMAC__
     // use a standard looking modal dialog on wxOSX;
     // sadly, positioning over center of parent window is not supported by NSAlert
     wxMessageDialog dialog(wxGetActiveWindow(), msg, query,
@@ -477,7 +477,7 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
                                            wxPD_CAN_ABORT | wxPD_SMOOTH |
                                            wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME);
             
-#if defined(__WXMAC__)
+#ifdef __WXMAC__
             if (progdlg) {
                 // install key event handler
                 progdlg->PushEventHandler(new ProgressHandler());
@@ -496,7 +496,7 @@ void EndProgress()
     if (inscript && !showprogress) return;
 
     if (progdlg) {
-#if defined(__WXMAC__)
+#ifdef __WXMAC__
         // remove and delete ProgressHandler
         progdlg->PopEventHandler(true);
 #endif
@@ -516,16 +516,50 @@ void EndProgress()
 
 // =============================================================================
 
+void DrawRect(wxDC& dc, wxRect& rect)
+{
+    #ifdef __WXMAC__
+        #if wxCHECK_VERSION(3,1,5)
+            // EnableOffset fix no longer works in 3.1.5!
+            if (scalefactor > 1.0) {
+                rect.x++;
+                rect.y++;
+                rect.width--;
+                rect.height--;
+            }
+        #else
+            // fix DrawRectangle problem on Retina screens
+            if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
+        #endif
+    #endif
+
+    dc.DrawRectangle(rect);
+
+    #ifdef __WXMAC__
+        #if wxCHECK_VERSION(3,1,5)
+            if (scalefactor > 1.0) {
+                // restore rect
+                rect.x--;
+                rect.y--;
+                rect.width++;
+                rect.height++;
+            }
+        #endif
+    #endif
+}
+
+// -----------------------------------------------------------------------------
+
 void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush)
 {
     // set pen transparent so brush fills rect
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.SetBrush(brush);
     
-    dc.DrawRectangle(rect);
+    dc.DrawRectangle(rect);     // don't call DrawRect(dc,rect) here!
     
-    dc.SetBrush(wxNullBrush);     // restore brush
-    dc.SetPen(wxNullPen);         // restore pen
+    dc.SetBrush(wxNullBrush);   // restore brush
+    dc.SetPen(wxNullPen);       // restore pen
 }
 
 // -----------------------------------------------------------------------------
