@@ -1,0 +1,90 @@
+#N pedestrian-life-oblique-rake-gun.rle
+#O Luka Okanishi, May 3 2016
+#C     In the realm of outer-totalistic Life-like cellular automata,
+#C the highest birth condition is B8. Adding that to the Game of Life
+#C gives Pedestrian Life, B38/S23, so named because the traffic light
+#C constellation is much less common. A large number of Life patterns
+#C just work as well in this rule - but there are something especially
+#C not pedestrian! For one, the classical methuselah R-pentomino shows
+#C different behaviour that allows for them to be combined akin to
+#C the switch engine in Life. The result is a class of spaceships, 
+#C puffers and rakes travelling obliquely at a speed of (5,2)c/190.
+#C     The following pattern is a bootstrapping period-1326 gun for 
+#C one of those rakes based on an 8-glider synthesis. After a rake is
+#C built, some of its output gliders are directed by series of Snarks
+#C and p6 bumpers so as to produce the next rake. In other words, it
+#C is essentially engine-less!
+#C Reference: https://www.conwaylife.com/forums/viewtopic.php?f=11&t=1661&p=30569#p30569
+#C For general description on this rule, see LifeWiki article:
+#C https://www.conwaylife.com/wiki/OCA:Pedestrian_Life
+x = 314, y = 280, rule = B38/S23
+172b2o14bo$168b2obo14b3o$168b2o2bo2bo9bo$173bobo9b2o$174bo$181bo$173b
+2o5bobo$173b2o4bo2bo8bo2bo$148b2o30b2o12bo15bo$147bobo40bo4bo12b3o$
+141b2o4bo42b2o2bobo10bo$139bo2bo2b2ob4o43bob2o8b2o$139b2obobobobo2bo$
+142bobobobo54bo$142bobob2o47bo2bo3bobo$143bo51b2o4bo2bo$76bo14b2o109b
+2o$76b3o12b2o2b2o59b2o$69b2o8bo9b2obo2b2o50b2o7bo$69b2o7b2o9b3o55b2o5b
+obo$154b2o$69bo13bo15b4o15bo$68bobo11bobo5b2o6bo4bo12b3o$68bo2bo2b2o6b
+o2bo4b2o6bo3bobo10bo$72bob2o7b2o14bo3bobo9b2o$70b2o33bo$105bo5bo$102bo
+2bo4bobo31b2o$103b2o4bo2bo32bo$75bo34b2o30b3o$74bobo10bobo52bo$73bo2bo
+11b2o$74b2o12bo3$70b2o112bo$69bobo112bobo$69bo114b2o$68b2o9$184b2o14bo
+$180b2obo14b3o$93b2o85b2o2bo2bo9bo$86b2o4bo2bo89bobo9b2o$86bobo4bobo
+90bo$87b3o4bo98bo$88b2o95b2o5bobo$86bobo9b2o85b2o4bo2bo8bo2bo11b2o$81b
+2o2bobo10bo93b2o12bo11bobo$81bobo2bo12b3o100bo4bo12b3o$82b4o15bo100b2o
+2bobo10bo3bo$83b2o122bob2o8b2o2bo$224b2o$215bo9bo$207bo2bo3bobo7bo$
+207b2o4bo2bo7b2o$214b2o16$201b2o$194b2o4bo2bo$194bobo4bobo$195b3o4bo$
+196b2o$194bobo9b2o$189b2o2bobo10bo$189bobo2bo12b3o$190b4o15bo$180b4o7b
+2o6bo$179bo4bo12b3o$179bo3bobo10bo$180bo3bobo9b2o$186bo$186bo5bo$183bo
+2bo4bobo$184b2o4bo2bo7b4o15bo$191b2o7bo4bo12b3o$200bo3bobo10bo86bo$
+201bo3bobo9b2o85b3o$207bo91bo7bo$148bo58bo5bo37b2o46b3o4b2o$148bobo53b
+o2bo4bobo35b2o42bo7bo$148b2o55b2o4bo2bo37bo41b3o4b2o$212b2o83bo$296b2o
+$284bo$284b3o$287bo$286b2o$274bo$79bo80b2o112b3o$79bobo66b2o10bobo106b
+o7bo$79b2o63b2obo14b3o104b3o4b2o$144b2o2bo2bo9bo3bo106bo$149bobo9b2o2b
+o105b2o$150bo15b2o91bo$157bo9bo91b3o30b2o$149b2o5bobo6bo96bo28bo2bo$
+149b2o4bo2bo6b2o94b2o28bo2bo$156b2o91bo42bobo$249b3o42b4o$244bo7bo40b
+2o2bo$244b3o4b2o41b3o$165bo73bo7bo47bo$164bo74b3o4b2o$164b3o75bo$241b
+2o$47b2o180bo$48bo27b2o27b2o26b2o27b2o65b3o$48bobo26bo28bo27bo20b2o4bo
+2bo67bo25bo$49b2o26bobo26bobo25bobo18bobo4bobo66b2o24b4o$78b2o27b2o26b
+2o19b3o4bo92bo2b2o$157b2o37b2o58bo4bo$53b2o100bobo9b2o28bo58b2obob2o
+41bo$52bo2bo26b2o27b2o26b2o9b2o2bobo10bo29bobo60b4o39bobo$53bobo25bo2b
+o25bo2bo24bo2bo8bobo2bo12b3o27bobo59b4o38bo3bo$54bo27bobo26bobo25bobo
+9b4o15bo28bo3b2o54b5o39bobo$83bo28bo27bo11b2o49b2o53b2o2bo41bo$259b3o$
+51b2o160bo46bo$50b4o159b3o94b2o$49bo2bobo23b2o28bo26b2o79bo95b2o$48bob
+o2b2o23b2o2b2o23bob4o22b2o2b2o74b2o85bo4bo4b2o$47bobo26b2obo2b2o22bobo
+b3o20b2obo2b2o68b2o80bo9b2o4b2o3b2o$46b2o28b3o26bobo25b3o74bo9b2o68bo
+2bo12bo4bo$46b3o57bo103bobo6b2o72bo13b4o$b2o44bobo56b2o71b2o30b2o6bo2b
+3ob3o39b3o23bo12b3o$2bo45b2o27b2o27b2o26b2o43b2o39b5o43b3o22b2o2b2o$2b
+obo72b2o7b2o18b2o26b2o84b2ob2o41b2obob2o20b2o2b2o$3b2o81bo92bo86b3ob3o
+$84bobo91bobo41b3o41b2obob2o$84b2o92bo2bo2b2o36bobo43b3o$7b2o173bob2o
+36bob4o40b3o$6bo2bo170b2o41b2o2bo$7bobo52b2o16b2o142b3o51bo19b2o$8bo
+54bo15bo2bo142bo51bobo17bobo$63bobo13bobo184b2o4b3o5bo17bo$64b2o14bo
+104bo80b2o4b2ob3obo$4bo2bo176bobo71b2o10bobo2b2obo$4bo120bo57bo2bo70bo
+bo10bob2o2bo$3bo4bo59b2o53b3o58b2o71b2o12b3obo$2bobo2b2o58bo2bo13b2o
+36bo135bo3b2o$2obo64bobo9b2obo38b2o53b2o83b2o$69bo10b2o2bo2bo89bo2b2o$
+85bobo90b2obo$o2bo82bo43b2o47bo$2b2o62b2o63bo47bo$65b4o16b2o44bob2o45b
+2o$64bo2bobo15b2o7b2o27b2o4b3o2bo47bob2o53b6o18b2o$63bobo2b2o24bo28b2o
+3bo3b2o48b2obo52bob3o3bo15bobo$62bobo27bobo33b4o99b2o5bo2bo4bo16bo$61b
+2o29b2o20b2o15bo92bo6b2o13bo$61b3o49bobo12b3o91b4o16b2o$62bobo48bo13bo
+93b2o3bo10bo$63b2o5b2o16b2o22b2o14b5o87bo3b3o9bobo$71bo15bo2bo41bo88b
+4ob3o$71bobo13bobo40bo91bo4b2o$72b2o14bo41b2o138b2o35b2o$270bo19bo15b
+4o$272bo17b3o12bo2bobo$76b2o11bo2bo159b2o14b5o20bo10bobo2b2o$75bo2bo
+13bo160bo13bo24b2o9bobo$76bobo9bo4bo134b2o23bobo12b3o31b2o$77bo10b2o2b
+obo132bobo24b2o15bo25bo4b3o$93bob2o131bo39b4o24bobo4bobo$116b2o145b2o
+3bo3b2o22bo2bo4b2o$117bo145b2o4b3o2bo22b2o12b2o$73bo19bo2bo20bobo151bo
+b2o36bo$72bob4o15b2o23b2o151bo37bobo$71bobob3o192b2o37b2o$70bobo$71bo
+50b2o$71b2o48bo2bo137b2o41b2o$71b2o49bobo137bo41bo2bo$71b2o50bo139b3o
+38bobo$265bo39bo$83bo$83b3o34b2o$86bo32b4o$85b2o31bo2bobo182b4o$117bob
+o2b2o181bo4bo$116bobo131b2o53bo3bobo$77b2o36b2o133b2o54bo3bobo$77bo37b
+3o132b2o60bo$74b2obo38bobo132bo60bo$74bo2b3o4b2o31b2o131bobo56bo2bo$
+75b2o3bo3b2o159b3obobo58b2o$77b4o164b4obo$77bo15b2o154bo$78b3o12bobo$
+81bo13bo$76b5o14b2o$76bo168bo$78bo165bobo$77b2o165bo2bo$245b2o3$249b2o
+$249bobo$251bo$251b2o22b2o$268b2o4bo2bo$268b2o5bobo$268b2o6bo$269bo$
+232b2o34bobo9b2o$231bo2bo4b2o22b3obobo10bo$231bobo3bo2bo22b4obo12b3o$
+232bo34bo15bo2$227b2o8b2obo$228bo10bobo2b2o$225b3o12bo4bo$131b2o92bo
+15bo$94bo35bo2bo4b2o101bo2bo$92bobo35bobo4bo2bo$93b2o36bo5bo$137bo$
+126b2o9bobo3bo$127bo10bobo3bo$124b3o12bo4bo$124bo15b4o12$232b2o$231bo
+2bo4b2o$231bobo4bo2bo$127bo61b2o41bo5bo$125b3o60bo2bo4b2o40bo$124bo63b
+obo3bo2bo29b2o9bobo3bo$124b2o63bo38bo10bobo3bo$225b3o12bo4bo$184b2o8b
+2obo27bo15b4o$185bo10bobo2b2o$182b3o12bo4bo$182bo15bo$198bo2bo$114b2o
+26b2o$113bobo5b2o18bo2bo4b2o$113bo7b2o18bobo5b2o$112b2o28bo$149bo$126b
+o10b2o9bobo$122b2obobo10bo9bo2bo2b2o$121bobobobo7b3o14bob2o$118bo2bobo
+bobob2o4bo14b2o$118b4ob2o2bo2bo$122bo4b2o$120bobo$120b2o!
