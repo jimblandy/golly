@@ -1,0 +1,11 @@
+#N rulerish-replicator.rle
+#O Original form by toroidalet, June 28 2019
+#C     This is a diagonal linear replicator that is also a linear wavestretcher
+#C in the perpendicular direction. Its sequential wave lengths demostrate 
+#C the ruler sequence (OEIS A001511), hence the name.
+#C
+#C Reference:
+#C  https://www.conwaylife.com/forums/viewtopic.php?p=78517#p78517
+#C (rulestring has been simplified from original form).
+x = 5, y = 5, rule = B1e2e3j4ejtw5c6cn7c/S2n3kn4cnq5jk6e
+o$b3o$b2obo$bobo$2bo!

@@ -1,0 +1,12 @@
+#N smos-predecessor.rle
+#O Sarp, June 27 2019 
+#C    A 2c/4 spaceship keeps chasing and colliding with a c/3 spaceship,
+#C and subsequent chaos just happens to generate the original two ships,
+#C resulting a really cool 218c/1476 diagonal glide-symmetric spaceship.
+#C
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=78482#p78482
+#C For other spaceships made up of other spaceships, see
+#C   https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3071
+x = 2, y = 3, rule = B2k3-ejny4knqtw5cjny6en7c/S01e2aen3ijnry4ikqtyz5-cekr6ckn7c
+2o2$bo!
