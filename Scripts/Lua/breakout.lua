@@ -300,7 +300,7 @@ local music = {
     fade         = 1,
     faderate     = -0.01,
     gameovertime = 1000 * 64,
-    folder       = "oplus/sounds/breakout/"
+    folder       = "sounds/breakout/"
 }
 
 --------------------------------------------------------------------------------
@@ -407,13 +407,13 @@ end
 --------------------------------------------------------------------------------
 
 local function soundstate(sound)
-    return ov("sound state "..music.folder..sound..".ogg")
+    return g.sound("state", music.folder..sound..".ogg")
 end
 
 --------------------------------------------------------------------------------
 
 local function setvolume(sound, vol)
-    ov("sound volume "..music.folder..sound..".ogg "..vol)
+    g.sound("volume", music.folder..sound..".ogg", vol)
 end
 
 --------------------------------------------------------------------------------
@@ -435,14 +435,14 @@ end
 --------------------------------------------------------------------------------
 
 local function stopallsound()
-    ov("sound stop")
+    g.sound("stop")
 end
 
 --------------------------------------------------------------------------------
 
 local function stopmusic()
     if music.currenttrack ~= "" then
-        ov("sound stop "..music.folder..music.currenttrack..".ogg")
+        g.sound("stop", music.folder..music.currenttrack..".ogg")
     end
 end
 --------------------------------------------------------------------------------
@@ -451,9 +451,9 @@ local function playsound(name, loop)
     if options.soundvol > 0 then
         loop = loop or false
         if loop then
-            ov("sound loop "..music.folder..name..".ogg "..(options.soundvol / 100))
+            g.sound("loop", music.folder..name..".ogg", options.soundvol / 100)
         else
-            ov("sound play "..music.folder..name..".ogg "..(options.soundvol / 100))
+            g.sound("play", music.folder..name..".ogg", options.soundvol / 100)
         end
     end
 end
@@ -465,9 +465,9 @@ local function playmusic(name, loop)
     stopmusic()
     music.currenttrack = name
     if loop then
-        ov("sound loop "..music.folder..name..".ogg "..(options.musicvol / 100))
+        g.sound("loop", music.folder..name..".ogg", options.musicvol / 100)
     else
-        ov("sound play "..music.folder..name..".ogg "..(options.musicvol / 100))
+        g.sound("play", music.folder..name..".ogg", options.musicvol / 100)
     end
 end
 
@@ -1200,7 +1200,7 @@ local function pausegame(paused)
                 music.faderate  = -0.05
             else
                 music.faderate = 0.05
-                ov("sound resume")
+                g.sound("resume")
             end
         end
     end
@@ -1215,7 +1215,7 @@ local function updatemusic()
                 music.fade = music.fade + music.faderate
                 if music.fade <= 0 then
                     music.fade = 0
-                    ov("sound pause")
+                    g.sound("pause")
                 else
                     setvolume(music.currenttrack, (options.musicvol * music.fade / 100))
                 end

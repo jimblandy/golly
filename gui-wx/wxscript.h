@@ -82,7 +82,7 @@ const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 void DoAutoUpdate();          // update display if autoupdate is true
 
 // The following Golly Script Functions are used to reduce code duplication.
-// They are called by corresponding functions in wxlua/wxperl/wxpython.cpp.
+// They are called by corresponding functions in wxlua.cpp and wxpython.cpp.
 
 const char* GSF_open(const wxString& filename, int remember);
 const char* GSF_save(const wxString& filename, const char* format, int remember);
@@ -112,5 +112,14 @@ void GSF_update();
 void GSF_exit(const wxString& errmsg);
 const char* GSF_getpath();
 const char* GSF_getinfo();
+#ifdef ENABLE_SOUND
+    bool GSF_SoundEnabled();
+    const char* GSF_SoundPlay(const char* args, bool loop);
+    const char* GSF_SoundStop(const char* args);
+    const char* GSF_SoundState(const char* args);
+    const char* GSF_SoundVolume(const char* args);
+    const char* GSF_SoundPause(const char* args);
+    const char* GSF_SoundResume(const char* args);
+#endif
 
 #endif

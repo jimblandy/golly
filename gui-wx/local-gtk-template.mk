@@ -11,10 +11,8 @@ PYTHON = python3
 # Uncomment the next line to enable Golly to run perl scripts.
 # ENABLE_PERL = 1
 
-# Uncomment the next line to allow Golly to play sounds:
-# ENABLE_SOUND = 1
-# Change the next line to specify where you installed IrrKLang
-IRRKLANGDIR = /home/chris/irrKlang-64bit-1.6.0
+# Comment out the next line to disable sound play:
+ENABLE_SOUND = 1
 
 # Add any extra CXX and LD flags here
 # CXXFLAGS =

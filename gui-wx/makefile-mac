@@ -1,10 +1,10 @@
-# Makefile for building Golly on Mac OS 10.10+.
+# Makefile for building Golly on Mac OS 10.11+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /path/to/wxWidgets/wxWidgets-3.1.5  (use 3.1.5+ on Mac OS 10.10+)
+# cd /path/to/wxWidgets/wxWidgets-3.1.5  (use 3.1.5+ on Mac OS 10.11+)
 # mkdir build-osx
 # cd build-osx
-# ../configure --disable-sys-libs --disable-shared --with-osx_cocoa --with-macosx-version-min=10.10 --enable-universal_binary=arm64,x86_64
+# ../configure --disable-sys-libs --disable-shared --with-osx_cocoa --with-macosx-version-min=10.11 --enable-universal_binary=arm64,x86_64
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
@@ -19,7 +19,7 @@ WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 4.1b1
+APP_VERSION = 4.1b2
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -27,6 +27,7 @@ DOCSDIR = ../docs
 BASEDIR = ../gollybase
 CMDDIR = ../cmdline
 LUADIR = ../lua
+SOUNDDIR = ../sound
 OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
 # for building binary and source distributions:
@@ -34,7 +35,7 @@ RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
 BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly \
    $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
-SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
+SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(SOUNDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
@@ -65,7 +66,7 @@ TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
-CXXC = g++ -mmacosx-version-min=10.10
+CXXC = g++ -mmacosx-version-min=10.11
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
@@ -83,21 +84,9 @@ ifdef ENABLE_PERL
     CXXFLAGS += -DENABLE_PERL
 endif
 
-# uncomment next line and set IRRKLANGDIR to correct path to allow Lua scripts to play sounds:
-# ENABLE_SOUND = 1
-
-ifdef ENABLE_SOUND
-    IRRKLANGDIR = $(EXEDIR)/irrKlang-64bit-1.6.0
-    IRRKLANG_DYLIB = $(IRRKLANGDIR)/bin/macosx-gcc/libirrklang.dylib
-    # set appropriate RPATH so dyld can load the dylib from inside the app bundle
-    IRRKLANG_LINK = $(IRRKLANG_DYLIB) -Wl,-rpath,@loader_path/../Libs
-    CXXFLAGS += -DENABLE_SOUND
-    CPPFLAGS += -I$(IRRKLANGDIR)/include
-    # change ID name in libirrklang.dylib to use @rpath
-    CHANGE_IRRKLANG_ID = install_name_tool -id "@rpath/libirrklang.dylib" $(IRRKLANG_DYLIB)
-    CREATE_IRRKLANG_FOLDER = mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/Libs
-    COPY_IRRKLANG_DYLIB = cp -f $(IRRKLANG_DYLIB) $(EXEDIR)/$(APP_NAME).app/Contents/Libs
-endif
+# comment out next 2 lines to disable sound play:
+CXXFLAGS += -DENABLE_SOUND
+CPPFLAGS += -I$(SOUNDDIR)
 
 LDFLAGS = -arch arm64 -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
@@ -180,16 +169,13 @@ app.bin: $(BASEOBJ) $(WXOBJ) $(LUALIB)
 $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
 $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__WXLIB_GL_p) \
 $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) $(__LIB_ZLIB_p) \
-$(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK) $(IRRKLANG_LINK)
+$(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
 $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
 icons/app.icns icons/file-mc.icns icons/file-rle.icns
 	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents
 	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/MacOS
 	mkdir -p $(EXEDIR)/$(APP_NAME).app/Contents/Resources
-	$(CHANGE_IRRKLANG_ID)
-	$(CREATE_IRRKLANG_FOLDER)
-	$(COPY_IRRKLANG_DYLIB)
 	
 	sed -e "s/VERSION/$(APP_VERSION)/" \
 	Info.plist.in >$(EXEDIR)/$(APP_NAME).app/Contents/Info.plist
@@ -317,7 +303,7 @@ $(OBJDIR)/wxperl.o: wxperl.cpp
 $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) $(AUTO_RELEASE) -c -o $@ wxpython.cpp
 
-$(OBJDIR)/wxscript.o: wxscript.cpp
+$(OBJDIR)/wxscript.o: wxscript.cpp $(SOUNDDIR)/cute_sound.h $(SOUNDDIR)/stb_vorbis.c
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp

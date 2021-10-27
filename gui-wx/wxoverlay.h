@@ -13,12 +13,7 @@
     #pragma warning(default:4702)   // enable "unreachable code" warnings
 #endif
 
-#ifdef ENABLE_SOUND
-#include <irrKlang.h>               // for sound
-using namespace irrklang;
-#endif
-
-#include "lua.hpp"
+#include "lua.hpp"                  // Lua headers
 
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.  See Help/overlay.html for details.
@@ -479,30 +474,6 @@ private:
     // Set only_draw_overlay to true and then update the current layer
     // so DrawView will only draw the overlay if OnlyDrawOverlay() is true.
 
-#ifdef ENABLE_SOUND
-    const char *SoundStop(const char *args);
-    // Stop sound playback for specified sound or all sounds if none specified.
-
-    const char *SoundPlay(const char *args, bool loop);
-    // Play the specified sound once or in a loop.
-
-    const char *SoundState(const char *args);
-    // Returns whether the specified sound or any sound (if none specified) is playing.
-    // Can be "playing", "stopped", or "unknown" if the specified sound is not found.
-
-    const char *SoundVolume(const char *args);
-    // Sets the volume of the specified sound.
-
-    const char *SoundPause(const char *args);
-    // Pauses all or the specified sound.
-
-    const char *SoundResume(const char *args);
-    // Resumes all or the specified sound.
-#endif
-
-    const char *DoSound(const char *args);
-    // Play, stop, pause or resume playback, get playback status, or set volume.
-
     const char *OverlayError(const char *msg);
     // Return a string starting with "ERR:" followed by the given message.
 
@@ -842,11 +813,6 @@ private:
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
-
-#ifdef ENABLE_SOUND
-    // sound
-    std::map<std::string,ISound*> sounds;
-#endif
 
     // text
     wxFont currfont;                // current font used by text command

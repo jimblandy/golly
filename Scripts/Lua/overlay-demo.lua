@@ -57,7 +57,7 @@ local extra_layer = false
 local return_to_main_menu = false
 
 -- flag if sound is available
-local sound_enabled = false
+local sound_enabled = g.sound() == 2
 
 -- timing
 local tstart = gp.timerstart
@@ -2326,7 +2326,7 @@ local function test_sound()
     local bgclip = "bg"
     ov("copy 0 0 0 0 "..bgclip)
 
-    local soundname = "oplus/sounds/breakout/levelcompleteloop.ogg"
+    local soundname = "sounds/breakout/levelcompleteloop.ogg"
     local running = true
 
     -- main loop
@@ -2339,35 +2339,35 @@ local function test_sound()
             running = false
         elseif event == "key p none" then
             command = "play"
-            result = ov("sound play "..soundname.." "..(volume / 100))
+            result = g.sound("play", soundname, volume / 100)
             paused = false
         elseif event == "key l none" then
             command = "loop"
-            result = ov("sound loop "..soundname.. " "..(volume / 100))
+            result = g.sound("loop", soundname, volume / 100)
             paused = false
         elseif event == "key s none" then
             command = "stop"
-            ov("sound stop")
+            g.sound("stop")
             result = ""
         elseif event == "key - none" then
             volume = volume - 10
             if (volume < 0) then volume = 0 end
             command = "volume "..(volume / 100)
-            ov("sound volume "..soundname.." "..(volume / 100))
+            g.sound("volume", soundname, volume / 100)
         elseif event == "key + none" or event == "key = none" then
             volume = volume + 10
             if (volume > 100) then volume = 100 end
             command = "volume "..(volume / 100)
-            ov("sound volume "..soundname.." "..(volume / 100))
+            g.sound("volume", soundname, volume / 100)
         elseif event == "key q none" then
             if paused then
                 paused = false
                 command = "resume"
-                ov("sound resume "..soundname)
+                g.sound("resume", soundname)
             else
                 paused = true
                 command = "pause"
-                ov("sound pause "..soundname)
+                g.sound("pause", soundname)
             end
         end
 
@@ -2411,7 +2411,7 @@ local function test_sound()
         pastetext(floor((wd - w) / 2), 480)
 
         -- draw status
-        local state = ov("sound state "..soundname)
+        local state = g.sound("state", soundname)
         w, _ = maketext("State: "..state, nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 510)
 
@@ -2419,7 +2419,7 @@ local function test_sound()
     end
 
     -- stop any sounds before exit
-    ov("sound stop")
+    g.sound("stop")
 
     -- no point calling repeat_test()
     return_to_main_menu = true
@@ -2580,7 +2580,7 @@ local function main_menu()
     local textht = h1 + textgap + h2
 
     -- check if sound is enabled
-    if (sound_enabled == false) then numbutts = numbutts - 1 end
+    if not sound_enabled then numbutts = numbutts - 1 end
 
     -- resize overlay to fit buttons and text
     wd = hgap + buttwd + hgap + w1 + hgap
@@ -2612,7 +2612,7 @@ local function main_menu()
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
     scale_button.show(x, y)         y = y + buttgap + buttht
-    if (sound_enabled) then
+    if sound_enabled then
         sound_button.show(x, y)         y = y + buttgap + buttht
     end
     text_button.show(x, y)          y = y + buttgap + buttht
@@ -2654,9 +2654,6 @@ end
 local function main()
     -- create overlay
     create_overlay()
-
-    -- check if sound is available
-    if (ov("sound") == "2") then sound_enabled = true end
 
     -- create menu
     create_menu_buttons()

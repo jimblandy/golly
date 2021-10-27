@@ -23,7 +23,6 @@ local sin = math.sin
 local wd, ht  = g.getview(g.getlayer())  -- viewport width and height
 
 local sound_enabled = false  -- flag if sound available
-
 local extra_layer = false    -- whether the extra layer was created
 
 local minzoom = 1/16
@@ -75,16 +74,16 @@ local function animate_credits()
     ov("create "..wd.." "..ht)
 
     -- check if sound is available
-    if (ov("sound") == "2") then sound_enabled = true end
+    if g.sound() == 2 then sound_enabled = true end
 
     -- create a new layer
     g.addlayer()
     extra_layer = true
     g.setalgo("QuickLife")
+    g.setname("Credits")
 
     -- add the pattern
     g.open("../../Patterns/Life/Guns/golly-ticker.rle")
-    g.setname("Credits")
     g.run(1024)
 
     -- create the cellview
@@ -123,7 +122,7 @@ local function animate_credits()
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext1 = [[
-Golly 4.1b1
+Golly 4.1b2
 
 © The Golly Gang:
 
@@ -246,7 +245,7 @@ for Lua
 ]]
 
     if sound_enabled then
-        creditstext1 = creditstext1.."\n\nfor irrKlang\n"
+        creditstext1 = creditstext1.."\n\nfor cute_sound\n"
     end
 
     creditstext1 = creditstext1..
@@ -418,7 +417,7 @@ Roberto Ierusalimschy and all Lua developers
 ]]
 
     if sound_enabled then
-        creditstext2 = creditstext2.."\nNikolaus Gebhardt @ Ambiera\n\n"
+        creditstext2 = creditstext2.."\nRandy Gaul\n\n"
     end
 
     creditstext2 = creditstext2..
@@ -468,7 +467,7 @@ Kenichi Morita
 
     -- start music if sound enabled
     if sound_enabled then
-        ov("sound loop oplus/sounds/overlay-demo/animation.ogg")
+        g.sound("loop", "sounds/credits.ogg")
         creditstext1 = creditstext1.."\n\n\n\nMusic\n\n\n'Contentment'\n"
         creditstext2 = creditstext2.."\n\n\n\n\n\n\n\nWritten and performed by Chris Rowett"
     end
@@ -689,7 +688,7 @@ Kenichi Morita
 
     -- stop music
     if sound_enabled then
-        ov("sound stop")
+        g.sound("stop")
     end
 
     -- delete the layer

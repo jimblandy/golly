@@ -2561,9 +2561,90 @@ static int g_sleep(lua_State* L)
     CheckEvents(L);
 
     int ms = luaL_checkinteger(L, 1);
-    wxMilliSleep(ms);
+    if (ms <= 0) {
+        // do nothing (ensures g.sleep(0) is a no-op)
+    } else if (ms <= 100) {
+        wxMilliSleep(ms);
+    } else {
+        // do event checking every 100ms (lets user abort sleep if ms value is very large)
+        int i = 0;
+        while (i < ms) {
+            wxMilliSleep(100);
+            CheckEvents(L);
+            i += 100;
+        }
+        // i >= ms
+        i -= ms;
+        if (i > 0) wxMilliSleep(i);
+    }
     
     return 0;   // no result
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_sound(lua_State* L)
+{
+    AUTORELEASE_POOL
+    CheckEvents(L);
+
+    #ifdef ENABLE_SOUND
+        // check for sound
+        int numargs = lua_gettop(L);
+        if (numargs == 0) {
+            if (GSF_SoundEnabled()) {
+                // sound is enabled and initialized
+                lua_pushinteger(L, 2);
+                return 1;
+            } else {
+                // failed to initialize sound
+                lua_pushinteger(L, 1);
+                return 1;
+            }
+        }
+        
+        // numargs should be 1, 2 or 3
+        const char* cmd = luaL_checkstring(L, 1);
+        
+        // build args for GSF_SoundPlay etc
+        std::string args = "";
+        if (numargs > 1) args += luaL_checkstring(L, 2);    // soundfile
+        if (numargs > 2) {
+            float level = luaL_checknumber(L, 3);   // volume (0.0 to 1.0)
+            char s[16];
+            sprintf(s, " %f", level);
+            args += s;
+        }
+        
+        // check which sound command is specified
+        const char* result = NULL;
+        if        (strcmp(cmd, "play") == 0) {      result = GSF_SoundPlay(args.c_str(), false);
+        } else if (strcmp(cmd, "loop") == 0) {      result = GSF_SoundPlay(args.c_str(), true);
+        } else if (strcmp(cmd, "stop") == 0) {      result = GSF_SoundStop(args.c_str());
+        } else if (strcmp(cmd, "state") == 0) {     result = GSF_SoundState(args.c_str());
+        } else if (strcmp(cmd, "volume") == 0) {    result = GSF_SoundVolume(args.c_str());
+        } else if (strcmp(cmd, "pause") == 0) {     result = GSF_SoundPause(args.c_str());
+        } else if (strcmp(cmd, "resume") == 0) {    result = GSF_SoundResume(args.c_str());
+        } else {
+            GollyError(L, "unknown sound command");
+        }
+        
+        if (result == NULL) {
+            return 0;
+        } else {
+            // check if GSF_SoundPlay etc returned an error msg
+            if (result[0] == 'E' && result[1] == 'R' && result[2] == 'R' ) {
+                std::string msg = result + 4;  // skip past "ERR:"
+                GollyError(L, msg.c_str());
+            }
+            lua_pushstring(L, result);      // should be from GSF_SoundState
+            return 1;
+        }
+    #else
+        // sound support is not enabled
+        lua_pushinteger(L, 0);
+        return 1;
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -3045,6 +3126,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
     { "sleep",        g_sleep },        // sleep for the given number of millisecs
+    { "sound",        g_sound },        // control playing of audio
     { "savechanges",  g_savechanges },  // show standard save changes dialog and return answer
     { "settitle",     g_settitle },     // set window title to given string
     { "setoption",    g_setoption },    // set given option to new value (and return old value)

@@ -62,6 +62,86 @@ const int maxcomments = 128 * 1024; // maximum comment size
 
 // -----------------------------------------------------------------------------
 
+#ifdef ENABLE_SOUND
+    // only create header symbols
+    #define STB_VORBIS_HEADER_ONLY
+    #include "stb_vorbis.c"
+
+    #ifdef __WXGTK__
+        // SDL2 is used to provide sound support on Linux systems
+        #define _CRT_SECURE_NO_WARNINGS
+        #include <SDL2/SDL.h>
+        #define CUTE_SOUND_FORCE_SDL
+    #endif
+    
+    #define CUTE_SOUND_IMPLEMENTATION
+    #define CUTE_SOUND_SCALAR_MODE      // avoid SSE instructions
+
+    #include "cute_sound.h"
+
+    static cs_context_t* soundctx = NULL;
+    
+    // remember loaded sounds
+    static std::map<std::string,cs_loaded_sound_t*> sounds;
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+
+static void InitSounds()
+{
+    // create soundctx once
+    if (soundctx == NULL) {
+        #ifdef __WXMSW__
+            HWND winhdl = mainptr->GetHandle();
+        #else
+            void* winhdl = NULL;
+        #endif
+        // a non-zero pool (1000 below) indicates we're using the high-level API
+        #ifdef __WXMSW__
+            // no sound below 1024*4, slight crackling at 1024*4, so we use 1024*8
+            soundctx = cs_make_context(winhdl, 44100, 1024*8, 1000, NULL);
+        #else
+            soundctx = cs_make_context(winhdl, 44100, 1024, 1000, NULL);
+        #endif
+        if (!soundctx) {
+            Warning(_("Unable to initialize sound!"));
+        } else {
+            // create a thread that calls cs_mix periodically
+            cs_spawn_mix_thread(soundctx);
+            // specify the delay after each cs_mix call
+            #ifdef __WXMSW__
+                // because we call timeBeginPeriod(1) we need to delay by the old 15ms resolution
+                cs_thread_sleep_delay(soundctx, 15);
+            #else
+                cs_thread_sleep_delay(soundctx, 5); // this seems good for macOS and Linux
+            #endif
+        }
+    }
+}
+
+static void FinishSounds()
+{
+    if (soundctx) {
+        // stop playing any sounds
+        cs_stop_all_sounds(soundctx);
+    
+        // free all loaded sounds
+        std::map<std::string,cs_loaded_sound_t*>::iterator itsnd;
+        for (itsnd = sounds.begin(); itsnd != sounds.end(); ++itsnd) {
+            // cs_free_sound only frees the channel data
+            cs_free_sound(itsnd->second);
+            free(itsnd->second);
+        }
+        sounds.clear();
+    }
+}
+
+#endif
+
+// -----------------------------------------------------------------------------
+
 void DoAutoUpdate()
 {
     if (autoupdate && !mainptr->IsIconized()) {
@@ -114,8 +194,7 @@ void ChangeWindowTitle(const wxString& name)
 // =============================================================================
 
 // The following Golly Script Functions are used to reduce code duplication.
-// They are called by corresponding pl_* and py_* functions in wxperl.cpp
-// and wxpython.cpp respectively.
+// They are called by corresponding g_* and py_* functions in wxlua.cpp and wxpython.cpp respectively.
 
 const char* GSF_open(const wxString& filename, int remember)
 {
@@ -1457,6 +1536,350 @@ const char* GSF_getinfo()
     return comments;
 }
 
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+static const char* SoundError(const char* msg)
+{
+    // prefix the message with "ERR:" so we can tell it's an error rather than a GSF_SoundState result
+    static std::string err;
+    err = "ERR:";
+    err += msg;
+    return err.c_str();
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+static cs_loaded_sound_t* LoadedSound(const char* name)
+{
+    std::map<std::string,cs_loaded_sound_t*>::iterator it;
+    it = sounds.find(name);
+    if (it != sounds.end()) {
+        return it->second;
+    } else {
+        return NULL;
+    }
+}
+
+// NOTE: FindSound calls must be within cs_lock and cs_unlock (if using cs_spawn_mix_thread)
+
+static cs_playing_sound_t* FindSound(const char* name)
+{
+    std::map<std::string,cs_loaded_sound_t*>::iterator it;
+    it = sounds.find(name);
+    if (it == sounds.end()) {
+        return NULL;            // name not loaded
+    }
+    
+    cs_loaded_sound_t* lsound = it->second;
+    
+    // search playing list for lsound
+    cs_playing_sound_t* sound = cs_get_playing(soundctx);
+    while (sound) {
+        if (sound->loaded_sound == lsound) break;   // found
+        sound = sound->next;
+    }
+
+    return sound;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+bool GSF_SoundEnabled()
+{
+    return soundctx != NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* GSF_SoundPlay(const char* args, bool loop)
+{
+    // check for soundctx
+    if (soundctx) {
+        if (*args == 0) {
+            if (loop) {
+                return SoundError("sound loop requires an argument");
+            } else {
+                return SoundError("sound play requires an argument");
+            }
+        }
+
+        // check for the optional volume argument
+        float v = 1;
+        const char* name = args;
+
+        // skip name
+        char* scan = (char*)args;
+        while (*scan && *scan != ' ') {
+            scan++;
+        }
+
+        // check if there is a volume argument
+        if (*scan) {
+            if (sscanf(scan, " %f", &v) == 1) {
+                if (v < 0.0 || v > 1.0) {
+                    if (loop) {
+                        return SoundError("sound loop volume must be in the range 0.0 to 1.0");
+                    } else {
+                        return SoundError("sound play volume must be in the range 0.0 to 1.0");
+                    }
+                }
+            }
+
+            // null terminate name
+            *scan = 0;
+        }
+        
+        cs_loaded_sound_t* sndptr = LoadedSound(name);
+        if (sndptr == NULL) {
+            // named sound hasn't been loaded yet
+            sndptr = (cs_loaded_sound_t*)malloc(sizeof(cs_loaded_sound_t));
+        
+            // check that name ends with .ogg or .wav
+            std::string namestr = name;
+            std::size_t foundogg = namestr.rfind(".ogg");
+            std::size_t foundwav = namestr.rfind(".wav");
+            if (foundogg != std::string::npos && foundogg == namestr.length()-4) {
+                *sndptr = cs_load_ogg(name);
+            } else if (foundwav != std::string::npos && foundwav == namestr.length()-4) {
+                *sndptr = cs_load_wav(name);
+            } else {
+                free(sndptr);
+                return SoundError("sound file extension must be .wav or .ogg");
+            }
+            if (sndptr->channels[0] == NULL) {
+                free(sndptr);
+                return SoundError(cs_error_reason);
+            }
+            
+            // remember this successfully loaded sound
+            sounds[name] = sndptr;
+
+        } else {
+            // stop this previously loaded sound if already playing
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = FindSound(name);
+            if (sound && cs_is_active(sound)) {
+                cs_stop_sound(sound);
+                // next cs_mix call will remove sound from playing list
+            }
+            cs_unlock(soundctx);
+        }
+
+        // set the volume and looped value
+        cs_play_sound_def_t snddef = cs_make_def(sndptr);
+        snddef.volume_left = v;
+        snddef.volume_right = v;
+        snddef.looped = loop ? 1 : 0;
+        
+        // play the sound
+        cs_playing_sound_t* newsound = cs_play_sound(soundctx, snddef);
+        if (newsound == NULL) {
+            return SoundError("could not play sound");
+        }
+        
+        // note that newsound->loaded_sound == sndptr and newsound has been
+        // added to soundctx's playing list
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* GSF_SoundStop(const char* args)
+{
+    if (soundctx) {
+        // check for argument
+        if (*args == 0) {
+            cs_stop_all_sounds(soundctx);
+        } else {
+            // skip whitespace
+            while (*args == ' ') args++;
+
+            // stop named sound if it's playing
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = FindSound(args);
+            if (sound && cs_is_active(sound)) {
+                cs_stop_sound(sound);
+                // next cs_mix call will remove sound from playing list
+            }
+            cs_unlock(soundctx);
+        }
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* GSF_SoundState(const char* args)
+{
+    bool playing = false;
+    bool paused = false;
+
+    if (soundctx) {
+        // check for argument
+        if (*args == 0) {
+            // see if any sounds are playing
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = cs_get_playing(soundctx);
+            while (sound) {
+                if (sound->active && !sound->paused) playing = true;
+                sound = sound->next;
+            }
+            cs_unlock(soundctx);
+        } else {
+            // skip whitespace
+            while (*args == ' ') args++;
+            
+            // check if named sound has been loaded
+            if (LoadedSound(args) == NULL) return "unknown";
+
+            // see if named sound is playing
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = FindSound(args);
+            if (sound && cs_is_active(sound)) {
+                playing = true;
+                paused = sound->paused == 1;
+            }
+            cs_unlock(soundctx);
+        }
+    }
+
+    // return status as string
+    if (paused && playing) {
+        return "paused";
+    } else {
+        if (playing) {
+            return "playing";
+        } else {
+            return "stopped";
+        }
+    }
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* GSF_SoundVolume(const char* args)
+{
+    // check for soundctx
+    if (soundctx) {
+        float v = 1;
+        const char* name = args;
+
+        // skip name
+        char* scan = (char*)args;
+        while (*scan && *scan != ' ') scan++;
+
+        // check if there is a volume argument
+        if (*scan) {
+            if (sscanf(scan, " %f", &v) == 1) {
+                if (v < 0.0 || v > 1.0) {
+                    return SoundError("sound volume must be in the range 0.0 to 1.0");
+                }
+            } else {
+                return SoundError("sound volume command requires two arguments");
+            }
+
+            // null terminate name
+            *scan = 0;
+        }
+
+        cs_lock(soundctx);
+        cs_playing_sound_t* sound = FindSound(name);
+        if (sound && cs_is_active(sound)) {
+            cs_set_volume(sound, v, v);
+        }
+        cs_unlock(soundctx);
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* GSF_SoundPause(const char* args)
+{
+    // check for soundctx
+    if (soundctx) {
+        // check for argument
+        if (*args == 0) {
+            // pause all sounds
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = cs_get_playing(soundctx);
+            while (sound) {
+                if (sound->active && !sound->paused) sound->paused = 1;
+                sound = sound->next;
+            }
+            cs_unlock(soundctx);
+        } else {
+            // skip whitespace
+            while (*args == ' ') args++;
+
+            // pause the named sound
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = FindSound(args);
+            if (sound && cs_is_active(sound)) {
+                cs_pause_sound(sound, 1);
+            }
+            cs_unlock(soundctx);
+        }
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* GSF_SoundResume(const char* args)
+{
+    // check for soundctx
+    if (soundctx) {
+        // check for argument
+        if (*args == 0) {
+            // resume all paused sounds
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = cs_get_playing(soundctx);
+            while (sound) {
+                if (sound->active && sound->paused) sound->paused = 0;
+                sound = sound->next;
+            }
+            cs_unlock(soundctx);
+        } else {
+            // skip whitespace
+            while (*args == ' ') args++;
+
+            // resume the named sound
+            cs_lock(soundctx);
+            cs_playing_sound_t* sound = FindSound(args);
+            if (sound && cs_is_active(sound)) {
+                cs_pause_sound(sound, 0);
+            }
+            cs_unlock(soundctx);
+        }
+    }
+
+    return NULL;
+}
+#endif
+
 // =============================================================================
 
 void CheckScriptError(const wxString& ext)
@@ -1569,6 +1992,16 @@ void RunScript(const wxString& filename)
         pass_mouse_events = false;
         pass_file_events = false;
         wxGetApp().PollerReset();
+        
+        #ifdef ENABLE_SOUND
+            InitSounds();
+        #endif
+    
+        #ifdef __WXMSW__
+            // on Windows we want g.sleep times to have a resolution of 1ms
+            timeBeginPeriod(1);
+            // note that timeEndPeriod(1) is called below
+        #endif
     }
 
     // temporarily change current directory to location of script
@@ -1718,6 +2151,14 @@ void RunScript(const wxString& filename)
 
         // restore accelerators that were cleared above
         mainptr->UpdateMenuAccelerators();
+
+        #ifdef __WXMSW__
+            timeEndPeriod(1); // must match above timeBeginPeriod
+        #endif
+
+        #ifdef ENABLE_SOUND
+            FinishSounds();
+        #endif
     }
 }
 
@@ -1973,3 +2414,11 @@ void FinishScripting()
     FinishPerlScripting();
     FinishPythonScripting();
 }
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+    // create implementation (we do this last because stb_vorbis.c defines macros like L, etc)
+    #undef STB_VORBIS_HEADER_ONLY
+    #include "stb_vorbis.c"
+#endif

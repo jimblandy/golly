@@ -17,14 +17,8 @@ PYTHON_INCLUDE = -I"C:\Python39-64\include"
 # -DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
 # -DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl514-64\lib\CORE"
 
-# Uncomment the next line to allow Golly to play sounds:
-#ENABLE_SOUND = 1
-
-# Change the next line to specify where you installed IrrKLang
-IRRKLANGDIR = C:\irrKlang-64bit-1.6.0
-
-# If you have the static (Pro) IrrKLang library then uncomment the next line
-#IRRKLANG_STATIC = /DIRRKLANG_STATIC
+# Comment out the next line to disable sound play:
+ENABLE_SOUND = 1
 
 # Add any extra CXX flags here
 EXTRACXXFLAGS =

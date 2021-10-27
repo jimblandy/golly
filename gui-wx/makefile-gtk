@@ -13,7 +13,7 @@
 include local-gtk-template.mk
 -include local-gtk.mk
 
-APP_VERSION = 4.1b1
+APP_VERSION = 4.1b2
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -21,6 +21,7 @@ DOCSDIR = ../docs
 BASEDIR = ../gollybase
 CMDDIR = ../cmdline
 LUADIR = ../lua
+SOUNDDIR = ../sound
 OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
 # Dealing with rpath and packaging shared libraries.
@@ -40,6 +41,7 @@ SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gtk-template.mk \
     golly.rc Info.plist.in wx*.h wx*.cpp bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
+SOUNDFILES = $(SOUNDDIR)/*.h $(SOUNDDIR)/*.c
 
 LUALIB = $(LUADIR)/liblua.a -ldl
 
@@ -49,15 +51,13 @@ CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
     -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
 LDFLAGS := -Wl,--as-needed -Wl,-rpath,'$$ORIGIN/$(RPATHSTR)' $(LDFLAGS)
 
-# For sound support (requires irrKlang)
+# For sound support
 ifdef ENABLE_SOUND
-    IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
-    IRRKLANG_LIBDIR = $(IRRKLANGDIR)/bin/linux-gcc-64
-    IRRKLANG_LIBNAME = IrrKlang
-    IRRKLANG_FULLNAME = lib$(IRRKLANG_LIBNAME).so
-    IRRKLANG_LINK = -L$(IRRKLANG_LIBDIR) -l$(IRRKLANG_LIBNAME)
-    IRRKLANG_LOCAL = $(LIBDIR)/$(IRRKLANG_FULLNAME)
     CXXFLAGS += -DENABLE_SOUND
+    SOUND_INCLUDE = -I$(SOUNDDIR)
+    ### SOUND_LINK = /usr/local/lib/libSDL2.a -lrt
+    ### above loads SDL2 lib statically (but requires building SDL2 from source)
+    SOUND_LINK = -lSDL2
 endif
 
 # For Perl script support
@@ -92,7 +92,7 @@ ZLIB_LDFLAGS = -lz
 EXTRALIBS_OPENGL = `$(WX_CONFIG) --libs gl` -lGL -lGLU
 
 # for wxGTK support (required for GUI)
-WX_CXXFLAGS = `$(WX_CONFIG) --cxxflags` $(IRRKLANG_INCLUDE) -I$(LUADIR)
+WX_CXXFLAGS = `$(WX_CONFIG) --cxxflags` -I$(LUADIR) $(SOUND_INCLUDE)
 WX_LDFLAGS = `$(WX_CONFIG) --libs`
 
 OBJDIR = ObjGTK
@@ -131,15 +131,9 @@ clean:
 	-rm -rf $(LOCALDIR)
 	-(cd $(LUADIR) && $(MAKE) clean)
 
-	
-ifdef ENABLE_SOUND
-$(IRRKLANG_LOCAL): $(LIBDIR)
-	cp $(IRRKLANG_LIBDIR)/$(IRRKLANG_FULLNAME) $(LIBDIR)
-endif
-
-golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB) $(IRRKLANG_LOCAL)
+golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB)
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
-	$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
+	$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(SOUND_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
@@ -264,7 +258,7 @@ $(OBJDIR)/wxperl.o: wxperl.cpp
 $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
 
-$(OBJDIR)/wxscript.o: wxscript.cpp
+$(OBJDIR)/wxscript.o: wxscript.cpp $(SOUNDDIR)/cute_sound.h $(SOUNDDIR)/stb_vorbis.c
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp
@@ -299,9 +293,11 @@ srcdist:
 	mkdir $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src/gui-wx
 	mkdir $(RELEASENAME)-src/lua
+	mkdir $(RELEASENAME)-src/sound
 	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
 	cp -rp $(GUIFILES) $(RELEASENAME)-src/gui-wx
 	cp -rp $(LUAFILES) $(RELEASENAME)-src/lua
+	cp -rp $(SOUNDFILES) $(RELEASENAME)-src/sound
 	find $(RELEASENAME)-src -name '.[^.]*' -delete
 	find $(RELEASENAME)-src -name '*.o' -delete
 	find $(RELEASENAME)-src -name 'makefile' -delete

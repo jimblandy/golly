@@ -329,6 +329,7 @@ or you can search for individual commands alphabetically:
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
 <a href="#sleep"><b>sleep</b></a><br>
+<a href="#sound"><b>sound</b></a><br>
 <a href="#step"><b>step</b></a><br>
 <a href="#store"><b>store</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
@@ -1202,11 +1203,77 @@ The returned value is a floating point number.
 
 <a name="sleep"></a><p><dt><b>sleep(<i>millisecs</i>)</b></dt>
 <dd>
-Sleep for the given number of millisecs.
+Sleep for the given number of milliseconds.
 Scripts with an event loop can call this command to avoid hogging the CPU
 when the script is idle.
 </dd>
 <dd> Example: <b>g.sleep(5)</b></dd>
+</p>
+
+<a name="sound"></a><p><dt><b>sound(<i>command, soundfile, level</i>)</b></dt>
+<dd>
+Control playback of audio files. If present the <i>soundfile</i> argument must point
+to a WAV or OGG format file containing the sound to be played.
+If the volume <i>level</i> is supplied it must be a number from 0.0 (silent) to 1.0 (maximum).
+Multiple sounds can be played simultaneously.
+</dd>
+</p>
+<p><dd>
+If the function is invoked with no arguments then it returns an integer indicating
+whether sound is available:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>0</b></td><td width=20></td><td>&ndash; sound support is not available</td></tr>
+<tr><td><b>1</b></td><td width=20></td><td>&ndash; sound support is available but failed to initialize</td></tr>
+<tr><td><b>2</b></td><td width=20></td><td>&ndash; sound support is available and ready to use</td></tr>
+</table>
+</dd>
+</p>
+<p><dd>
+There are seven sound commands (if sound support is not available or failed to initialize
+then the commands will silently do nothing):
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>play <i>soundfile (level)</i></b></td></tr>
+<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately.
+The volume is set to maximum level (1.0) if not specified.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><b>loop <i>soundfile (level)</i></b></td></tr>
+<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until
+the <b>stop</b> command is used.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td></tr>
+<tr><td>Stop all sound playback or just the specified <i>soundfile</i>.
+All sounds automatically stop playing when a script finishes.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="pause"></a><b>pause <i>(soundfile)</i></b></td></tr>
+<tr><td>Pause all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="stop"></a><b>resume <i>(soundfile)</i></b></td></tr>
+<tr><td>Resume all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="volume"></a><b>volume <i>soundfile level</i></b></td></tr>
+<tr><td>Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum).
+This is typically used to change the volume of a sound that is already playing.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td></tr>
+<tr><td>Returns "playing" if any sound (or the specified sound) is playing,
+"paused" if the specified sound is paused, "stopped" if the sound is not playing, or
+"unknown" if <i>soundfile</i> is not found.</td></tr>
+</table>
+</dd>
+</p>
+<p>
+<dd>Examples:</dd>
+<dd><b>g.sound("play", "beep.wav", 0.5)</b>         <i>-- play beep.wav at half volume</i></dd>
+<dd><b>g.sound("play", "beep.wav")</b>              <i>-- play beep.wav at full volume</i></dd>
+<dd><b>g.sound("loop", "background.ogg")</b>        <i>-- play background.ogg in a loop at full volume</i></dd>
+<dd><b>g.sound("volume", "background.ogg", 0.7)</b> <i>-- set background.ogg volume to 0.7</i></dd>
+<dd><b>g.sound("pause", "background.ogg")</b>       <i>-- pause playback of background.ogg</i></dd>
+<dd><b>g.sound("resume")</b>                        <i>-- resume playback of all paused sounds</i></dd>
+<dd><b>g.sound("stop")</b>                          <i>-- stop all sounds playing</i></dd>
 </p>
 
 <a name="settitle"></a><p><dt><b>settitle(<i>string</i>)</b></dt>

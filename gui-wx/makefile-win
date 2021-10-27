@@ -38,7 +38,7 @@
 
 ### Golly-related variables: ###
 
-APP_VERSION = 4.1b1
+APP_VERSION = 4.1b2
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -46,20 +46,11 @@ DOCSDIR = ..\docs
 BASEDIR = ..\gollybase
 CMDDIR = ..\cmdline
 LUADIR = ..\lua
+SOUNDDIR = ..\sound
 
-COPYSOUNDLIB =
-IRRKLANG_DLL =
 !if "$(ENABLE_SOUND)" == "1"
-# sound library
-IRRKLANG_INCLUDE = $(IRRKLANGDIR)\include
-IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND $(IRRKLANGSTATIC)
-!if "$(IRRKLANGSTATIC)" == ""
-IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlang.lib
-IRRKLANG_DLL = $(IRRKLANGDIR)\bin\winx64-visualStudio\irrKlang.dll
-COPYSOUNDLIB = copy $(IRRKLANG_DLL) $(EXEDIR)
-!else
-IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlangPro.lib
-!endif
+SOUND_FLAGS = /I$(SOUNDDIR) /DENABLE_SOUND
+SOUND_LIB = dsound.lib
 !endif
 
 # for building binary and source distributions:
@@ -68,7 +59,8 @@ GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gt
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = bitmaps icons
 LUAFILES = $(LUADIR)\*.h $(LUADIR)\*.c $(LUADIR)\*.hpp $(LUADIR)\Makefile $(LUADIR)\ReadMe.html
-BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html $(IRRKLANG_DLL)
+SOUNDFILES = $(SOUNDDIR)\cute_sound.h $(SOUNDDIR)\stb_vorbis.c
+BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
 
 !if "$(TARGET_CPU)" == "X64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_x64_$(LIBTYPE_SUFFIX)$(CFG)
@@ -90,10 +82,9 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 	$(__DEBUG_DEFINE_p) $(__NDEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
 	$(__THREAD_DEFINE_p) $(__UNICODE_DEFINE_p) /I$(WX_DIR)\include /I$(SETUPHDIR) \
 	/W4 /wd4100 /I. $(__DLLFLAG_p) /D_WINDOWS /I$(WX_DIR)\samples /DNOPCH $(__RTTIFLAG_9) \
-        $(IRRKLANG_CXXFLAGS) \
 	$(__EXCEPTIONSFLAG_10) $(CPPFLAGS) \
 	/D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS \
-	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR) $(EXTRACXXFLAGS) \
+	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR) $(EXTRACXXFLAGS) $(SOUND_FLAGS) \
 	/wd4459 /wd4458 /wd4457 /wd4456
 
 OBJDIR = ObjWin
@@ -403,7 +394,6 @@ clean:
 	-if exist *.res del *.res
 	-if exist $(EXEDIR)\Golly.exe del $(EXEDIR)\Golly.exe
 	-if exist $(EXEDIR)\bgolly.exe del $(EXEDIR)\bgolly.exe
-	-if exist $(EXEDIR)\irrKlang.dll del $(EXEDIR)\irrKlang.dll
 	-if exist $(EXEDIR)\RuleTableToTree.exe del $(EXEDIR)\RuleTableToTree.exe
 	-if exist golly.pdb del golly.pdb
 	-if exist $(LUADIR)\*.obj del $(LUADIR)\*.obj
@@ -417,8 +407,7 @@ $(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res
 	wx$(PORTNAME)$(WXUNIVNAME)$(WX_RELEASE)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_gl.lib \
 	$(__UNICOWS_LIB_p) kernel32.lib user32.lib gdi32.lib comdlg32.lib \
 	winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib \
-	rpcrt4.lib advapi32.lib wsock32.lib wininet.lib opengl32.lib $(IRRKLANG_LIBS)
-	$(COPYSOUNDLIB)
+	rpcrt4.lib advapi32.lib wsock32.lib wininet.lib opengl32.lib $(SOUND_LIB)
 
 golly.res: golly.rc
 	rc /fo$@ /d $(WX_CPU_DEF) /d WIN32 $(____DEBUGRUNTIME_2_p_1) $(__NO_VC_CRTDBG_p_1)  /d __WXMSW__ $(__WXUNIV_DEFINE_p_1) \
@@ -515,10 +504,12 @@ srcdist:
 	xcopy /S /I $(EXEDIR)\gollybase $(RELEASENAME)-src\gollybase
 	xcopy /S /I $(EXEDIR)\cmdline $(RELEASENAME)-src\cmdline	
 	mkdir $(RELEASENAME)-src\lua
+	mkdir $(RELEASENAME)-src\sound
 	mkdir $(RELEASENAME)-src\gui-wx
 	mkdir $(RELEASENAME)-src\gui-wx\bitmaps
 	mkdir $(RELEASENAME)-src\gui-wx\icons
 	for %%F IN ($(LUAFILES)) do xcopy %F $(RELEASENAME)-src\lua
+	for %%F IN ($(SOUNDFILES)) do xcopy %F $(RELEASENAME)-src\sound
 	for %%F IN ($(GUIFILES)) do xcopy %F $(RELEASENAME)-src\gui-wx
 	for %%F IN ($(GUIDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\gui-wx\%F
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip

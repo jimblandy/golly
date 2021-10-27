@@ -44,12 +44,6 @@ above links to open the script in your preferred text editor, then run the
 script by clicking on the same link.
 </p>
 
-<p>
-As well as graphics the overlay supports <a href="#sound">audio playback</a>.
-Note that audio support is a compile time option for Golly and is not enabled in the
-standard builds.
-</p>
-
 <p><a name="commands"></a>&nbsp;<br>
 <font size=+1><b>The overlay commands</b></font>
 
@@ -113,15 +107,14 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#save"><b>save</b></a><br>
 <a href="#scale"><b>scale</b></a><br>
 <a href="#set"><b>set</b></a><br>
-<a href="#sound"><b>sound</b></a><br>
 <a href="#target"><b>target</b></a><br>
 <a href="#text"><b>text</b></a><br>
 <a href="#textoption"><b>textoption</b></a><br>
-<a href="#theme"><b>theme</b></a>
+<a href="#theme"><b>theme</b></a><br>
+<a href="#transform"><b>transform</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
 <a href="#xy"><b>xy</b></a>
@@ -353,7 +346,6 @@ Delete the overlay or if a clip name is specified delete the named clip.
 When deleting the overlay this is equivalent to selecting
 <a href="layer.html#deleteoverlay">Delete Overlay</a> from the Layer menu.
 Note that it is an error to delete a clip that is the current render <a href="#target">target</a>.
-Also note that deleting the overlay will <a href="#stop">stop</a> any sound that is playing.
 </dd>
 <dd> Example: <b>ov("delete")</b></dd>
 <dd> Example: <b>ov("delete myclip")</b></dd>
@@ -735,22 +727,6 @@ render target with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 <dd> Example: <b>ov("save 0 0 100 80 "..g.getdir("temp").."foo.png")</b></dd>
 </p>
 
-<a name="set"></a><p><dt><b>set <i>x1 y1 (...xn yn)</i></b></dt>
-<dd>
-Set the specified pixels in the render <a href="#target">target</a> to the current <a href="#rgba">rgba</a> values.
-Pixels outside the render target are silently ignored.
-</dd>
-<dd>Examples:</dd>
-<dd><i>-- set pixel at (10, 20)</i></dd>
-<dd><b>ov("set 10 20")</b></dd>
-<dd> &nbsp;or
-<dd><b>ovt{"set", 10, 20}</b></dd>
-<dd><i>-- set pixels at (10, 20), (15, 25) and (16, 25)</i></dd>
-<dd><b>ov("set 10 20 15 25 16 25")</b></dd>
-<dd> &nbsp;or
-<dd><b>ovt{"set", 10, 20, 15, 25, 16, 25}</b></dd>
-</p>
-
 <a name="scale"></a><p><dt><b>scale <i>quality x y wd ht clipname</i></b></dt>
 <dd>
 Paste the named clip into the current render <a href="#target">target</a>, scaling it so it fits into the
@@ -770,66 +746,20 @@ use a fast, but lower quality, scaling algorithm
 <dd> Example: <b>ov("scale best 10 10 100 200 image")</b></dd>
 </p>
 
-<a name="sound"></a><p><dt><b>sound <i>(command (soundfile))</i></b></dt>
+<a name="set"></a><p><dt><b>set <i>x1 y1 (...xn yn)</i></b></dt>
 <dd>
-Controls playback of audio files. If present the <i>soundfile</i> argument must point to a WAV or OGG format
-file containing the sound to be played. Multiple sounds can be played simultaneously.
+Set the specified pixels in the render <a href="#target">target</a> to the current <a href="#rgba">rgba</a> values.
+Pixels outside the render target are silently ignored.
 </dd>
-</p>
-<p><dd>
-If the command is invoked with no arguments then it returns a string indicating whether sound is available.
-<table cellspacing=0 cellpadding=0>
-<tr><td width=20><b>0</b></td><td>Sound support is not available</td></tr>
-<tr><td width=20><b>1</b></td><td>Sound support is available but failed to initialize</td></tr>
-<tr><td width=20><b>2</b></td><td>Sound support is available and ready to use</td></tr>
-</table>
-</dd>
-</p>
-<p><dd>
-There are seven sound <i>commands</i>:
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile (level)</i></b></td></tr>
-<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><b>loop <i>soundfile (level)</i></b></td></tr>
-<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td></tr>
-<tr><td>Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><a name="pause"></a><b>pause <i>(soundfile)</i></b></td><td width=20></td></tr>
-<tr><td>Pause all sound playback or just the specified <i>soundfile</i>.</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><a name="stop"></a><b>resume <i>(soundfile)</i></b></td></tr>
-<tr><td>Resume all sound playback or just the specified <i>soundfile</i>.</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><a name="volume"></a><b>volume <i>soundfile level</i></b></td></tr>
-<tr><td>Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td></tr>
-<tr><td>Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, <i>"paused"</i> if the specified sound is paused or <i>"stopped"</i> otherwise.
-</table>
-</dd>
-<p><dd>
-Notes:
-<p><dd>
-<ul>
-<li>Deleting the overlay will stop any sounds that are playing.</li>
-<li>The <b>play</b> command returns the empty string "" if successful and an error message otherwise.</li>
-<li>The <b>state</b> command will return <i>"unknown"</i> if the specified sound is not found.</li>
-<li>If sound support is not available or failed to initialize then the sound commands will silently do nothing.</li>
-</dd>
-</p>
-<p>
-<dd> Example: <b>ov("sound play beep.wav 0.5") -- play beep.wav at half volume</b></dd>
-<dd> Example: <b>ov("sound play beep.wav") -- play beep.wav at full volume</b></dd>
-<dd> Example: <b>ov("sound stop") -- stop all sounds playing</b></dd>
-<dd> Example: <b>ov("sound loop background.ogg") -- play background.ogg in a loop at full volume</b></dd>
-<dd> Example: <b>ov("sound volume background.ogg 0.7") -- set background.ogg volume to 0.7</b></dd>
-<dd> Example: <b>ov("sound pause background.ogg") -- pause playback of background.ogg</b></dd>
-<dd> Example: <b>ov("sound resume") -- resume playback of all paused sounds</b></dd>
+<dd>Examples:</dd>
+<dd><i>-- set pixel at (10, 20)</i></dd>
+<dd><b>ov("set 10 20")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"set", 10, 20}</b></dd>
+<dd><i>-- set pixels at (10, 20), (15, 25) and (16, 25)</i></dd>
+<dd><b>ov("set 10 20 15 25 16 25")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"set", 10, 20, 15, 25, 16, 25}</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>

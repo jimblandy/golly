@@ -1958,7 +1958,7 @@ static void DoFrame()
 
 int EMSCRIPTEN_KEEPALIVE main()
 {
-    SetMessage("This is Golly 4.1b1 for the web.  Copyright 2005-2020 The Golly Gang.");
+    SetMessage("This is Golly 4.1b2 for the web.  Copyright 2005-2021 The Golly Gang.");
     InitPaths();                // init tempdir, prefsfile, etc
     MAX_MAG = 5;                // maximum cell size = 32x32
     maxhashmem = 300;           // enough for caterpillar

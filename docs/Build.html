@@ -22,7 +22,6 @@ This document contains instructions for how to build the desktop version of Goll
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#glin"><b>On Linux</b></a><br>
 <a href="#rebuilding"><b>Rebuilding wxWidgets and/or Golly</b><br>
-<a href="#sound"><b>How to install optional sound with irrKlang</b></a><br>
 <a href="#bgolly"><b>How to build bgolly</b></a><br>
 <a href="#source"><b>Source code road map</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#dir"><b>Directory structure</b></a><br>
@@ -303,45 +302,6 @@ The safe way to make sure that a call to nmake rebuilds everything that it needs
 <p>
 Run the above immediately before the standard <tt>nmake -f makefile.vc</tt> to ensure a completely fresh new build.
 
-<a name="sound"></a>
-<h2>How to install optional sound with irrKlang</h2>
-
-<p>
-Golly can use the irrKlang library to play sounds. The Overlay has a sound command that can be used
-in Lua scripts to do this.
-
-<p>
-You can download the irrKlang library from
-<a href="http://www.ambiera.com/irrklang/downloads.html">http://www.ambiera.com/irrklang/downloads.html</a>.
-Make sure you get the 64-bit version.
-The download is a zip file containing the libraries for Windows, Mac and Linux.
-Golly has been tested with irrKlang 1.5 and 1.6.
-
-<p>
-Unzip the download file.  You then need to edit the makefile for your platform to enable sound and then
-<a href="#golly">build Golly</a>.
-
-<h3>On Windows</h3>
-Edit <tt>local-win.mk</tt> and uncomment the line:
-<pre>
-ENABLE_SOUND = 1
-</pre>
-Change the path for IRRKLANGDIR to the full path of where you unzipped the irrKlang zip file.
-
-<h3>On Mac</h3>
-Edit <tt>makefile-mac</tt> and uncomment the line:
-<pre>
-ENABLE_SOUND = 1
-</pre>
-Change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
-
-<h3>On Linux</h3>
-Edit <tt>local-gtk.mk</tt> and uncomment the line:
-<pre>
-ENABLE_SOUND = 1
-</pre>
-Also change the path for IRRKLANGDIR to match where you unzipped the irrKlang zip file.
-
 
 <a name="bgolly"></a>
 <h2>How to build bgolly</h2>
@@ -443,6 +403,11 @@ a .tar.gz file.  You should see the following directories:
 <p><b>Scripts</b><p>
 <dd>
    Contains Lua and Python scripts that can be run by Golly.
+</dd>
+
+<p><b>sound</b><p>
+<dd>
+   Contains the source files for sound support.
 </dd>
 
 <p>
