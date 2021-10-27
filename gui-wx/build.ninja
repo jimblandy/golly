@@ -20,18 +20,11 @@ cmddir = ../cmdline
 exedir = ..
 gollydir = 
 
-# uncomment the lines in the "sound section" below to enable Golly sound support
+# comment out the lines in the "sound section" below to disable Golly sound support
 # sound section START
-#irrklangdir = /home/chris/irrKlang-64bit-1.6.0
-#irrklang_cxxflags = -I$irrklangdir/include -DENABLE_SOUND
-#irrklang_libdir = $irrklangdir/bin/linux-gcc-64/
-#irrklang_libname = IrrKlang
-#irrklang_fullname = lib$irrklang_libname.so
-#irrklang_ldflags = -L$irrklang_libdir -Wl,-rpath='$$ORIGIN' -l$irrklang_libname
-#rule installsound
-   #command = cp $irrklang_libdir/$irrklang_fullname $out
-   #description = COPY $irrklang_libname
-#build $exedir/$irrklang_fullname: installsound
+sounddir = ../sound
+sound_cxxflags = -DENABLE_SOUND -I$sounddir
+sound_ldflags = -lSDL2
 # sound section END
 
 # lua cflags
@@ -123,7 +116,7 @@ rule cxxc
 # wx build rule
 rule cxxc_wx
    depfile = $out.d
-   command = g++ -MMD -MF $out.d $cxxflags $wx_cxxflags $irrklang_cxxflags $extra_cxxflags -c $in -o $out
+   command = g++ -MMD -MF $out.d $cxxflags $wx_cxxflags $sound_cxxflags $extra_cxxflags -c $in -o $out
    deps = gcc
    description = CXX $in -> $out
 
@@ -225,7 +218,7 @@ build $exedir/golly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.
       $objdir/wxfile.o $objdir/wxedit.o $objdir/wxcontrol.o $objdir/wxtimeline.o $
       $objdir/wxundo.o $objdir/wxselect.o $objdir/wxlayer.o $objdir/wxmain.o $objdir/wxgolly.o $
       $lua_lib
-   extra_ldflags = $extralibs_opengl $wx_ldflags $lua_ldflags $irrklang_ldflags
+   extra_ldflags = $extralibs_opengl $wx_ldflags $lua_ldflags $sound_ldflags
   
 # link bgolly
 build $exedir/bgolly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.o $
