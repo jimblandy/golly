@@ -49,15 +49,11 @@ local render_button
 local replace_button
 local save_button
 local scale_button
-local sound_button
 local text_button
 local transition_button
 
 local extra_layer = false
 local return_to_main_menu = false
-
--- flag if sound is available
-local sound_enabled = g.sound() == 2
 
 -- timing
 local tstart = gp.timerstart
@@ -2284,152 +2280,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local volume = 70
-local paused = false
-
-local function test_sound()
-    local oldblend = ov("blend 0")
-    ov("rgba 0 0 128 255")
-    ovt{"fill"}
-
-    -- draw exit message
-    ov("blend 1")
-    ov(op.white)
-    local oldfont = ov(demofont)
-    local exitw = maketext("Click or press enter to return to the main menu.", nil, nil, 2, 2)
-    pastetext(floor((wd - exitw) / 2), 550)
-
-    -- draw commands
-    ov("font 22 mono")
-    ov(op.yellow)
-    local w, _ = maketext("sound play audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 50)
-    w, _ = maketext("sound loop audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 140)
-    w, _ = maketext("sound stop", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 230)
-
-    -- draw controls
-    ov("font 16 mono")
-    ov(op.white)
-    w, _ = maketext("Press P to play sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 20)
-    w, _ = maketext("Press L to loop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 110)
-    w, _ = maketext("Press S to stop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 200)
-    w, _ = maketext("Press - or + to adjust volume", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 290)
-
-    -- update screen then copy background
-    ov("update")
-    local bgclip = "bg"
-    ov("copy 0 0 0 0 "..bgclip)
-
-    local soundname = "sounds/breakout/levelcompleteloop.ogg"
-    local running = true
-
-    -- main loop
-    local result = ""
-    local command = "stop"
-    while running do
-        -- check for input
-        local event = g.getevent()
-        if event:find("^oclick") or event == "key return none" then
-            running = false
-        elseif event == "key p none" then
-            command = "play"
-            result = g.sound("play", soundname, volume / 100)
-            paused = false
-        elseif event == "key l none" then
-            command = "loop"
-            result = g.sound("loop", soundname, volume / 100)
-            paused = false
-        elseif event == "key s none" then
-            command = "stop"
-            g.sound("stop")
-            result = ""
-        elseif event == "key - none" then
-            volume = volume - 10
-            if (volume < 0) then volume = 0 end
-            command = "volume "..(volume / 100)
-            g.sound("volume", soundname, volume / 100)
-        elseif event == "key + none" or event == "key = none" then
-            volume = volume + 10
-            if (volume > 100) then volume = 100 end
-            command = "volume "..(volume / 100)
-            g.sound("volume", soundname, volume / 100)
-        elseif event == "key q none" then
-            if paused then
-                paused = false
-                command = "resume"
-                g.sound("resume", soundname)
-            else
-                paused = true
-                command = "pause"
-                g.sound("pause", soundname)
-            end
-        end
-
-        -- draw background
-        ov("blend 0")
-        ovt{"paste", 0, 0, bgclip}
-
-        -- draw pause or resume
-        ov("font 16 mono")
-        ov("blend 1")
-        ov(op.white)
-        if paused then
-            w, _ = maketext("Press Q to resume playback", nil, nil, 2, 2)
-        else
-            w, _ = maketext("Press Q to pause playback", nil, nil, 2, 2)
-        end
-        pastetext(floor((wd - w) / 2), 380)
-        ov(op.yellow)
-        ov("font 22 mono")
-        if paused then
-            w, _ = maketext("sound resume audio.wav", nil, nil, 2, 2)
-        else
-            w, _ = maketext("sound pause audio.wav", nil, nil, 2, 2)
-        end
-        pastetext(floor((wd - w) / 2), 420)
-
-        -- display volume
-        ov("blend 1")
-        w, _ = maketext("sound volume audio.wav "..(volume / 100), nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 320)
-
-        -- draw last command
-        ov("blend 1")
-        ov(op.cyan)
-        ov("font 16 mono")
-        if (result ~= "" and result ~= nil) then
-            w, _ = maketext("Last command: "..command.." ("..result..")", nil, nil, 2, 2)
-        else
-            w, _ = maketext("Last command: "..command, nil, nil, 2, 2)
-        end
-        pastetext(floor((wd - w) / 2), 480)
-
-        -- draw status
-        local state = g.sound("state", soundname)
-        w, _ = maketext("State: "..state, nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 510)
-
-        ov("update")
-    end
-
-    -- stop any sounds before exit
-    g.sound("stop")
-
-    -- no point calling repeat_test()
-    return_to_main_menu = true
-    ov("delete "..bgclip)
-    ov("font "..oldfont)
-    ov("blend "..oldblend)
-end
-
---------------------------------------------------------------------------------
-
 local function test_mouse()
     ::restart::
 
@@ -2537,7 +2387,6 @@ local function create_menu_buttons()
     replace_button = op.button(     longest, test_replace)
     save_button = op.button(        longest, test_save)
     scale_button = op.button(       longest, test_scale)
-    sound_button = op.button(       longest, test_sound)
     text_button = op.button(        longest, test_text)
     transition_button = op.button(  longest, test_transitions)
 
@@ -2557,7 +2406,6 @@ local function create_menu_buttons()
     replace_button.setlabel(     "Replacing Pixels", false)
     save_button.setlabel(        "Saving the Overlay", false)
     scale_button.setlabel(       "Scaling Images", false)
-    sound_button.setlabel(       "Sounds", false)
     text_button.setlabel(        "Text and Transforms", false)
     transition_button.setlabel(  "Transitions", false)
 end
@@ -2565,7 +2413,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 18
+    local numbutts = 17
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 9
@@ -2578,9 +2426,6 @@ local function main_menu()
     ov(demofont)
     local w2, h2 = maketext("Click on a button to see what's possible.", "smalltext")
     local textht = h1 + textgap + h2
-
-    -- check if sound is enabled
-    if not sound_enabled then numbutts = numbutts - 1 end
 
     -- resize overlay to fit buttons and text
     wd = hgap + buttwd + hgap + w1 + hgap
@@ -2612,9 +2457,6 @@ local function main_menu()
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
     scale_button.show(x, y)         y = y + buttgap + buttht
-    if sound_enabled then
-        sound_button.show(x, y)         y = y + buttgap + buttht
-    end
     text_button.show(x, y)          y = y + buttgap + buttht
     transition_button.show(x, y)
 
