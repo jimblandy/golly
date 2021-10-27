@@ -260,11 +260,13 @@ to a new file called <tt>local-gtk.mk</tt>.  This file is included by <tt>makefi
 Edit <tt>local-gtk.mk</tt> and make any desired changes to the supplied default settings.
 
 <p>
-You will probably need to add the development package for Python 3 (version > 3.3).<br>
+You will probably need to add the development package for Python 3 (version > 3.3),
+and if ENABLE_SOUND is defined then you need to install the SDL2 headers and library.
 For example, on Ubuntu:
 
 <pre>
    sudo apt-get install python3-dev
+   sudo apt-get install libsdl2-dev
 </pre>
 
 <p>
