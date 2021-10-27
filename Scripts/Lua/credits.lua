@@ -20,9 +20,11 @@ local rand = math.random
 local floor = math.floor
 local sin = math.sin
 
-local wd, ht  = g.getview(g.getlayer())  -- viewport width and height
+local wd, ht -- viewport width and height (set after hiding scroll bars)
 
-local sound_enabled = false  -- flag if sound available
+-- check if sound is available
+local sound_enabled = g.sound() == 2
+
 local extra_layer = false    -- whether the extra layer was created
 
 local minzoom = 1/16
@@ -70,21 +72,27 @@ end
 --------------------------------------------------------------------------------
 
 local function animate_credits()
-    -- create the overlay
+    -- get viewport dimensions and create the overlay
+    wd, ht = g.getview(g.getlayer())
     ov("create "..wd.." "..ht)
-
-    -- check if sound is available
-    if g.sound() == 2 then sound_enabled = true end
 
     -- create a new layer
     g.addlayer()
     extra_layer = true
     g.setalgo("QuickLife")
-    g.setname("Credits")
+
+    -- create graduated background
+    local bgclip = "bg"
+    create_anim_bg(bgclip)
+    -- draw background now so we won't see the pattern created by g.open
+    ov("blend 0")
+    ovt{"paste", 0, 0, bgclip}
+    ov("update")
 
     -- add the pattern
     g.open("../../Patterns/Life/Guns/golly-ticker.rle")
     g.run(1024)
+    g.setname("Credits")
 
     -- create the cellview
     ov("cellview 1640 -138 1024 1024")
@@ -467,7 +475,7 @@ Kenichi Morita
 
     -- start music if sound enabled
     if sound_enabled then
-        g.sound("loop", "sounds/credits.ogg")
+        g.sound("loop", "sounds/credits.ogg", 0.5)
         creditstext1 = creditstext1.."\n\n\n\nMusic\n\n\n'Contentment'\n"
         creditstext2 = creditstext2.."\n\n\n\n\n\n\n\nWritten and performed by Chris Rowett"
     end
@@ -480,10 +488,6 @@ Kenichi Morita
     local creditsclip2 = "credits2"
     local credwidth1, credheight1 = maketext(creditstext1, creditsclip1, "rgba 128 255 255 255", 2, 2)
     local credwidth2, credheight2 = maketext(creditstext2, creditsclip2, "rgba 224 255 255 255", 2, 2)
-
-    -- create graduated background
-    local bgclip = "bg"
-    create_anim_bg(bgclip)
 
     -- create stars
     local starx = {}
