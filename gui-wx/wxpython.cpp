@@ -2625,6 +2625,60 @@ static PyObject* py_os(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_sound(PyObject* self, PyObject* args)
+{
+    AUTORELEASE_POOL
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+    
+    const char* cmd = "";
+    const char* soundfile = "";
+    float volume = 1.0;
+    if (!G_PyArg_ParseTuple(args, (char*)"|ssf", &cmd, &soundfile, &volume)) return NULL;
+
+    #ifdef ENABLE_SOUND
+        // check for sound
+        if (cmd[0] == 0) {
+            if (GSF_SoundEnabled()) {
+                // sound is enabled and initialized
+                return G_Py_BuildValue((char*)"i", 2);
+            } else {
+                // failed to initialize sound
+                return G_Py_BuildValue((char*)"i", 1);
+            }
+        }
+        
+        // check which sound command is specified
+        const char* result = NULL;
+        if        (strcmp(cmd, "play") == 0) {      result = GSF_SoundPlay(soundfile, volume, false);
+        } else if (strcmp(cmd, "loop") == 0) {      result = GSF_SoundPlay(soundfile, volume, true);
+        } else if (strcmp(cmd, "stop") == 0) {      result = GSF_SoundStop(soundfile);
+        } else if (strcmp(cmd, "state") == 0) {     result = GSF_SoundState(soundfile);
+        } else if (strcmp(cmd, "volume") == 0) {    result = GSF_SoundVolume(soundfile, volume);
+        } else if (strcmp(cmd, "pause") == 0) {     result = GSF_SoundPause(soundfile);
+        } else if (strcmp(cmd, "resume") == 0) {    result = GSF_SoundResume(soundfile);
+        } else {
+            PYTHON_ERROR("unknown sound command");
+        }
+        
+        if (result == NULL) {
+            G_Py_RETURN_NONE;
+        } else {
+            // check if GSF_SoundPlay etc returned an error msg
+            if (result[0] == 'E' && result[1] == 'R' && result[2] == 'R' ) {
+                std::string msg = result + 4; // skip past "ERR:"
+                PYTHON_ERROR(msg.c_str());
+            }
+            return G_Py_BuildValue((char*)"s", result); // should be from GSF_SoundState
+        }
+    #else
+        // sound support is not enabled
+        return G_Py_BuildValue((char*)"i", 0);
+    #endif
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setoption(PyObject* self, PyObject* args)
 {
     AUTORELEASE_POOL
@@ -3122,6 +3176,7 @@ static PyMethodDef py_methods[] = {
     { "getcolors",    py_getcolors,  METH_VARARGS, "get color(s) used in current layer" },
     // miscellaneous
     { "os",           py_os,         METH_VARARGS, "get the current OS (Windows/Mac/Linux)" },
+    { "sound",        py_sound,      METH_VARARGS, "control playing of audio" },
     { "setoption",    py_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
     { "getoption",    py_getoption,  METH_VARARGS, "return current value of given option" },
     { "setcolor",     py_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },

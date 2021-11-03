@@ -1598,57 +1598,39 @@ bool GSF_SoundEnabled()
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* GSF_SoundPlay(const char* args, bool loop)
+const char* GSF_SoundPlay(const char* soundfile, float volume, bool loop)
 {
     // check for soundctx
     if (soundctx) {
-        if (*args == 0) {
+        if (*soundfile == 0) {
             if (loop) {
-                return SoundError("sound loop requires an argument");
+                return SoundError("sound loop requires a sound file");
             } else {
-                return SoundError("sound play requires an argument");
+                return SoundError("sound play requires a sound file");
             }
         }
 
-        // check for the optional volume argument
-        float v = 1;
-        const char* name = args;
-
-        // skip name
-        char* scan = (char*)args;
-        while (*scan && *scan != ' ') {
-            scan++;
-        }
-
-        // check if there is a volume argument
-        if (*scan) {
-            if (sscanf(scan, " %f", &v) == 1) {
-                if (v < 0.0 || v > 1.0) {
-                    if (loop) {
-                        return SoundError("sound loop volume must be in the range 0.0 to 1.0");
-                    } else {
-                        return SoundError("sound play volume must be in the range 0.0 to 1.0");
-                    }
-                }
+        if (volume < 0.0 || volume > 1.0) {
+            if (loop) {
+                return SoundError("sound loop volume must be in the range 0.0 to 1.0");
+            } else {
+                return SoundError("sound play volume must be in the range 0.0 to 1.0");
             }
-
-            // null terminate name
-            *scan = 0;
         }
         
-        cs_loaded_sound_t* sndptr = LoadedSound(name);
+        cs_loaded_sound_t* sndptr = LoadedSound(soundfile);
         if (sndptr == NULL) {
             // named sound hasn't been loaded yet
             sndptr = (cs_loaded_sound_t*)malloc(sizeof(cs_loaded_sound_t));
         
-            // check that name ends with .ogg or .wav
-            std::string namestr = name;
+            // check that soundfile ends with .ogg or .wav
+            std::string namestr = soundfile;
             std::size_t foundogg = namestr.rfind(".ogg");
             std::size_t foundwav = namestr.rfind(".wav");
             if (foundogg != std::string::npos && foundogg == namestr.length()-4) {
-                *sndptr = cs_load_ogg(name);
+                *sndptr = cs_load_ogg(soundfile);
             } else if (foundwav != std::string::npos && foundwav == namestr.length()-4) {
-                *sndptr = cs_load_wav(name);
+                *sndptr = cs_load_wav(soundfile);
             } else {
                 free(sndptr);
                 return SoundError("sound file extension must be .wav or .ogg");
@@ -1659,12 +1641,12 @@ const char* GSF_SoundPlay(const char* args, bool loop)
             }
             
             // remember this successfully loaded sound
-            sounds[name] = sndptr;
+            sounds[soundfile] = sndptr;
 
         } else {
             // stop this previously loaded sound if already playing
             cs_lock(soundctx);
-            cs_playing_sound_t* sound = FindSound(name);
+            cs_playing_sound_t* sound = FindSound(soundfile);
             if (sound && cs_is_active(sound)) {
                 cs_stop_sound(sound);
                 // next cs_mix call will remove sound from playing list
@@ -1674,8 +1656,8 @@ const char* GSF_SoundPlay(const char* args, bool loop)
 
         // set the volume and looped value
         cs_play_sound_def_t snddef = cs_make_def(sndptr);
-        snddef.volume_left = v;
-        snddef.volume_right = v;
+        snddef.volume_left = volume;
+        snddef.volume_right = volume;
         snddef.looped = loop ? 1 : 0;
         
         // play the sound
@@ -1695,19 +1677,15 @@ const char* GSF_SoundPlay(const char* args, bool loop)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* GSF_SoundStop(const char* args)
+const char* GSF_SoundStop(const char* soundfile)
 {
     if (soundctx) {
-        // check for argument
-        if (*args == 0) {
+        if (*soundfile == 0) {
             cs_stop_all_sounds(soundctx);
         } else {
-            // skip whitespace
-            while (*args == ' ') args++;
-
             // stop named sound if it's playing
             cs_lock(soundctx);
-            cs_playing_sound_t* sound = FindSound(args);
+            cs_playing_sound_t* sound = FindSound(soundfile);
             if (sound && cs_is_active(sound)) {
                 cs_stop_sound(sound);
                 // next cs_mix call will remove sound from playing list
@@ -1723,14 +1701,13 @@ const char* GSF_SoundStop(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* GSF_SoundState(const char* args)
+const char* GSF_SoundState(const char* soundfile)
 {
     bool playing = false;
     bool paused = false;
 
     if (soundctx) {
-        // check for argument
-        if (*args == 0) {
+        if (*soundfile == 0) {
             // see if any sounds are playing
             cs_lock(soundctx);
             cs_playing_sound_t* sound = cs_get_playing(soundctx);
@@ -1740,15 +1717,12 @@ const char* GSF_SoundState(const char* args)
             }
             cs_unlock(soundctx);
         } else {
-            // skip whitespace
-            while (*args == ' ') args++;
-            
             // check if named sound has been loaded
-            if (LoadedSound(args) == NULL) return "unknown";
+            if (LoadedSound(soundfile) == NULL) return "unknown";
 
             // see if named sound is playing
             cs_lock(soundctx);
-            cs_playing_sound_t* sound = FindSound(args);
+            cs_playing_sound_t* sound = FindSound(soundfile);
             if (sound && cs_is_active(sound)) {
                 playing = true;
                 paused = sound->paused == 1;
@@ -1773,35 +1747,22 @@ const char* GSF_SoundState(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* GSF_SoundVolume(const char* args)
+const char* GSF_SoundVolume(const char* soundfile, float volume)
 {
     // check for soundctx
     if (soundctx) {
-        float v = 1;
-        const char* name = args;
+        if (*soundfile == 0) {
+            return SoundError("sound volume command requires a sound file");
+        }
 
-        // skip name
-        char* scan = (char*)args;
-        while (*scan && *scan != ' ') scan++;
-
-        // check if there is a volume argument
-        if (*scan) {
-            if (sscanf(scan, " %f", &v) == 1) {
-                if (v < 0.0 || v > 1.0) {
-                    return SoundError("sound volume must be in the range 0.0 to 1.0");
-                }
-            } else {
-                return SoundError("sound volume command requires two arguments");
-            }
-
-            // null terminate name
-            *scan = 0;
+        if (volume < 0.0 || volume > 1.0) {
+            return SoundError("sound volume must be in the range 0.0 to 1.0");
         }
 
         cs_lock(soundctx);
-        cs_playing_sound_t* sound = FindSound(name);
+        cs_playing_sound_t* sound = FindSound(soundfile);
         if (sound && cs_is_active(sound)) {
-            cs_set_volume(sound, v, v);
+            cs_set_volume(sound, volume, volume);
         }
         cs_unlock(soundctx);
     }
@@ -1813,12 +1774,12 @@ const char* GSF_SoundVolume(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* GSF_SoundPause(const char* args)
+const char* GSF_SoundPause(const char* soundfile)
 {
     // check for soundctx
     if (soundctx) {
         // check for argument
-        if (*args == 0) {
+        if (*soundfile == 0) {
             // pause all sounds
             cs_lock(soundctx);
             cs_playing_sound_t* sound = cs_get_playing(soundctx);
@@ -1828,12 +1789,9 @@ const char* GSF_SoundPause(const char* args)
             }
             cs_unlock(soundctx);
         } else {
-            // skip whitespace
-            while (*args == ' ') args++;
-
             // pause the named sound
             cs_lock(soundctx);
-            cs_playing_sound_t* sound = FindSound(args);
+            cs_playing_sound_t* sound = FindSound(soundfile);
             if (sound && cs_is_active(sound)) {
                 cs_pause_sound(sound, 1);
             }
@@ -1848,12 +1806,12 @@ const char* GSF_SoundPause(const char* args)
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
-const char* GSF_SoundResume(const char* args)
+const char* GSF_SoundResume(const char* soundfile)
 {
     // check for soundctx
     if (soundctx) {
         // check for argument
-        if (*args == 0) {
+        if (*soundfile == 0) {
             // resume all paused sounds
             cs_lock(soundctx);
             cs_playing_sound_t* sound = cs_get_playing(soundctx);
@@ -1863,12 +1821,9 @@ const char* GSF_SoundResume(const char* args)
             }
             cs_unlock(soundctx);
         } else {
-            // skip whitespace
-            while (*args == ' ') args++;
-
             // resume the named sound
             cs_lock(soundctx);
-            cs_playing_sound_t* sound = FindSound(args);
+            cs_playing_sound_t* sound = FindSound(soundfile);
             if (sound && cs_is_active(sound)) {
                 cs_pause_sound(sound, 0);
             }

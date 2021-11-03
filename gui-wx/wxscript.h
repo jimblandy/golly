@@ -114,12 +114,12 @@ const char* GSF_getpath();
 const char* GSF_getinfo();
 #ifdef ENABLE_SOUND
     bool GSF_SoundEnabled();
-    const char* GSF_SoundPlay(const char* args, bool loop);
-    const char* GSF_SoundStop(const char* args);
-    const char* GSF_SoundState(const char* args);
-    const char* GSF_SoundVolume(const char* args);
-    const char* GSF_SoundPause(const char* args);
-    const char* GSF_SoundResume(const char* args);
+    const char* GSF_SoundPlay(const char* soundfile, float volume, bool loop);
+    const char* GSF_SoundStop(const char* soundfile);
+    const char* GSF_SoundState(const char* soundfile);
+    const char* GSF_SoundVolume(const char* soundfile, float volume);
+    const char* GSF_SoundPause(const char* soundfile);
+    const char* GSF_SoundResume(const char* soundfile);
 #endif
 
 #endif

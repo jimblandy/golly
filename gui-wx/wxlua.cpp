@@ -2605,26 +2605,20 @@ static int g_sound(lua_State* L)
         
         // numargs should be 1, 2 or 3
         const char* cmd = luaL_checkstring(L, 1);
-        
-        // build args for GSF_SoundPlay etc
-        std::string args = "";
-        if (numargs > 1) args += luaL_checkstring(L, 2);    // soundfile
-        if (numargs > 2) {
-            float level = luaL_checknumber(L, 3);   // volume (0.0 to 1.0)
-            char s[16];
-            sprintf(s, " %f", level);
-            args += s;
-        }
+        const char* soundfile = "";
+        float volume = 1.0;
+        if (numargs > 1) soundfile = luaL_checkstring(L, 2);
+        if (numargs > 2) volume = luaL_checknumber(L, 3);
         
         // check which sound command is specified
         const char* result = NULL;
-        if        (strcmp(cmd, "play") == 0) {      result = GSF_SoundPlay(args.c_str(), false);
-        } else if (strcmp(cmd, "loop") == 0) {      result = GSF_SoundPlay(args.c_str(), true);
-        } else if (strcmp(cmd, "stop") == 0) {      result = GSF_SoundStop(args.c_str());
-        } else if (strcmp(cmd, "state") == 0) {     result = GSF_SoundState(args.c_str());
-        } else if (strcmp(cmd, "volume") == 0) {    result = GSF_SoundVolume(args.c_str());
-        } else if (strcmp(cmd, "pause") == 0) {     result = GSF_SoundPause(args.c_str());
-        } else if (strcmp(cmd, "resume") == 0) {    result = GSF_SoundResume(args.c_str());
+        if        (strcmp(cmd, "play") == 0) {      result = GSF_SoundPlay(soundfile, volume, false);
+        } else if (strcmp(cmd, "loop") == 0) {      result = GSF_SoundPlay(soundfile, volume, true);
+        } else if (strcmp(cmd, "stop") == 0) {      result = GSF_SoundStop(soundfile);
+        } else if (strcmp(cmd, "state") == 0) {     result = GSF_SoundState(soundfile);
+        } else if (strcmp(cmd, "volume") == 0) {    result = GSF_SoundVolume(soundfile, volume);
+        } else if (strcmp(cmd, "pause") == 0) {     result = GSF_SoundPause(soundfile);
+        } else if (strcmp(cmd, "resume") == 0) {    result = GSF_SoundResume(soundfile);
         } else {
             GollyError(L, "unknown sound command");
         }
