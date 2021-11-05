@@ -363,6 +363,11 @@ static int g_store(lua_State* L)
     const char* err = tempalgo->setrule(currlayer->algo->getrule());
     if (err) tempalgo->setrule(tempalgo->DefaultRule());
     
+    if (savexrle) {
+        // ensure non-zero generation count will be included in #CXRLE comment
+        tempalgo->setGeneration( currlayer->algo->getGeneration() );
+    }
+    
     // copy cell array into temporary universe
     bool multistate = (len & 1) == 1;
     int ints_per_cell = multistate ? 3 : 2;

@@ -629,6 +629,11 @@ static PyObject* py_store(PyObject* self, PyObject* args)
     const char* err = tempalgo->setrule(currlayer->algo->getrule());
     if (err) tempalgo->setrule(tempalgo->DefaultRule());
     
+    if (savexrle) {
+        // ensure non-zero generation count will be included in #CXRLE comment
+        tempalgo->setGeneration( currlayer->algo->getGeneration() );
+    }
+    
     // copy cell list into temporary universe
     bool multistate = (G_PyList_Size(inlist) & 1) == 1;
     int ints_per_cell = multistate ? 3 : 2;

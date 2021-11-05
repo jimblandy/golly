@@ -18,8 +18,10 @@
      less than 500ms when the selection is complete.
 <li> Lua's <a href="lua.html#sleep">sleep</a> command now has a resolution of about 1ms on Windows
      (previously it was about 15ms).
-<li> The Lua <a href="lua.html#setoption">setoption</a> command and Python <a href="python.html#setoption">setoption</a>
-     command now recognize "showcellborders" for showing or hiding cell borders when zoomed in &gt; 2x.
+<li> The <a href="lua.html#setoption">setoption</a> command now recognizes "showcellborders" for
+     showing or hiding cell borders when zoomed in &gt; 2x.
+<li> If the "Save Extended RLE" option is ticked then the <a href="lua.html#store">store</a> command
+     now ensures a non-zero generation count is included in the saved file's #CXRLE comment line.
 <li> Fixed a bug in Mac app when drawing while a pattern is generating (only on Retina screens).
 <li> Fixed a bug in Larger than Life weighted neighborhoods with negative counts.
 <li> Fixed some problems in hexgrid.lua.
