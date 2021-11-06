@@ -2572,15 +2572,13 @@ static int g_sleep(lua_State* L)
         wxMilliSleep(ms);
     } else {
         // do event checking every 100ms (lets user abort sleep if ms value is very large)
-        int i = 0;
-        while (i < ms) {
-            wxMilliSleep(100);
+        while (ms > 100) {
             CheckEvents(L);
-            i += 100;
+            wxMilliSleep(100);
+            ms -= 100;
         }
-        // i >= ms
-        i -= ms;
-        if (i > 0) wxMilliSleep(i);
+        // ms is > 0 and <= 100
+        wxMilliSleep(ms);
     }
     
     return 0;   // no result
