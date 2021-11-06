@@ -1,0 +1,41 @@
+#N binary-counter-and-iterated-log-gun.rle
+#O Emerson J. Perkins, 31 July to 1 August 2010
+#C 
+#C Top: backrakes containing binary counters
+#C     Their front engine is a backrake breeder firing new backrakes
+#C backwards, but they interfere with each other (in a good way),
+#C eventually making a binary counter. Its period is adjustable by
+#C moving the trailing spaceship; starting with the first p32 case,
+#C every 24 cells back doubles the period. A p6 spaceship is released
+#C every time the counter cycles through all states.
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=3089#p3089
+#C
+#C Bottom: O(log*(t)) gun
+#C     After the discovery of the binary counter, Adam P. Goucher
+#C replaced the trailing spaceship with a stationary converter behind
+#C that emits sideways spaceship instead. This way the binary counter
+#C keeps lengthening all the time, resulting a very sparse stream of
+#C outputs where they appear at a rate of O(log*(t)) (log* denotes the
+#C iterated logarithm function). The version shown is an improvement
+#C by Emerson J. Perkins that emits the third output at generation
+#C ~ 12,600, and the fourth is estimated at gen. ~2^390, far beyond
+#C the capability of QuickLife.
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=3099#p3099
+x = 136, y = 202, rule = B017/S01
+99bobo21bobo5bobo$101bo23bo7bo$99bo23bo7bo2$133bo$123bo3bo3bo3bo$123bo
+7bo3bo3$123bo7bo3bo$123bo3bo3bo3bo$133bo2$98bo24bo7bo$100bo10bobo11bo
+7bo$96bo3bo12bo9bobo5bobo$111bo14$99bobo21bobo5bobo$101bo23bo7bo$99bo
+23bo7bo2$133bo$123bo3bo3bo3bo$123bo7bo3bo3$123bo7bo3bo$123bo3bo3bo3bo$
+133bo2$74bo48bo7bo$76bo34bobo11bo7bo$72bo3bo36bo9bobo5bobo$111bo14$99b
+obo21bobo5bobo$101bo23bo7bo$99bo23bo7bo2$133bo$123bo3bo3bo3bo$123bo7bo
+3bo3$123bo7bo3bo$123bo3bo3bo3bo$133bo2$50bo72bo7bo$52bo58bobo11bo7bo$
+48bo3bo60bo9bobo5bobo$111bo14$99bobo21bobo5bobo$101bo23bo7bo$99bo23bo
+7bo2$133bo$123bo3bo3bo3bo$123bo7bo3bo3$123bo7bo3bo$123bo3bo3bo3bo$133b
+o2$26bo96bo7bo$28bo82bobo11bo7bo$24bo3bo84bo9bobo5bobo$111bo14$99bobo
+21bobo5bobo$101bo23bo7bo$99bo23bo7bo2$133bo$123bo3bo3bo3bo$123bo7bo3bo
+3$123bo7bo3bo$123bo3bo3bo3bo$133bo2$2bo120bo7bo$4bo106bobo11bo7bo$o3bo
+108bo9bobo5bobo$111bo44$37bo$37bo2$10b2o$2o8b2o21bo3bo$2o31bo3bo2$27bo
+$29bo7bo$35bobo2$3b2o$3b2o30bobo$29bo7bo$27bo2$33bo3bo$33bo3bo3$37bo$
+37bo!

@@ -1,0 +1,28 @@
+#N adjustable-slope-spaceships.rle
+#O AforAmpere, July 23 2018
+#C     The isotropic rule has a 3-cell c/2 orthogonal spaceship and a
+#C still life dot. Interestingly, one of the spaceship+dot collisions
+#C displaces a dot by (2,0) and reflects the spaceship to the adjacent
+#C lane. This allows for spaceships with adjustable slopes to be made.
+#C     The spaceships demonstrated in this pattern has the following
+#C speeds respectively, from left to right:
+#C (10,2)c/324, slope 10/2=5;
+#C (8,2)c/260, slope 8/2=4;
+#C (6,2)c/196, slope 6/2=3;
+#C (4,2)c/132, slope 4/2=2;
+#C (8,6)c/460, slope 8/6=4/3.
+#C     Apart from these, orthogonal (slope=0) and diagonal (slope=1)
+#C spaceships are also possible. Note how the first four make use of
+#C two smaller 2c/64 orthogonal ones at the top and bottom; by
+#C adjusting the distance d of two dots, it attains all orthogonal
+#C speeds of the form 2c/(4d-12) for d>= 6.
+#C 
+#C Reference: https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3081&post=62131#p62131
+#C For other small adjustable spaceships in various rules, see
+#C https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3081
+x = 205, y = 88, rule = B2ce3cen4ekt6kn/S01c2ae4cknr5akn
+2bo39bo39bo39bo50bo$9bo11bo27bo11bo27bo11bo27bo11bo50bo10bo$10bo39bo
+39bo39bo62bo$bo7bo31bo7bo31bo7bo31bo7bo62bo$obo17bo19bobo17bo19bobo17b
+o19bobo17bo61bo$19bobo37bobo37bobo37bobo59bobo4$170bobo$171bo26$123bo$
+130bo11bo$131bo$130bo2$204bo$172bo19bo$191bo$192bo8$102bo$83bo14bo$97b
+o$98bo13$43bo$50bo11bo$51bo$50bo13$22bo$3bo12bo$15bo$16bo!
