@@ -1,5 +1,6 @@
 -- This script runs the current pattern and plays different sounds
--- depending on how the population changes.
+-- depending on how the population changes.  Hopefully a useful template
+-- for people who want to experiment with CA-generated "music".
 
 local g = golly()
 if g.empty() then g.exit("There is no pattern.") end
@@ -15,11 +16,12 @@ local sounds = {
     soundsdir.."brick6.ogg"
 }
 local volume = 0.2
-local minpop = math.maxinteger
-local maxpop = math.mininteger
-local running = true
+local minpop = tonumber(g.getpop())
+local maxpop = minpop
+local prevsound, samecount = 0, 0 -- used to detect a repeating sound
 local genspersec = 10
 local nextgen = 0
+local running = true
 
 --------------------------------------------------------------------------------
 
@@ -42,8 +44,40 @@ end
 
 --------------------------------------------------------------------------------
 
+function PlaySound()
+    -- the next (non-empty) generation has just been created
+    -- so get the current population and update minpop and maxpop
+    local currpop = tonumber(g.getpop())
+    if currpop < minpop then minpop = currpop end
+    if currpop > maxpop then maxpop = currpop end
+    local poprange = maxpop - minpop
+    if poprange == 0 then
+        g.sound("play", sounds[#sounds//2], volume)
+    else
+        local p = (currpop-minpop) / poprange
+        -- p is from 0.0 to 1.0
+        local i = 1 + math.floor(p * (#sounds-1))
+        g.sound("play", sounds[i], volume)
+        -- note that we can end up repeating the same sound
+        -- (eg. if the initial pattern is a dense Life soup),
+        -- so if that happens we reset minpop and maxpop
+        if i == prevsound then
+            samecount = samecount + 1
+            if samecount == #sounds then
+                minpop = currpop
+                maxpop = currpop
+                prevsound, samecount = 0, 0
+            end
+        else
+            prevsound = i
+            samecount = 0
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 function EventLoop()
-    local prevsound, samecount = 0, 0 -- used to detect a repeating sound
     while true do
         local space = false
         local event = g.getevent()
@@ -73,36 +107,10 @@ function EventLoop()
             g.doevent(event) -- might be a keyboard shortcut
         end
         if (running or space) and g.millisecs() >= nextgen then
-            -- get current population and update minpop and maxpop
-            local currpop = tonumber(g.getpop())
-            if currpop < minpop then minpop = currpop end
-            if currpop > maxpop then maxpop = currpop end
-            local poprange = maxpop - minpop
-            if poprange == 0 then
-                g.sound("play", sounds[#sounds//2], volume)
-            else
-                local p = (currpop-minpop) / poprange
-                -- p is from 0.0 to 1.0
-                local i = 1 + math.floor(p * (#sounds-1))
-                g.sound("play", sounds[i], volume)
-                -- note that we can end up repeating the same sound
-                -- (eg. if the initial pattern is a dense Life soup),
-                -- so if that happens we reset minpop and maxpop
-                if i == prevsound then
-                    samecount = samecount + 1
-                    if samecount == #sounds then
-                        minpop = math.maxinteger
-                        maxpop = math.mininteger
-                        prevsound, samecount = 0, 0
-                    end
-                else
-                    prevsound = i
-                    samecount = 0
-                end
-            end
             g.run(1)
-            g.update()
             if g.empty() then g.exit("The pattern died.") end
+            PlaySound()
+            g.update()
             if not space then
                 nextgen = g.millisecs() + 1000/genspersec
             end
