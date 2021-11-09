@@ -1,25 +1,42 @@
--- This script runs the current pattern and plays different sounds
+-- This script runs the current pattern and plays different piano notes
 -- depending on how the population changes.  Hopefully a useful template
 -- for people who want to experiment with CA-generated "music".
 
 local g = golly()
 if g.empty() then g.exit("There is no pattern.") end
 
--- eventually replace these sounds with a larger set of (organ/piano?) notes!!!
-local soundsdir = g.getdir("app").."Scripts/Lua/sounds/breakout/"
+local soundsdir = g.getdir("app").."Scripts/Lua/sounds/piano/"
 local sounds = {
-    soundsdir.."brick1.ogg",
-    soundsdir.."brick2.ogg",
-    soundsdir.."brick3.ogg",
-    soundsdir.."brick4.ogg",
-    soundsdir.."brick5.ogg",
-    soundsdir.."brick6.ogg"
+    soundsdir.."C3.ogg",
+    soundsdir.."D3.ogg",
+    soundsdir.."E3.ogg",
+    soundsdir.."F3.ogg",
+    soundsdir.."G3.ogg",
+    soundsdir.."A3.ogg",
+    soundsdir.."B3.ogg",
+    soundsdir.."C4.ogg",
+    soundsdir.."D4.ogg",
+    soundsdir.."E4.ogg",
+    soundsdir.."F4.ogg",
+    soundsdir.."G4.ogg",
+    soundsdir.."A4.ogg",
+    soundsdir.."B4.ogg",
+    soundsdir.."C5.ogg",
+    soundsdir.."D5.ogg",
+    soundsdir.."E5.ogg",
+    soundsdir.."F5.ogg",
+    soundsdir.."G5.ogg",
+    soundsdir.."A5.ogg",
+    soundsdir.."B5.ogg",
+    soundsdir.."C6.ogg",
+    soundsdir.."D6.ogg",
+    soundsdir.."E6.ogg",
 }
-local volume = 0.2
+local volume = 0.3
 local minpop = tonumber(g.getpop())
 local maxpop = minpop
 local prevsound, samecount = 0, 0 -- used to detect a repeating sound
-local genspersec = 10
+local genspersec = 5
 local nextgen = 0
 local running = true
 
