@@ -75,6 +75,16 @@ function PlaySound()
         -- p is from 0.0 to 1.0
         local i = 1 + math.floor(p * (#sounds-1))
         g.sound("play", sounds[i], volume)
+
+        -- occasionally play a chord
+        if math.random() < 0.1 then
+            -- two notes up will be a major or minor third
+            -- since only white notes are used
+            local j = i + 2
+            if j > #sounds then j = 1 end
+            g.sound("play", sounds[j], volume)
+        end
+
         -- note that we can end up repeating the same sound
         -- (eg. if the initial pattern is a dense Life soup),
         -- so if that happens we reset minpop and maxpop
