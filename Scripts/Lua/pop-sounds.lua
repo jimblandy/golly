@@ -3,6 +3,9 @@
 -- for people who want to experiment with CA-generated "music".
 
 local g = golly()
+local status = g.sound()
+if status == 0 then g.exit("Sound support is not enabled.") end
+if status == 1 then g.exit("Sound support failed to initialize.") end
 if g.empty() then g.exit("There is no pattern.") end
 
 local soundsdir = g.getdir("app").."Scripts/Lua/sounds/piano/"
