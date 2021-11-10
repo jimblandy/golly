@@ -6,9 +6,8 @@ import golly as g
 from time import time, sleep
 from random import random
 
-status = g.sound()
-if status == 0: g.exit("Sound support is not enabled.")
-if status == 1: g.exit("Sound support failed to initialize.")
+if g.sound() == 0: g.exit("Sound support is not enabled.")
+if g.sound() == 1: g.exit("Sound support failed to initialize.")
 if g.empty(): g.exit("There is no pattern.")
 
 soundsdir = g.getdir("app")+"Scripts/Lua/sounds/piano/"
@@ -38,11 +37,12 @@ sounds = [
     soundsdir+"D6.ogg",
     soundsdir+"E6.ogg",
 ]
-volume = 0.3
+numsounds = len(sounds)
 minpop = int(g.getpop())
 maxpop = minpop
 prevsound, samecount = 0, 0 # used to detect a repeating sound
 genspersec = 5
+volume = 0.3
 
 # ------------------------------------------------------------------------------
 
@@ -72,11 +72,11 @@ def PlaySound():
     if currpop > maxpop: maxpop = currpop
     poprange = maxpop - minpop
     if poprange == 0:
-        g.sound("play", sounds[len(sounds)//2], volume)
+        g.sound("play", sounds[numsounds//2], volume)
     else:
         p = (currpop-minpop) / poprange
         # p is from 0.0 to 1.0
-        i = int(p * (len(sounds)-1))
+        i = int(p * (numsounds-1))
         g.sound("play", sounds[i], volume)
         
         # occasionally play a chord
@@ -84,7 +84,7 @@ def PlaySound():
             # two notes up will be a major or minor third
             # since only white notes are used
             j = i + 2
-            if j >= len(sounds): j = 0
+            if j >= numsounds: j = 0
             g.sound("play", sounds[j], volume)
         
         # note that we can end up repeating the same sound
@@ -92,7 +92,7 @@ def PlaySound():
         # so if that happens we reset minpop and maxpop
         if i == prevsound:
             samecount = samecount + 1
-            if samecount == len(sounds):
+            if samecount == numsounds:
                 minpop = currpop
                 maxpop = currpop
                 prevsound, samecount = 0, 0

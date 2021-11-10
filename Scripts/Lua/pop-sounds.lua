@@ -3,9 +3,9 @@
 -- for people who want to experiment with CA-generated "music".
 
 local g = golly()
-local status = g.sound()
-if status == 0 then g.exit("Sound support is not enabled.") end
-if status == 1 then g.exit("Sound support failed to initialize.") end
+
+if g.sound() == 0 then g.exit("Sound support is not enabled.") end
+if g.sound() == 1 then g.exit("Sound support failed to initialize.") end
 if g.empty() then g.exit("There is no pattern.") end
 
 local soundsdir = g.getdir("app").."Scripts/Lua/sounds/piano/"
@@ -35,13 +35,12 @@ local sounds = {
     soundsdir.."D6.ogg",
     soundsdir.."E6.ogg",
 }
-local volume = 0.3
+local numsounds = #sounds
 local minpop = tonumber(g.getpop())
 local maxpop = minpop
 local prevsound, samecount = 0, 0 -- used to detect a repeating sound
 local genspersec = 5
-local nextgen = 0
-local running = true
+local volume = 0.3
 
 --------------------------------------------------------------------------------
 
@@ -72,11 +71,11 @@ function PlaySound()
     if currpop > maxpop then maxpop = currpop end
     local poprange = maxpop - minpop
     if poprange == 0 then
-        g.sound("play", sounds[#sounds//2], volume)
+        g.sound("play", sounds[numsounds//2], volume)
     else
         local p = (currpop-minpop) / poprange
         -- p is from 0.0 to 1.0
-        local i = 1 + math.floor(p * (#sounds-1))
+        local i = 1 + math.floor(p * (numsounds-1))
         g.sound("play", sounds[i], volume)
 
         -- occasionally play a chord
@@ -84,7 +83,7 @@ function PlaySound()
             -- two notes up will be a major or minor third
             -- since only white notes are used
             local j = i + 2
-            if j > #sounds then j = 1 end
+            if j > numsounds then j = 1 end
             g.sound("play", sounds[j], volume)
         end
 
@@ -93,7 +92,7 @@ function PlaySound()
         -- so if that happens we reset minpop and maxpop
         if i == prevsound then
             samecount = samecount + 1
-            if samecount == #sounds then
+            if samecount == numsounds then
                 minpop = currpop
                 maxpop = currpop
                 prevsound, samecount = 0, 0
@@ -108,6 +107,8 @@ end
 --------------------------------------------------------------------------------
 
 function EventLoop()
+    local nextgen = 0
+    local running = true
     while true do
         local space = false
         local event = g.getevent()
