@@ -174,8 +174,8 @@ local options = {
     showoptions   = false,
     confirming    = false,
     comboscore    = 1,
-    soundvol      = 1,
-    musicvol      = 1,
+    soundvol      = 100,
+    musicvol      = 70,
     fullscreen    = 0
 }
 
