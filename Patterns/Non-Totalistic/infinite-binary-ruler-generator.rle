@@ -1,5 +1,5 @@
 #C infinite binary ruler generator from random asymmetric soup
-#C Daniel R. Collazo, 30 May 2017
+#C dani, 30 May 2017
 #C http://www.conwaylife.com/forums/viewtopic.php?f=11&t=803&p=43939#p43939
 x = 32, y = 32, rule = B2ak3nr4iy/S3-nr4ent5er
 o2bobob2o3b3o2bob2ob6o3bo$2bob5o2bo3b3obo3bobo3bobo$ob4ob3obo2b5ob2obo

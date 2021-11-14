@@ -1,7 +1,8 @@
 #N Ordovician Radiation
 #O Matthias Merzenich, 3 December 2020
 #C A collection of organisms found primarily in the last 15 years.
-#C https://conwaylife.com/forums/viewtopic.php?&p=113168#p114098
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?&p=114098#p114098
 #C
 #C Run showinviewer.lua script to see the LifeViewer labels for these objects
 #C
@@ -175,7 +176,7 @@
 #C [[ LABELSIZE 20 LABEL 573 655 5 "c/6 ship\nMatthias Merzenich,\nAug 2016" ]]
 #C
 #C [[ LABELTRACK 0 -1/10 ]]
-#C [[ LABELSIZE 20 LABEL 466 673 5 "c/10 fireship\nSimon Ekström,\n20 March 2016" ]]
+#C [[ LABELSIZE 20 LABEL 466 673 5 "c/10 fireship\nSimon Ekstrom,\n20 March 2016" ]]
 #C [[ LABELSIZE 15 LABEL 484 696 5 "period-20 tagalong\nChristoph Reinthaler,\n11 Oct 2018" ]]
 #C [[ LABELSIZE 15 LABEL 547 701 5 "period-10 tagalongs\nTanner Jacobi,\n20 Mar 2016" ]]
 #C

@@ -1,0 +1,25 @@
+#N omosso-p79576-spaceship.rle
+#O 77topaz, January 28 2020
+#C 
+#C     Omosso (B2k3acijr4ijqy6i7c/S2aek3ijnqr4it5n) is an INT rule
+#C featuring B-heptomino as a c/98 orthogonal spaceship, a number of
+#C oscillators made of copies of B-heptomino and a larger category of
+#C complex high-period c/98 spaceships and rakes. The following p79576
+#C (812*98) spaceship arises from an interaction between a p5684 
+#C (58*98) front-sparky spaceship and a p2744 (28*98) tight siderake. 
+#C 
+#C Reference:
+#C  https://www.conwaylife.com/forums/viewtopic.php?p=88322#p88322
+x = 197, y = 308, rule = B2k3acijr4ijqy6i7c/S2aek3ijnqr4it5n
+78b3o$77bo2bo$77bo3bo$76b2ob3o8$113bo$108b2o2b3o$108bo5b2o$107bo3bo2bo
+$83b2o22b3o2b2o$82bobo24b4o$86b2o$79b3obobobo$79bo2bobo$79b3o3bo2$82bo
+3bo$82bo3bo$83b3o2$99bo$101bo$101bo$96bo3b2o$95bobo$94b2obo$95b2o$96bo
+7$194bo$193b3o$192bo2b2o$192b2o2bo$196bo7$164bo$159b3obobo$159bo2bo2bo
+$159bo2b2ob2o$160b6o22bo$189b3o$186b2o2bobo$186bob2obobo$189bo3b2o$
+189bob3o$189bo$187b2ob2o$188b3o$189bo3$173b3o$172b4o$173bo2b2o$176bobo
+$178bo$177b2o$176bo191$2bo$b3o$2o2bo$o2b2o$2b3o$bobo2$3bo$4bo$4bo$2b3o
+118bo$2bo119b3o$35b3o83bo2b2o$35bobo83b2o2bo$35bo89bo$37b2o$37bo$32b3o
+2b6o$31b2obo6bobo$32b4o7bo$bobo32b2ob5o$2o2bo33b2o53bo$2o3b2o33bo47b3o
+bobo$4b2obo80bo2bo2bo$6b2o80bo2b2ob2o$6bo82b6o22bo$118b3o$115b2o2bobo$
+115bob2obobo$118bo3b2o$118bob3o$118bo$116b2ob2o$117b3o$118bo$14b3o$12b
+2ob2o$12bo89b3o$12b4obo83b4o$16bo85bo2b2o$105bobo$107bo$106b2o$105bo!

@@ -1,0 +1,58 @@
+#N hive-spaceship-collection.rle
+#C AforAmpere, February 16 2019
+#C
+#C     In B3-ry4ckn/S2-in3-cjn4it5aiky6-a7e8, a pre-beehive (the 2x3
+#C rectangle in Life) is a failed replicator that can be combined to
+#C form various natural high-period oscillators and spaceships. The
+#C rule is therefore named "Hive".
+#C     In the following orthogonal spaceship collection, the speeds 
+#C from left to right are c/2, 2c/5, c/3, c/4, c/5, c/7, 16c/127, 
+#C 29c/436, 58c/993, 19c/412, 13c/305, 17c/399, 16c/480, 20c/674, 
+#C 10c/510 and 3c/285 respectively.
+#C
+#C Reference:
+#C  https://www.conwaylife.com/forums/viewtopic.php?p=70853#p70853
+x = 919, y = 99, rule = B3-ry4ckn/S2-in3-cjn4it5aiky6-a7e8
+3o3bo15bo18bo4bo11b2o7b2o14bo17bo68bo74b3o15b3o133bo31bo76b3o97bo73bo
+60bo8b3o43bo49bo66bobo$3o2b3o12bobobo12b2o2b2o2b2o2b2o6bo2bo5bo2bo12bo
+bo84b3o73bobo15bobo132b3o29b3o75bobo96b3o71b3o58b3o8bo43b3o47b3o64bobo
+bo$b3o15bob3obo10bo2b2o6b2o2bo5bo2bo5bo2bo30bobo67bo338bo98bo133b3o53b
+o49bo67bo$4bo2bo9b2obobobob2o10bo2b2o2b2o2bo7b4o5b4o7bo2bobobobo2bo11b
+o67b3o337bo97b3o72bo60bo54bo48b3o65bobo$bobobo10bo2bobobobo2bo9bo2b2o
+2b2o2bo6b6o3b6o5b2obobobobobob2o10bo143b3o15b3o132bobo29bobo74bo3bo
+231bo6b2o3b2o40b3o$2o14bobo7bobo8bo3b2o2b2o3bo7b2o7b2o8b2obo5bob2o8b2o
+bob2o139b5o13b5o131b3o29b3o183bobo123b3o5b2o3b2o41bo48bobo$3bo12b3o2bo
+bo2b3o13bo2bo11bo2bo5bo2bo7bo11bo7b3o3b3o137b2o3b2o11b2o3b2o250b3o95b
+3o63bo59b3o103bo$2bo11bo6bobo6bo9bo6bo10b2o7b2o10b2o5b2o10bo5bo138b2o
+3b2o11b2o3b2o241bo9bo95bobobo61b3o59bo103b3o$2o13bo2bo7bo2bo9b4o2b4o
+27bo2bob2ob2obo2bo153b5o13b5o242bo8b3o232bo$18b2o5b2o11b2o8b2o11b5o10b
+2o2b3ob3o2b2o70b3o81b3o15b3o253bo97bo64bo69b3o$20bobobo13b2o8b2o7bobob
+2ob2obobo11b2ob2o11bobo3bobo56bo7bo437bo$16bo4b3o4bo28b3obo3bob3o10bo
+5bo10bo2b3o2bo55b3o5b3o335bo3bo95b3o$17bo2b5o2bo8b2o12b2o5b2o9b2o11bo
+3bo12bo2bo2bo64b3o73bobo15bobo243bo97b3o63b3o13b3o$37b5o4b5o6b2o2bo3bo
+2b2o9bo7bo73b3o6bo74b3o15b3o243bo98bo64b3o13b3o$17bobo5bobo11b2o6b2o7b
+3o9b3o7b2o7b2o72bobo344bobo336b3o$16bobo7bobo27b15o7b2ob2ob2ob2o419b3o
+337bo57b3o$16b2o9b2o29b4o3b4o13bobo588b3o13b3o155bobo57bo7bobo$16b2o9b
+2o33b3o12b3o2bobo2b3o308b3o29b3o240b3o13b3o215bo8bo$16bo11bo33bobo12b
+4obobob4o308b3o29b3o249bo164b3o13b3o41bo6bobobo$15bo13bo29b2o2bo2b2o
+11bobo3bobo760bo14b3o41bo7bobo$14bo15bo28b3o3b3o12bob3obo82b3o435b3o7b
+o63b3o163b3o57bo$16bo11bo32bobobo12bo2bobobo2bo81bo437bo73bo165bo58bo$
+63bo15bob2ob2obo81b3o347bo87b3o5bobobo286b3o$60bo5bo11b5ob5o72bobo6bo
+347b3o87bo7b3o$59bob5obo93b3o355bo96bobo63bo$58b2obo3bob2o8bo11bo428b
+3o$58b3ob3ob3o9bo9bo72b3o517b3o$58bobo5bobo9b2o7b2o73bo519bo$58bobo5bo
+bo8bobo7bobo71b3o$58b3o5b3o8b3o7b3o724b3o$57bo11bo8b2obo3bob2o725bobo$
+56bobo9bobo6b2obobobobob2o725bo$78bobo5bobo709bo15b3o$56bo2bo7bo2bo
+726b3o15bo$57bobo7bobo176bo17bo533bo$58bo3bobo3bo176b3o15b3o532bo$61b
+2ob2o180bo17bo532b3o$59bo3bo3bo177bobo15bobo532bo$61bobobo179b3o15b3o
+242b3o$62bobo443b3o$62bobo$62bobo443b3o$63bo182bo17bo244bo305bo$245bob
+o15bobo242b3o303b3o$245b3o15b3o549bo47b3o$508b3o303bobo46b3o$509bo9bob
+4obo287b3o$508b3o7b2o6b5o$519bob4obo$508b3o$508b3o3$246bo17bo$244bo3bo
+13bo3bo$244bobobo13bobobo2$245b3o15b3o$246bo17bo$246bo17bo$245bobo15bo
+bo$246bo17bo$245bobo15bobo$245b3o15b3o$246bo17bo$246bo17bo249b3o12b3o
+14b3o12b3o$245b3o15b3o246bob2obo10bob2obo10bob2obo10bob2obo$206bobob2o
+8b2obobo18b2ob2o13b2ob2o18bobob2o8b2obobo209b3o12b3o14b3o12b3o$206b3ob
+o10bob3o18bobobo13bobobo18b3obo10bob3o$206bobob2o8b2obobo18bobobo13bob
+obo18bobob2o8b2obobo$245bobo15bobo$246bo17bo$245bobo15bobo$245b3o15b3o
+$246bo17bo$246bo17bo$245b3o15b3o$245b3o15b3o19$188bobo2bob4o2b4obo2bob
+o87bobo2bob4o2b4obo2bobo$187b4o2b3ob2o2b2ob3o2b4o85b4o2b3ob2o2b2ob3o2b
+4o$188bobo2bob4o2b4obo2bobo87bobo2bob4o2b4obo2bobo!
