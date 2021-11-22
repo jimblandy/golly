@@ -15,6 +15,8 @@
 #C If you're starting from a two-state pattern, you can use Alt+K
 #C   on selections to alter cell colors, as described under
 #C   Help > Algorithms > Super.
+#C
+#C On Macintosh systems the "Option" key is the equivalent of "Alt".
 x = 281, y = 268, rule = B3-kq4j/S2-i34qSuper
 116.2pA3.2pA4.2pA12.2pA4.2pA3.2pA$116.2pA3.2pA4.2pA12.2pA4.2pA3.2pA7$
 129.2pA8.2pA60.2U23.2U$68.2pA3.2pA4.2pA12.2pA4.2pA3.2pA23.2pA8.2pA60.
