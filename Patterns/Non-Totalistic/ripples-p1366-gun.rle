@@ -1,0 +1,16 @@
+#N ripples-p1366-gun.rle
+#O Schiaparelliorbust, November 12 2020
+#C     This is an adjustable high-period gun for a "Ripples" spaceship.
+#C In this rule, long straight orthogonal lines of cells tend to die
+#C off, and diagonal lines stabilize into large still lifes -- but
+#C oblique lines with a slope around 2, and especially multiple such
+#C lines meeting at an angle, display a very wide range of
+#C interesting behavior.
+#C Reference:
+#C  https://www.conwaylife.com/forums/viewtopic.php?p=110341#p110341
+x = 246, y = 211, rule = B2en3ijk4a5ae7e8/S1c2cek3-a4aciqw5aky6en7
+34$78bo$77b3o$76b2ob2o$75b2o3b2o$76b2ob2o$77b3o$78bo4$82b3o$82bo$71bo
+10b2o$70b3o11bo26bo$69b2ob2o36b3o$68b2o3b2o34b2ob2o$69b2ob2o34b2o3b2o$
+70b3o36b2ob2o$71bo38b3o$111bo93$110bo$109b3o38bo$108b2ob2o36b3o$107b2o
+3b2o34b2ob2o$108b2ob2o34b2o3b2o$109b3o36b2ob2o$110bo38b3o$150bo6$143bo
+$142b3o$141b2ob2o$140b2o3b2o$141b2ob2o$142b3o$143bo!

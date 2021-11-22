@@ -1,0 +1,12 @@
+#N elastic-growth.rle
+#O dani, March 2 2017
+#C Active blobs of whitespace with diagonal and horizontal boundaries
+#C grow and shrink until a minor phase transition occurs around T=2000,
+#C when a roughly diamond-shaped stable central core appears and begins
+#C to grow steadily.
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=41111#p41111
+#C See also rules with fluxional "amoebas": 
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=94257#p94257
+x = 4, y = 3, rule = B2-a5678/S125678
+obo$bo$3bo!
