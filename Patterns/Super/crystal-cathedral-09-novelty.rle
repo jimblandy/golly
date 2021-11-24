@@ -4,8 +4,9 @@
 #C
 #C This is rendered in LifeSuper rather than plain Life, to allow the
 #C    incoming glider streams that form the kaleidoscopic pattern in
-#C    the center to be a different color from the settled ash.
-#C 
+#C    the center to be a different color from the settled ash. To 
+#C    switch back to two-state Life hit Alt+J (Option+J on a Mac).
+#C
 #C The pattern's final fate is only determined after more than
 #C    314 million generations.  Until that time, the pairs of
 #C    backward glider streams from the receding arks
@@ -59,7 +60,14 @@
 #C At T = 314,339,784, a glider on the lanes closest to the N/S spine
 #C     hits a simple TL+ship combination, and makes a boat-bit-catching
 #C eater (bo$2bo6b2o$3o5bobo$8b2o2$4b3o2$2bo5bo$2bo5bo$2bo5bo2$4b3o!)
-#C
+#C At T = 318,134,782, a new beacon appears on the streams closest to
+#C     the E/W axis. The streams closest to the N/S axis then have a
+#C     brief chance to save the day, but...
+#C At T = 318,140,758, they clear their final bit of debris. Future
+#C     gliders in those streams sail merrily to meet their fate on the
+#C     patiently waiting boat-bit-catching eater, which is sitting
+#C     safely in the bottom of a very long open drill hole, like a
+#C     very well-fed ant lion.
 x = 144, y = 1160, rule = LifeSuper
 71.2H9$pA2.2pA.2pA.pA.pA2.2pA112.2pA2.pA.pA.2pA.2pA2.pA$5.5pA4.2pA
 112.2pA4.5pA$3.pA3.pA.pA.2pA2.pA112.pA2.2pA.pA.pA3.pA$pA.3pA2.pA.pA.pA
