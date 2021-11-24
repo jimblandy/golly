@@ -1,11 +1,20 @@
 #N justfriends-oscillators.rle
-#C A collection of some oscillators in "Just Friends".  These were
-#C found by a team of people (e.g, Dean Hickerson, David Bell,
-#C Paul Tooke, Jason Summers, Mark Niemiec) between 2000 and 2004.
-#C
 #C     The JustFriends rule, B2-a/S12, is a member of the family of
 #C isotropic non-totalistic (INT) rules -- one of the earliest such
 #C rules explored by Lifenthusiasts.
+#C
+#C This is an early collection of oscillators in "Just Friends",
+#C found by a team of people (e.g, Dean Hickerson, David Bell,
+#C Paul Tooke, Jason Summers, Mark Niemiec) between 2000 and 2004.
+#C
+#C     More recent research results can be found in the Just Friends
+#C thread on the conwaylife.com forums:
+#C   https://www.conwaylife.com/forums/viewtopic.php?f=11&t=2442
+#C
+#C     Also, Jeremy Tan's "Skopje" project maintains a list of the
+#C smallest known oscillators (SKOPs) of various periods in his
+#C "Skopje" repository:
+#C    https://github.com/Parcly-Taxel/Skopje/blob/main/skopje/justfriends.py
 x = 621, y = 269, rule = B2-a/S12
 313b6o21boo127bo100bo13bo$335bo131bobobo97boob11oboo$312boobobo17bob3o
 15b5o44b6obbo6bobb3obbo18bo20bobobo$315bobo14bobbo5bo11boo57bo6bo7bo

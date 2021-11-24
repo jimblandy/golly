@@ -1,0 +1,18 @@
+#C 52513m.rle
+#C Dylan Chen, 16 January 2021
+#C
+#C     This is the longest-lasting asymmetric 16x16 methuselah soup
+#C found by apgsearch as of November 2021, stabilizing in 52,513 ticks.
+#C The most recent record-holders can be found on Catagolue:
+#C   https://catagolue.hatsya.com/census/b3s23/C1/methuselah
+#C
+#C     Unlike the situation with diehards (the "messless" category
+#C on Catagolue) symmetric methuselahs do not seem to have any
+#C particular tendency to last longer than asymmetric ones.
+#C
+#C Reference:
+#C   https://www.conwaylife.com/wiki/52513M
+x = 16, y = 16, rule = B3/S23
+3o2b2obob2ob3o$2obob3o4bobo$bo2bo2bobob3obo$2bo2b2o3bo2bo$2bo5bobo3b2o
+$o4b2o3b3obo$3b2o2bo2bobo2bo$2b4obo2bob2o$2ob2o2b2o5b2o$ob4obo4b3o$o3b
+4o2b3o$b10o2b3o$2o3bob3obob3o$b2ob6o3bobo$obo5b4obo$3obobob2o5bo!

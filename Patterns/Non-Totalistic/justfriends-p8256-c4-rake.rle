@@ -1,0 +1,76 @@
+#N justfriends-p8256-c4-rake.rle
+#C
+#C     The JustFriends rule, B2-a/S12, is a member of the family of
+#C isotropic non-totalistic (INT) rules -- one of the earliest such
+#C rules explored by Lifenthusiasts.
+#C
+#C     In July 2000, David I. Bell constructed a slightly dirty
+#C period-8256 forward rake for the 3-cell glider, which consists of
+#C a flotilla of c/4 orthogonal spaceships that circulate and duplicate
+#C gliders to burn a wick repeatedly. In August 2019, forums user
+#C FWKnightship completed its cleanup system, giving a clean rake.
+#C
+#C     Compare with Life/Rakes/c4-sideways-rake.rle.
+#C 
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=80733#p80733
+x = 1829, y = 866, rule = B2-a/S12
+12b2o$12bo$12bo2bo824bo$13b3o824bo2$2b2o3bo2b819o$2bo4b3o$2bo2bobo2b
+818o$3b3o$12b2obo$b2obo$11bo$o10b2o$2o5$460b3o$459bo2b2o$460bo2bo$460b
+2obo2$462b2obo2$461bo$461b2o36$648b3o$647bo2b2o$648bo2bo$333b2o313b2ob
+o$333bo$333bo2bo313b2obo$334b3o$326b3o320bo$325bo2b2o5b2obo310b2o$326b
+o2bo5bo2bo$326b2obo7bo$335b2o$328b2obo2$327bo$327b2o326b2o204b3o$657bo
+202bo2b2o$655bo2bo202bo2bo$655b2obo202b2obo$341b2o$343bo310b3o206b2obo
+$341bo2bo308bo2bo$298b3o40b2obo308bo208bo$297bo2b2o209b2o140b2o207b2o$
+298bo2bo38b3o168bo$298b2obo37bo2bo168bo2bo162b2o$339bo172b3o70b2o90bo$
+300b2obo35b2o163b3o78bo$503bo2b2o5b2obo68bo2bo89b2obo$299bo204bo2bo5bo
+2bo69b3o$299b2o203b2obo7bo160b2obo$513b2o72b2obo85bo2bo$506b2obo77bo2b
+o84bo2b2o238b3o$589bo86b3o239bo$505bo81b2o$505b2o4$519b2o$521bo$519bo
+2bo$476b3o40b2obo$475bo2b2o$476bo2bo38b3o$476b2obo37bo2bo$517bo$478b2o
+bo35b2o2$477bo$289b2o186b2o$291bo$289bo2bo$289b2obo2$288b3o$287bo2bo$
+287bo$287b2o2$883b2o$562b2o321bo$564bo318bo2bo$393b2o167bo2bo317b2obo$
+393bo168b2obo$569b2o311b3o$394b2obo35b2o126b3o5bo311bo2bo10b2o$433bo
+126bo2bo317bo13bo$392b2obo37bo2bo123bo9b2obo307b2o$392bo2bo38b3o123b2o
+334b2obo$391bo2b2o172b2obo$392b3o40b2obo129bo2bo322b2obo$435bo2bo128bo
+2b2o322bo2bo$437bo130b3o322bo2b2o$435b2o457b3o4$421b2o$421bo2$422b2obo
+$429b2o$420b2obo7bo$420bo2bo5bo2bo$419bo2b2o5b2obo$420b3o$428b3o$427bo
+2bo$427bo$427b2o22$527b2o$529bo$527bo2bo$527b2obo2$526b3o$525bo2bo$
+525bo$525b2o3$593b2o$593bo$593bo2bo$594b3o2$595b2obo$595bo2bo$597bo$
+595b2o2$441b3o$440bo2b2o$441bo2bo$441b2obo$433b2o$433bo9b2obo142b2o$
+433bo2bo152bo$434b3o5bo$442b2o146b2obo$435b2obo$435bo2bo149b2obo$437bo
+150bo2bo$435b2o150bo2b2o$588b3o3$448b2o$448bo2$405b2o42b2obo$405bo148b
+3o$405bo2bo38b2obo102bo2b2o$406b3o38bo2bo103bo2bo$446bo2b2o103b2obo$
+407b2obo36b3o96b2o$407bo2bo135bo9b2obo$409bo136bo2bo$407b2o138b3o5bo$
+555b2o$548b2obo$548bo2bo$550bo$548b2o4$561b2o$561bo2$518b2o42b2obo$
+518bo148b3o$390b2o126bo2bo38b2obo102bo2b2o$392bo126b3o38bo2bo103bo2bo$
+390bo2bo165bo2b2o103b2obo$390b2obo126b2obo36b3o96b2o327b2o$397b2o121bo
+2bo135bo9b2obo315bo$389b3o5bo124bo136bo2bo325bo2bo$388bo2bo128b2o138b
+3o5bo320b3o$388bo9b2obo266b2o$388b2o271b2obo325b2obo$396b2obo261bo2bo
+325bo2bo$396bo2bo263bo328bo$395bo2b2o261b2o327b2o$396b3o3$674b2o$674bo
+2$631b2o42b2obo$631bo148b3o$503b2o126bo2bo38b2obo102bo2b2o$505bo126b3o
+38bo2bo103bo2bo$503bo2bo165bo2b2o103b2obo$503b2obo126b2obo36b3o96b2o$
+510b2o121bo2bo135bo9b2obo$502b3o5bo124bo136bo2bo$501bo2bo128b2o138b3o
+5bo$501bo9b2obo266b2o$501b2o271b2obo$509b2obo261bo2bo$509bo2bo205bo57b
+o$508bo2b2o205b3o53b2o$509b3o3$787b2o$787bo2$744b2o42b2obo$744bo148b3o
+$616b2o126bo2bo38b2obo102bo2b2o$618bo126b3o38bo2bo103bo2bo$616bo2bo
+165bo2b2o103b2obo$616b2obo126b2obo36b3o96b2o$623b2o121bo2bo135bo9b2obo
+$615b3o5bo124bo136bo2bo$614bo2bo128b2o138b3o5bo$614bo9b2obo266b2o$614b
+2o271b2obo$622b2obo261bo2bo$622bo2bo263bo$621bo2b2o261b2o$622b3o3$900b
+2o$900bo2$857b2o42b2obo$857bo$729b2o126bo2bo38b2obo$731bo126b3o38bo2bo
+$729bo2bo165bo2b2o582b2o$729b2obo126b2obo36b3o583bo$736b2o121bo2bo622b
+o2bo$728b3o5bo124bo624b3o$727bo2bo128b2o$727bo9b2obo746b2obo$727b2o
+758bo2bo$677bo57b2obo750bo$677b3o55bo2bo748b2o$734bo2b2o$735b3o7$944b
+2o$842b2o100bo$844bo$842bo2bo99b2obo$842b2obo106b2o$849b2o92b2obo7bo$
+841b3o5bo93bo2bo5bo2bo$840bo2bo98bo2b2o5b2obo$840bo9b2obo89b3o$840b2o
+109b3o$848b2obo98bo2bo$848bo2bo98bo$847bo2b2o98b2o276b3o$848b3o376bo2b
+2o$1228bo2bo$1228b2obo2$1230b2obo2$1229bo$1229b2o10$1084b3o$1083bo2b2o
+$1084bo2bo$1084b2obo735b2o$1823bo$1086b2obo733bo2bo$1824b3o$1085bo$
+1085b2o738b2obo$1825bo2bo$1827bo$1825b2o23$710b2o$712bo$710bo2bo$613bo
+96b2obo$613bo$614bo94b3o$708bo2bo$708bo$708b2o12$823b2o$825bo$823bo2bo
+$823b2obo2$822b3o$821bo2bo$821bo$821b2o12$936b2o$938bo$936bo2bo$936b2o
+bo2$935b3o$934bo2bo$934bo$934b2o14$535b2o$537bo$535bo2bo$535b2obo2$
+534b3o$533bo2bo$533bo$533b2o9$1031b2o$592bo440bo$592bo438bo2bo$591bo
+439b2obo2$1030b3o$1029bo2bo$1029bo$1029b2o58$1133b2o$1135bo$1133bo2bo$
+1133b2obo2$1132b3o$1131bo2bo$1131bo$1131b2o94$1325b2o$1327bo$1325bo2bo
+$1325b2obo2$1324b3o$1323bo2bo$1323bo$1323b2o223$1572b2o$1572bo2$1573b
+2obo2$1571b2obo$1571bo2bo$1570bo2b2o$1571b3o!
