@@ -1,7 +1,8 @@
 #C All known 2c/5 spaceships up to 90 bits
 #C Spaceships found by Dean Hickerson, Hartmut Holzwart, David Bell,
 #C Robert Wainwright, Paul Tooke, Stephen Silver, Tim Coe, Josh Ball,
-#C Matthias Merzenich, Aidan F. Pierce, Arie Paap, and "Bullet51".
+#C Matthias Merzenich, Aidan F. Pierce, Arie Paap, "Bullet51", and
+#C John Winston Garth.
 x = 1347, y = 760, rule = B3/S23
 562bo3bo$562bo3bo$561bobo$560b3o2b2o$231bo20bo290bobo$229b2o3bo15b2o3b
 o284bo4bo17b2o$229b2o2bo16b2o2bo284b3o4bo16b2o$229b4obo15b4obo282bobo
