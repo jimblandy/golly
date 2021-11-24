@@ -32,7 +32,9 @@
 <li> The performance of the QuickLife algorithm on patterns in bounded grids has been significantly improved
      (and a problem fixed that could cause a gradual slowing down of patterns in partially bounded grids).
 <li> Updated Lua to version 5.4.3.
-<li> New patterns: <a href="open:Patterns/Life/Bounded-Grids/crystallizing-dirty-superstring.rle">crystallizing-dirty-superstring.rle</a>,
+<li> New patterns, primarily in OCA (non-Conway's Life) rules: <a href="open:Patterns/Generations/b3-s23-g3-spaceship-breeder.rle">b3-s23-g3-spaceship-breeder.rle</a>,
+<a href="open:Patterns/Generations/isotropic-rule-wire-construction-gun.rle">isotropic-rule-wire-construction-gun.rle</a>,
+<a href="open:Patterns/Life/Bounded-Grids/crystallizing-dirty-superstring.rle">crystallizing-dirty-superstring.rle</a>,
 <a href="open:Patterns/Larger-than-Life/liquid-methuseblob-soup.rle">liquid-methuseblob-soup.rle</a>,
 <a href="open:Patterns/Larger-than-Life/r50-unknown-fate-bug.rle">r50-unknown-fate-bug.rle</a>,
 <a href="open:Patterns/Life-Like/binary-counter-and-iterated-log-gun.rle">binary-counter-and-iterated-log-gun.rle</a>,
@@ -40,36 +42,63 @@
 <a href="open:Patterns/Life-Like/highlife-c98o-spaceship-p1728-gun.rle">highlife-c98o-spaceship-p1728-gun.rle</a>,
 <a href="open:Patterns/Life-Like/lfod-flying-rule110-simulator.rle">lfod-flying-rule110-simulator.rle</a>,
 <a href="open:Patterns/Life-Like/pedestrian-life-oblique-rake-gun.rle">pedestrian-life-oblique-rake-gun.rle</a>,
+<a href="open:Patterns/Life/Miscellaneous/conga-line-switch-engine-extender.rle">conga-line-switch-engine-extender.rle</a>,
 <a href="open:Patterns/Life/Miscellaneous/ordovician-radiation.rle">ordovician-radiation.rle</a>,
+<a href="open:Patterns/Life/Miscellaneous/sawtooth177.rle">sawtooth177.rle</a>,
 <a href="open:Patterns/Non-Totalistic/1d-turing-machine.rle">1d-turing-machine.rle</a>,
-<a href="open:Patterns/Non-Totalistic/16engine-74,46c378-spaceship.rle">16engine-74,46c378-spaceship.rle</a>,
-<a href="open:Patterns/Non-Totalistic/236c21058-orthogonal-spaceship.rle">236c21058-orthogonal-spaceship.rle</a>.
-<a href="open:Patterns/Non-Totalistic/adjustable-slope-spaceships.rle">adjustable-slope-spaceships.rle</a>,
 <a href="open:Patterns/Non-Totalistic/checkerboard-spaceships-and-growth.rle">checkerboard-spaceships-and-growth.rle</a>,
 <a href="open:Patterns/Non-Totalistic/elastic-growth.rle">elastic-growth.rle</a>,
-<a href="open:Patterns/Non-Totalistic/fractal-making-replicator.rle">fractal-making-replicator.rle</a>,
-<a href="open:Patterns/Non-Totalistic/hive-spaceship-collection.rle">hive-spaceship-collection.rle</a>,
-<a href="open:Patterns/Non-Totalistic/leaplife-p361-glider-gun.rle">leaplife-p361-glider-gun.rle</a>,
 <a href="open:Patterns/Non-Totalistic/moving-crystallographic-defects.rle">moving-crystallographic-defects.rle</a>,
-<a href="open:Patterns/Non-Totalistic/myrtlelife-rake-gun.rle">myrtlelife-rake-gun.rle</a>,
-<a href="open:Patterns/Non-Totalistic/omosso-p79576-spaceship.rle">omosso-p79576-spaceship.rle</a>,
-<a href="open:Patterns/Non-Totalistic/ripples-p1366-gun.rle">ripples-p1366-gun.rle</a>,
-<a href="open:Patterns/Non-Totalistic/rulerish-replicator.rle">rulerish-replicator.rle</a>,
-<a href="open:Patterns/Non-Totalistic/spaghetti2-spaceship-collection.rle">spaghetti2-spaceship-collection.rle</a>.
-<a href="open:Patterns/Non-Totalistic/tlife-8c282-spaceship.rle">tlife-8c282-spaceship.rle</a>,
-<a href="open:Patterns/Non-Totalistic/triangular-replicator.rle">triangular-replicator.rle</a>,
-<a href="open:Patterns/Non-Totalistic/tubular-geminoid.rle">tubular-geminoid.rle</a>,
-<a href="open:Patterns/Non-Totalistic/whitespace-1176c4704o-spaceship-predecessor.rle">whitespace-1176c4704o-spaceship-predecessor.rle</a>.
-<li> Updated <a href="open:Patterns/Life/Oscillators/honey-farm-hasslers.rle">honey-farm-hasslers.rle</a>,
-<a href="open:Patterns/Life/Oscillators/phase-shift.rle">phase-shift.rle</a>,
-<a href="open:Patterns/Life/Oscillators/traffic-light-hasslers.rle">traffic-light-hasslers.rle</a>,
-<a href="open:Patterns/Life/Spaceships/2c5-orthogonal.rle">2c5-orthogonal.rle</a>,
+<a href="open:Patterns/Non-Totalistic/five-margolus-media.rle">five-margolus-media.rle</a>,
+<a href="open:Patterns/Non-Totalistic/oblique-frontend-rro.rle">oblique-frontend-rro.rle</a>,
+<a href="open:Patterns/Non-Totalistic/whitespace-puffer.rle">whitespace-puffer.rle</a>,
+<a href="open:Patterns/Non-Totalistic/wickstretcher-explosion.rle">wickstretcher-explosion.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/leaplife-p361-glider-gun.rle">leaplife-p361-glider-gun.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/myrtlelife-rake-gun.rle">myrtlelife-rake-gun.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/ripples-p1366-gun.rle">ripples-p1366-gun.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/glitter2-p312-2c12d-gun.rle">glitter2-p312-2c12d-gun.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/fractal-making-replicator.rle">fractal-making-replicator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/rulerish-replicator.rle">rulerish-replicator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/triangular-replicator.rle">triangular-replicator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/irregular-triangular-replicator.rle">irregular-triangular-replicator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/pascal-mod-3-generator.rle">pascal-mod-3-generator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/replicator-blooming-spaceships.rle">replicator-blooming-spaceships.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/rule-110-replicator.rle">rule-110-replicator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/sierpinski-like-log5-12.rle">sierpinski-like-log5-12.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/weird-replicator-generator.rle">weird-replicator-generator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/c2-p146808-orthogonal-spaceship.rle">c2-p146808-orthogonal-spaceship.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/16engine-74,46c378-spaceship.rle">16engine-74,46c378-spaceship.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/adjustable-slope-spaceships.rle">adjustable-slope-spaceships.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/hive-spaceship-collection.rle">hive-spaceship-collection.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/omosso-p79576-spaceship.rle">omosso-p79576-spaceship.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/spaghetti2-spaceship-collection.rle">spaghetti2-spaceship-collection.rle</a>.
+<a href="open:Patterns/Non-Totalistic/Spaceships/tlife-8c282-spaceship.rle">tlife-8c282-spaceship.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/tubular-geminoid.rle">tubular-geminoid.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/whitespace-1176c4704o-spaceship-predecessor.rle">whitespace-1176c4704o-spaceship-predecessor.rle</a>,
+<a href="open:Patterns/Super/exploratorium.rle.gz">exploratorium.rle.gz</a>.
+<li> Updated <a href="open:Patterns/Life/Spaceships/2c5-orthogonal.rle">2c5-orthogonal.rle</a>,
 <a href="open:Patterns/Life/Spaceships/c4-orthogonal.rle">c4-orthogonal.rle</a>,
+<a href="open:Patterns/Life/Oscillators/honey-farm-hasslers.rle">honey-farm-hasslers.rle</a>,
+<a href="open:Patterns/Life/Oscillators/phase-shift.rle">phase-shift.rle</a>,
+<a href="open:Patterns/Super/pure-nonfiller-LifeHistory.rle">pure-nonfiller-LifeHistory.rle</a>,
 <a href="open:Patterns/Life/Spaceships/short-thin.rle">short-thin.rle</a>,
 <a href="open:Patterns/Life/Spaceships/spaceship-types.rle">spaceship-types.rle</a>,
-<a href="open:Patterns/Super/pure-nonfiller-LifeHistory.rle">pure-nonfiller-LifeHistory.rle</a>.
-<li> Moved patterns <a href="open:Patterns/Non-Totalistic/b2ein-spaceships-and-rakes.rle">b2ein-spaceships-and-rakes.rle</a> and <a href="open:Patterns/Other-Rules/calcyman-primer.zip">calcyman-primer.zip</a>.
-<li> Renamed <a href="open:Patterns/Life/Miscellaneous/cambrian-explosion.rle">cambrian-explosion.rle</a>.
+<a href="open:Patterns/Life/Oscillators/traffic-light-hasslers.rle">traffic-light-hasslers.rle</a>.
+<li> Moved/renamed patterns <a href="open:Patterns/Non-Totalistic/Spaceships/b2ein-spaceships-and-rakes.rle">b2ein-spaceships-and-rakes.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/horiship-guns.rle">horiship-guns.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/intergalactic-cruise-ship-factory.rle">intergalactic-cruise-ship-factory.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Guns/rr14gun.rle">rr14gun.rle</a>,
+<a href="open:Patterns/Non-Totalistic/justfriends-p137loop.rle">justfriends-p137loop.rle</a>,
+<a href="open:Patterns/Non-Totalistic/justfriends-oscillators.rle">justfriends-oscillators.rle</a>,
+<a href="open:Patterns/Non-Totalistic/justfriends-p384drifter.rle">justfriends-p384drifter.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/justfriends-spaceships.rle">justfriends-spaceships.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/p42-knightship.rle">p42-knightship.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/pondpuffer-spaceship.rle"></a>,
+<a href="open:Patterns/Non-Totalistic/Spaceships/unit-fraction-orthogonal-spaceships.zip">unit-fraction-orthogonal-spaceships.zip</a>,
+<a href="open:Patterns/Other-Rules/calcyman-primer.zip">calcyman-primer.zip</a>,
+and <a href="open:Patterns/Life/Miscellaneous/cambrian-explosion.rle">cambrian-explosion.rle</a>.
+<li> Removed patterns <a href="open:Patterns/Non-Totalistic/JustFriends/p8256c4dirtyrake.rle">p8256c4dirtyrake.rle</a>
+and <a href="open:Patterns/Life/Miscellaneous/sawtooth6b.rle">sawtooth6b.rle</a>.
 </ul>
 
 <p>
