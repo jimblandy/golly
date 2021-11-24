@@ -1,0 +1,13 @@
+#N rule-110-replicator.rle
+#C
+#C     In December 2020, iNoMed reported a non-totalistic rule that 
+#C features a small replicator following Wolfram's Rule 110. Each
+#C cycle is 8 ticks, and a single unit is a U-pentomino.
+#C     Simulating Rule 110 in another rule is of particular interest
+#C because this provides an indication of the Turing-completeness of
+#C the rule (based on Matthew Cook's universality proof for Rule 110).
+#C
+#C Reference: https://conwaylife.com/forums/viewtopic.php?p=116434#p116434
+#C See LifeWiki article: https://conwaylife.com/wiki/OCA:Rule_110
+x = 2, y = 3, rule = B2ei3aci4aei5kqr7e/S01c2-kn3ijry4citwy5aeiq
+2o$o$2o!

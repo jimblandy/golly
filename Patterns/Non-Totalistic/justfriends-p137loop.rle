@@ -1,3 +1,5 @@
+#N justfriends-p137loop.rle
+#O David I. Bell, August 2004
 #C A period 137 (prime) glider loop.
 #C This is based on glider turning reactions using four base period 26
 #C oscillators whose phases are changed to period 37 due to the impacts.
@@ -5,7 +7,10 @@
 #C is the number of contiguous period 26 gaps in the loop, then similar
 #C oscillators can be built for any period of the form 37M + 26N, where
 #C M > 0 and N > 0.  (Here M=3 and N=1).
-#C David I. Bell, August 2004
+#C
+#C     The JustFriends rule, B2-a/S12, is a member of the family of
+#C isotropic non-totalistic (INT) rules -- one of the earliest such
+#C rules explored by Lifenthusiasts.
 x = 292, y = 292, rule = B2-a/S12
 140b7o$$142bobo$142bobo$142bobo7$141b3o$143bo3$154bo$152b3o$135boo$
 137bo3$160bo$158bobo$129boo$$130bo$$166bo$166bo$165bo5$118bobo$120bo3$

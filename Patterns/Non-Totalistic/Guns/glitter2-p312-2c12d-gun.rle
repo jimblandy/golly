@@ -1,0 +1,46 @@
+#N glitter2-p312-2c12d-gun.rle
+#O EvinZL, April 2 2021
+#C
+#C     Glitter is a non-totalistic rule devised by dani that is named
+#C after the glider-splitting block. The following pattern is in a
+#C close relative that has a glide-symmetric c/6 diagonal spaceship,
+#C three of which can capture and adopt a glider. This is a period-312
+#C gun for the resulting 2c/12 diagonal spaceship.
+#C 
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=127670#p127670
+x = 250, y = 213, rule = B3-ekqy4j5acy6cn7c/S2-in3aijnr4aw6ci7c8
+170b2o3b2o$170b2o3b2o$168b2o$168b2o9$155b2o$155b2o2$145b2o3b2o$145b2o
+3b2o$143b2o10b2o$143b2o10b2o$157b2o$157b2o6$198b2o$130b2o66b2o$130b2o
+68b2o$200b2o3$130b2o$130b2o68b2o$132b2o66b2o10bo$132b2o78b2o$205bo4bo
+2bo$204bobo4b2o$130b2o3b2o66bob2o$130b2o3b2o47bo19bo3b3o$128b2o55bo21b
+2obo$128b2o43b2o8b3o21bobo$173b2o33bo2b2o$187b2o22bobo$170b2o15b2o21bo
+bo$150bo18bobo39bo$151bo19bo$149b3o63b2o3b2o$215b2o3b2o$222b2o$115b2o
+105b2o$115b2o4$115b2o$115b2o$117b2o$117b2o43b2o$162b2o$155b2o3b2o43b2o
+$155b2o3b2o43b2o$110b2o3b2o$111bo3b2o91b2o$108bo49b2o48bobo$108b2o48b
+2o48bo$111b2o$110b3o42b3o$111bo45bo$136bo19bo$134bobo25b2ob2o$135b2o
+25b2ob2o$248b2o$248b2o$95b2o110b2o$95b2o110b2o2$203b3o42b2o$205bo42b2o
+$95b2o107bo41b2o$95bo150b2o$98bo48b2o$97b2o48b2o29b2o$140b2o3b2o31b2o$
+140b2o3b2o$178b2o10b2o$160bo17b2o10b2o$160b2o26b2o$138b2o13bo4bo2bo26b
+2o$138b2o12bobo4b2o23b2o$151bob2o29b2o43b2o$152bo28b2o46b2o$180bobo5b
+2o41b2o3b2o$182bo5b2o41b2o3b2o$159b2o$152b2o5bobo$153b2o3bobo$152bo6bo
+42b2o29b2o$135b2o65bobo28b2o$135b2o65bo$75b2o3b2o85b2o$76bo3b2o85b2o$
+73bo91b2o66b2o$73b2o90b2o66b2o$231b2o$127b2o102b2o$128bo$120b2o3bo39b
+2o$120b2o3b2o38b2o$160b2o$160b2o2$60b2o88b2o26b3o29b2o$60b2o88b2o26bo
+31b2o$179bo$50b2o3b2o157b2o$51bo3b2o157b2o$48bo11b2o148b2o4b2o3b2o$48b
+2o10bo149b2o4b2o3b2o$63bo144b2o$62b2o79b2o63b2o$144bo$141bo$141b2o3$
+103b2o$35b2o66bo37b2o$35b2o69bo25b2o3b2o2b2o$105b2o26bo3b2o$130bo60b2o
+$130b2o59b2o$35b2o149b2o5b2o3b2o$35bo69b2o79b2o5b2o3b2o$38bo66b2o$37b
+2o$182b2o$85bobo93b3o2b2o$35b2o3b2o44b2o20bo73bo4bo$36bo3b2o44bo21b2o
+74bo$33bo72bo2bo16bo57b2o$33b2o43b2o27b2o3b2ob2o7b2o$78b2o32b2ob2o8b2o
+$51bobo38b2o$52b2o38b2o52bo$52bo92b2o$145bobo$72b2o45b2o$73b2o44b2o$
+72bo$20b2o145b2o$20b2o95b2o3b2o43bo$118bo3b2o46bo3b2o$115bo53b2o3b2o$
+115b2o43b2o$20b2o138bo$20bo142bo$23bo138b2o$22b2o43b2o$68bo$60b2o3bo$
+60b2o3b2o95b2o$15b2o3b2o140b2o$15b2o3b2o88bobo$13b2o48b2o45b2o$13b2o
+48b2o46bo$37bo$38b2o$17b3o17b2o51b2o39b2o$17bo40bo31b2o38b2o$18bo39b2o
+7b2ob2o32b2o26bo$57bobo7b2ob2o32b2o43b2o$150bo$142b2o3bo$2o95b2o43b2o
+3b2o$2o94b2o$98bo$145b2o$77b2o66bo$2o75b2o69bo$2o145b2o$2b2o48b2o$2b2o
+49bo$45b2o3bo26b2o$45b2o3b2o25bo69b2o$80bo66b2o$79b2o2$43b2o$43b2o$56b
+o$56b2o$54bo2bo62b2o$55b2o63bo$123bo10b2o$122b2o11bo$127b2o3bo$127b2o
+3b2o$40b2o$40b2o80b2o$122b2o5$32b2o$32b2o$25b2o3b2o$25b2o3b2o$109b2o$
+110bo$102b2o3bo$102b2o3b2o!

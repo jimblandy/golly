@@ -1,0 +1,9 @@
+#N irregular-triangular-replicator.rle
+#O silversmith, May 7 2021
+#C 
+#C     This replicator reproduces every 26 generations irregularly,
+#C leading to a chaotic matrix of child copies.
+#C
+#C Reference: https://conwaylife.com/forums/viewtopic.php?f=11&t=3752&p=129799#p129799
+x = 2, y = 4, rule = B2e3ijn6n/S1c2cek3n
+o$bo$bo$2o!

@@ -1,0 +1,16 @@
+#N whitespace-puffer.rle
+#O jimmyChen2013, March 28 2021
+#C 
+#C     Here in another corner of the whitespace rules is a puffer 
+#C puffing spacefillers at a period of 14. The resulting pattern
+#C grows in population in an unusual way.
+#C     If the outputs are linear wickstretchers instead of quadratic
+#C spacefillers, the population versus generation curve will 
+#C converge to a Takagi function as pointed out in this post:
+#C   https://conwaylife.com/forums/viewtopic.php?p=90367#p90367
+#C
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=127178#p127178
+x = 9, y = 15, rule = B3acij4ci5aceqr6ckn7/S3-kr4centy5ikn6cei7c8
+3b3o$2bobobo$bob3obo$ob5obo$9o$ob5obo$bob3obo$3bobo$2bo3bo$3bobo$bob3o
+bo$b7o$bob3obo$2bobobo$3b3o!

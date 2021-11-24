@@ -1,0 +1,19 @@
+#N Sawtooth 177
+#O thunk, 27 October 2015
+#C
+#C     A sawtooth is a pattern with population that reaches new heights
+#C infinitely often, but also infinitely often drops to some fixed
+#C value.  This sawtooth has the lowest known minimum repeating
+#C population, 177, which occurs at generations 48 * (121^n - 1).
+#C It is a slight refinement of a population-181 sawtooth constructed
+#C by Chris Cain on 28 April 2015.
+#C
+#C https://conwaylife.com/forums/viewtopic.php?p=24238#p24238
+x = 68, y = 77, rule = B3/S23
+59b2o$59b2o3$56b2o$56b2o8b2o$7b2o57bo$7b2o50b2o6bo$59b2o5b2o2$10b2o$2o
+8b2o$bo46b3o$o6b2o40bo$2o5b2o40b3o4$17b3o$18bo$16b3o4$48b2o$48b2o2$51b
+2o$51b2o2$18b2o$18b2o28b2o$40bo7b2o$15b2o21b3o$15b2o20bo$37b2o2$18b2o
+5bobo$18b2o5b2o$26bo5$24bo$24bobo5b2o3b2o$24b2o8b3o$33bo3bo$34bobo$35b
+o4$35b2o$6b4o25b2o$4b2o4b2o$4b2o5bo$6b2obobo10bo4bo$11bo8b2ob4ob2o$7bo
+3bo10bo4bo$7bo4bo$9b3o3bo$9b2o4bo$15b2o$17bo$17b3o3$20bo$19bob5o$18b2o
+5bo$18b2o3bo2bo$26bo$20b2obo2bo$23bo2bo$24b2o$24b2o!

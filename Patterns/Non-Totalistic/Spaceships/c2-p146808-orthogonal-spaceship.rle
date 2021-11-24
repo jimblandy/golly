@@ -1,0 +1,11 @@
+#N c2-p146808-orthogonal-spaceship.rle
+#O J.H. Yu, May 30 2021
+#C
+#C     A c/2 orthogonal spaceship with the highest known period from
+#C the 5s search. It stretches and shrinks frequently, with the initial
+#C configuration reappearing at generation 73,404, glide-reflected.
+#C
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?&p=131168#p131168
+x = 12, y = 7, rule = B2-an3-eiry4et5eijn6-in/S1c2n3ey4ejtwz5eijnq6-n78
+2bo4bo2bo$o3b6o$2ob7obo$bo3b6o$3bob5obo$6b4o$7bo2bo!
