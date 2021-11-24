@@ -1,0 +1,81 @@
+#C crystal-cathedral-09-novelty.rle
+#C Bill Gosper, 18 May 2021
+#C One of Bill Gosper's recent Golly-based "novelty experiments".
+#C
+#C This is rendered in LifeSuper rather than plain Life, to allow the
+#C    incoming glider streams that form the kaleidoscopic pattern in
+#C    the center to be a different color from the settled ash.
+#C 
+#C The pattern's final fate is only determined after more than
+#C    314 million generations.  Until that time, the pairs of
+#C    backward glider streams from the receding arks
+#C    ( https://www.conwaylife.com/wiki/Ark )
+#C    repeatedly drill through sections of the arks' ash clouds,
+#C    then gradually build up crystal structures
+#C    (https://www.conwaylife.com/wiki/Crystal)
+#C    until the crystal comes into contact with another structure
+#C    and restarts the production of chaotic ash.
+#C
+#C The two parallel streams of gliders from each corner do a fairly
+#C    good job of keeping each other chaotic.  Each stream by itself
+#C    has a tendency to drill through debris, on average.  But in this
+#C    case, if one stream drills deeper than the other, it tends to
+#C    keep getting interrupted by explosions from the other stream.
+#C
+#C This means that there seems to be a tendency to build up ash.
+#C    These eightfold glider-stream novelty experiments quite often
+#C    end with one of a few stabilization mechanisms at the center.
+#C    But fairly early on in this pattern's evolution, the two streams
+#C    stop being able to drill through to meet their partner streams.
+#C
+#C At around 63 million ticks, the pattern appears to have stabilized:
+#C    it develops a spatial periodicity of 2,688 cells and temporal
+#C    periodicity 6,151,680 ticks.  By T = 80,000,000, it has repeated
+#C    the same ash pattern three times.
+#C
+#C However, the novelty story is not over yet! There's a very subtle
+#C    mechanism involving a glider hitting the east/west "spine" of
+#C    the ash pattern, every six million ticks, bouncing back another
+#C    glider toward the diagonals.  If that glider doesn't arrive
+#C    soon enough, a key change is not made in the active region of
+#C    the repeating ash pattern.  The key glider takes longer on each
+#C    cycle to travel from the spine to the diagonal. Eventually it
+#C    arrives just a little too late, and novelty generation resumes.
+#C
+#C At T = 313,822,924, a deadly collision occurs on the streams
+#C     closest to the east and west spines. A glider hits a 
+#C     loaf/welded-hat combination.
+#C At T = 313,823,095, a Baneful Beacon appears, which performs a
+#C     boat-bit catch of the rest of that stream as soon as the
+#C     stream drills through to it.
+#C At T = 314,098,160, in a stunning turn of events, the other stream
+#C     rescues the trapped stream by destroying the beacon.
+#C     (In fact a potential rescue happened sooner than that, since
+#C     the other stream interrupted the trapped stream higher up; the
+#C     beacon wasn't catching anything any more at that point, though
+#C     it was still dangerously placed and could have started up again
+#C     whenever the stream drilled through, unless a lucky drilling
+#C     explosion destroyed it.)
+#C At T = 314,339,784, a glider on the lanes closest to the N/S spine
+#C     hits a simple TL+ship combination, and makes a boat-bit-catching
+#C eater (bo$2bo6b2o$3o5bobo$8b2o2$4b3o2$2bo5bo$2bo5bo$2bo5bo2$4b3o!)
+#C
+x = 144, y = 1160, rule = LifeSuper
+71.2H9$pA2.2pA.2pA.pA.pA2.2pA112.2pA2.pA.pA.2pA.2pA2.pA$5.5pA4.2pA
+112.2pA4.5pA$3.pA3.pA.pA.2pA2.pA112.pA2.2pA.pA.pA3.pA$pA.3pA2.pA.pA.pA
+3.pA112.pA3.pA.pA.pA2.3pA.pA$pA2.pA.3pA.5pA116.5pA.3pA.pA2.pA$.pA2.pA
+.pA3.2pA2.pA114.pA2.2pA3.pA.pA2.pA$2pA2.2pA2.pA2.pA.2pA114.2pA.pA2.pA
+2.2pA2.2pA$5pA2.pA.pA.pA2.2pA112.2pA2.pA.pA.pA2.5pA$.pA4.pA.2pA.2pA.pA
+114.pA.2pA.2pA.pA4.pA$5pA2.2pA.4pA116.4pA.2pA2.5pA$4.2pA3.3pA.pA116.pA
+.3pA3.2pA$pA.9pA2.2pA114.2pA2.9pA.pA$2.pA.pA3.2pA4.2pA112.2pA4.2pA3.pA
+.pA$4.pA.pA2.3pA2.pA114.pA2.3pA2.pA.pA$2pA3.4pA2.3pA.pA112.pA.3pA2.4pA
+3.2pA$4pA3.pA4.pA.pA114.pA.pA4.pA3.4pA133$71.2H845$71.2H133$4pA3.pA4.
+pA.pA114.pA.pA4.pA3.4pA$2pA3.4pA2.3pA.pA112.pA.3pA2.4pA3.2pA$4.pA.pA
+2.3pA2.pA114.pA2.3pA2.pA.pA$2.pA.pA3.2pA4.2pA112.2pA4.2pA3.pA.pA$pA.
+9pA2.2pA114.2pA2.9pA.pA$4.2pA3.3pA.pA116.pA.3pA3.2pA$5pA2.2pA.4pA116.
+4pA.2pA2.5pA$.pA4.pA.2pA.2pA.pA114.pA.2pA.2pA.pA4.pA$5pA2.pA.pA.pA2.
+2pA112.2pA2.pA.pA.pA2.5pA$2pA2.2pA2.pA2.pA.2pA114.2pA.pA2.pA2.2pA2.2pA
+$.pA2.pA.pA3.2pA2.pA114.pA2.2pA3.pA.pA2.pA$pA2.pA.3pA.5pA116.5pA.3pA.
+pA2.pA$pA.3pA2.pA.pA.pA3.pA112.pA3.pA.pA.pA2.3pA.pA$3.pA3.pA.pA.2pA2.
+pA112.pA2.2pA.pA.pA3.pA$5.5pA4.2pA112.2pA4.5pA$pA2.2pA.2pA.pA.pA2.2pA
+112.2pA2.pA.pA.2pA.2pA2.pA9$71.2H!
