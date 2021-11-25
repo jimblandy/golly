@@ -12,19 +12,15 @@
 #C Since this collection was built, many new oscillators have been found.
 #C Most notably, in 1996 David Buckingham showed how to create tracks
 #C built from still-lifes through which Herschels can move.  (See
-#C  https://conwaylife.com/ref/lifepage/patterns/bhept/bhept.html
+#C   https://conwaylife.com/ref/lifepage/patterns/bhept/bhept.html
 #C for Buckingham's description of this, and
-#C  https://conwaylife.com/ref/lifepage/patterns/p1/p1.html
+#C   https://conwaylife.com/ref/lifepage/patterns/p1/p1.html
 #C for Paul Callahan's discussion of using such conduits to build a stable
 #C glider reflector.)  Using Herschel tracks, Buckingham obtained glider
 #C guns of all periods >= 62 and oscillators of all periods >= 61.  Further
 #C work on Herschel tracks has been done by Buckingham, Paul Callahan,
 #C Dieter Leithner, and me; such tracks now give oscillators of all periods
-#C >=54, and guns of periods 54, 55, and 56. In addition, the 2013 discovery
-#C of the Snark allowed all oscillators of all periods 43 and higher.
-#C There are 4 periods for which oscillators are still unknown as of
-#C late 2021: 19, 34, 38, and 41. (For period 34, we could use a noninteracting
-#C combination of p2 and p17 oscillators, but that's considered trivial.)
+#C >=54, and guns of periods 54, 55, and 56.
 #C
 #C Building this collection would have been impossible without the help
 #C of many people.  In addition to those who found the oscillators, I'd
@@ -39,6 +35,12 @@
 #C and list of missing periods updated on 5/8/2009.
 #C
 #C Notes from David Raucci:
+#C The 2013 discovery of the Snark allowed oscillators of all periods
+#C 43 and higher. There are 4 periods for which oscillators are still
+#C unknown as of late 2021: 19, 34, 38, and 41. (For period 34,
+#C we could use a noninteracting combination of p2 and p17 oscillators,
+#C but that's considered trivial.)
+#C
 #C If you find any errors or can fill in any of the blanks, please
 #C let me know. This file has been updated in 2020 and 2021, converting it
 #C to a Python program that automatically updates based on a text file input
