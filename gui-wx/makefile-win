@@ -375,7 +375,7 @@ __LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
 
 ### Targets: ###
 
-all: $(OBJDIR) $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe
+all: $(OBJDIR) $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(EXEDIR)\RuleTableToTree.exe
 
 $(BASEO): $(BASEH)
 

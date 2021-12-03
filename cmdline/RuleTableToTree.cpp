@@ -70,7 +70,9 @@ int addndd(const vector<vector<state> > &inputs, const state output,
    const vector<state> &inset = inputs[remap[at-1]] ;
    for (unsigned int i=0; i<inset.size(); i++)
       n.vals[inset[i]] = addndd(inputs, output, n.vals[inset[i]], at-1) ;
-   return getnode(n) ;
+   int r = getnode(n) ;
+   cache[nddr] = r ;
+   return r ;
 }
 void shrink() ;
 void addndd(const vector<vector<state> > &inputs, const state output) {
