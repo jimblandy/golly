@@ -29,7 +29,7 @@ o60bo14bo3bo$170b4oboo67bo14b4o$170b6o64bo3bo$171b4o66b4o!
 #C [[ LABEL 170 0 9 "P16 c/2 forerake\nTim Coe, 1996" ]]
 #C [[ LABEL 170 50 9 "P16 c/2 backrake\nTim Coe, 1996" ]]
 #C [[ LABELSIZE 28 LABELALPHA .8 COLOR LABEL SpringGreen ]]
-#C [[ LABEL 60 20 3 7 "sample higher-period forerake (p240),\nbased on a repeatably ignited blinker fuse" ]]
+#C [[ LABEL 60 20 7 "sample higher-period forerake (p240),\nbased on a repeatably ignited blinker fuse" ]]
 #C
 #C -- notice below that coordinates for points of interest are pattern coordinates,
 #C    whereas labels are cursor/screen coordinates --
