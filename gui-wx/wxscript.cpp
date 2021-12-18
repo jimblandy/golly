@@ -58,7 +58,7 @@ static wxString scriptloc;          // location of script file
 static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events
 
 // constants:
-const int maxcomments = 128 * 1024; // maximum comment size
+const int maxcomments = 1024 * 1024; // maximum comment size
 
 // -----------------------------------------------------------------------------
 
@@ -73,14 +73,14 @@ const int maxcomments = 128 * 1024; // maximum comment size
         #include <SDL2/SDL.h>
         #define CUTE_SOUND_FORCE_SDL
     #endif
-    
+
     #define CUTE_SOUND_IMPLEMENTATION
     #define CUTE_SOUND_SCALAR_MODE      // avoid SSE instructions
 
     #include "cute_sound.h"
 
     static cs_context_t* soundctx = NULL;
-    
+
     // remember loaded sounds
     static std::map<std::string,cs_loaded_sound_t*> sounds;
 #endif
@@ -126,7 +126,7 @@ static void FinishSounds()
     if (soundctx) {
         // stop playing any sounds
         cs_stop_all_sounds(soundctx);
-    
+
         // free all loaded sounds
         std::map<std::string,cs_loaded_sound_t*>::iterator itsnd;
         for (itsnd = sounds.begin(); itsnd != sounds.end(); ++itsnd) {
@@ -315,7 +315,7 @@ const char* GSF_os()
         return "Mac";
     #elif defined(__WXGTK__)
         return "Linux";
-    #else 
+    #else
         return "unknown";
     #endif
 }
@@ -1572,9 +1572,9 @@ static cs_playing_sound_t* FindSound(const char* name)
     if (it == sounds.end()) {
         return NULL;            // name not loaded
     }
-    
+
     cs_loaded_sound_t* lsound = it->second;
-    
+
     // search playing list for lsound
     cs_playing_sound_t* sound = cs_get_playing(soundctx);
     while (sound) {
@@ -1617,12 +1617,12 @@ const char* GSF_SoundPlay(const char* soundfile, float volume, bool loop)
                 return SoundError("sound play volume must be in the range 0.0 to 1.0");
             }
         }
-        
+
         cs_loaded_sound_t* sndptr = LoadedSound(soundfile);
         if (sndptr == NULL) {
             // named sound hasn't been loaded yet
             sndptr = (cs_loaded_sound_t*)malloc(sizeof(cs_loaded_sound_t));
-        
+
             // check that soundfile ends with .ogg or .wav
             std::string namestr = soundfile;
             std::size_t foundogg = namestr.rfind(".ogg");
@@ -1639,7 +1639,7 @@ const char* GSF_SoundPlay(const char* soundfile, float volume, bool loop)
                 free(sndptr);
                 return SoundError(cs_error_reason);
             }
-            
+
             // remember this successfully loaded sound
             sounds[soundfile] = sndptr;
 
@@ -1659,13 +1659,13 @@ const char* GSF_SoundPlay(const char* soundfile, float volume, bool loop)
         snddef.volume_left = volume;
         snddef.volume_right = volume;
         snddef.looped = loop ? 1 : 0;
-        
+
         // play the sound
         cs_playing_sound_t* newsound = cs_play_sound(soundctx, snddef);
         if (newsound == NULL) {
             return SoundError("could not play sound");
         }
-        
+
         // note that newsound->loaded_sound == sndptr and newsound has been
         // added to soundctx's playing list
     }
@@ -1947,11 +1947,11 @@ void RunScript(const wxString& filename)
         pass_mouse_events = false;
         pass_file_events = false;
         wxGetApp().PollerReset();
-        
+
         #ifdef ENABLE_SOUND
             InitSounds();
         #endif
-    
+
         #ifdef __WXMSW__
             // on Windows we want g.sleep times to have a resolution of 1ms
             timeBeginPeriod(1);

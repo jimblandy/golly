@@ -293,7 +293,7 @@ const char *readrle(lifealgo &imp, char *line) {
                   // write run of cells to grid checking cells are within any bounded grid
                   if (ght == 0 || y < ght) {
                      while (n-- > 0) {
-                        if (gwd == 0 || x < gwd) {  
+                        if (gwd == 0 || x < gwd) {
                            if (imp.setcell(xoff + x, yoff + y, state) < 0)
                               return "Cell state out of range for this algorithm" ;
                         }
@@ -551,7 +551,7 @@ const char *readmcell(lifealgo &imp, char *line) {
          }
       }
    }
-   
+
    if (wd > 0 || ht > 0) {
       if (useltl) {
          // setrule has already been called above
@@ -590,7 +590,7 @@ const char *readmcell(lifealgo &imp, char *line) {
          }
       }
    }
-   
+
    return 0;
 }
 
