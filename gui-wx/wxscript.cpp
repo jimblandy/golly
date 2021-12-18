@@ -57,9 +57,6 @@ static wxString scriptchars;        // non-escape chars saved by PassKeyToScript
 static wxString scriptloc;          // location of script file
 static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events
 
-// constants:
-const int maxcomments = 1024 * 1024; // maximum comment size
-
 // -----------------------------------------------------------------------------
 
 #ifdef ENABLE_SOUND
@@ -1517,7 +1514,7 @@ const char* GSF_getpath()
 const char* GSF_getinfo()
 {
     // comment buffer
-    static char comments[maxcomments];
+    static char comments[maxcommlen];
 
     // buffer for receiving comment data (allocated by readcomments)
     char *commptr = NULL;
@@ -1530,8 +1527,8 @@ const char* GSF_getinfo()
     }
 
     // copy the comments and truncate to buffer size if longer
-    strncpy(comments, commptr, maxcomments);
-    comments[maxcomments - 1] = '\0';
+    strncpy(comments, commptr, maxcommlen);
+    comments[maxcommlen - 1] = '\0';
     free(commptr);
     return comments;
 }

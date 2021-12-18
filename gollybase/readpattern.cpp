@@ -827,9 +827,6 @@ const char *readclipboard(const char *filename, lifealgo &imp,
 
 const char *readcomments(const char *filename, char **commptr)
 {
-   // allocate a 128K buffer for storing comment data (big enough
-   // for the comments in Dean Hickerson's stamp collection)
-   const int maxcommlen = 128 * 1024;
    *commptr = (char *)malloc(maxcommlen);
    if (*commptr == NULL) {
       return "Not enough memory for comments!";

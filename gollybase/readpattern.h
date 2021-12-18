@@ -6,6 +6,10 @@
 #include "bigint.h"
 class lifealgo ;
 
+// allocate a 1MB buffer for storing comment data (big enough
+// for the comments in the updated version of Dean Hickerson's stamp collection)
+const int maxcommlen = 1024 * 1024;
+
 /*
  *   Read pattern file into given life algorithm implementation.
  */
