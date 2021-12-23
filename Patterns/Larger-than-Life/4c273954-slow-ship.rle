@@ -1,0 +1,33 @@
+#N 4c273954-slow-ship.rle
+#O Connor Steppie, 6 February 2019
+#C     The following is a spaceship which moves orthogonally with a
+#C displacement of four cells every 273 954 generations, or
+#C approximately one cell every 68488.5 generations.
+#C This makes this spaceship the slowest known spaceship as of 2021,
+#C excluding spaceships made with universal construction technology,
+#C rules with adjustable-speed spaceship families, or custom rules
+#C specifically created to harbor slow spaceships.
+#C
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=69941#p69941
+x = 100, y = 100, rule = R45,C2,S2884-4922,B2500-4973
+40b20o$36b9o10b9o$34b7o5b8o5b7o$32b6o6b12o6b6o$30b6o6b16o6b6o$28b6o5b
+22o5b6o$27b5o5b26o5b5o$25b6o3b32o3b6o$24b5o4b34o4b5o$22b6o3b38o3b6o$
+21b6o2b42o2b6o$20b6o2b44o2b6o$19b6o2b46o2b6o$18b6ob50ob6o$16b7ob52ob7o
+$15b7ob54ob7o$15b6ob56ob6o$14b6ob58ob6o$13b6ob60ob6o$12b6ob62ob6o$11b
+6ob64ob6o$10b6ob66ob6o$9b6ob68ob6o$9b82o$8b84o$7b5ob74ob5o$7b4ob76ob4o
+$6b4ob78ob4o$5b90o$5b43o4b43o$4b4ob34o14b34ob4o$4b37o18b37o$3b37o20b
+37o$3b3ob32o22b32ob3o$3b34o26b34o$2b4ob29o28b29ob4o$2b33o30b33o$2b32o
+32b32o$b33o32b33o$b32o34b32o$b31o36b31o$b31o36b31o$31o38b31o$31o38b31o
+$31o38b31o$30o40b30o$30o40b30o$30o40b30o$30o40b30o$31o38b31o$31o38b31o
+$31o38b31o$31o38b31o$3ob27o38b27ob3o$3ob28o36b28ob3o$b3ob27o36b27ob3o$
+b3ob27o36b27ob3o$b2o3b27o34b27o3b2o$b3o2b28o32b28o2b3o$b3o3b27o32b27o
+3b3o$2b2o3b28o30b28o3b2o$2b3o2b29o28b29o2b3o$2b3o3b29o26b29o3b3o$3b3o
+2b30o24b30o2b3o$3b3o3b30o22b30o3b3o$4b3o2b32o18b32o2b3o$4b3o3b32o16b
+32o3b3o$5b3o2b34o12b34o2b3o$5b3o3b78o3b3o$6b3o3b76o3b3o$6b4o2b76o2b4o$
+7b4o2b74o2b4o$7b4o3b72o3b4o$8b4o2b72o2b4o$9b4o2b70o2b4o$9b5o2b68o2b5o$
+10b5o2b66o2b5o$11b6ob64ob6o$12b6ob62ob6o$13b6ob60ob6o$13b7ob58ob7o$14b
+7ob56ob7o$15b7ob54ob7o$16b7ob52ob7o$17b7ob50ob7o$18b7ob48ob7o$19b7ob
+46ob7o$20b8ob42ob8o$22b7ob40ob7o$23b8ob36ob8o$24b8o2b32o2b8o$26b8o2b
+28o2b8o$27b9o2b24o2b9o$29b10o2b18o2b10o$31b10o2b14o2b10o$33b34o$35b30o
+$38b24o$41b18o$48b4o!
