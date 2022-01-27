@@ -1983,19 +1983,71 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
         int yoffset = y * outerwd;
         unsigned char* cellptr = currgrid + y * outerwd;
         
-        for (int x = mincol; x <= maxcol; x++) {
-            int ncount = 0;
-            int offset = 1;
+        // for the first two cells in the row count the entire neighbourhood
+        int x = mincol;
+        int ncount = 0;
+        int ncount2 = 0;
+        int offset = 1;
+        unsigned char* cp1 = cellptr - topoffset;
+        for (int j = -range; j <= range; j++, cp1 += outerwd) {
+            for (int i = -range + offset; i <= range - offset; i += 2) {
+                if (cp1[x + i] == 1) ncount++;
+            }
+            offset = 1 - offset;
+        }
+        if (cellptr[x] == 1) ncount++;
+
+        update_next_grid(x, y, yoffset+x, ncount);
+        x++;
+
+        // check if there are two cells in the row
+        if (x <= maxcol) {
+            ncount2 = 0;
+            offset = 1;
             unsigned char* cp1 = cellptr - topoffset;
             for (int j = -range; j <= range; j++, cp1 += outerwd) {
                 for (int i = -range + offset; i <= range - offset; i += 2) {
-                    if (cp1[x + i] == 1) ncount++;
+                    if (cp1[x + i] == 1) ncount2++;
                 }
                 offset = 1 - offset;
             }
-            if (cellptr[x] == 1) ncount++;
+            if (cellptr[x] == 1) ncount2++;
 
-            update_next_grid(x, y, yoffset+x, ncount);
+            update_next_grid(x, y, yoffset+x, ncount2);
+            x++;
+
+            // for the remaining cell pairs on the row subtract the left and add the right cells
+            while (x <= maxcol) {
+                offset = 1;
+                unsigned char* cp1 = cellptr - topoffset;
+                for (int j = -range; j <= range; j++, cp1 += outerwd) {
+                    if (cp1[x - range + offset - 2] == 1) ncount--;
+                    if (cp1[x + range - offset] == 1) ncount++;
+                    offset = 1 - offset;
+                }
+
+                // check for survival
+                if (cellptr[x - 2] == 1) ncount--;
+                if (cellptr[x] == 1) ncount++;
+                update_next_grid(x, y, yoffset+x, ncount);
+                x += 1;
+
+                if (x <= maxcol) {
+                    offset = 1;
+                    unsigned char* cp1 = cellptr - topoffset;
+                    for (int j = -range; j <= range; j++, cp1 += outerwd) {
+                        if (cp1[x - range + offset - 2] == 1) ncount2--;
+                        if (cp1[x + range - offset] == 1) ncount2++;
+                        offset = 1 - offset;
+                    }
+
+                    // check for survival
+                    if (cellptr[x - 2] == 1) ncount2--;
+                    if (cellptr[x] == 1) ncount2++;
+                    update_next_grid(x, y, yoffset+x, ncount2);
+                    x += 1;
+                }
+            }
         }
     }
 }
@@ -2162,26 +2214,103 @@ void ltlalgo::fast_Triangular(int mincol, int minrow, int maxcol, int maxrow)
 {
     // vertical range is half range
     int halfr = range >> 1;
-    int width = 0;
 
     for (int y = minrow; y <= maxrow; y++) {
         int yoffset = y * outerwd;
         unsigned char* cellptr = currgrid + (y - halfr) * outerwd;
         
-        for (int x = mincol; x <= maxcol; x++) {
-            int ncount = 0;
+        // for the first cell compute the whole neighbourhood
+        int x = mincol;
+        int ncount = 0;
+        int k = (x + y) & 1;
+        if (k == 0) {
+            int width = halfr + 1;
             unsigned char* cp1 = cellptr;
-            for (int j = -halfr; j <= halfr; j++, cp1 += outerwd) {
-                if (((x + y) & 1) == 0) {
-                    width = shape[j + range];
-                } else {
-                    width = shape[range - j];
+            for (int j = -halfr; j < 0; j++, cp1 += outerwd) {
+                for (int i = -width; i <= width; i++) {
+                    if (cp1[x + i] == 1) ncount++;
                 }
+                width++;
+            }
+            for (int j = 0; j <= halfr; j++, cp1 += outerwd) {
+                width--;
                 for (int i = -width; i <= width; i++) {
                     if (cp1[x + i] == 1) ncount++;
                 }
             }
+        } else {
+            int width = halfr;
+            unsigned char* cp1 = cellptr;
+            for (int j = -halfr; j <= 0; j++, cp1 += outerwd) {
+                for (int i = -width; i <= width; i++) {
+                    if (cp1[x + i] == 1) ncount++;
+                }
+                width++;
+            }
+            for (int j = 1; j <= halfr; j++, cp1 += outerwd) {
+                width--;
+                for (int i = -width; i <= width; i++) {
+                    if (cp1[x + i] == 1) ncount++;
+                }
+            }
+        }
+        update_next_grid(x, y, yoffset+x, ncount);
+        x++;
+
+        // for the remaining cells compute the edge differences
+        while (x <= maxcol) {
+            int k = (x + y) & 1;
+            if (k == 0) {
+                int width = halfr + 1;
+                int l = halfr;
+                unsigned char* cp1 = cellptr;
+                for (int j = -halfr; j < 0; j++, cp1 += outerwd) {
+                    if (cp1[x + l] == 1) ncount++;
+                    if (cp1[x + l + 1] == 1) ncount++;
+                    l++;
+                    width++;
+                }
+
+                // middle row
+                width--;
+                if (cp1[x - l - 1] == 1) ncount--;
+                if (cp1[x + l] == 1) ncount++;
+                l++;
+                cp1 += outerwd;
+
+                for (int j = 1; j <= halfr; j++, cp1 += outerwd) {
+                    width--;
+                    l--;
+                    if (cp1[x - l - 1] == 1) ncount--;
+                    if (cp1[x - l] == 1) ncount--;
+                }
+            } else {
+                int width = halfr;
+                int l = halfr + 1;
+                unsigned char* cp1 = cellptr;
+                for (int j = -halfr; j < 0; j++, cp1 += outerwd) {
+                    if (cp1[x - l - 1] == 1) ncount--;
+                    if (cp1[x - l] == 1) ncount--;
+                    width++;
+                    l++;
+                }
+
+                // middle row
+                l--;
+                if (cp1[x - l - 1] == 1) ncount--;
+                if (cp1[x + l] == 1) ncount++;
+                width++;
+                cp1 += outerwd;
+
+                for (int j = 1; j <= halfr; j++, cp1 += outerwd) {
+                    width--;
+                    l--;
+                    if (cp1[x + l] == 1) ncount++;
+                    if (cp1[x + l + 1] == 1) ncount++;
+                }
+            }
             update_next_grid(x, y, yoffset+x, ncount);
+            x++;
         }
     }
 }
@@ -2904,16 +3033,6 @@ int ltlalgo::max_neighbors(const int range, const char neighborhood, const int c
 
         case 'L':
             // triangular
-            r2 = range + range;
-            for (int i = -1; i >= -range; i--) {
-                tshape[i + range + range] = r2;
-                r2--;
-            }
-            r2 = range + range;
-            for (int i = 0; i <= range; i++) {
-                tshape[i + range + range] = r2;
-                r2--;
-            }
             result = (range * 4 + 1) * (range * 2 + 1) - (range * 2 * range) - 1;
             break;
 
