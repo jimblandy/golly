@@ -365,7 +365,7 @@ void bigint::mul_smallint(int a) {
       return ;
    }
    if (v.i & 1) {
-      if ((v.i >> 1) <= MAX_SIMPLE / a) {
+      if (MIN_SIMPLE / a <= (v.i >> 1) && (v.i >> 1) <= MAX_SIMPLE / a) {
          c = (v.i >> 1) * a ;
          fromint((v.i >> 1) * a) ;
          return ;
