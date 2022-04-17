@@ -87,6 +87,8 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 	/EHsc /DVERSION=$(APP_VERSION) /DZLIB /I$(WX_DIR)\src\zlib /I$(BASEDIR) $(EXTRACXXFLAGS) $(SOUND_FLAGS) \
 	/wd4459 /wd4458 /wd4457 /wd4456
 
+LDFLAGS = /F32000000
+
 OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
     $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
