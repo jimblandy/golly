@@ -9,7 +9,7 @@
 <p>
 This directory contains the source files needed to embed Lua in Golly.
 It's essentially the same set of files from the src directory in
-the full distribution of Lua 5.4.3
+the full distribution of Lua 5.4.4
 (available <a href="http://www.lua.org/download.html">here</a>)
 but with these minor changes:
 
@@ -18,6 +18,9 @@ but with these minor changes:
 <li> Removed lua.c (the Lua stand-alone interpreter).
 <li> Removed luac.c (the Lua compiler).
 <li> Simplified Makefile (so it can be called from makefile-mac or makefile-gtk).
+<li> Implemented <a href="https://github.com/Lekensteyn/lua-unicode">Peter Wu's patch</a>
+     to support UTF-8 file paths on Windows.  This required adding two new files
+     (utf8_wrappers.h, utf8_wrappers.c) and a tiny bit of code at the end of luaconf.h.
 <ul>
 
 </td></tr></table></center>
