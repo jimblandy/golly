@@ -130,7 +130,7 @@ local function animate_credits()
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext1 = [[
-Golly 4.1
+Golly 4.2b1
 
 © The Golly Gang:
 
