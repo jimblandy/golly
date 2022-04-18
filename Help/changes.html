@@ -3,11 +3,15 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-<font size=+1><b>Changes in version 4.2 (released !!!!)</b></font>
+<font size=+1><b>Changes in version 4.2 (released !!!)</b></font>
 
 <p>
 <ul>
-<li> Performance improvements to <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> NL (Triangular) and NB (Checkboard) rules.
+<li> The default stack size for Golly (and bgolly) on Windows has been increased from 1MB to 32MB.
+<li> Fixed a bug in script commands like g.setpos that accept integers as strings
+     (large negative values less than -1 billion were not parsed correctly).
+<li> Performance improvements to <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> NL (Triangular)
+     and NB (Checkboard) rules.
 </ul>
 
 <p>
