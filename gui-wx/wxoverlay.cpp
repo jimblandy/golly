@@ -25,8 +25,8 @@
 #include <ctype.h>          // for isspace, isdigit
 
 // Endian definitions
-// Note: for big endian platforms you must compile with BIGENDIAN defined
-#ifdef BIGENDIAN
+// Note: for big endian platforms you must compile with GOLLYBIGENDIAN defined
+#ifdef GOLLYBIGENDIAN
 
 // big endian 32bit pixel component order is RGBA
 
@@ -36,7 +36,7 @@
 #define BMASK   0x0000ff00
 #define AMASK   0x000000ff
 #define RBMASK  0xff00ff00
-#define RBGMASK 0xffffff00
+#define RGBMASK 0xffffff00
 
 // shift RB components right and left to avoid overflow
 // R.B. becomes .R.B

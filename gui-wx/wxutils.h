@@ -87,10 +87,6 @@ bool IsRuleFile(const wxString& filename);
 
 // Following macro is used to create a wxBitmap from included XPM data:
 
-#if defined(__WXGTK__) || defined(__WXMAC__)
-    #define XPM_BITMAP(name) wxBitmap(name##_xpm)
-#else // other platforms (eg. wxMSW)
-    #define XPM_BITMAP(name) wxBitmap(name##_xpm, wxBITMAP_TYPE_XPM)
-#endif
+#define XPM_BITMAP(name) wxBitmap(name##_xpm)
 
 #endif // _WXUTILS_H_
