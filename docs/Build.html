@@ -43,26 +43,16 @@ and grab the appropriate source archive for your platform:
 </ul>
 
 <p>
-Golly should compile with wxWidgets 3.0 or later, but it's best to
-use the latest stable version (3.0.5 at time of writing).
-Mac users should definitely get 3.1.5 or later if you have macOS 10.10+.
+<b>Note that Golly requires wxWidgets 3.1.5 or later.</b>
 
 <p>
-<b>Note</b>: in the discussion that follows, if you install wxWidgets to a directory other than
-<b>"wxWidgets"</b>, then replace that path with whatever is correct for your system. For example,
-for the current wxWidgets installer on Windows, the default installation directory is <b>"C:\wxWidgets-3.1.4\"</b>.
+In the discussion that follows, if you install wxWidgets to a directory other than
+<b>"wxWidgets"</b>, then replace that path with whatever is correct for your system.
+For example, for the current wxWidgets installer on Windows, the default installation
+directory is <b>"C:\wxWidgets-3.1.5\"</b>.
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
-
-<p>
-If your wxWidgets version is earlier than 3.0 then you need to enable OpenGL.
-Edit <tt>\wxWidgets\include\wx\msw\setup.h</tt>, find the line
-"<tt>#define wxUSE_GLCANVAS 0</tt>" and change the value to 1.
-If you've previously built wxWidgets 2.x without OpenGL enabled then you might
-also need to edit <tt>\wxWidgets\lib\vc_lib\mswu\wx\setup.h</tt>, change
-<tt>wxUSE_GLCANVAS</tt> to 1, then run "<tt>nmake -f makefile.vc clean</tt>"
-before running "<tt>nmake -f makefile.vc</tt>".
 
 <p>
 If you only want to build one wxWidgets configuration then it's a good idea to edit
@@ -72,8 +62,6 @@ If you only want to build one wxWidgets configuration then it's a good idea to e
    BUILD=release
    DEBUG_INFO=0
    DEBUG_FLAG=0
-   UNICODE=1             (already 1 in wxWidgets 3.0+)
-   USE_OPENGL=1          (already 1 in wxWidgets 3.0+)
    TARGET_CPU=X64
    RUNTIME_LIBS=static
 </pre>
@@ -115,7 +103,6 @@ open the correct Visual Studio command prompt and type:
 <pre>
    cd \wxWidgets\build\msw
    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=X64
-                        UNICODE=1 USE_OPENGL=1
 </pre>
 
 
@@ -140,7 +127,7 @@ re-check the build instructions above, and see the section on <a href="#rebuildi
 
 <p>
 Unpack the wxWidgets source archive wherever you like.
-If you're using macOS 10.10 or later then start up Terminal and type these commands
+If you're using macOS 10.11 or later then start up Terminal and type these commands
 (using the correct path and version number):
 
 <pre>
@@ -148,7 +135,7 @@ If you're using macOS 10.10 or later then start up Terminal and type these comma
    mkdir build-osx
    cd build-osx
    ../configure --with-osx_cocoa --disable-shared --disable-sys-libs
-                --with-macosx-version-min=10.10 --enable-universal_binary=arm64,x86_64
+                --with-macosx-version-min=10.11 --enable-universal_binary=arm64,x86_64
    make
 </pre>
 
@@ -158,10 +145,11 @@ If you're using macOS 10.10 or later then start up Terminal and type these comma
 
 <p>
 Before building the wxWidgets libraries you will probably need to install
-some packages for GTK-2 and OpenGL development.  For example, on Ubuntu:
+some development packages for GTK-2, libcurl, and OpenGL.  For example, on Ubuntu:
 
 <pre>
    sudo apt-get install libgtk2.0-dev
+   sudo apt-get install libcurl4-openssl-dev
    sudo apt-get install mesa-common-dev
    sudo apt-get install freeglut3-dev
 </pre>
@@ -171,7 +159,7 @@ Unpack the wxWidgets source archive wherever you like, start up a terminal
 session and type these commands (using the correct version number):
 
 <pre>
-   cd /path/to/wxWidgets-3.0.5
+   cd /path/to/wxWidgets-3.1.5
    mkdir build-gtk
    cd build-gtk
    ../configure --with-gtk --disable-shared --enable-unicode --with-opengl
@@ -233,7 +221,6 @@ Otherwise you'll need to specify all the same options that were used to build wx
 
 <pre>
    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=X64
-                         UNICODE=1 USE_OPENGL=1
 </pre>
 
 <a name="gmac"></a>

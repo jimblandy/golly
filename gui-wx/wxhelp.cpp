@@ -8,7 +8,7 @@
 
 #include "wx/wxhtml.h"          // for wxHtmlWindow
 #include "wx/file.h"            // for wxFile
-#include "wx/protocol/http.h"   // for wxHTTP
+#include "wx/webrequest.h"      // for wxWebRequest
 #include "wx/wfstream.h"        // for wxFileOutputStream, wxFileInputStream
 #include "wx/zipstrm.h"         // for wxZipInputStream
 
@@ -39,7 +39,11 @@ public:
     }
     
     bool infront;     // help window is active?
-    
+
+    // for downloading files using wxWebRequest
+    void OnWebRequestState(wxWebRequestEvent& evt);
+    bool DownloadURL(const wxString& url, const wxString& filepath);
+
 private:
     // ids for buttons in help window (see also wxID_CLOSE)
     enum {
@@ -57,6 +61,11 @@ private:
     void OnClose(wxCloseEvent& event);
     
     wxStaticText* status;   // status line at bottom of help window
+
+    // for downloading files
+    wxWebRequest webRequest;
+    wxString download_file;
+    bool download_complete;
     
     // any class wishing to process wxWidgets events must use this macro
     DECLARE_EVENT_TABLE()
@@ -166,9 +175,10 @@ const wxString lexicon_name = _("lexicon");        // name of lexicon layer
 int lexlayer;                 // index of existing lexicon layer (-ve if not present)
 wxString lexpattern;          // lexicon pattern data
 
-// prefix of most recent full URL in a html get ("get:http://.../foo.html")
+// prefix of most recent full URL in a html get ("get:http[s]://.../foo.html")
 // to allow later relative gets ("get:foo.rle")
 wxString urlprefix = wxEmptyString;
+bool httpslink = false;
 const wxString HTML_PREFIX = _("GET---");          // prepended to html filename
 
 // -----------------------------------------------------------------------------
@@ -271,10 +281,14 @@ void UpdateHelpButtons()
         // url so any later relative "get:foo.rle" links will work
         wxString filename = location.AfterLast('/');
         if (filename.StartsWith(HTML_PREFIX)) {
-            // replace HTML_PREFIX with "http://" and convert spaces to '/'
+            // replace HTML_PREFIX with "http[s]://" and convert spaces to '/'
             // (ie. reverse what we did in GetURL)
             urlprefix = filename;
-            urlprefix.Replace(HTML_PREFIX, wxT("http://"), false);   // do once
+            if (httpslink) {
+                urlprefix.Replace(HTML_PREFIX, wxT("https://"), false); // do once
+            } else {
+                urlprefix.Replace(HTML_PREFIX, wxT("http://"), false); // do once
+            }
             urlprefix.Replace(wxT(" "), wxT("/"));
             urlprefix = urlprefix.BeforeLast('/');
             urlprefix += wxT("/");     // must end in slash
@@ -402,6 +416,85 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
     
     Destroy();        // also deletes all child windows (buttons, etc)
     helpptr = NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnWebRequestState(wxWebRequestEvent& evt)
+{
+    bool stillActive = false;
+
+    switch (evt.GetState()) {
+        case wxWebRequest::State_Completed:
+            if (!wxRenameFile(evt.GetDataFile(), download_file)) {
+                Warning(_("Could not move downloaded file!"));
+            } else {
+                download_complete = true;
+            }
+            break;
+
+        case wxWebRequest::State_Failed:
+            Warning(wxString::Format("Web request failed:\n%s", evt.GetErrorDescription()));
+            break;
+
+        case wxWebRequest::State_Cancelled:
+            break;
+
+        case wxWebRequest::State_Unauthorized:
+            // should never happen???
+            Warning(_("Unauthorized request!"));
+            break;
+
+        case wxWebRequest::State_Active:
+            stillActive = true;
+            break;
+
+        case wxWebRequest::State_Idle:
+            // do nothing
+            break;
+    }
+
+    if (!stillActive) {
+        webRequest = wxWebRequest(); // terminate DownloadURL's while loop
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+bool HelpFrame::DownloadURL(const wxString& url, const wxString& filepath)
+{
+    // see wxWidgets-3.1.5/samples/webrequest/webrequest.cpp
+
+    // create a request for the specified URL
+    webRequest = wxWebSession::GetDefault().CreateRequest(this, url);
+
+    // bind event handler for state change
+    Bind(wxEVT_WEBREQUEST_STATE, &HelpFrame::OnWebRequestState, this);
+
+    webRequest.SetStorage(wxWebRequest::Storage_File);
+    download_file = filepath;
+    download_complete = false;
+    
+    // start the web request (events will be sent to OnWebRequestState)
+    webRequest.Start();
+    
+    BeginProgress(_("Downloading ") + url.AfterLast('/'));
+
+    // wait until the web request completes
+    while (webRequest.IsOk()) {
+        double downcount = webRequest.GetBytesReceived();
+        double expected = webRequest.GetBytesExpectedToReceive();
+        char msg[128];
+        sprintf(msg, "File size: %.2f MB", downcount/1048576.0);
+        if (AbortProgress(downcount/expected, wxString(msg,wxConvLocal))) {
+            webRequest.Cancel();
+        }
+        wxYield();
+    }
+    
+    EndProgress();
+    
+    return download_complete;
 }
 
 // -----------------------------------------------------------------------------
@@ -561,97 +654,12 @@ void LoadRule(const wxString& rulestring, bool fromfile)
 
 // -----------------------------------------------------------------------------
 
-bool DownloadFile(const wxString& url, const wxString& filepath)
-{
-    bool result = false;
-    
-    wxHTTP http;
-    http.SetTimeout(5);                                // secs
-    http.SetHeader(wxT("Accept") , wxT("*/*"));        // any file type
-    http.SetHeader(wxT("User-Agent"), wxT("Golly"));
-    
-    // Connect() wants a server address (eg. "www.foo.com"), not a full URL
-    wxString temp = url.AfterFirst('/');
-    while (temp[0] == '/') temp = temp.Mid(1);
-    size_t slashpos = temp.Find('/');
-    wxString server = temp.Left(slashpos);
-    if (http.Connect(server, 80)) {
-        // GetInputStream() wants everything after the server address
-        wxString respath = temp.Right(temp.length() - slashpos);
-        wxInputStream* instream = http.GetInputStream(respath);
-        if (instream) {
-            
-            wxFileOutputStream outstream(filepath);
-            if (outstream.Ok()) {
-                // read and write in chunks so we can show a progress dialog
-                const int BUFFER_SIZE = 4000;             // seems ok (on Mac at least)
-                char buf[BUFFER_SIZE];
-                size_t incount = 0;
-                size_t outcount = 0;
-                size_t lastread, lastwrite;
-                double filesize = (double) instream->GetSize();
-                if (filesize <= 0.0) filesize = -1.0;     // show indeterminate progress
-                
-                BeginProgress(_("Downloading file"));
-                while (true) {
-                    instream->Read(buf, BUFFER_SIZE);
-                    lastread = instream->LastRead();
-                    if (lastread == 0) break;
-                    outstream.Write(buf, lastread);
-                    lastwrite = outstream.LastWrite();
-                    incount += lastread;
-                    outcount += lastwrite;
-                    if (incount != outcount) {
-                        Warning(_("Error occurred while writing file:\n") + filepath);
-                        break;
-                    }
-                    char msg[128];
-                    sprintf(msg, "File size: %.2f MB", double(incount) / 1048576.0);
-                    if (AbortProgress((double)incount / filesize, wxString(msg,wxConvLocal))) {
-                        // force false result
-                        outcount = 0;
-                        break;
-                    }
-                }
-                EndProgress();
-                
-                result = (incount == outcount);
-                if (!result) {
-                    // delete incomplete filepath
-                    if (wxFileExists(filepath)) wxRemoveFile(filepath);
-                }
-            } else {
-                Warning(_("Could not open output stream for file:\n") + filepath);
-            }
-            delete instream;
-            
-        } else {
-            int err = http.GetError();
-            if (err == wxPROTO_NOFILE) {
-                Warning(_("Remote file does not exist:\n") + url);
-            } else {
-                // we get wxPROTO_NETERR (generic network error) with some naughty servers
-                // that use LF rather than CRLF to terminate HTTP header messages
-                // eg: http://fano.ics.uci.edu/ca/rules/b0135s014/g1.lif
-                // (wxProtocol::ReadLine needs to be made more tolerant)
-                Warning(wxString::Format(_("Could not download file (error %d):\n"),err) + url);
-            }
-        }
-    } else {
-        Warning(_("Could not connect to server:\n") + server);
-    }
-    
-    http.Close();
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-
 void GetURL(const wxString& url)
 {
     wxString fullurl;
-    if (url.StartsWith(wxT("http:"))) {
+    if (url.StartsWith(wxT("http"))) {
         fullurl = url;
+        httpslink = url.StartsWith(wxT("https"));
     } else {
         // relative get, so prepend prefix set earlier in UpdateHelpButtons
         fullurl = urlprefix + url;
@@ -659,15 +667,8 @@ void GetURL(const wxString& url)
     
     wxString filename = fullurl.AfterLast('/');
     
-    // remove ugly stuff at start of file names downloaded from ConwayLife.com
-    if (filename.StartsWith(wxT("download.php?f=")) ||
-        filename.StartsWith(wxT("pattern.asp?p=")) ||
-        filename.StartsWith(wxT("script.asp?s="))) {
-        filename = filename.AfterFirst('=');
-    }
-    
     // create full path for downloaded file based on given url;
-    // first remove initial "http://"
+    // first remove initial "http[s]://"
     wxString filepath = fullurl.AfterFirst('/');
     while (filepath[0] == '/') filepath = filepath.Mid(1);
     if (IsHTMLFile(filename)) {
@@ -697,7 +698,7 @@ void GetURL(const wxString& url)
     }
     
     // try to download the file
-    if ( !DownloadFile(fullurl, filepath) ) return;
+    if ( !helpptr->DownloadURL(fullurl, filepath) ) return;
     
     if (htmlwin->editlink) {
         if (IsRuleFile(filename) && filename.Lower().EndsWith(wxT(".icons"))) {
@@ -914,8 +915,8 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
 #endif
     
     wxString url = link.GetHref();
-    if ( url.StartsWith(wxT("http:")) || url.StartsWith(wxT("mailto:")) ) {
-        // pass http/mailto URL to user's preferred browser/emailer
+    if ( url.StartsWith(wxT("http")) || url.StartsWith(wxT("mailto:")) ) {
+        // pass URL to user's preferred browser/emailer
         if ( !wxLaunchDefaultBrowser(url) )
             Warning(_("Could not open URL in browser!"));
         
@@ -1113,7 +1114,7 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
 void HtmlView::OnKeyUp(wxKeyEvent& event)
 #else
 // we have to use OnKeyDown handler on Mac -- if OnKeyUp handler is used and
-// cmd-C is pressed quickly then key code is 400!!!
+// cmd-C is pressed quickly then key code is 400
 void HtmlView::OnKeyDown(wxKeyEvent& event)
 #endif
 {

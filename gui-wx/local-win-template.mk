@@ -2,8 +2,8 @@
 # and call it local-win.mk, then make any desired changes.
 
 # Change the next 2 lines to specify where you installed wxWidgets:
-!include <C:/wxWidgets-3.1.4/build/msw/config.vc>
-WX_DIR = C:\wxWidgets-3.1.4
+!include <C:/wxWidgets-3.1.5/build/msw/config.vc>
+WX_DIR = C:\wxWidgets-3.1.5
 
 # Change the next line to match your wxWidgets version (first two digits):
 WX_RELEASE = 31

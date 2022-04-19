@@ -1,4 +1,4 @@
-# Makefile for GTK version of Golly using wxWidgets.
+# Makefile for GTK version of Golly using wxWidgets (3.1.5 or later is required).
 # It assumes you've built and installed wxWidgets with commands like these:
 #
 # cd <wx-install-dir>

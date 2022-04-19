@@ -98,7 +98,7 @@ CXXBASE = -arch arm64 -arch x86_64 \
    -fno-strict-aliasing -fno-common -I$(BASEDIR)
 LDBASE = -arch arm64 -arch x86_64 -lz
 
-EXTRALIBS = -lz -lpthread -liconv
+EXTRALIBS = -lz -lpthread -liconv -lcurl
 EXTRALIBS_GUI = -framework WebKit -framework AudioToolbox -framework OpenGL -framework AGL
 
 OBJDIR = ObjOSX
