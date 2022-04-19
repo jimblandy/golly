@@ -471,7 +471,8 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
         // the task will take, especially when we use nextcell for cut/copy
         if ( (msecs > 1000 && fraction_done < 0.3) || msecs > 2500 ) {
             // task is probably going to take a while so create progress dialog
-            progdlg = new wxProgressDialog(progtitle, wxEmptyString,
+            // (note that non-empty message avoids dialog height being too small on Windows)
+            progdlg = new wxProgressDialog(progtitle, wxT(" "),
                                            maxprogrange, wxGetActiveWindow(),
                                            wxPD_AUTO_HIDE | wxPD_APP_MODAL |
                                            wxPD_CAN_ABORT | wxPD_SMOOTH |
