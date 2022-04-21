@@ -337,7 +337,7 @@ def draw_icon_boxes(numicons, linestate):
         
         # show state number above top row of icons
         t, twd, tht = color_text(str(i+1), linestate)
-        t.put(x + 32/2 - twd//2, y - 2 - tht)
+        t.put(x + 32//2 - twd//2, y - 2 - tht)
 
 # --------------------------------------------------------------------
 
