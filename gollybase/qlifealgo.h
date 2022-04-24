@@ -197,7 +197,8 @@ public:
    // call after setcell/clearcell calls
    virtual void endofpattern() {
      // AKT: unnecessary (and prevents shrinking selection while generating)
-     // poller->bailIfCalculating() ;
+     // TGR: uncommented, since I think it's probably necessary
+     poller->bailIfCalculating() ;
      popValid = 0 ;
    }
    virtual void setIncrement(bigint inc) { increment = inc ; }

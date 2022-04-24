@@ -1,6 +1,6 @@
 // This file is part of Golly.
 // See docs/License.html for the copyright notice.
-
+#include <cstdlib> // for abort
 /**
  *   This interface is called every so often by lifealgo routines to
  *   make sure events are processed and the screen is redrawn in a
