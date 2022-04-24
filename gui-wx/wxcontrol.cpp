@@ -427,7 +427,9 @@ void MainFrame::SetGenIncrement()
 
 void MainFrame::StartGenTimer()
 {
-    int interval = SIXTY_HERTZ;     // do ~60 calls of OnGenTimer per sec
+    if (inscript) return;       // do NOT call OnGenTimer if a script is running!
+
+    int interval = SIXTY_HERTZ; // do ~60 calls of OnGenTimer per sec
     
     // increase interval if user wants a delay
     if (currlayer->currexpo < 0) {
