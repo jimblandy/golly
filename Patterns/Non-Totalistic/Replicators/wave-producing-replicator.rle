@@ -1,0 +1,10 @@
+#N wave-producing-replicator.rle
+#O Daniel R. Collazo, 31 August 2016
+#C
+#C     This one-dimensional replicator produces decaying lightspeed
+#C waves (superstrings) that fade sideways.
+#C 
+#C Reference: 
+#C https://conwaylife.com/forums/viewtopic.php?p=35037#p35037
+x = 3, y = 3, rule = B35i/S235e6c
+2o$3o$2o!

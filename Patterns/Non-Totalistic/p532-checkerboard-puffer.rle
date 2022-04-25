@@ -1,0 +1,18 @@
+#N p532-checkerboard-puffer
+#O Feng Geng (shouldsee), 7 March 2017
+#C
+#C     This is a glide-symmetric c/2 p532 puffer that makes connected
+#C checkerboard pieces, inside which excited crystallographic defects
+#C lengthen themselve, push boundaries, and sometimes form a closed 
+#C loop and disappear. Compare moving-crystallographic-defects.rle.
+#C 
+#C References: 
+#C https://conwaylife.com/forums/viewtopic.php?p=41363#p41363
+x = 28, y = 32, rule = B2ck3ai4-ejnqr5-cjkq6cn7/S1e2ack3acn4-iqrt5ckn6ek
+9bo$8b3o$8b3o$7bobobo$10bobo$6bob2obo$6bobobo2bo$5bobobobobo$6bobob2ob
+o$4b2obobobo2bo$5bo2bobo3bo$5b3obobobobo$7b2obobobobo$7bobobobobobo$5b
+2obobobobo$3bo3bobobobobobo$3bo2bobobo2bo$bo3bobobobo3bobo$obobobobo2b
+o3bobo$bo3bobobobo3bo2b2o$4bobobobo2bo2b3o$3bobobobobob2o2b2o$2bobobob
+obobo$3bobobobobobobo3bo$4bobobobobobobobo2bobo$5bobobobobobobobo$6bob
+obobobobobobo4bo$7bobobobobobobobob2o$6bobobobobobobobobobo2bo$7bobobo
+bobobobobobo$4bobobobobobobobobobobo$3bobobobobobobobobobobobo!

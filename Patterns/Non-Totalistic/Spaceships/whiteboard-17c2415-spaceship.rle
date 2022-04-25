@@ -1,0 +1,8 @@
+#N whiteboard-17c2415-spaceship.rle
+#O yujh, 12 November 2021
+#C     Expanding and contracting rectangular 'whiteboard' areas with an unusual mechanism
+#C in this rule results in an orthogonal 17c/2415 spaceship.
+#C Reference:
+#C   https://discord.com/channels/357922255553953794/370571046971244545/908747270718099487
+x = 6, y = 9, rule = B2ce3-cinq4iqrt5-cij6-ci78/S1c2cik3anry4-acrwy5-ekr6-i78
+bo3bo$3b2o$b4o$4o$4obo$4o$b4o$3b2o$bo3bo!

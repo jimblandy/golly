@@ -1,0 +1,13 @@
+#N unusual-ruler.rle
+#O gameoflifeboy, 30 June 2015
+#C
+#C     A single block appears to create a normal ruler sequence for a
+#C while, but at generation 2^19 wickstretchers extend out and form a
+#C square. As it turns out, squares form at generations 8*4, 8*(4 + 
+#C 2^4), 8*(4 + 2^4 + 2^2^4), 8*(4 + 2^4 + 2^2^4 + 2^2^2^4)..., the 
+#C 4th term of which has over 19000 digits.
+#C
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=20889#p20889
+x = 2, y = 2, rule = 34568/2/10
+2A$2A!

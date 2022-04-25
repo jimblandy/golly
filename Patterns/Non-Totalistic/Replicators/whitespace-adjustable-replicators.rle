@@ -1,0 +1,27 @@
+#N whitespace-adjustable-replicators.rle
+#O bibunsekibun, 8 June 2021
+#C
+#C     The growing/shrinking nature of whitespace results in a family
+#C of adjustable one-dimensional replicators, each consisting of two
+#C whitespace cores. Data for the first nine are listed below:
+#C
+#C Core distance  6 10 15  22  27  34  39  46  51
+#C Displacement   8 12 16  24  28  36  40  48  52
+#C Period        17 25 33  49  57  73  81  97 105
+#C Thickness     49 65 82 113 130 161 178 209 226
+#C
+#C     Let k be a positive integer 1,2,... , then two whitespace cores
+#C separated by (12k-2) cells constitute a replicator with speed 12kc/
+#C (24k+1) and thickness (48k+17) cells, and two cores separated by
+#C (12k+3) cells result in one with speed (12k+4)c/(24k+9) and thick-
+#C ness (48k+34) cells. These can describe all but the first member of
+#C the replicators, which has core distance 6 and speed 8c/17. Raising
+#C the distance makes the speed of replicator arbitrarily close to c/2.
+#C 
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=131662#p131662
+x = 1134, y = 3, rule = B3aeiy4eqrty5cijn6ck7c8/S2-i3acein4cejkq5ir6cei7c8
+bo5bo53bo9bo59bo14bo84bo21bo97bo26bo122bo33bo135bo38bo150bo45bo173bo
+50bo$obo3bobo51bobo7bobo57bobo12bobo82bobo19bobo95bobo24bobo120bobo31b
+obo133bobo36bobo148bobo43bobo171bobo48bobo$bo5bo53bo9bo59bo14bo84bo21b
+o97bo26bo122bo33bo135bo38bo150bo45bo173bo50bo!

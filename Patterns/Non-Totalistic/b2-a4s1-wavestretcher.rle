@@ -1,0 +1,81 @@
+#N b2-a4s1-wavestretcher.rle
+#O Nico Brown, 20 July 2017
+#C
+#C     In B2-a4/S1, there is a near-replicator that travels at c/2 and
+#C a tiny c/4 diagonal spaceship. The following is a wavestretcher 
+#C that produces many bounded segments of the near-replicator. Left
+#C end is c/2 and top end is c/6.
+#C
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=46983#p46983
+x = 403, y = 537, rule = B2-a4/S1
+52bo2$52bo$387bo$73bo313bo$72bo314bo$72bo$366bobo$368bo5$100bo$99bo$
+99bo$339bobo$341bo$52bo2$52bo$387bo$127bo259bo$45bobo78bo260bo$44bo3bo
+77bo266bo$43b2o3b2o262bobo76b5o$44bo3bo265bo78bo$45bobo3$393bo$154bo
+236b5o$153bo239bo$153bo$285bobo$287bo$52bo2$52bo$387bo$181bo205bo$180b
+o206bo$180bo$258bobo$260bo5$208bo$207bo$207bo$231bobo$233bo$52bo128b2o
+$183bo$52bo203b2o$387bo$256bo130bo$387bo4$154b2o$156bo$283b2o2$283bo2$
+151bobo$153bo$152bo2bo$52bo74bobo25b3o$129bo24bo2bo127bobo$52bo101bobo
+153b2o$154b3o152bo77bo$45b3o106bobo230bo$153bo3bo229bo$154bobo236bo$
+284bo$282b5o106bo$100bobo43bobo6bo128bo$102bo52bo$155bo51bobo127b2o$
+206bo3bo20bo50b2ob2o4b3o42bo$147bo59bobo19b5o49bobo$145b5o81bo59b3o$
+147bo7bo135bobo$145b5o5bo75bo58bo3bo$147bo7bo51bobo81bobo$52bo20bobo
+130bo3bo80b3o$75bo71bo59bobo73bobo$145b5o4bobo74bo50b2ob2o77b2o$54bo
+92bo5bo3bo205bo$51bo3bo89b5o2b2o3b2o72bo$50b2o3b2o90bo5bo3bo71b5o50bo$
+51bo3bo98bobo74bo59b3o90b2o$52bobo99b3o134bobo$154bobo5bobo125bo3bo91b
+o$153bo3bo3bo3bo8bo101bo14bobo90b5o$152b2o3b2o3bobo7bobo99b5o107bo$
+153bo3bo118bo107b5o$154bobo229bo$264bo11bo$265b2o7b5o$52bobo221bo7bo$
+51bo3bo226b5o99bo$50b2o3b2o227bo99b5o$51bo3bo330bo$52bobo$162bobo$146b
+obo12bo3bo110bo$162bobo109b5o107bo$276bo107b5o$291b3o92bo$276bo$274b5o
+$146bobo6bo120bo$155bo$155bo$291b3o$283bobo2$155bo$155bo$155bo2$283bob
+o6$147bo$145b5o12bobo$147bo13bo3bo110bo14bobo$145b5o12bobo109b5o11bo3b
+o$147bo128bo14bobo$207b3o81b3o$147bo128bo$145b5o4bobo74bo42b5o$147bo5b
+o3bo118bo7bo$145b5o2b2o3b2o72bo50b5o$147bo5bo3bo126bo$154bobo44bo89b3o
+$154b3o42bobo89bobo$154bobo5bobo125bo3bo$146bobo4bo3bo3bo3bo110bo14bob
+o$152b2o3b2o3bobo72bo36b5o12b3o$153bo3bo80b2o36bo$154bobo134b3o$276bo$
+274b5o$146bobo6bo120bo7bo$155bo$155bo$282b2ob2o4b3o$283bobo2$155bo$
+155bo$155bo2$283bobo7$52b3o2$386bo$163bo$163bo222bo$163bo2$275bobo8$
+219b3o18$219b3o177bobo$393bo4bo3bo$394bo4bobo$394bo4b3o6$399b3o$366bo
+32bobo$367bo30bo3bo$367bo31bobo5$394bo$219b3o$339bo54bo$340bo$340bo7$
+312bo$313bo$313bo5$394bo$219b3o$285bo108bo$286bo$286bo112b3o4$2bo$5o$
+2bo5bobo388b3o$8bo249bo$2bo256bo$259bo3$2bo241b2o$243bo$2bo391bo$5o30b
+obo181b3o$2bo32bo358bo5$8bo228bobo31b2o$8bo227bo3bo29bo$8bo226b2o3b2o$
+62bobo171bo3bo$62bo174bobo5$297bobo$297bo$394bo$89bobo127b3o15bobo159b
+obo$89bo146bo3bo153bo3bo3bo$235b2o3b2o57bo99bobo$236bo3bo56b5o97b3o$
+237bobo59bo2$8bo290bo24bobo$8bo288b5o22bo$8bo290bo$2bo113bobo171bobo
+106b3o$116bo172bo3bo105bobo$2bo287bobo105bo3bo$290b3o106bobo$290bobo$
+289bo3bo$2bo287bobo58bobo$351bo$2bo391bo$143bobo73b3o$143bo135bo114bo$
+279bobo$399b3o$157b2o2$8bo149bo219bobo$8bo369bo$8bo3$237b3o2$130b2o32b
+o$162b5o$131bo32bo$162b5o225bobo$164bo72b3o151bo3bo$219b3o170bobo$392b
+3o2$282bobo$103b2o176bo3bo$105bo174b2o3b2o$8bo272bo3bo$2bo5bo155bo117b
+obo107b3o$5o3bo153b5o115b3o$2bo161bo117bobo$102bobo57b5o114bo3bo$2bo
+98bo3bo58bo115b2o3b2o$100b2o3b2o174bo3bo$76b2o23bo3bo176bobo107b3o$78b
+o23bobo177b3o$2bo279bobo$111bo169bo3bo$2bo106b5o166b2o3b2o$5o106bo107b
+3o59bo3bo$2bo279bobo107b3o$111bo170b3o107bobo$109b5o168bobo106bo3bo$
+49b2o60bo169bo3bo106bobo$51bo228b2o3b2o$8bo228bobo41bo3bo$8bo227bo3bo
+41bobo$8bo114bo111b2o3b2o$2bo118b2o113bo3bo$237bobo12bo30bo$2bo249bobo
+28bo$283bo$22b2o$24bo2$283bo108bobo$164bo118bo107bo3bo$219b3o15bobo43b
+o108bobo$164bo71bo3bo151b3o$235b2o3b2o56bobo$236bo3bo41bobo$237bobo41b
+o3bo$9bo154bo115b2o3b2o$7b5o269bo3bo$9bo154bo117bobo107b3o$282b3o6bo$
+9bo272bobo6bo$119bo161bo3bo5bo$117b5o115b3o40b2o3b2o$119bo161bo3bo$9bo
+107b5o160bobo107b3o$119bo162b3o$9bo272bobo$119bo161bo3bo$117b5o158b2o
+3b2o$119bo99b3o59bo3bo$9bo107b5o160bobo107b3o$119bo162b3o107bobo$9bo
+272bobo106bo3bo$119bo161bo3bo106bobo$117b5o158b2o3b2o$119bo161bo3bo$9b
+o107b5o160bobo$119bo$9bo$7b5o107bo$9bo107b5o$119bo$117b5o42bo$119bo42b
+5o$164bo$162b5o116bo$150bo13bo118bo$118bobo27b2o69b3o61bo$225bo$225bob
+o3$9bo$7b5o106bobo$9bo154bo227b3o$162b5o$9bo92b3o59bo$119bo42b5o$117b
+5o42bo$119bo$9bo107b5o$119bo$9bo$110bobo6bo$117b5o42bo$119bo99b3o$9bo
+107b5o42bo$119bo$9bo$119bo$117b5o$119bo$9bo107b5o$119bo$9bo$7b5o107bo$
+9bo107b5o$119bo$117b5o$119bo4$219b3o6$118bobo2$177bo$175b2o$198bo$198b
+obo2$9bo2$9bo3$219b3o16$156bo23bo11bo$155b3o21b3o9b3o21bo$154bo3bo6bo
+5bo6bo3bo7bo3bo6bo5bo6bo3bo2bo$165bo5bo29bo5bo10bo$154bo3bo6bo5bo6bo3b
+o7bo3bo6bo5bo6bo2bo$155b3o21b3o9b3o21bobo$156bo23bo11bo23bo17$206bo$
+204b5o$206bo10$206bo3$204b2ob2o$205bobo2$147bo9bo30bo$147bo9bo28b5o$
+146b3obo3bob3o29bo$147bo9bo$147bo9bo47bobo$204b2ob2o$150bo17bo$166bo3b
+o$131bo21bo11bo23bo16bo$131bo21bo11b3ob2o18bo26bobo$130b3obo3bobo3bobo
+3bob3o10b2o3bo3bobo3bobo3bob3obobo3bobo15bo2bo$131bo21bo12bo2b2o18bo
+26bo2bo$131bo21bo12bo22bo27bobo$170bo5$206bo$204b5o$206bo$137bo21bo13b
+o21bo$136bob2o5bo5bo5b2obo11bob2o5bo5bo5b2ob2obo5bo$139bo5bo5bo5bo17bo
+5bo5bo5bo3bobo5bo$136bob2o5bo5bo5b2obo11bob2o5bo5bo5b2ob2obo5bo$137bo
+21bo13bo21bo13$136bobo21bobo9bobo$136bobo21bobo9bobo$135b5o5bobo3bobo
+5b5o7b5o5bobo3bobo8bo2bo3bobo$136bobo21bobo9bobo$136bobo21bobo9bobo!

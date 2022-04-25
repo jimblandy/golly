@@ -1,0 +1,12 @@
+#N modern-art-puffthing.rle
+#O Saka, 6 March 2017
+#C
+#C     A c/2 orthogonal engine keeps moving and leaving debris, but 
+#C sometimes another c/2 frontend emerges and proceeds in a perpendi-
+#C cular direction. Gradually the unlimited-novelty pattern develops
+#C a Modern Art picture.
+#C 
+#C Reference: 
+#C https://www.conwaylife.com/forums/viewtopic.php?p=41297#p41297
+x = 11, y = 4, rule = B2k35n/S23-a4eitz
+3ob3ob3o$obobobobobo$2b3obo$3bo!

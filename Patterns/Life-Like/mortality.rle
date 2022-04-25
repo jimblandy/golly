@@ -1,0 +1,16 @@
+#N mortality.rle
+#O Feng Geng (shouldsee), 2 August 2016
+#C
+#C     This totalistic B0 rule is rich of "clean/dirty" rakes, making
+#C the universe at the edge of explosion but highly dynamic. It is 
+#C easy to get a moving head but usually it does not last forever. The
+#C following pattern is taken from the tail of the original one at 
+#C generation 114, which does not give a second c/2 frontend until gen
+#C 14,400. The QuickLife simulation may slow down at gen 42,700 due to
+#C an expanding white triangle in the east.
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=33827#p33827
+x = 17, y = 17, rule = B0124/S025
+12bo$7b2o2bob2o$6bo2b6o$3b11obo$15o$b14o$ob13o$ob15o$b12o$b8obobo2bo$b
+7o4bo$b7o$2b6o$2b6o$bob4obo$2bob2obo$3b4o!

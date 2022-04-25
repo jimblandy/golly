@@ -8,7 +8,7 @@
 #C to the switch engines in Life. There is also a small period-32
 #C reflectorless rotating oscillator called spinner.
 #C     The following pattern is a period-480 gun for a 5-engine 9c/28o
-#C rake. Credit goes to Jasom Summers for the base p480 glider gun
+#C rake. Credit goes to Jason Summers for the base p480 glider gun
 #C (which uses four engines similar to the twirling T-tetsons 2 in
 #C Life to circulate and duplicate gliders, and a blocker and a
 #C spinner as filters), Paul Tooke for a 2-engine 9c/28o spaceship,

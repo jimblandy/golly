@@ -1,0 +1,49 @@
+#N w110-rosary-example.rle
+#O FWKnightship, 22 November 2020
+#C
+#C     W110 (or Wolfram's Rule 110) is a one-dimensional elementary
+#C cellular automaton notable for its Turing-completeness proved by
+#C Matthew Cook in the 1990s. This implies that any cellular 
+#C automaton wtih adequate signal circuitry to simulate Rule 110 is
+#C also Turing-complete. Therefore, building simulators for Rule 110
+#C becomes a common practice when a conwaylife.com forums user makes
+#C post for a new rule in Other Cellular Automata subforum, as it
+#C demonstrates useful basic mechanisms with potential for further 
+#C constructions.
+#C     The following pattern is taken from an unnamed rule devised by
+#C silversmith, where a small 2c/5 orthogonal spaceship can be easily
+#C shifted and reflected by vessels (the extensible family starting
+#C with tub, barge and long barge). The "rosary" design means that 
+#C spaceships will circulate in a finite but extendable circuitry and
+#C their presence or absence will be updated sequentially. First, a
+#C spaceship is split into four with a bait block at (142, 62). Two of
+#C them represent the state of current center, one is used to carry
+#C out AND (NOT) operation with the next signal at (203, 40) and last 
+#C one is used to carry out XOR operation with the previous signal at
+#C (210, 127). Finally these two outputs pass an OR gate at (271, 147)
+#C to give the new state of the center after applying W110 on the tape
+#C once. As the circuitry is finite, it will eventually fall into a 
+#C cycle of 680 iterations, or a period-97240 (=680x143) oscillator.
+#C
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=111913#p111913
+#C For more Rule-110-simulator constructions, see thread
+#C https://www.conwaylife.com/forums/viewtopic.php?f=11&t=2597
+x = 403, y = 186, rule = B3aeiy4cwz5acry/S2-in3-ky4ijrw5aci6ik
+205bo$204bobo$205bo3$136bo$135bobo$136bo28$246bo$245bobo$246bobo$247bo
+bo$248bobo$249bobo$132bo117bobo$131bobo117bobo$132bo119bo4$159bo$158bo
+bo$159bo3$145bo109bo$144bobo107bobo$145bo107bobo$244bo7bobo$243bobo5bo
+bo$244bo7bo2$204bo$203bobo$162bo41bo$142b2o17bobo90bo$142b2o16bobo90bo
+bo$161bo92bo$bo243bo$obo241bobo$bo243bo5$130bo$129bobo$128bobo38bo$
+127bobo12bo25bobo$128bo12bobo25bobo$140bobo17bo9bobo$139bobo17bobo9bob
+o$140bo19bo11bobo$173bobo$174bobo$175bobo$176bo8$182bo$181bobo$182bobo
+$183bobo$184bobo$125bo49bo9bobo$124bobo47bobo9bobo$125bo49bo11bobo$
+188bobo$189bobo$163bo26bobo$162bobo26bobo$163bo28bobo$193bobo$194bobo$
+195bobo$196bobo$197bobo$198bobo$199bobo$200bobo$201bobo$202bobo$203bob
+o$204bobo$205bobo$206bobo31bo$207bobo29bobo$208bobo29bo$209bobo$210bob
+o13bo$211bobo11bobo$212bobo11bo$213bobo56bo$214bo56bobo$272bo$144bo91b
+o$143bobo89bobo$144bo91bo2$214bo15bo$213bobo13bobo$214bo15bo20bo$250bo
+bo$251bobo$252bobo$253bobo$254bobo$255bobo$256bobo$257bobo$258bobo$
+259bobo$260bobo$261bobo$262bobo$263bobo$264bobo$265bobo$266bobo$267bob
+o$268bobo$269bobo125bo$270bobo123bobo$271bobo123bo$272bobo$273bo22$
+401bo$195b2o203bobo$194b2o205bo$195b2o$5bo$4bobo$5bo!

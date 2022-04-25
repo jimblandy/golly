@@ -1,0 +1,51 @@
+#N glider-24mer-gun.rle
+#O wwei47, 12 April 2021
+#C
+#C     The non-totalistic rule is inhabited by gliders and glider
+#C polymers, especially tetramers (from a V-pentomino) and dimers.
+#C Additionally, a ship or a tub can split a glider tetramer to two.
+#C The following gun aligns six copies of 2-glider tetramer synthesis
+#C to produce a glider 24mer.
+#C
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=128096#p128096
+x = 250, y = 206, rule = B3-ky4jy5cr/S2-in3-aeky4cnrt5a6ekn
+220b2o$219bobo$219bobo$220b2o4$214bo$213bobo$214bo11$230bo$221b2o6bobo
+$178b2o8b4o30b2o6bo$41bo135bobo8bo2bo29b2obo$42bo134bobo9b2o32b3o$41bo
+bo134b2o43bobo$41bobo182b2o8b2o$42bo184b2o6bo2bo$41bo154bo29b2obo5b4o$
+172bo22bobo30b3o$171bobo22bo31bobo$48bo123bo$47bobo$48bo3$51bo$51bo$
+49b3o3$65bob2obo141bo$66bo2bo118bo5b4o13bobo$67b2o118bobo4bo2bo14bo$
+32bo103b2o8b4o38bo6b2o$31bobo101bobo8bo2bo$32bo8b2o92bobo9b2o$41bobo9b
+2o6bo74b2o$41bo9b2obo5bobo131b2o$38b3o10bobo7bo30b3o98bo2bo$25b2o11bo
+13b2o37bo62bo38b4o23b3o$24bo2bo8b2o2bo50bo38bo22bobo67bo$23bob2obo7bo
+21b2o32b3o34bobo22bo3b2o63bo$36bobo17b2obo70bo27bo61b3o$33b3o20bobo
+100b2o$33bo23b2o$34bo51bo$85bobo139b2o$80b2o4bo113bo26bobo$80bo60bo56b
+2o28b2o$45bo33bo3bo56bob2o55b2o$44bobo12bob2obo14bo2b2o59bo$45bo14bo2b
+o16b2o56bo2b2o$61b2o22b2o50bo2bo29bo$85bo52bobo5bo5b4o13bobo$54bobo8bo
+2bo15bo3bo49b2o5bobo4bo2bo14bo$54b3o8bo2bo15bo2b2o7b2o6b4o38bo6b2o91bo
+2bo$52b2obo9bo2bo16b2o8bo2bo5bo2bo138bo2bo$54bo11b2o27bobo7b2o139bo2bo
+$53bo42bo5bo144b2o$101bobo48b2o$52bo49bo48bo2bo$50bobo20bo38bo38b4o$
+51b2o19bobo36bobo127b2o$73bo38bo127bobo$108b2o97b2o6bo24b2o$87bo19bo2b
+o95bobo5b2o$88b2o17bo2bo95b2o6bobo$87b2o18bo2bo101b2o$84bobo124b2o$84b
+3o123bob2o$82b2obo123b3o$83b2o124bobo$82b2o123b2o$43b2o34bobo124b2o$
+42b2obo34b2o7bo38bo79bo$42b2obo34bo7bobo19b4o13bobo$43b2o44bo20bo2bo
+14bo$73bob2obo32b2o$74bo2bo$75b2o$50bo21bo133b3o10b2o$49bobo18bobo125b
+3o4bo13bobo$50bo13b3o4b2o128bo3bo14b2o$39b3o25bo133bo4b3o$41bo25bo130b
+3o$39bo2b2o20b3o$43bo182b3o$41bobo181bo$44b3o158b2o18bo$46bo158bobo18b
+3o$44bo2b2o33bo123b2o$48bo16bo14bobo$46bobo15bobo14b2o$34bo29b2o$33bob
+o$34bo$63bo$62bobo45bo113bo2bo$58b2o3bo44b2o114bo2bo$27b2o16b2o10bobo
+18b3o28b2o113bo2bo$26bo2bo13bo2bo11bo21bo11bo132b2o$26b4o12bo3b2o31bo
+10bobo$27b2o12bo2bo3bo42b2o$40bo6b2o$42bo176b2o$39bo178bobo$23bo15b3o
+143b2o27b2o2b2o$24bo16bobo76bo63bobo26b3o$23bobo16b2o74b2o64b2o28bo$
+23bobo21bo71b2o$24bo21bobo53bo$23bo23bo52bobo$43bo57b2o$44bo$30bo12bob
+o$29bobo11bobo7b2o$30bo13bo7bob2o$43bo8bob2o74bo$53b2o73b2o$129b2o$
+112bo$110bobo$111b2o71b3o10b2o$176b3o4bo13bobo$179bo3bo14b2o$179bo4b3o
+$176b3o$140bo$138b2o64b3o$139b2o62bo$13b3o27bo78bo60b2o18bo$15bo26bobo
+75bobo60bobo18b3o$9bo5bo27bo77b2o61b2o$8bobo$9bo3$65bo84bo$2b2o60bobo
+81b2o$bo2bo60bo83b2o51bo2bo$ob2obo126bo69bo2bo$130bobo69bo2bo$131b2o
+70b2o$166bo$166b4o$166bo2bo$167bo2b2o25b2o$171bo24bobo$22bo140b2o4bobo
+24b2o$21bobo138bobo5b3o$22bo119bo19b2o$140bobo$80bo60b2o14b3o$29bo49bo
+bo76bobo$28bo51bo77bo$27bobo128b2o2bo$27bobo130bo2bo$28bo56bo74b4o$29b
+o54bobo76bo$85bo5$162b3o10b2o$161bo13bobo$161bo14b2o$162b3o3$182b3o$
+181bo$100bo80bo$99bobo80b3o$100bo3$105bo$104bobo$105bo13$120bo$119bobo
+$120bo!

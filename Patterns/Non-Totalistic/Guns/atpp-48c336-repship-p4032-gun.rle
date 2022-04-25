@@ -1,0 +1,120 @@
+#N atpp-48c336-repship-p4032-gun.rle
+#O toroidalet, 8 February 2019
+#C 
+#C     ATPP, shortand for A Table-Puller Paradise, is a non-totalistic
+#C rule named after a characteristic 24c/112o spaceship that involves
+#C a pair of tables pulled by winding, replicating pi-heptominoes. Its
+#C unusual replication (compared with that in HighLife, for example)
+#C leads to a few novel guns and engineered spaceships. The following
+#C pattern is a period-4032 gun for a 48c/336o spaceship; despite the
+#C products operating on glider collisions, their assembly can be seen
+#C as "gliderless".
+#C 
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=70212#p70212
+x = 742, y = 1178, rule = B3-ckq4z/S2-c3-a4iq5k6k
+292bo92bo122bo$292bo92bo122bo$292bo92bo122bo3$440b2ob2o118b2ob2o$433bo
+7bobo7bo112bobo$432b3o6bobo6b3o111bobo$213b3o4b2o3b2o17b2o3b2o11b2o9b
+2o11b2o143b2ob2o4b2ob2o4b2ob2o8b3o73b2o9b2o12b2ob2o17b3o$218b2obo3bob
+2o13b2obo3bob2ob2ob2ob2obo2b2ob2o2bob2o7b2obo2b2ob2o2b2ob3o72b3o41b2ob
+2o74b3o35b2obo2b2ob2o2bob2o$218b2o7b2o13b2o7b2o2bobo2b2o5bobo5b2o7b2o
+5bobo126bobo113b2o5bobo5b2o$218b2o7b2o13b2o7b2o2bobo2b2o5bobo5b2o7b2o
+5bobo126bobo113b2o5bobo5b2o$254b2ob2o7b2ob2o19b2ob2o124b2ob2o118b2ob2o
+39$617b3o45b3o45b3o9$664bo2$665b2o$666bo$665b2o4$662bo2bo2$618bo2bo44b
+o2bo$618b4o44b4o2$618b4o44b4o$618bo2bo44bo2bo2$662bo2bo2$712bo$614bo2b
+o$614b4o47b2o46b2o$666bo47bo$614b4o47b2o46b2o$614bo2bo$617bo46bo2$617b
+2o94b2o$618bo95bo$617b2o94b2o2$712bo$662bo2bo$617b2o43b4o$618bo$617b2o
+43b4o$662bo2bo$616bo95bo2$713b2o$714bo$713b2o3$710bo2bo$710b4o2$710b4o
+$710bo2bo3$713b2o$714bo$713b2o2$712bo$614bo2bo$614b4o2$614b4o$614bo2bo
+8$710bo2bo$710b4o2$710b4o$710bo2bo$616bo96bo2$617b2o94b2o$618bo95bo$
+617b2o94b2o3$614bo2bo92bo2bo$614b4o92b4o2$614b4o92b4o$614bo2bo92bo2bo
+3$617b2o94b2o$618bo95bo$617b2o94b2o2$616bo96bo$710bo2bo$710b4o2$710b4o
+$710bo2bo91$513bo2bo$513b4o2$513b4o$513bo2bo3$513b3o$512bo2bo$512b2ob
+2o$515b2o$515bo$513bo2bo$513b4o2$513b4o$513bo2bo$515bo$515b2o$512b2ob
+2o$512bo2bo$513b3o3$513bo2bo$513b4o2$513b4o$513bo2bo3$513b3o$512bo2bo$
+512b2ob2o$515b2o$514b2o$515b2o$512b2ob2o$512bo2bo$513b3o45$390bo2bo$
+390b4o2$390b4o$390bo2bo9$389b2o$388b2o$389b2o4$389b2o$388b2o$389b2o$
+389b2o2$389b2o2bo$390b4o2$390b4o$389b2o2bo2$389b2o$389b2o$388b2o$389b
+2o4$389b2o$388b2o$389b2o21$284bo2bo$284b4o2$284b4o$284bo2bo3$285b3o$
+285bo2bo$284b2ob2o$284b2o$285bo$284bo2bo$284b4o2$284b4o$284bo2bo$285bo
+$284b2o$284b2ob2o$285bo2bo$285b3o3$284bo2bo$284b4o2$284b4o$284bo2bo3$
+285b3o$285bo2bo$284b2ob2o$284b2o$285b2o$284b2o$70b3o211b2ob2o$285bo2bo
+$285b3o7$254b2ob2o7b2ob2o19b2ob2o124b2ob2o118b2ob2o$218b2o7b2o13b2o7b
+2o2bobo2b2o5bobo5b2o7b2o5bobo126bobo113b2o5bobo5b2o$218b2o7b2o13b2o7b
+2o2bobo2b2o5bobo5b2o7b2o5bobo126bobo113b2o5bobo5b2o$218b2obo3bob2o13b
+2obo3bob2ob2ob2ob2obo2b2ob2o2bob2o7b2obo2b2ob2o2b2o76b3o41b2ob2o74b3o
+35b2obo2b2ob2o2bob2o$213b3o4b2o3b2o17b2o3b2o11b2o9b2o11b2o15b3o125b2ob
+2o4b2ob2o4b2ob2o8b3o73b2o9b2o12b2ob2o17b3o$432b3o6bobo6b3o111bobo$433b
+o7bobo7bo112bobo$440b2ob2o118b2ob2o14$33bo224b2ob2o19b2ob2o80b2ob2o19b
+2ob2o142b2ob2o$33bo225bobo21bobo82bobo21bobo144bobo$33bo225bobo21bobo
+43bo18bo10b3o6bobo6b3o12bobo18b3o3b3o49bo67bobo$218bo32b2o5b2ob2o5b2o
+12b2ob2o42bo18bo10bobo5b2ob2o5bobo11b2ob2o17bobo3bobo37bo11bo66b2ob2o
+12b2o3b2o20bo$218bo18b2ob2o8bobo15bobo58bo18bo10bobo15bobo33bobo3bobo
+14b2ob2o18bo11bo75b2ob2o2bobo3bobo19bo$218bo19bobo8b2o3bobo7bobo3b2o
+165bobo19bo88bobo2b2o3bo3b2o18bo$238bobo9bo5b2o5b2o5bo166bobo108bobo3b
+o7bo$237b2ob2o194b2ob2o106b2ob2o3$24b3o4$154bobo15bobo$138b2ob2o11b3o
+5b2ob2o5b3o$139bobo13bo7bobo7bo$139bobo21bobo$138b2ob2o19b2ob2o11$70b
+3o$70bo$70b3o6$68bo2bo$47b3o18b4o2$68b4o$68bo2bo3$33bo2bo$33b4o2$33b4o
+33b3o$33bo2bo33bo$70b3o9$46b3o$33bo12bo$33b2o11b3o$34b2o32bo2bo$33b2o
+33b4o$33bo$46b3o19b4o$29bo2bo13bo21bo2bo$29b4o2$29b4o$29bo2bo14b2o2bo$
+47b5o$33bo$33b2o13b4o$34b2o12bo2bo$33b2o$33bo3$44bo2bo$44b4o2$44b4o$
+44bo2bo$70b3o$70bo$70b3o2$32bo$32bo$32bo37b3o$70bo$70b3o9$46b3o$46bo$
+46b3o4$46b3o$46bo$46b3o$68bo2bo$68b4o2$68b4o$68bo2bo7$467b3o93b3o6$44b
+o2bo$44b4o2$44b4o$44bo2bo7$70b3o$70bo$70b3o3$46b3o$46bo320b3o$46b3o$
+68bo2bo$68b4o2$68b4o$68bo2bo$44bo2bo$44b4o2$44b4o$44bo2bo$70b3o$70bo$
+70b3o3$46b3o$46bo23b3o$46b3o21bo$70b3o6$68bo2bo$68b4o2$68b4o$68bo2bo$
+8bo35bo2bo$8bo35b4o$8bo$44b4o$44bo2bo6$46b3o$46bo$46b3o4$46b3o$46bo23b
+3o$46b3o21bo$70b3o$5bo2bo$5b4o$9bo$5b3o62b3o$5bo64bo$70b3o3$10bo$9b2o$
+9bo2$9bo$9b2o$10b2o34b3o$9b2o35bo23b3o$9bo36b3o21bo$70b3o3$46b3o23bo2b
+o$46bo25b4o$46b3o$72b4o$72bo2bo6$9bo$9b2o60b3o$10b2o$9b2o$9bo2$9bo$9b
+2o$10b2o$9b2o$9bo34bo2bo$44b4o2$44b4o$44bo2bo6$46b3o$46bo103b2ob2o19b
+2ob2o$46b3o102bobo21bobo$151bobo7bo5bo7bobo7bo$150b2ob2o5b3o3b3o5b2ob
+2o5b3o$160bobo3bobo15bobo$46b3o$46bo$46b3o$3o3$201b2ob2o206b2ob2o118b
+2ob2o$200bobobobo3bo9bo7bo184bobo90bo5b2o5b2o5bo9bobo$44bo2bo146bo3bo
+3bobo5b2o7b2o3bo3b2o183bobo19bo69b2o3bobo7bobo3b2o8bobo19bo$44b4o146bo
+2bo3b2ob2o2bobo9bobo3bobo76bo18bo28bobo3bobo15bobo3bobo15bobo3bo4b2ob
+2o4bo3bobo7bo11bo58bobo15bobo8b2ob2o18bo$194bo2bo10b2o11b2o3b2o77bo18b
+o18b2ob2o5bobo3bobo15bobo3bobo5b2ob2o5bobo3bo4b2ob2o4bo3bobo7bo11bo59b
+2o5b2ob2o5b2o32bo$9bo34b4o257bo18bo19bobo6b3o3b3o15b3o3b3o6bobo6b3o3b
+2o11b2o3b3o19bo67bobo$9bo34bo2bo296bobo45bobo120bobo$9bo333b2ob2o43b2o
+b2o118b2ob2o5$46b3o$46bo$46b3o7$221b2ob2o$222bobo154bo11bo11bo5bo$222b
+obo36b3o114b3o9b3o9b3o3b3o$189b3o22b2o5b2ob2o11b2o22bo2bo112b2ob2o7b2o
+b2o7b2ob2ob2ob2o26b3o48b2o11b2o9b2o11b2o3b2o17b2o3b2o4b3o$212b2obo14b
+2ob2o2bob2ob2ob2o13b2ob2o11b3o72b3o29b2ob2o86b3ob2o2b2ob2o2bob2o7b2obo
+2b2ob2o2bob2ob2ob2ob2obo3bob2o13b2obo3bob2o$212b2o4b3o5b3o2bobo5b2o2bo
+bo14b2o122bobo96bobo5b2o7b2o5bobo5b2o2bobo2b2o7b2o13b2o7b2o$212b2o4b3o
+5b2obobobo5b2o2bobo15b2o121bobo96bobo5b2o7b2o5bobo5b2o2bobo2b2o7b2o13b
+2o7b2o$230b2ob2o7b2ob2o13b2o121b2ob2o94b2ob2o19b2ob2o7b2ob2o$260b2ob2o
+$261bo2bo$261b3o3$260bo2bo$260b4o2$46b3o211b4o$260bo2bo3$261b3o$261bo
+2bo$260b2ob2o$260b2o$261b2o$260b2o$260b2ob2o$261bo2bo$261b3o10$365b2o$
+364b2o$365b2o4$365b2o$364b2o$365b2o$365b2o2$365b2o2bo$366b4o2$366b4o$
+365b2o2bo2$365b2o$365b2o$364b2o$365b2o3$366bo2bo$366b4o2$366b4o$366bo
+2bo3$365b2o$364b2o$365b2o$365b2o2$365b2o2bo$366b4o2$366b4o$366bo2bo45$
+489b3o$488bo2bo$488b2ob2o$491b2o$490b2o$491b2o$488b2ob2o$488bo2bo$489b
+3o3$489bo2bo$489b4o2$489b4o$489bo2bo3$489b3o$488bo2bo$488b2ob2o$491b2o
+$490b2o$491b2o$488b2ob2o$488bo2bo$489b3o9$489bo2bo$489b4o2$489b4o$489b
+o2bo91$734bo2bo$734b4o2$734b4o$734bo2bo$592bo144bo2$593b2o142b2o$594bo
+143bo$593b2o142b2o3$590bo2bo140bo2bo$590b4o140b4o2$590b4o140b4o$590bo
+2bo140bo2bo3$593b2o142b2o$594bo143bo$593b2o142b2o2$592bo143bo6$592bo
+143bo2$593b2o142b2o$594bo143bo$593b2o142b2o3$590bo2bo140bo2bo$590b4o
+140b4o2$590b4o140b4o$590bo2bo140bo2bo3$593b2o142b2o$594bo143bo$593b2o
+142b2o2$593bo143bo$590bo2bo140bo2bo$590b4o140b4o2$590b4o140b4o$590bo2b
+o140bo2bo7$592bo143bo2$593b2o142b2o$594bo143bo$593b2o142b2o4$593b2o
+142b2o$594bo143bo$593b2o142b2o2$593bo143bo$590bo2bo92bo2bo44bo2bo$590b
+4o92b4o44b4o2$590b4o92b4o44b4o$590bo2bo92bo2bo44bo2bo$593bo46bo96bo2$
+593b2o46b2o94b2o$594bo47bo95bo$593b2o46b2o94b2o3$638bo2bo$593b2o43b4o
+95b2o$594bo143bo$593b2o43b4o95b2o$638bo2bo$592bo143bo2$641b2o$642bo$
+641b2o2$640bo47bo$590bo2bo140bo2bo$590b4o95b2o43b4o$690bo$590b4o95b2o
+43b4o$590bo2bo140bo2bo$640bo2$641b2o46b2o$642bo47bo$641b2o46b2o2$592bo
+96bo46bo$686bo2bo$593b2o46b2o43b4o47b2o$594bo47bo95bo$593b2o46b2o43b4o
+47b2o$686bo2bo$640bo2$590bo2bo140bo2bo2$594bo2bo92bo2bo44bo2bo$594b4o
+92b4o44b4o2$594b4o92b4o44b4o$594bo2bo92bo2bo44bo2bo2$590bo2bo140bo2bo
+4$593b2o142b2o$594bo143bo$593b2o142b2o2$592bo143bo9$593b3o45b3o45b3o
+45b3o39$230b2ob2o7b2ob2o136b2ob2o94b2ob2o19b2ob2o7b2ob2o$212b2o4b3o5b
+2obobobo5b2o2bobo138bobo96bobo5b2o7b2o5bobo5b2o2bobo2b2o7b2o13b2o7b2o$
+212b2o4b3o5b3o2bobo5b2o2bobo138bobo96bobo5b2o7b2o5bobo5b2o2bobo2b2o7b
+2o13b2o7b2o$212b2obo14b2ob2o2bob2ob2ob2o29b3o72b3o29b2ob2o86b3ob2o2b2o
+b2o2bob2o7b2obo2b2ob2o2bob2ob2ob2ob2obo3bob2o13b2obo3bob2o$189b3o22b2o
+5b2ob2o11b2o138b2ob2o7b2ob2o7b2ob2ob2ob2o26b3o48b2o11b2o9b2o11b2o3b2o
+17b2o3b2o4b3o$222bobo153b3o9b3o9b3o3b3o$222bobo154bo11bo11bo5bo$221b2o
+b2o3$268bo92bo122bo$268bo92bo122bo$268bo92bo122bo!

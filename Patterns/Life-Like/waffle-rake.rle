@@ -1,0 +1,20 @@
+#N waffle-rake.rle
+#O Eric Goldstein, 8 June 2012
+#C
+#C     An outer-totalistic rule in the "B0/D8 rulespace" is inhabited 
+#C by rakes, breeders, and wickstretchers. Curiously, if two moons 
+#C collide face-to-face with an even-cell gap, they will not only
+#C pass each other completely unaffected, but also emit two other
+#C moons sideways. The following pattern consists of two tail-to-tail
+#C backrakes that are slightly dirty, producing a waffle-like pattern
+#C with the shape of a thin triangle. Try selecting the right half
+#C and shifting it (Shift+S hotkey to activate shift.lua) by multiples
+#C of 2, to observe different outcomes.
+#C
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=6654#p6654
+x = 90, y = 28, rule = B013468/S023
+11b2o$10bo2bo$9bo3bo$8bo3b3o$8bo4bo$8bo16bo$11bo13bo$8b2o3bo12bo2$10bo
+$bo$o$o2b3o21bo34bo21bo$b2o3bo21bo32bo21bo$6bo21bo32bo21bo3b2o$5bo21bo
+34bo21b3o2bo$89bo$88bo$79bo2$63bo12bo3b2o$64bo13bo$64bo16bo$76bo4bo$
+75b3o3bo$76bo3bo$76bo2bo$77b2o!

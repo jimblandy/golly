@@ -1,0 +1,7 @@
+#N flying-sierpinski.rle
+#C
+#C     A single dot replicates under both Gnarl (B1/S1) and some of
+#C its Generation extensions 1/1/G (G=4, 5, 6). However, in the latter
+#C pattern, flying Sierpinski triangles produce an interesting effect.
+x = 1, y = 1, rule = 1/1/5
+A!

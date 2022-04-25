@@ -1,0 +1,12 @@
+#N slow-expanding-box.rle
+#O Brian Prentice, 2 May 2017
+#C 
+#C     An arrangement of dirty replicators spawn more replicators and
+#C XOR oscillators (like the fifth one in five-margolus-media.rle) by
+#C the side, creating a chaotically expanding pattern.
+#C
+#C Reference:
+#C https://www.conwaylife.com/forums/viewtopic.php?p=43166#p43166
+x = 52, y = 52, rule = B2ac3q4art5nqr/S3q4aeijkrt5cjnq7c8
+16bobo11bo$16bobo11bo15$2o2$2o3$50b2o9$2o3$50b2o2$50b2o15$21bo11bobo$
+21bo11bobo!
