@@ -201,6 +201,7 @@ static bool IsImageFile(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
+// only called by LoadPattern
 bool MainFrame::LoadImage(const wxString& path)
 {
     // don't try to load JPEG file
@@ -249,6 +250,8 @@ bool MainFrame::LoadImage(const wxString& path)
 void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
                             bool updatestatus, bool updateall)
 {
+    if (insideYield > 0) return; // avoid recursion (probably unnecessary here, but play safe)
+
     if ( !wxFileName::FileExists(path) ) {
         Warning(_("The file does not exist:\n") + path);
         return;

@@ -10,8 +10,8 @@
 <li> The default stack size for Golly (and bgolly) on Windows has been increased from 1MB to 32MB.
 <li> Fixed a bug in script commands like g.setpos that accept integers as strings
      (large negative values less than -1 billion were not parsed correctly).
-<li> Fixed a bug that could result in an "illegal operation" warning (after which Golly usually crashed)
-     if a script called g.run or g.step and the user changed the step size via the +/- keys.
+<li> Fixed a number of bugs that could result in an "illegal operation while calculating" warning
+     (after which Golly usually crashed).
 <li> Performance improvements to <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> NL (Triangular)
      and NB (Checkboard) rules.
 <li> Updated Lua to version 5.4.4.

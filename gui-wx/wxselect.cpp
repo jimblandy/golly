@@ -340,6 +340,8 @@ bool Selection::SaveDifferences(lifealgo* oldalgo, lifealgo* newalgo,
 
 void Selection::Advance()
 {
+    if (insideYield > 0) return; // avoid recursion
+
     if (mainptr->generating || viewptr->drawingcells || viewptr->waitingforclick) return;
 
     if (!exists) {
@@ -478,6 +480,8 @@ void Selection::Advance()
 
 void Selection::AdvanceOutside()
 {
+    if (insideYield > 0) return; // avoid recursion
+
     if (mainptr->generating || viewptr->drawingcells || viewptr->waitingforclick) return;
 
     if (!exists) {
@@ -884,6 +888,8 @@ void Selection::Fit()
 
 void Selection::Shrink(bool fit, bool remove_if_empty)
 {
+    if (insideYield > 0) return; // avoid recursion
+
     if (!exists) return;
 
     if (mainptr->generating) {
@@ -945,19 +951,6 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
         statusptr->ErrorMessage(selection_too_big);
         if (fit) viewptr->FitSelection();
         return;
-    }
-
-    if ( insideYield > 0 ) {
-        // we've been called from checkevents() so we don't attempt to shrink a very
-        // large selection because the progress dialog can't be cancelled, presumably
-        // because normal event handling isn't available inside Yield()
-        double wd = right.todouble() - left.todouble() + 1.0;
-        double ht = bottom.todouble() - top.todouble() + 1.0;
-        if ( wd * ht > 1.0e12 ) {
-            statusptr->ErrorMessage(_("Selection is too big to shrink."));
-            if (fit) viewptr->FitSelection();
-            return;
-        }
     }
 
     // the easy way to shrink selection is to create a new temporary universe,
@@ -1071,6 +1064,8 @@ void Selection::EmptyUniverse()
 
 void Selection::Clear()
 {
+    if (insideYield > 0) return; // avoid recursion
+
     if (!exists) return;
 
     // no need to do anything if there is no pattern
@@ -1236,6 +1231,8 @@ bool Selection::SaveOutside(bigint& t, bigint& l, bigint& b, bigint& r)
 
 void Selection::ClearOutside()
 {
+    if (insideYield > 0) return; // avoid recursion
+
     if (!exists) return;
 
     // no need to do anything if there is no pattern
@@ -1386,6 +1383,8 @@ void Selection::AddRun(int state,                // in: state of cell to write
 
 void Selection::CopyToClipboard(bool cut)
 {
+    if (insideYield > 0) return; // avoid recursion
+
     // can only use getcell/setcell in limited domain
     if (TooBig()) {
         statusptr->ErrorMessage(selection_too_big);
@@ -1569,6 +1568,8 @@ bool Selection::CanPaste(const bigint& wd, const bigint& ht, bigint& top, bigint
 
 void Selection::RandomFill()
 {
+    if (insideYield > 0) return; // avoid recursion (eg. due to setcell calling checkevents)
+
     if (!exists) return;
 
     // can only use getcell/setcell in limited domain
@@ -1670,6 +1671,7 @@ void Selection::RandomFill()
 
 // -----------------------------------------------------------------------------
 
+// only called by Selection::Flip
 bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
                          int itop, int ileft, int ibottom, int iright)
 {
@@ -1732,6 +1734,8 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
 
 bool Selection::Flip(bool topbottom, bool inundoredo)
 {
+    if (insideYield > 0) return false; // avoid recursion
+
     if (!exists) return false;
 
     if (mainptr->generating) {
@@ -1866,6 +1870,7 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
 const wxString rotate_clockwise =      _("Rotating selection +90 degrees");
 const wxString rotate_anticlockwise =  _("Rotating selection -90 degrees");
 
+// only called by Selection::Rotate
 bool Selection::RotateRect(bool clockwise,
                            lifealgo* srcalgo, lifealgo* destalgo, bool erasesrc,
                            int itop, int ileft, int ibottom, int iright,
@@ -1927,6 +1932,7 @@ bool Selection::RotateRect(bool clockwise,
 
 // -----------------------------------------------------------------------------
 
+// only called by Selection::Rotate
 bool Selection::RotatePattern(bool clockwise,
                               bigint& newtop, bigint& newbottom,
                               bigint& newleft, bigint& newright,
@@ -2031,6 +2037,8 @@ bool Selection::RotatePattern(bool clockwise,
 
 bool Selection::Rotate(bool clockwise, bool inundoredo)
 {
+    if (insideYield > 0) return false; // avoid recursion
+
     if (!exists) return false;
 
     if (mainptr->generating) {
