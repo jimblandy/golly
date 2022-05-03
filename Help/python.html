@@ -663,6 +663,10 @@ CONTROL COMMANDS
 Run the current pattern for the specified number of generations.
 Intermediate generations are never displayed, and the final generation
 is only displayed if the current <b>autoupdate</b> setting is True.
+Note that if the user hits the +/- keys while the <b>run</b> command is executing
+then it might not advance by <i>numgens</i>.
+An easy way to avoid that happening is to use the <a href="#getevent">getevent</a>
+command to prevent those key events changing the step size.
 </dd>
 <dd> Example: <b>g.run(100)</b></dd>
 </p>
