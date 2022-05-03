@@ -734,12 +734,6 @@ void hlifealgo::setMaxMemory(int newmemlimit) {
    maxmem = newlimit ;
    hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
 }
-/**
- *   Clear everything.
- */
-void hlifealgo::clearall() {
-   lifefatal("clearall not implemented yet") ;
-}
 /*
  *   This routine expands our universe by a factor of two, maintaining
  *   centering.  We use four new nodes, and *reuse* the root so this cannot

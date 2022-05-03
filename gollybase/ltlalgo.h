@@ -14,7 +14,6 @@ class ltlalgo : public lifealgo {
 public:
     ltlalgo();
     virtual ~ltlalgo();
-    virtual void clearall();
     virtual int setcell(int x, int y, int newstate);
     virtual int getcell(int x, int y);
     virtual int nextcell(int x, int y, int& v);

@@ -189,13 +189,6 @@ void ltlalgo::empty_boundaries()
 
 // -----------------------------------------------------------------------------
 
-void ltlalgo::clearall()
-{
-    lifefatal("clearall is not implemented");
-}
-
-// -----------------------------------------------------------------------------
-
 int ltlalgo::NumCellStates()
 {
     return maxCellStates;

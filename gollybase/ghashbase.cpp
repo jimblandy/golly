@@ -626,12 +626,6 @@ void ghashbase::setMaxMemory(int newmemlimit) {
    maxmem = newlimit ;
    hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
 }
-/**
- *   Clear everything.
- */
-void ghashbase::clearall() {
-   lifefatal("clearall not implemented yet") ;
-}
 /*
  *   This routine expands our universe by a factor of two, maintaining
  *   centering.  We use four new ghnodes, and *reuse* the root so this cannot

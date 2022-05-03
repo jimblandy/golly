@@ -12,19 +12,7 @@ int lifepoll::checkevents() {
   return 0 ;
 }
 int lifepoll::inner_poll() {
-  // AKT: bailIfCalculating() ;
-  // TGR:  I think we need this; we should never recursively poll
-  //       That indicates something bizarre is going on.  Maybe it's
-  //       okay but let's see.
   bailIfCalculating() ;
-  // TGR:  After the previous statement this should be a no-op
-  /*
-  if (isCalculating()) {
-    // AKT: nicer to simply ignore user event
-    // lifefatal("recursive poll called.") ;
-    return interrupted ;
-  }
-  */
   countdown = POLLINTERVAL ;
   calculating++ ;
   if (!interrupted)
@@ -34,11 +22,10 @@ int lifepoll::inner_poll() {
 }
 void lifepoll::bailIfCalculating() {
   if (isCalculating()) {
-    // AKT: nicer not to call lifefatal
-    // lifefatal("recursive poll called.") ;
     lifewarning("Illegal operation while calculating.") ;
     abort() ;
-    interrupted = 1 ;
+    // if abort() call is removed then enable next line
+    // interrupted = 1 ;
   }
 }
 void lifepoll::updatePop() {}

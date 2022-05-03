@@ -193,25 +193,14 @@ void qlifealgo::uproot() {
  *   This subroutine allocates a new empty universe.  The universe starts
  *   out as a 256x256 universe.
  */
+static int bc[256] ; // popcount
 qlifealgo::qlifealgo() {
    int test = (INT_MAX != 0x7fffffff) ;
    if (test)
       lifefatal("bad platform for this program") ;
    memused = 0 ;
    maxmemory = 0 ;
-   clearall() ;
-}
-/*
- *   Clear everything.  This one also frees memory.
- */
-static int bc[256] ; // popcount
-void qlifealgo::clearall() {
    poller->bailIfCalculating() ;
-   while (memused) {
-      linkedmem *nu = memused->next ;
-      free(memused) ;
-      memused = nu ;
-   }
    generation = 0 ;
    increment = 1 ;
    tilelist = 0 ;

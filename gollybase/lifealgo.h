@@ -50,13 +50,12 @@ public:
          unbounded = true ;         // most algorithms use an unbounded universe
       }
    virtual ~lifealgo() ;
-   virtual void clearall() = 0 ;
    // returns <0 if error
    virtual int setcell(int x, int y, int newstate) = 0 ;
    virtual int getcell(int x, int y) = 0 ;
    virtual int nextcell(int x, int y, int &v) = 0 ;
    void getcells(unsigned char *buf, int x, int y, int w, int h) ;
-   // call after setcell/clearcell calls
+   // call after setcell calls
    virtual void endofpattern() = 0 ;
    virtual void setIncrement(bigint inc) = 0 ;
    virtual void setIncrement(int inc) = 0 ;

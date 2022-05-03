@@ -190,14 +190,11 @@ class qlifealgo : public lifealgo {
 public:
    qlifealgo() ;
    virtual ~qlifealgo() ;
-   virtual void clearall() ;
    virtual int setcell(int x, int y, int newstate) ;
    virtual int getcell(int x, int y) ;
    virtual int nextcell(int x, int y, int &v) ;
-   // call after setcell/clearcell calls
+   // call after setcell calls
    virtual void endofpattern() {
-     // AKT: unnecessary (and prevents shrinking selection while generating)
-     // TGR: uncommented, since I think it's probably necessary
      poller->bailIfCalculating() ;
      popValid = 0 ;
    }
