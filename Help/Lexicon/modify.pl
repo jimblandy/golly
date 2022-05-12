@@ -8,7 +8,7 @@ for $file (@files) {
    for (($f)) {
       s/<body>/<body bgcolor="#FFFFCE">/g ;
       s|<img src="./at.gif" alt="@">|@|g ;
-      s!<center><a HREF="http://www.conwaylife.com/ref/lexicon/lex_home.htm">Life Lexicon Home Page</a>!<center><A HREF="lex.htm">Introduction</A> \| <A HREF="lex_bib.htm">Bibliography</A></center>!g ;
+      s!<center><a HREF="https://conwaylife.com/ref/lexicon/lex_home.htm">Life Lexicon Home Page</a>!<center><A HREF="lex.htm">Introduction</A> \| <A HREF="lex_bib.htm">Bibliography</A></center>!g ;
       s!<center><a HREF="lex_home.htm">Life Lexicon Home Page</a>!<center><A HREF="lex.htm">Introduction</A> \| <A HREF="lex_bib.htm">Bibliography</A></center>!g ;
       s|<center><b class=l>Life Lexicon</b></center>||g ;
       s:^<A HREF="lex.htm">Introduction</A> \|:<font size=-1><b>:gm ;
