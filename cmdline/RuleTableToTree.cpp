@@ -209,14 +209,14 @@ void my_ruletable_algo::buildndd() {
 int main(int argc, char *argv[]) {
    if (argc < 2) {
       cerr << "Usage: RuleTableToTree rule >Rules/rule.tree" << endl ;
-      exit(0) ;
+      exit(1) ;
    }
    lifeerrors::seterrorhandler(&mylifeerrors) ;
    my_ruletable_algo *rta = new my_ruletable_algo() ;
    string err = rta->loadrule(argv[1]) ;
    if (err.size() > 0) {
       cerr << "Error: " << err << endl ;
-      exit(0) ;
+      exit(1) ;
    }
    rta->buildndd() ;
    write_ndd() ;
