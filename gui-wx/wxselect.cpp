@@ -1734,7 +1734,8 @@ bool Selection::FlipRect(bool topbottom, lifealgo* srcalgo, lifealgo* destalgo, 
 
 bool Selection::Flip(bool topbottom, bool inundoredo)
 {
-    if (insideYield > 0) return false; // avoid recursion
+    // we need to allow flipping a selection when waiting for paste click
+    if (insideYield > 0 && !viewptr->waitingforclick) return false; // avoid recursion
 
     if (!exists) return false;
 
@@ -2037,7 +2038,8 @@ bool Selection::RotatePattern(bool clockwise,
 
 bool Selection::Rotate(bool clockwise, bool inundoredo)
 {
-    if (insideYield > 0) return false; // avoid recursion
+    // we need to allow rotation of a selection when waiting for paste click
+    if (insideYield > 0 && !viewptr->waitingforclick) return false; // avoid recursion
 
     if (!exists) return false;
 
