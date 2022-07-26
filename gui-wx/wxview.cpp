@@ -402,7 +402,7 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         mainptr->UpdateToolBar();           // disable all tool bar buttons
         UpdateLayerBar();                   // disable all layer bar buttons
         UpdateEditBar();                    // disable all edit bar buttons
-        CaptureMouse();                     // get mouse down event even if outside view
+        if (!HasCapture()) CaptureMouse();  // get mouse down event even if outside view
         pasterect = wxRect(-1,-1,0,0);
         
         while (waitingforclick) {
@@ -452,7 +452,7 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
             mouseisdown = false;
         #endif
 
-        if ( HasCapture() ) ReleaseMouse();
+        if (HasCapture()) ReleaseMouse();
         mainptr->EnableAllMenus(true);
         mainptr->UpdateMenuAccelerators();  // restore accelerators
         
