@@ -175,10 +175,8 @@ static bool LoadPythonLib()
     wxDynamicLibrary dynlib;
     
     // if dynlib.Load fails then only see the detailed log error if GollyPrefs sets debug_level=2
-    wxLogNull noLog;
-    if (debuglevel == 2) {
-        noLog.~wxLogNull();
-    }
+    wxLogNull* noLog = new wxLogNull();
+    if (debuglevel == 2) delete noLog;
 
     // the prompt message for loading the Python library
     wxString prompt = _(
@@ -214,9 +212,11 @@ static bool LoadPythonLib()
         if (button == wxID_OK) {
             pythonlib = dialog.GetValue();
         } else {
+            if (debuglevel != 2) delete noLog;
             return false;
         }
     }
+    if (debuglevel != 2) delete noLog;
 
     // load python function address with symbol "FUNC_NAME"
     // to our function pointer G_FUNC_NAME.

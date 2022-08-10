@@ -1958,7 +1958,7 @@ void RunScript(const wxString& filename)
 
     // temporarily change current directory to location of script
     wxFileName fullname(filename);
-    fullname.Normalize();
+    fullname.Normalize(wxPATH_NORM_DOTS | wxPATH_NORM_TILDE | wxPATH_NORM_ABSOLUTE | wxPATH_NORM_SHORTCUT);
     scriptloc = fullname.GetPath();
     if ( scriptloc.Last() != wxFILE_SEP_PATH ) scriptloc += wxFILE_SEP_PATH;
     wxSetWorkingDirectory(scriptloc);
