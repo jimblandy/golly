@@ -1,9 +1,9 @@
 #N small-JvN-self-replicator.rle
 #O Redstoneboi, 17 August 2018
 #C smaller and faster JvN linear self-replicator, period 221693.
-#C   http://www.conwaylife.com/forums/viewtopic.php?p=62707#p62707
+#C   https://conwaylife.com/forums/viewtopic.php?p=62707#p62707
 #C Inspired in part by a small JvN self-replicator by Rohan Ridenour,
-#C   http://www.conwaylife.com/forums/viewtopic.php?p=61421#p61421
+#C   https://conwaylife.com/forums/viewtopic.php?p=61421#p61421
 x = 12314, y = 21, rule = JvN29
 2.2IpAIpA3IL.pAIpA4IpAT$2.JLpAKpA2K.pA.J2.2IL.R$.pAJ.pAT.IpAQ.2pAK2pA
 IpAIpAI$IJ2ILQI2J2.L.I2J.J.pAJ$pAIpAIpAIpAIpA2.2IpAIpALJIJ$J3.2IJ6.2I

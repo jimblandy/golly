@@ -2,7 +2,8 @@
 #O dani, 4 April 2022
 #C
 #C     This is the smallest known pattern by population that exhibits
-#C quadratic growth at the time of writing. Starting from an unnamed
+#C quadratic growth as of August 2022, improving on the record held
+#C since 2014 by switch-engine-ping-pong.rle. Starting from an unnamed
 #C 9-cell island on the left that turns into H+SE and an 11-cell GPSE
 #C (glider-producing switch engine) predecessor, the switch-engine-
 #C pair breeder produces a BLSE (block-laying switch engine) every
