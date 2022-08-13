@@ -19,7 +19,7 @@
 #C the distance makes the speed of replicator arbitrarily close to c/2.
 #C 
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=131662#p131662
+#C https://conwaylife.com/forums/viewtopic.php?p=131662#p131662
 x = 1134, y = 3, rule = B3aeiy4eqrty5cijn6ck7c8/S2-i3acein4cejkq5ir6cei7c8
 bo5bo53bo9bo59bo14bo84bo21bo97bo26bo122bo33bo135bo38bo150bo45bo173bo
 50bo$obo3bobo51bobo7bobo57bobo12bobo82bobo19bobo95bobo24bobo120bobo31b

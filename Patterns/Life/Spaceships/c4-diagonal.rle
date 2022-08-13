@@ -3,9 +3,10 @@
 #C between smaller ships are not shown.
 #C
 #C This collection was compiled by Nicolay Beluchenko.
+#C It was updated in 2022 by Matthias Merzenich -- source:
+#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 #C
 #C Discovery credits:
-#C AP - Aidan F. Pierce
 #C DB - David Bell
 #C DH - Dean Hickerson
 #C GN - Gabriel Nivasch
@@ -13,12 +14,13 @@
 #C HH - Hartmut Holzwart
 #C MM - Matthias Merzenich
 #C NB - Nicolay Beluchenko
+#C PR = "praosylen"
 #C RG - Richard Guy
 #C RW - Robert Wainwright
 #C SS - Steven Silver
 #C TC - Tim Coe
 #C
-#C 5  RG     1970 "glider"
+#C 5  RG     1969 "glider"
 #C 25 JS Sep 2000 "quarter" or "crab"
 #C 27 JS Sep 2000 "wings"
 #C 29 HH Apr 2004 "B29"
@@ -222,7 +224,7 @@
 #C    NB Apr 2012
 #C    NB Jul 2012
 #C    NB Dec 2012
-#C    AP Mar 2017
+#C    PR Mar 2017
 #C 61 JS Oct 2000
 #C    HH Feb 2004
 #C    HH Mar 2004
@@ -260,7 +262,7 @@
 #C    NB Apr 2012
 #C    NB Jul 2012
 #C    NB Dec 2012
-#C    AP Feb 2017
+#C    PR Feb 2017
 #C 63 JS Mar 1999
 #C    NB Jul 2005
 #C    NB Jul 2005 (tag by HH Apr 1993)
@@ -338,7 +340,7 @@
 #C    NB Dec 2012
 #C    MM Mar 2017
 #C 66 DH Dec 1989 "big glider"
-#C    HH Apr 1993
+#C    HH Apr 1993 ??
 #C    HH Mar 2004
 #C    HH Mar 2004
 #C    HH Dec 2004
@@ -458,7 +460,7 @@
 #C    NB Dec 2012
 #C    NB Dec 2012
 #C    NB Dec 2012
-#C    AP Mar 2017
+#C    PR Mar 2017
 #C 69 DH Mar 1993 "Enterprise"
 #C    HH Apr 1993
 #C    SS Jan 1999 "welded Canada geese"
@@ -512,7 +514,7 @@
 #C    NB Dec 2012
 #C    NB Dec 2012
 #C    NB Dec 2012
-#C    AP Feb 2017
+#C    PR Feb 2017
 #C 70 HH and DB earlier than 2000
 #C    HH Mar 2004
 #C    NB Jul 2005

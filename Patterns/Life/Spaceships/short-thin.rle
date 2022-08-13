@@ -25,7 +25,7 @@
 #C  (1,0)c/2  |   21    |  12* (Hartmut Holzwart, 3 Jul 1992)
 #C  (1,0)c/3  |   12    |  13* ("turtle", Dean Hickerson, Aug 1989)
 #C  (1,0)c/4  |   10    |  44* (Stephen Silver, 2 Mar 1999)
-#C  (1,1)c/4  |    3    |   4* ("glider", Richard Guy, 1970)
+#C  (1,1)c/4  |    3    |   4* ("glider", Richard Guy, 1969)
 #C  (2,0)c/4  |    5    |   6* ("LWSS", John Conway, 1970)
 #C  (1,0)c/5  |   11    |  89* (Paul Tooke, 12 Mar 2001)
 #C  (1,1)c/5  |   13    |  26  (Tim Coe, Dec 2015)
@@ -57,7 +57,7 @@
 #C  (1,0)c/2  |    8    | 31* (Dean Hickerson, 28 Jul 1989)
 #C  (1,0)c/3  |    5    | 16* (Dean Hickerson, Aug 1989)
 #C  (1,0)c/4  |    8    | 26* (Tim Coe, 6 Aug 1995)
-#C  (1,1)c/4  |    3    |  4* ("glider", Richard Guy, 1970)
+#C  (1,1)c/4  |    3    |  4* ("glider", Richard Guy, 1969)
 #C  (2,0)c/4  |    6    |  5* ("LWSS", John Conway, 1970)
 #C  (1,0)c/5  |    8    | 31* ("spider", David Bell, 14 Apr 1997)
 #C  (1,1)c/5  |   13    | 26  (Tim Coe, Dec 2015)
@@ -74,7 +74,8 @@
 #C  (3,0)c/7  |  > 7    |
 #C
 #C Patterns and comments from Stephen Silver's 12 Jan 2004 'ships.zip'
-#C Updated on 21 Nov 2021.
+#C Updated on 21 Nov 2021 -- -- source:
+#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 406, y = 163, rule = B3/S23
 b2o23b3o34bo26b2o27b2ob2o24bo33b2o26b2o27bo28bo29bo3bo78bo17bo$2o23bo
 36bobo27bobo23bo3bobo22b3o29b2ob2o22b2obo2bob2o22bobo26b3o27b3ob3o76b

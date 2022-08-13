@@ -26,9 +26,9 @@
 #C cycle of 680 iterations, or a period-97240 (=680x143) oscillator.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=111913#p111913
+#C https://conwaylife.com/forums/viewtopic.php?p=111913#p111913
 #C For more Rule-110-simulator constructions, see thread
-#C https://www.conwaylife.com/forums/viewtopic.php?f=11&t=2597
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=2597
 x = 403, y = 186, rule = B3aeiy4cwz5acry/S2-in3-ky4ijrw5aci6ik
 205bo$204bobo$205bo3$136bo$135bobo$136bo28$246bo$245bobo$246bobo$247bo
 bo$248bobo$249bobo$132bo117bobo$131bobo117bobo$132bo119bo4$159bo$158bo

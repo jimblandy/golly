@@ -25,7 +25,7 @@
 #C allows the natural rake to escape, creating a breeder.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=6374#p6374
+#C https://conwaylife.com/forums/viewtopic.php?p=6374#p6374
 x = 842, y = 938, rule = 237/34578/4
 620.3A$619.ABCBA$618.AB4A$618.BA4.C$617.C$620.C2BC$622.2CA$617.C3.4A$
 618.6A$618.3A12$637.2A$636.C2A$636.A.CA$636.ABA$636.3A$558.C76.C$558.

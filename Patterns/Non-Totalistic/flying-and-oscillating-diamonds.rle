@@ -7,9 +7,9 @@
 #C a period-(N+1) oscillator, both of which are diamond-shaped.
 #C 
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=50441#p50441
+#C https://conwaylife.com/forums/viewtopic.php?p=50441#p50441
 #C For other rules with small adjustable spaceships, see forums thread
-#C https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3081
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3081
 x = 137, y = 21, rule = B2ik3-kqry4-ijky5-i6i7/S02a4i
 b3o4b5o4b7o4b9o4b11o4b13o6b61o$o3bo2bo5bo2bo7bo2bo9bo2bo11bo2bo13bo4bo
 61bo19$3o2b5o2b7o2b9o2b11o!

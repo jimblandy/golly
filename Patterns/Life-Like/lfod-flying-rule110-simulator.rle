@@ -1,5 +1,5 @@
 #N lfod-flying-rule110-simulator.rle
-#O FWKnightship, October 20 2020
+#O FWKnightship, 20 October 2020
 #C     Live Free or Die, abbreviated LFoD, is an outer-totalistic
 #C Life-like cellular automaton with rulestring B2/S0. In this rule,
 #C there are several spaceships, puffers and rakes travelling at c
@@ -9,11 +9,11 @@
 #C     Rule 110 (or W110) is a one-dimensional elementary cellular
 #C automaton, which is notable for its Turing-completeness proved by
 #C Matthew Cook in the 1990s (see https://en.wikipedia.org/wiki/Rule_110
-#C and https://www.conwaylife.com/wiki/OCA:Rule_110 for details). This
+#C and https://conwaylife.com/wiki/OCA:Rule_110 for details). This
 #C implies that any cellular automaton wtih adequate signal circuitry
 #C to simulate Rule 110 is also Turing-complete. A list of relevant
 #C unit cell constructions can be found in the following forums thread:
-#C   https://www.conwaylife.com/forums/viewtopic.php?f=11&t=2597
+#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=2597
 #C
 #C     This toroidal pattern is extracted from the thread above; it
 #C shows how signals can be stored in still lives and oscillators, and
@@ -32,10 +32,10 @@
 #C and so on, entering a cycle.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=107139#p107139
+#C   https://conwaylife.com/forums/viewtopic.php?p=107139#p107139
 #C
 #C For general description on this rule, see the LifeWiki article
-#C   https://www.conwaylife.com/wiki/OCA:Live_Free_or_Die
+#C   https://conwaylife.com/wiki/OCA:Live_Free_or_Die
 x = 4261, y = 3935, rule = B2/S0:T4320,7200
 2506bo1217$407b2o3b2o713b2o3b2o713b2o3b2o713b2o3b2o713b2o3b2o713b2o3b
 2o$406bo7bo711bo7bo711bo7bo711bo7bo711bo7bo711bo7bo$405bo3b3o3bo709bo

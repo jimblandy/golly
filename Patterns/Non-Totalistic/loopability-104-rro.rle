@@ -19,9 +19,9 @@
 #C are shown, reducing the oscillator's period to 61.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=135905#p135905
+#C   https://conwaylife.com/forums/viewtopic.php?p=135905#p135905
 #C For the conwaylife.com forum thread on RROs, see
-#C   https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3447
+#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=3447
 x = 927, y = 927, rule = B2n3-k4cejz5ek6-e7/S3-jky4-cjnwz5cr678
 855b3o$854bob2o$854b3o$855b2o$854bob2o$855b4obo$856b5o$858b2o$857bo7$
 858bo$858bo14$856bo$855b3o$854b5o$855b5o$855b4o$855b4o$855b4o$854b3obo

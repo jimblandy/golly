@@ -1,11 +1,11 @@
 #N wickstretcher-explosion.rle
-#O GUYTU6J, February 5 2020
+#O GUYTU6J, 5 February 2020
 #C
 #C     A rotating engine spits out wickstretchers constantly. When a
 #C wick is burnt to the wickstretcher frontend, it splits into four 
 #C new wickstretchers, eventually leading to a chaotic explosion.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=88848#p88848
+#C   https://conwaylife.com/forums/viewtopic.php?p=88848#p88848
 x = 7, y = 9, rule = B2n3aikq/S2-i3-a4i
 2b3o$2bobo$2bo2b2o$3bo2bo$4b3o$3bo$2bo$obo$3o!

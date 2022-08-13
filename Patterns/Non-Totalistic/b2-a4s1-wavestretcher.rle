@@ -7,7 +7,7 @@
 #C end is c/2 and top end is c/6.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=46983#p46983
+#C https://conwaylife.com/forums/viewtopic.php?p=46983#p46983
 x = 403, y = 537, rule = B2-a4/S1
 52bo2$52bo$387bo$73bo313bo$72bo314bo$72bo$366bobo$368bo5$100bo$99bo$
 99bo$339bobo$341bo$52bo2$52bo$387bo$127bo259bo$45bobo78bo260bo$44bo3bo

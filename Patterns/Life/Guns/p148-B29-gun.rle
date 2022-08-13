@@ -11,7 +11,7 @@
 #C non-trivially, for example a shared block at (358,306).
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=40764#p40764
+#C   https://conwaylife.com/forums/viewtopic.php?p=40764#p40764
 x = 623, y = 516, rule = B3/S23
 498bo11b2o$497bobo10b2o$489bo3b2o2bobo$488bobo2bo2b2ob2o$488bobo3bobo$
 489bob4o2bob2o80bo11b2o$491bo3bobob2o79bobo10b2o$490bo3bobo75bo3b2o2bo

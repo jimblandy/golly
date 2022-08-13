@@ -1,6 +1,6 @@
 #C A period p spaceship which displaces itself (m,n) during its
 #C  period, where m >= n, is said to be of type (m,n)c/p.  It can be
-#C  shown that p >= 2m+2n. The number of possible types of spaceship
+#C  shown that p >= 2m+2n.  The number of possible types of spaceship
 #C  of period p is therefore [k(k+4)/4], where k = [p/2].
 #C  (Here, [x] denotes the floor of x, i.e., the greatest integer
 #C  not exceeding x.) Note, however, that no-one has ever proved
@@ -13,7 +13,7 @@
 #C  (1,0)c/2  64 cells                Dean Hickerson       28 Jul 1989
 #C  (1,0)c/3  25 cells [*]            Dean Hickerson          Aug 1989
 #C  (1,0)c/4  37 cells                Josh Ball            15 Apr 2012
-#C  (1,1)c/4  5 cells [*]             Richard Guy                 1970
+#C  (1,1)c/4  5 cells [*]             Richard Guy                 1969
 #C  (2,0)c/4  9 cells [*]             John Conway                 1970
 #C  (1,0)c/5  58 cells                David Bell           14 Apr 1997
 #C  (1,1)c/5  58 cells                Matthias Merzenich    5 Sep 2010
@@ -27,7 +27,7 @@
 #C  (1,1)c/7  83 cells                Matthias Merzenich   19 Aug 2011
 #C  (2,0)c/7  36 cells                David Eppstein       12 Jan 2000
 #C  (2,1)c/7  (no known example)
-#C  (3,0)c/7  257 cells               Dylan Chen           31 Dec 2020
+#C  (3,0)c/7  232 cells               Keith Amling         23 Feb 2022
 #C  (1,0)c/8  (no known example)
 #C  (1,1)c/8  (no known example)
 #C  (2,0)c/8  74 cells                Josh Ball               Mar 2010
@@ -46,64 +46,65 @@
 #C  (4,0)c/9  (no known example)
 #C
 #C types.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
-#C Updated on 21 Nov 2021.
+#C Updated on 16 May 2022 -- source:
+#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 279, y = 368, rule = B3/S23
 225b5o$225bo4bo$225bo$226bo4bo$228bo$229b2o2bo$227bo2bo3bo$225bo7bo$
-224bo5bo2bo$224bo3b2o$224b4o2b2o25$135bobo$134bo2bo48b2o8bo2bo$133b2o
-48b2o3bo10bo$132bo49bo5bo5b2obobo$131b4o46bo5bo5bobobo$130bo4bo37bo2b
-2o3bo5bo5bo3bobo$130bo2bo37b3o7bobobo3b2o2bo5bobo66bo$130bo2bo34b3ob2o
-8bo7b2o5bo69bobo$131bo35bo2bo8b2obo17bobo63b2o$132b4o30bobobo7b3o15b4o
-4bo62bo$139bo26bo4b2o2b3o16b2ob2o3bo2bo60bobo$132bobo2b2obo25bo2bobobo
-3bob2o6bo6bo8bo62bo$131b2o4bo29bobo3bo3bobo4bo3bo5b2o3bo65bo11bo$132b
-2o34bob2ob2o2bobo2bob2o3bo5bo4bo64bobo7b2obo$133b7o31b3o4bo2bo2b3o7b2o
-4bo64bo4b2o3b2o$134bobo34b3o6b3o10bo72b4o4bo$136bo2bo52bo77b2obo$134bo
-bo34b3o6b3o10bo72b4o4bo$133b7o31b3o4bo2bo2b3o7b2o4bo64bo4b2o3b2o$132b
-2o34bob2ob2o2bobo2bob2o3bo5bo4bo64bobo7b2obo$131b2o4bo29bobo3bo3bobo4b
-o3bo5b2o3bo65bo11bo$132bobo2b2obo25bo2bobobo3bob2o6bo6bo8bo62bo$139bo
-26bo4b2o2b3o16b2ob2o3bo2bo60bobo$132b4o30bobobo7b3o15b4o4bo62bo$131bo
-35bo2bo8b2obo17bobo63b2o$130bo2bo34b3ob2o8bo7b2o5bo69bobo$130bo2bo37b
-3o7bobobo3b2o2bo5bobo66bo$130bo4bo37bo2b2o3bo5bo5bo3bobo$131b4o46bo5bo
-5bobobo$132bo49bo5bo5b2obobo$133b2o48b2o3bo10bo$134bo2bo48b2o8bo2bo$
-135bobo22$131bo$130bobo$129b2o$130bo$129bobo50bo$129bo50b2ob2o49bo$92b
-o35bo53bo2bobo43b2obo$89b2ob2o34bobo2b2o52bo41bobo$88bobobo35bo3bo7b2o
-45bobo37bo12b2o$87b2o3bo36b3o4b2o2bo46bo2bo32b2o2bob3o6bo3bo$88bobo2bo
-37b2obobobo2bo43b2o3bo31b2ob2obo3bob2o2b4o$89b2obo39b2o3b4o44b2o36bo5b
-4o3bo2bo$58bo2bo123b2o35b2o12bo$57bo35b2o37b2o3b4o44b2o3bo32bo5b4o3bo
-3b3o$57bo3bo30bob3o34b2obobobo2bo45bo2bo31b2ob2obo3bob2o3bo$57b4o30bo
-3b3o31b3o4b2o2bo46bobo33b2o2bob3o6bo3bo$92bobo33bo3bo7b2o45bo39bo11bob
-o$93bo34bobo2b2o47bo2bobo41bobo$128bo51b2ob2o46b2obo$129bo52bo51bo$
-129bobo$130bo$129b2o$130bobo$131bo15$5bobo$4bo2bo$3b2o86b2o$2bo88bo2b
-2o35bo$b4o86bo2b2o35bo$o4bo84bo40bo$o2bo58bo27b4obo$o2bo56bo2b2o28bob
-2o34b3o$bo28bo27b3o29b3o37bo$2b4obo21bobo25bobo31bo38bo$3bo3bo21bobo
-25bob2o29b2o38bo4b2o3bo$4bo24bo26bo4bo27bo42bo4bobobo$4bobo48b2o33bo
-45b2o44b2o2bob2o$28b2o60bo42b2o2b2o42bo2bo2b2o$3b3o23bobo22bo4b2o31b3o
-37bob2obo44bobo$3b2o23bobo27bo72bo5bo45bo$3b3o22b3o24b3o34b3o36bo5bo
-51bo$57bo32bo41bob2obo49b3o$4bobo22bobo26bo31bo42b2o2b2o47bo$4bo24b2o
-26b2o30bo46b2o49bo$3bo3bo22bo27bo31b2o40bo4bobobo46b2o$2b4obo22bobo25b
-2o31bo38bo4b2o3bo$bo28bobo22bo2b2o30b3o37bo$o2bo27bo21b2o3bo34bob2o33b
-o$o2bo51bo34b4obo35b3o$o4bo84bo$b4o86bo2b2o35bo$2bo88bo2b2o35bo$3b2o
-86b2o38bo$4bo2bo$5bobo26$120b2o$119bo$120bo$84b4o33bo2bo$82b2o4b2o31bo
-2bo63bo5bo$82b2o5bo33bo63bo5b2o$84b2obobo97bo3bo$89bo34b2o62bo4bo$85bo
-3bo34b4o2b2o56bo8b2o$85bo4bo37b2o54b2o3bo5bobo$87b3o3bo33b2o54bo2bo4b
-2o$87b2o4bo39bo48bo5bo3bo3bo$93b2o34bo3bob3o37b2o4bobo4b2o$95bo34bobo
-42b2o6bo6bo2bo$59bo35b3o33bo3bo43bo3bo6b2o2b2o2bo$57b2o75bo38bo4bo2b2o
-13b2o$58b2o73b2o38bobob2o13bo$98bo33bo9bo30b2o2bobo13bo$97bob5o29b2o7b
-o50bo$96b2o5bo30b2o4bobo45b3obo$96b2o3bo2bo30b2ob2o47bo3bo$104bo31bobo
-3b2o43bo2bo$98b2obo2bo32bo3bo$101bo2bo35bo5bo38bo2bo$102b2o37bo4bo39b
-2o$102b2o38bo2bo39b2o$144b2o43b2o$144bobo39bo2b2o$146bo38bo$146b2o37b
-3o$146b2o2b2o$149bo2$150b2o2bo$152bobo$153bo19$238b2o$240bo$237bobo5bo
-$224bo2bo9bo4bo3bo$224bo8bo2bobob2o4bo$225bo7b2o3bo2bo4bo$221bobo3b2ob
-o3bo4bobo$221b2o5bo2bo6bo2bo4bo$222bo6b2o7b2o5bo$240bobob2o$231b2o$
-231b2o8b2o2$228bobo10bobo$228b2o5bo2bo2b2o$229bo5bo$236bo$232bobo3b2ob
-o$232b2o5bo2bo$233bo6b2o2$242b2o$242b2o2$239bobo$239b2o$240bo25$146bo$
-144b2o2$145bo$145b2o$144b2ob2o$143b2o3b3o$142b3o4bo$142b3o4bo$146b2o$
-144bobo2b2o$142b2obo2bo$141bo2b3obobo$144b2o2bobo$141b3o5bo$142b2o$
-145b3o$144bo2b2o$148bo$144bobo$137b3o4bo$140b4ob2o$136bo4b4o$140bo$
-138bo$138bob5o$138b3ob3o$139bo4bo$139b5o$140bo$141b2obo$141bo$142b2o3b
-o$140b4o2bo2bo$139b2o3bo3b2o$138bo6bob3o$139bo3b2o$139bo3bo3bo$140bobo
-3bobo$139b3o6bo$145b2o$141b5o$140b2o$140bo2b2o$139bo$133bob4o4b2o$133b
-4obo4b2o$131bo4b2ob3o$130bo3bo2bo$131bob3obo$133b3o2bo$136b2o$132b3o$
-132bo5b5o$131bo3bo6bo$131bo9bo2$131bo6b3o$134b2obobo$131bobobo3bo$130b
-3o6bo$130bo2bobobo$130bobo2b2o$130b2o3bo2bo$131b2ob3obo$130b2o6bo$133b
-ob2o$122b2o7bo4bo$126b3o2b2o2bo$121bo3bo$120bo9b2o$122b4o4b2o3bo$121bo
-4bo6b3o$122bob2o4b4o$122b2o6b4o$126b3o$124bo3bo$124bo2bo$124b2o!
+224bo5bo2bo$224bo3b2o$224b4o2b2o17$202b2o$201bob2o$200b2ob2ob2obo$199b
+o9bo$198b2o6b2o$198bobo$191b2o3b2o$190bob2o2bo$135bobo52bo2b2obobo$
+134bo2bo50bo2bo$133b2o48b2o6b2obo$132bo49bobo8bo$131b4o46bo2bo2bobo$
+130bo4bo35bo9bo6bo$130bo2bo35bo2b4o92bo$130bo2bo35bo10b2obo83bobo$131b
+o36bo3bo6bobobo82b2o$132b4o30b5o6bobob2o84bo$139bo26bo3bob3obo5bo83bob
+o$132bobo2b2obo25bo3bobob3o3b2o3bo80bo$131b2o4bo29bo4bobob3o6b2o78bo
+11bo$132b2o35b2ob2o3b2o2bo2bo2b2o76bobo7b2obo$133b7o30bob2o5bo7bo77bo
+4b2o3b2o$134bobo43b3o3bo79b4o4bo$136bo2bo130b2obo$134bobo43b3o3bo79b4o
+4bo$133b7o30bob2o5bo7bo77bo4b2o3b2o$132b2o35b2ob2o3b2o2bo2bo2b2o76bobo
+7b2obo$131b2o4bo29bo4bobob3o6b2o78bo11bo$132bobo2b2obo25bo3bobob3o3b2o
+3bo80bo$139bo26bo3bob3obo5bo83bobo$132b4o30b5o6bobob2o84bo$131bo36bo3b
+o6bobobo82b2o$130bo2bo35bo10b2obo83bobo$130bo2bo35bo2b4o92bo$130bo4bo
+35bo9bo6bo$131b4o46bo2bo2bobo$132bo49bobo8bo$133b2o48b2o6b2obo$134bo2b
+o50bo2bo$135bobo52bo2b2obobo$190bob2o2bo$191b2o3b2o$198bobo$198b2o6b2o
+$199bo9bo$200b2ob2ob2obo$201bob2o$202b2o14$131bo$130bobo$129b2o$130bo$
+129bobo50bo$129bo50b2ob2o49bo$92bo35bo53bo2bobo43b2obo$89b2ob2o34bobo
+2b2o52bo41bobo$88bobobo35bo3bo7b2o45bobo37bo12b2o$87b2o3bo36b3o4b2o2bo
+46bo2bo32b2o2bob3o6bo3bo$88bobo2bo37b2obobobo2bo43b2o3bo31b2ob2obo3bob
+2o2b4o$89b2obo39b2o3b4o44b2o36bo5b4o3bo2bo$58bo2bo123b2o35b2o12bo$57bo
+35b2o37b2o3b4o44b2o3bo32bo5b4o3bo3b3o$57bo3bo30bob3o34b2obobobo2bo45bo
+2bo31b2ob2obo3bob2o3bo$57b4o30bo3b3o31b3o4b2o2bo46bobo33b2o2bob3o6bo3b
+o$92bobo33bo3bo7b2o45bo39bo11bobo$93bo34bobo2b2o47bo2bobo41bobo$128bo
+51b2ob2o46b2obo$129bo52bo51bo$129bobo$130bo$129b2o$130bobo$131bo15$5bo
+bo$4bo2bo$3b2o86b2o$2bo88bo2b2o35bo$b4o86bo2b2o35bo$o4bo84bo40bo$o2bo
+58bo27b4obo$o2bo56bo2b2o28bob2o34b3o$bo28bo27b3o29b3o37bo$2b4obo21bobo
+25bobo31bo38bo$3bo3bo21bobo25bob2o29b2o38bo4b2o3bo$4bo24bo26bo4bo27bo
+42bo4bobobo$4bobo48b2o33bo45b2o44b2o2bob2o$28b2o60bo42b2o2b2o42bo2bo2b
+2o$3b3o23bobo22bo4b2o31b3o37bob2obo44bobo$3b2o23bobo27bo72bo5bo45bo$3b
+3o22b3o24b3o34b3o36bo5bo51bo$57bo32bo41bob2obo49b3o$4bobo22bobo26bo31b
+o42b2o2b2o47bo$4bo24b2o26b2o30bo46b2o49bo$3bo3bo22bo27bo31b2o40bo4bobo
+bo46b2o$2b4obo22bobo25b2o31bo38bo4b2o3bo$bo28bobo22bo2b2o30b3o37bo$o2b
+o27bo21b2o3bo34bob2o33bo$o2bo51bo34b4obo35b3o$o4bo84bo$b4o86bo2b2o35bo
+$2bo88bo2b2o35bo$3b2o86b2o38bo$4bo2bo$5bobo26$120b2o$119bo$120bo$84b4o
+33bo2bo$82b2o4b2o31bo2bo63bo5bo$82b2o5bo33bo63bo5b2o$84b2obobo97bo3bo$
+89bo34b2o62bo4bo$85bo3bo34b4o2b2o56bo8b2o$85bo4bo37b2o54b2o3bo5bobo$
+87b3o3bo33b2o54bo2bo4b2o$87b2o4bo39bo48bo5bo3bo3bo$93b2o34bo3bob3o37b
+2o4bobo4b2o$95bo34bobo42b2o6bo6bo2bo$59bo35b3o33bo3bo43bo3bo6b2o2b2o2b
+o$57b2o75bo38bo4bo2b2o13b2o$58b2o73b2o38bobob2o13bo$98bo33bo9bo30b2o2b
+obo13bo$97bob5o29b2o7bo50bo$96b2o5bo30b2o4bobo45b3obo$96b2o3bo2bo30b2o
+b2o47bo3bo$104bo31bobo3b2o43bo2bo$98b2obo2bo32bo3bo$101bo2bo35bo5bo38b
+o2bo$102b2o37bo4bo39b2o$102b2o38bo2bo39b2o$144b2o43b2o$144bobo39bo2b2o
+$146bo38bo$146b2o37b3o$146b2o2b2o$149bo2$150b2o2bo$152bobo$153bo19$
+238b2o$240bo$237bobo5bo$224bo2bo9bo4bo3bo$224bo8bo2bobob2o4bo$225bo7b
+2o3bo2bo4bo$221bobo3b2obo3bo4bobo$221b2o5bo2bo6bo2bo4bo$222bo6b2o7b2o
+5bo$240bobob2o$231b2o$231b2o8b2o2$228bobo10bobo$228b2o5bo2bo2b2o$229bo
+5bo$236bo$232bobo3b2obo$232b2o5bo2bo$233bo6b2o2$242b2o$242b2o2$239bobo
+$239b2o$240bo25$146bo$144b2o2$145bo$145b2o$144b2ob2o$143b2o3b3o$142b3o
+4bo$142b3o4bo$146b2o$144bobo2b2o$142b2obo2bo$141bo2b3obobo$144b2o2bobo
+$141b3o5bo$142b2o$145b3o$144bo2b2o$148bo$144bobo$137b3o4bo$140b4ob2o$
+136bo4b4o$140bo$138bo$138bob5o$138b3ob3o$139bo4bo$139b5o$140bo$141b2ob
+o$141bo$142b2o3bo$140b4o2bo2bo$139b2o3bo3b2o$138bo6bob3o$139bo3b2o$
+139bo3bo3bo$140bobo3bobo$139b3o6bo$145b2o$141b5o$140b2o$140bo2b2o$139b
+o$133bob4o4b2o$133b4obo4b2o$131bo4b2ob3o$130bo3bo2bo$131bob3obo$133b3o
+2bo$136b2o$132b3o$132bo5b5o$131bo3bo6bo$131bo9bo2$131bo6b3o$134b2obobo
+$131bobobo3bo$130b3o6bo$130bo2bobobo$130bobo2b2o$130b2o3bo2bo$131b2ob
+3obo$130b2o6bo$133bob2o$122b2o7bo4bo$126b3o2b2o2bo$121bo3bo$120bo9b2o$
+122b4o4b2o3bo$121bo4bo6b3o$122bob2o4b4o$122b2o6b4o$126b3o$124bo3bo$
+124bo2bo$124b2o!

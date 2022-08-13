@@ -1,0 +1,281 @@
+#C c2-orthogonal.rle
+#C A collection of c/2 spaceships (of any period) up
+#C to 50 cells.  Spaceships that consist entirely of
+#C components found in smaller ships are not included.
+#C From ships-c2-small.rle, from Matthias Merzenich's updated copy
+#C   of ships-c2small.lif from Jason Summers' 'jslife' collection:
+#C   https://github.com/Matthias-Merzenich/jslife-moving/blob/master/velocity-c2/ships-c2-small.rle
+#C
+#C Collection updated in 2022 by Matthias Merzenich -- source:
+#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C 
+#C Discovery credits:
+#C BG = Bill Gosper
+#C DB = David Bell
+#C DH = Dean Hickerson
+#C GU = "Gustone"
+#C HH = Hartmut Holzwart
+#C HO = "HotWheels9232"
+#C IN = "iNoMed"
+#C JC = John Conway
+#C JS = Jason Summers
+#C MM - Matthias Merzenich
+#C MN = Mark Niemiec
+#C MY = "mystical"
+#C PS = Paul Schick
+#C TC = Tim Coe
+#C WW = "wwei23"
+#C
+#C  9 JC        1970 "Lightweight spaceship (LWSS)"
+#C 11 JC        1970 "Middleweight spaceship (MWSS)"
+#C 13 JC        1970 "Heavyweight spaceship (HWSS)"
+#C 24 HH 21 Jul 1992 "Sidecar"
+#C    ??
+#C 28 HH 23 Feb 2001
+#C    TC 26 Oct 1995 "Coe ship"
+#C 30 DB 11 Jul 1992
+#C    ??
+#C    HH 24 May 2002
+#C 31 DB 13 Aug 1992 (using OWSS; MWSS support found by DB on 16 Aug 1992)
+#C    JS 29 Oct 2000
+#C    JC        1970 "Overweight spaceship (OWSS)"
+#C    JC        1970 "OWSS 2"
+#C 32 HH 21 Jul 1992
+#C    HH  5 Jan 1993 "Big A"
+#C    JS  8 Apr 2006
+#C    HH  8 Dec 2020
+#C    WW  2 Mar 2022
+#C 33 JC        1970 "OWSS 3"
+#C    ??
+#C 34 HH 10 Jul 1992 "x66"
+#C 35 JC        1970 "OWSS 4"
+#C    MY 10 Feb 2022
+#C 36 ??
+#C    MM  6 May 2018
+#C    IN 21 Mar 2022
+#C 37 ??
+#C 38 HH 17 Jul 1992
+#C    BG 21 Aug 1992
+#C    JS 29 Oct 2000
+#C    WW 15 Mar 2022
+#C    GU 28 Apr 2022 (based on a puffer by WW on 28 Apr 2022)
+#C 39 JC        1970 "OWSS 5"
+#C    TC 26 Oct 1995
+#C    MM  6 May 2018
+#C    IN 27 Mar 2022
+#C    MN 19 Mar 1997
+#C    PS        1972
+#C    ??
+#C 40 HH 25 Jun 1993 (using OWSS; LWSS support found by HH on 29 Jun 1993)
+#C    ??
+#C 41 HH 22 Jul 1994
+#C    HH  6 Sep 2002
+#C    HH 26 Nov 2002
+#C    MM  6 May 2018
+#C 42 HH 10 Jul 1992 "Hivenudger"
+#C    MN 21 Oct 1997
+#C    HH 17 Dec 2004
+#C    HH 24 Feb 2021
+#C 43 JC        1970 "OWSS 6"
+#C    ??
+#C    HH 12 Mar 2001
+#C    HH 17 Dec 2004
+#C    HH 21 Jul 1992
+#C    ??
+#C    HH 27 Dec 2002
+#C    MM  6 May 2018
+#C    MM 30 Mar 2019
+#C 44 MM  6 May 2018
+#C    IN 21 Mar 2022
+#C    IN 21 Mar 2022
+#C    HO 10 Apr 2022
+#C 45 ??
+#C    JS  4 Feb 2002
+#C    HH 12 Mar 2001
+#C    HH  6 Sep 2002
+#C 46 ??
+#C    ??
+#C    HH  2 Jul 1993
+#C    MM  6 May 2018
+#C    MM  6 May 2018
+#C    HH  6 Dec 2020
+#C 47 ??
+#C    JS  3 Oct 1999
+#C    HH 22 Jan 1993
+#C    HH 24 May 2002
+#C    MM  6 May 2018
+#C    MM  6 May 2018
+#C    MM  6 May 2018
+#C 48 HH 21 Jul 1992
+#C    ?? before 23 Sep 1995
+#C    ??
+#C    HH 12 Mar 2001
+#C    MM  6 May 2018
+#C    MM  6 May 2018
+#C    WW 19 Mar 2022
+#C 49 ?? before 23 Sep 1995
+#C    MM  6 May 2018
+#C    MM  6 May 2018
+#C    WW 10 Mar 2022
+#C    WW 18 Mar 2022
+#C    WW  6 May 2022
+#C    WW 13 May 2022
+#C 50 HH 17 Dec 2004
+#C    MM  6 May 2018
+#C    HH 22 Feb 2021
+#C    WW  8 Mar 2022
+#C    IN 27 Mar 2022
+x = 724, y = 138, rule = B3/S23
+436bo192bo2bo57bo$420b5o9bo3bo189bo59bo3bo$125b4o12b4o275bo4bo7bo194bo
+3bo54bo$125bo3bo11bo3bo69b4o37bo163bo12bo4bo189b4o55bo4bo$125bo15bo73b
+o3bo34bo3bo162bo3bo7b5o152bo2bo93b5o$98b2obo7b4o2b2o9bo2bo12bo2bo69bo
+37bo170bo21b4o139bo$8bobobo64bobobo4bo8b3o3bo7bo3b2o15bo62bobobo3bobob
+o10bo2bo14b2o4b5o8bo4bo118bo3bo4bo19bo5bo33bo3bo112bo3bo3bobobo13bo3bo
+71bo2bo23b2o$95bo13bo5bo2bo7bo5bo7bo6bo72bo11bo6bo5bo7b5o148bo13bob2ob
+o10bo9bo6b2o134b4o21bo2bo10b7o8b4o4b2o4bo6bo12bobo11b3o$8bo3bo68bo4bo
+8bo6bo7bo7bo6bo13bo57bo3bo14bo5bo8bo6bo138bo3bo4bo14b3o2bo5bo6b2o2bo
+10b3o10bo2bo2b3obo105bo3bo3bo40b3o2bo2b2o6bo6bo7bo3bo2bo3b2obo6bo3bo7b
+o15bo$22bo2bo70b3o3bo9bo2bo3bo5bo6bo6bo7bo67bo15bo13bo155b3o3b5o6b2obo
+2bo8b2obo15bo2b2obo136bo15bo5bo10bo14bo6bo4bo8b4o7b2o3bo$8bobobo8bo55b
+obobo4bo12b2o13b2o2bo6b7o7b8o46bobobo3bobobo9bo6bo8b8o17bo120bobobo4bo
+10b2o3b2o15bo12b2o2b2ob2o11b2obo107bobobo3bobobo23b2o9b2ob3o2bo10bo5bo
+8bo2bo2b3ob2o14b3obo3b2o14bo$21bo3bo87bo101b7o14b2o17bob2obo135b2ob2o
+19bobo10bo3bo17bo7bo129b2o3b3o10b2o5bo28bo5b3o14b2o3b2o17b3o$12bo8b4o
+56bo4bo24bo4bo80bo3bo3bo48b2o4bo120bo4bo10b6o18bo12bobo19bo110bo3bo3bo
+16bobo17bo8bo10b2o10bo3bo21bo22bo4bo$101b2o7bo144b2o141b3o3bo17bo13bo
+11b4o5bo5bo127b2o2b2o2b2o12b2o3b4o9bo2bo8bo26b2o21bo3bo$8bobobo64bobob
+o4bo13b2ob3o4bo4bo9b4o12b4o48bobobo3bobobo9bo2bo13b2o22bo124bo4bo13bo
+19b2obo24bo3bo5b5o104bo3bobobo16b2o4b2obo12b5ob2o8b2ob3o7bo4bo45bo$
+101b5o4b5o10bo3bo11bo3bo68bo3bob2o9b2ob2o22bobo139bo3bo20bo22bo144bob
+2ob2o31b2o3bo6b5o3b4o11bo2bo3b4o17b3o$102b3o20bo15bo72bo3bo13b4o20bo
+143b4o14b2obo2bo8b2o14bo2bo141b2o13b2o21bo18bo3bo9bo7bo3bo15b2o$126bo
+2bo12bo2bo68b2obo2bo12b2o19bo4bo158bo13b2ob2o171b2ob2o20b3o15bo13bo3bo
+3bo18b2o$253bo164bo3bo10b4o153bo2bo15b4o39bo2bo9b4o5bo2bo13b2obo$216b
+2o35bo5bo159b2obo11b2o153bo20b2o78bo$253b6o330bo3bo38b4o52bo$589b4o39b
+o3bo50bo$5bo5bo620bo54bo4bo$633bo2bo50b5o$5bo5bo12bo$22bo3bo$5bo5bo9bo
+$21bo4bo101b4o86b2obo$5bo5bo9b5o74b2o10b4o12bo3bo60bobobo3bobobo11bo3b
+o196b6o13b2o$98bo4bo8bo3bo11bo18b4o66bo179b4o5bo2bo8bo5bo11b2ob4o19b2o
+$5bo5bo85bo14bo16bo2bo14bo3bo12b5o28bo7bo11b2obo176bo3bo3bo12bo18b6o
+18b2ob2o$77bobobo3bobobo7bo5bo9bo2bo30bo16bo4bo55bo149bo3bo3bobobo9bo
+7bo3bo9bo4bo13b4o15bob2ob4o$97b6o45bo2bo12bo28bobobo7bo13b2obo2b2o171b
+o2bo3b4o12b2o34bobobob2o143bo$81bo7bo27b4o10b2o5b2o25bo3bo51b2ob2obo
+147bo3bo7bo32b3o32bo3bo146bo37b2o$102bobo11bo2bo10bobo3bo15b3o12bo29bo
+7bo12bo3bob2obo174b2o15b5o14b2o13b3o132bo2bo13bo6bo29bo4bo$77bobobo3bo
+bobo11bo2bo11bo2bo10bo6bobo12bo2b2o13b3o43bo3bo3b2o149bobobo3bobobo14b
+2o14b2ob4o9b2ob2o13b2obo2bo128bo17bo6bo10b2ob6o9bo$102bo13bo2bo10b3o5b
+o13b2o14b2ob2o20bobobo7bo9bo186b2o15b2o12bo4b2o11b2o134bo3bo13b6obo9b
+4o6bo8bo5bo53bo2bo11bo2bo$81bo3bo14b2o2bo12b4o33b2o11bo4bo42bo4bo158bo
+3bo49bo18b2o133b4o30b2o18b6o8b4o7bo11b4o7bo10bo14bo$98bo5bo48b2o11b2ob
+obo43b5o178bo2bo3b4o24b2ob2o16bo108bo3bo3bobobo19bobo12b2o10bo9bo22bo
+3bo5bobo10bo3bo5bobo9bo3bo10bo3bo$77bobobo3bobobo7bo15bo2bo35bo3bo8b2o
+2bobo207bo3bobobo9bo7bo3bo26bo12bo4bo139bo3bo10bo13b3obo27bo22bo11bo9b
+4o11b4o$2bo5bobobo84bo5bo8bo39bo2b2o9b2o229bo3bo3bo12b6o7bo3bo12bo114b
+o3bo7bo17bobo16bo12bo30bo2bo2bob2obo11bo2bo2bob2o20b2obo$97b6o9bo3bo
+11b4o20b2o15b2o226b4o5bo2bo8bo5bo5bo17bo4bo136b3o6bo7b2o16bo18b2o15b2o
+21b2o20bob5o$2bo9bo99b4o12bo3bo21b3o261bo11bo3bo13b5o110bobobo7bo13bo
+7bobo6bo19bo13b6o14bo22bo21bo7bo$24b2o102bo27bo262bo4bo5b4o155bo6b2o8b
+o2bo15bo13bo4bo15bo2bo2bo16bo2bo2bo13b2o4b2o$2bo5bobobo9bo4bo101bo2bo
+288b2o144bo7bo13b2ob2o3b2o7b2o17bo13bo16b2o3bobobo2bobo8b2o3bobobo2bob
+o7bo5b3o2bo$21bo273b2o301bo9b2o13b3obo11b2obo12b4o3bo3b3obo7b4o3bo3b3o
+bo6bo9bo$2bo9bo8bo5bo207bo58b4o269bo7bo15bo3bo26bo9bo8b2o11b2ob2o7b3o
+8b2ob2o7b3o8bo4bo$21b6o206bo3bo55b2ob2o295bob2o13b3o8b2o19b2o11b2o21b
+2o20b5o$2bo5bobobo204b4o11bo61b2o292bo2bo4bo11bob3o9b4o6bo8bobo$217bo
+3bo10bo4bo349bo18bo4bo11b2ob6o10b2o$193bobobo3bobobo11bo14b5o13b4o2b2o
+14b4o2b2o307bo3bo13bo5bobo26bob2obo$218bo2bo28bo3b2o16bo3b2o309b4o14bo
+4b2obo25b2o$98b4o95bo3bo3bo16bo27bo5bo2bo12bo5bo2bo15bo134bo172b5o28b
+2o$98bo3bo113bo7bo26bo7bo2b2o9bo7bo13b2obo131bo3bo204bo2bo$98bo15bo2bo
+75bobobo3bobobo9bo17b2o18bo2bo5b2o11bo2bo3bo11b2o133bo210bobo$77bobobo
+3bobobo9bo2bo10bo101bo8bo7b2ob3o3bo13b2o2b3o2bo12b2o3bo10b2o2bo131bo4b
+o18b2o$103bo9bo3bo79bo3bo3bo9b9o9b4o3bobo11bo7bo13bo4b2o11bo2bo101b2o
+12b6o10b5o17bo4bo5b4o13b5o13b2o$81bo7bo7bo7bo7b4o101bo15b2o16bo4bo16bo
+4bo3b3o9b2o6bo94b4o11bo5bo30bo11bo3bo12bo4bo11b4o$96bo96bobobo3bobobo
+7bo4b2o31bo21bo10b2o17bo93b2ob2o11bo20b2o14bo5bo5bo16bo15b2ob2o11b2obo
+$77bobobo3bobobo6bo8bo12b2o92bo5b2o17bo13bo4bo16bo4bo119b2o14bo4bo13b
+3o14b6o7bo2bo2bo10bo3bo11b2o12bo3bo27b2o$obobo3bo3bo83b9o13b2o92bo3bob
+o16bo3bo11b5o17b5o21bo75bo3bo3bobobo28bo2bo14bo32b4o12bo26bo24b2o5b2o$
+21bo16b3o40bo7bo23bo2bo95b4o18bo62bo3bo102b2o12b2o43bo6bo9bo2bob2o13bo
+9b2obo2bo17b2ob4o78b4o11b4o$4bo3bo3bo7bo5bo10b5o70bo121bo4bo56bo78bo3b
+o7bo8bo10bo9bo2bo15bobo23bo7bo8bo5b2obo10bobo15bo17b5o3bobo58b5o10bo3b
+o10bo3bo58b2o$20bo5bo9b2ob3o35bobobo3bobobo22bo3bo2b5o110b5o57bo4bo93b
+o20b2o18b2o16b2o6bo16bo3bo2b2o10b2o12b2obo20b3o4bo39b4o17bo4bo9bo14bo
+61b4o$obobo3bobobo7b5obo10b2o59b4o10b4o3bo4bo171b5o74bobobo3bobobo7bo
+11bo7b3o17bo15bo2bo7b7o10b4o14bo4bo11bo29b2obo35bo3bo16bo15bo3bo10bo3b
+o12bo2bo16bo2bo5bo13b2ob2o$98bo3bo16bo275b12o9bob2o16b2o12bo3bo13b2ob
+2o12b3o8b2o17bo4bobo22bo2bo34bo21bo3bo15bo14bo10bo19bo7bo3bo12b2o$o11b
+o11b2o8bo63bo21bo3bo254bo7bo29bo3bo14bobo7b2ob2ob2o14bo16b2o8b2ob3o12b
+2obobobo2bobo9b6o43bo2bo5bo13bo14b2ob2o10b2ob2o9bo3bo15bo3bo2bo$22bo4b
+o5bo65bo2bo19bo294b2o26bo4b2o16bob2o24b2o24b4o9bo5bo5b2o14bo3bo3bobobo
+11bo3b2obo27bo14bo13b4o4bo11b4o3bo4bo16bo$obobo7bo8bo11bo4bo340bo3bobo
+bo11b2o20bo12bo10bo16b4o13b5o17b2o8b2obo2bo5bo3bo7bo48bo3bo2b2o13b3o
+13bo4b2o8bo4b2o13b2obobo15b5o19bo$21bo5bo5b5o360b4o31b3o9b2ob2o12bo3bo
+12bo4bo16b2o8bo13bo10bo4bo21bo3bo3bo3bo7bo6bo4bo9bo17b2ob2obo8b2ob2o
+14bo3b2o34b2obob2o$21b6o370b2ob2o11b6o15b2o12bo13bo16bo31bo3bo9bo12b2o
+43bo4bob3o2bo8b2o21bo14b2o13b5obo12bo19bo3bob2o$398b2o13bo5bo23bo3bo
+15bo2bo13bo3bo10b5o12b2obo47bobobo3bobobo7b5o3bobo9b2ob3o49b2o15b3obo
+16bo5bo$413bo15b5o8bo39bo12bo4bo89b2obo10bo5bo31b2o30b2o2b2o16b3o$414b
+o4bo9bo4bo7bo3bo48bo71bo3bo3bo16bo12b3o2bo16bo10b2ob2o11b2o3bob4o10bob
+obob2o17bo5bo$296bo2bo116b2o11bo12b4o50bo3bo92bo13bo15b2ob2obo7bo4b2o
+9b4o3bo4bo10bo2bob3obo13b2o2b8o$216b5o36b2o19bo2bo13bo134bo3bo63bo68bo
+3bobobo7b4o23bo11bo4b2o8bo14b2ob2o3bo17b2ob3o2b2o13bob2o6bo$216bo4bo
+34b4o17bo17bo3bo132bo150bo3bo34bo14b2ob2o11b2o6bo3bo14bo23bo$23bo192bo
+27b4o7b2ob2o17bo3bo13b4o15bo2bo265bo21b2o15b2ob2o13bo22bo41bo5bo$21bo
+3bo51bobobo3bo3bo8bo94bobobo3bobobo11bo3bo22bo3bo7b2o19b4o32bo26b4o
+240bo2bo16b2ob4o14bo9bo3bo69bo$20bo75b2o124b2o10b6o3bo69bo3bo22bo3bo
+11b2o247b6o9bo3bo9bo$obobo3bobobo7bo4bo9b6o40bo3bo3bo6bo2b3o2bo92bo3bo
+3bo9bo9bo8bo5bob4o2bo12bo20bo13b3o3bo10b4o9b2o12bo17bo247b4o9bo14bo3bo
+$20b5o10bo5b2o53bo4b3o110bo19bo5bob2o17b2ob2o12b3o3b2o9b5o2bo16b3o5b2o
+12bo2bo2b2o7b2o261bo3bo10b4o$4bo3bo3bo22bo5bob2o32bobobo3bobobo7b3o2b
+2o89bobobo3bobobo8bo10bo9bo3bo20bo5bo10b3obo3bo8b2ob4obo16b2ob2o6b3o
+13b3o270b4o$25b2o9bo3bo173b11o12bo22bo15b2o2b2o4bo8b2o22b3o5b2o12bo2bo
+2b2o$obobo3bobobo12b2o11bo42bo7bo7b3o2b2o93bo7bo30b2o23bo15bo4bo2bo27b
+4o9b2o12bo95bo$37b2o57bo4b3o131b4o23b2obo12bo34bo3bo22bo3bo89bo3bo21b
+5o$o7bo3bo13b2o8b4o37bobobo7bo6bo2b3o2bo88bobobo3bobobo28b2ob2o16b4o5b
+5o13bo3bo26bo26b4o75b2o12bo26bo4bo$24bo4bo5b2ob2o56b2o118b5o14b2o18bo
+3bo7bo13bo15b5o12bo2bo32bo2bo64b2ob4o8bo4bo21bo$obobo3bobobo10bo12b2o
+60bo117bo4bo33bo25bo4bo10bo4bo46bo69b6o8b5o10b4o9bo3bo208b2o$23bo5bo
+186bo39bo2bo21b5o11bo51bo3bo21bo3bo3bo3bo15b2o15b4o24bo3bo10bo209b4o$
+23b6o188bo3bo76bo3bo46b4o43b2o5b2o43bo138b3o82b2ob2o28bo2bo$219bo80bo
+74bo3bo3bo3bo7b2ob4o34bobo10bo2bo133b5o82b2o15bo13bo$396b5o3bobo13b2ob
+2o11bobo146b2ob3o57bo39bo3bo11bo3bo$375bobobo3bobobo9b3o4bo3b2o13b2o9b
+2obo148b2o35bo22bo3bo27bo8bo16b4o$119b2o284b2o3bo7b2obo11bo3bo13b2o3b
+2o164bo5bo16bo30b2o9bo4bo$99b4o14bo4bo256bo7bo18bo11bo3bo10bo2b2o12bob
+o110bo3bo3bobobo14b2o11b2o4b4o9bo6bo3b4o8bo4bo28bo7b5o$99bo3bo12bo279b
+6o5bobo8bo3bo10b2o3b2o10bo6bo4b2o137bo6bo4bo8b5ob2o2bo4bo7b5o24b2o$56b
+2obo39bo16bo5bo256bo7bo8bo5bo16bo2bo12b3o12b3o10bo99bo3bo3bo3bo11b5o8b
+o6bo21bo27bo16bo2bo30b5o3bo$55bo3bo40bo2bo12b6o274bo27bo12bo24bo123b2o
+12bo25b2o3b2o4bo17bo3bo14bo2bo12bo16b2o4bo3bo$22bo12b4o5bo2bo7bo48b2o
+291bo4bo18bo3bo137bobobo3bobobo9b2o2b2o9b8o18b2o26b2o19bo2bo10bob2obob
+o9b2o2b2o4b2o3b3o$obobo3bobobo7b2o13bo3bo3bo11b2obo2bo15bobobo3bobobo
+8bo8bo291b2o19bo165bobo16b2o5b2o12b2o19b5obobo22bo9b2o4bo12bo6b3o$20bo
+2b3o2bo6bo7bo3bo14bo34bo18bo3bo95bo2bo200bo4bo8b6o127bo7bo11b2o3bo18b
+2ob3o9b2o19bo5b4o3bo14bo2bo10b2o4bo12b2o2bo$4bo3bo3bo7bo4b3o8bo2bo3b4o
+10b2obo20bo3bo11bo9bo7bo5bo93bo204b5o9bo5bo7b4o160b5o10bo19bo5bo3b2o2b
+o12bo2bo12b7o15bo$21b3o2b2o31bo37b10o8bo5bo93bo3bo12b4o3b2o193bo13bo3b
+o114bo3bobobo13b3o9b2o10b3o8b2obobo18bo10b2o2b2o9bo2bo17bo$obobo3bo3bo
+27b2o16bo18bobobo3bobobo25b6o94b4o12b2o3b2o197bo4bo7bo151b2ob2o19bo2b
+3o28bobo13b2o16bob3o12b2o$23b2o15bobo13b2obo170b2o5bobo197b2o10bo2bo
+135b2o11b4o19bo31bo22bo11b2ob3o10bo4bo$4bo3bo3bo8bo4bo10bo23bo19bo7bo
+103bo3bo3bobobo14bo10bobobobo348bo4bo10b2o21b6o24bo20b2o12b2o3bo10bo$
+20bo15bo17b2obo2bo38b4o117b2o10b2obo349bo41bob2o24bo3bo18bo12bobo12bo
+5bo$obobo3bobobo7bo5bo9bo3bo13bo22bobobo3bobobo9bo3bo13b3o73bo3bo3bo3b
+o12b2o15b2o348bo5bo63b4o33b2o2bo9b6o$20b6o10b4o14bo3bo40bo17bo2bo96b2o
+15b3ob2o345b6o82b2o21bo$55b2obo41bo2bo13bo3bo71bobobo3bo3bo10b2obo19bo
+432b2ob2o$118bo2bo95bo455b4o$120bo76bo3bo3bo12bo2bo7b5o202bo2bo234b2o$
+219bobo7bo4bo200bo$197bo3bobobo10b3o10bo205bo3bo$215bobo12bo3bo183b4o
+13b4o$215bo4bobo9bo164b4o17bo3bo31b5o$215b3obo177bo3bo16bo20b2o2bo10bo
+4bo$220bo2bo151bo3bo3bobobo9bo21bo2bo15bo15bo138b6o$221b2o175bo2bo2bo
+18bo14bo2bo3bo9bo3bo133bo5bo34bo2bo44b2obo$375bo3bo3bo18b4o13bo5bo12b
+3obo2bo11bo135bo39bo24bo2bo5b4o8b3o3bo$396bo8bo12bo23bo151bo4bo33bo3bo
+19bo4bo3bo4bo7bo$375bobobo3bobobo7bo9bo12bo6bo17b2o11b3o140bo9b4o4b2o
+14b4o20bo3b2o2bo13bo6bo$395bo22b7o30bo107bobobo3bobobo20bob2o9bo3bo2bo
+3b2ob2o32b4ob2o7bo8b3o3bo$379bo7bo7b9o36bo5bo7b2o140bobob2o7bo6bo4bo
+17bo24b2o17b2obo$403b2ob2o31bo13b2ob3o104bo7bo3bo18bo3bo11bo2bo2b3ob2o
+3bo12bo3bo19b2o5bo$379bo3bobobo15bo19bo15bo6bo7bo6bo130b3o18bo5b3o2bob
+o11bo3b2o19bo2bob2o21bo$403bob2o15b2o2b4o9b7o9b4o104bobobo3bo3bo15b2ob
+o2bo12bo3bo9bo13b6o23bo14b3o3b4o$397b4o22bo3bo29bo2b2o128b2o17bo29bo2b
+obo19bobo15bo5b2o$397bo3bo15b2o5bo2bo31bo107bo3bo3bo15b2o16bo4bo24bobo
+b2o18b2obobo13bo3bo$397bo18b2ob2o33bo4b2o132bo15b5o3b4o17b2obo20b2ob2o
+bo14bo3b5o$398bo2bo15b4o18b4o10bo5b2o102bobobo3bobobo17bo23bo3bo16bo2b
+3o19bo5bo14b2o$418b2o19bo3bo9bo3b2o130b2o26bo20bo4bo2bobo15b3o2bo17b3o
+bo$439bo13b4o129b3o3bo25bo2bo17b3o4b3o17bo2bo18bo3bo$440bo2bo141bo6bo
+48bo4b4o39b2o$585bo104bo2bo$585b3o3bo99bobo$588b2obo!

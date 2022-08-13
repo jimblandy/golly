@@ -9,7 +9,7 @@
 #C every 24 cells back doubles the period. A p6 spaceship is released
 #C every time the counter cycles through all states.
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=3089#p3089
+#C   https://conwaylife.com/forums/viewtopic.php?p=3089#p3089
 #C
 #C Bottom: O(log*(t)) gun
 #C     After the discovery of the binary counter, Adam P. Goucher
@@ -22,7 +22,7 @@
 #C ~ 12,600, and the fourth is estimated at gen. ~2^390, far beyond
 #C the capability of QuickLife.
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=3099#p3099
+#C   https://conwaylife.com/forums/viewtopic.php?p=3099#p3099
 x = 136, y = 202, rule = B017/S01
 99bobo21bobo5bobo$101bo23bo7bo$99bo23bo7bo2$133bo$123bo3bo3bo3bo$123bo
 7bo3bo3$123bo7bo3bo$123bo3bo3bo3bo$133bo2$98bo24bo7bo$100bo10bobo11bo

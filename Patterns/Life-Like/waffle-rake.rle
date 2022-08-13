@@ -12,7 +12,7 @@
 #C of 2, to observe different outcomes.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=6654#p6654
+#C https://conwaylife.com/forums/viewtopic.php?p=6654#p6654
 x = 90, y = 28, rule = B013468/S023
 11b2o$10bo2bo$9bo3bo$8bo3b3o$8bo4bo$8bo16bo$11bo13bo$8b2o3bo12bo2$10bo
 $bo$o$o2b3o21bo34bo21bo$b2o3bo21bo32bo21bo$6bo21bo32bo21bo3b2o$5bo21bo

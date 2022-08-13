@@ -1,6 +1,6 @@
 #C rr14gun
 #C Reflectorless rotating period 1016 14-barrelled shotgun
 #C dani, 19 February 2017
-#C http://conwaylife.com/forums/viewtopic.php?p=40761#p40761
+#C https://conwaylife.com/forums/viewtopic.php?p=40761#p40761
 x = 4, y = 6, rule = B2-ac3ai/S1c2-n3-aky4a
 3o$ob2o$ob2o$2bo$3bo$2b2o!

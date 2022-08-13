@@ -6,7 +6,8 @@
 #C the side, creating a chaotically expanding pattern.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=43166#p43166
+#C https://conwaylife.com/forums/viewtopic.php?p=43166#p43166
+#C (Pattern reduced from original)
 x = 52, y = 52, rule = B2ac3q4art5nqr/S3q4aeijkrt5cjnq7c8
 16bobo11bo$16bobo11bo15$2o2$2o3$50b2o9$2o3$50b2o2$50b2o15$21bo11bobo$
 21bo11bobo!

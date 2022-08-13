@@ -1,5 +1,5 @@
 #N sierpinski-like-log5-12.rle
-#O wwei23, October 20 2019
+#O wwei23, 20 October 2019
 #C 
 #C     In this rule, there is a replicator with a fractal dimension
 #C of log5(12). Run for a few thousand generations to see how

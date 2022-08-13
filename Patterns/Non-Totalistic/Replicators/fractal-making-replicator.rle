@@ -1,8 +1,16 @@
 #N fractal-making-replicator.rle
-#O GUYTU6J, October 4 2019
+#O GUYTU6J, 4 October 2019
 #C     This quadratic replicator makes a beautiful fractal by laying
-#C or deleting tubs while expanding indefinitely.
+#C or deleting tubs while expanding indefinitely. Give it a couple of
+#C minutes in HashLife's Hyperspeed mode, and the resulting pattern 
+#C will allow for zooming/magnifying for a few hundreds of times, just
+#C like a journey in a professional fractal-rendering program!
+#C     Similar replicators are also found later, for example bo$3o$bo!
+#C in B2i3aeijn4cetwy5ceikn6kn78/S2a3-jkqy4en5eikq6-a78 (reported by
+#C jimmyChen2013 in p130343) and 3o$obo! in B3-kqy6cn7c8/S2-i3-a4iqy5kq6a8
+#C (by Jiahao Yu in p131505) in 2021, but both of these are somewhat
+#C less HashLife-friendly than the following one.
 #C 
-#C Reference: https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3752&p=83736#p83736
+#C Reference: https://conwaylife.com/forums/viewtopic.php?f=11&t=3752&p=83736#p83736
 x = 5, y = 5, rule = B2kn3-nq5y6i7/S23-aeny4ciknqtz
 3bo$2b3o$bo$2obo$bo!

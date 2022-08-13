@@ -1,12 +1,12 @@
 #N 1d-turing-machine.rle
-#O AforAmpere, May 5 2021
+#O AforAmpere, 5 May 2021
 #C   The three-cell starting configuration behaves like a
 #C one-dimensional Turing machine, following simple rules about
 #C reading and writing 1s and 0s to its horizontal tape.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=129668#p129668
+#C   https://conwaylife.com/forums/viewtopic.php?p=129668#p129668
 #C For more patterns with unusual growth rates, see
-#C   https://www.conwaylife.com/forums/viewtopic.php?f=11&t=5238
+#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=5238
 x = 2, y = 3, rule = B3-cjkq4ceit5i6c/S012c3j4a5eiy6ci
 o$bo$o!

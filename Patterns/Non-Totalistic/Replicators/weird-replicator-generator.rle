@@ -1,5 +1,5 @@
 #N weird-replicator-generator.rle
-#O wwei23, October 7 2020
+#O wwei23, 7 October 2020
 #C 
 #C     The discoverer of this pattern has found lots of novel
 #C one-dimensional replicators that follow different replication rules
@@ -7,7 +7,7 @@
 #C infinitely many copies of one of the weird replicators.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=105950#p105950
+#C   https://conwaylife.com/forums/viewtopic.php?p=105950#p105950
 x = 77, y = 29, rule = B2e3-ajnr4cjry5cky/S1c2-ik3ay4ace6-ei
 30b3o$30b2o$30bobo3$30bobo$3o27b2o$2o28b3o$obo3$obo72b2o$2o72b3o$3o26b
 2o20b2o20bo$8b2o3b2o15bo20bo22b3o$8b2o3b2o4bo55b2o$18b3o$70bo$69b2o$

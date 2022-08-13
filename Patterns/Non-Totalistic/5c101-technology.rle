@@ -1,6 +1,6 @@
 #N 5c101-technology.rle
 #C
-#C Rule originally devised by Hunting on March 6, 2020 
+#C Rule originally devised by Hunting on 6 March 2020 
 #C
 #C Left: four rotating p768 5c/101 B-ship guns combined to build a 
 #C T gun, by Peter Naszvadi and FWKnightship. Many but one output have
@@ -10,7 +10,7 @@
 #C explore moving technologies on conwaylife.com forums.
 #C
 #C See several posts after Hunting's original report:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=90719#p90719
+#C https://conwaylife.com/forums/viewtopic.php?p=90719#p90719
 x = 825, y = 445, rule = B2n34c5c6n7c8/S23-ac4eiz6ci7
 204b2o511bo$204bo512b3o$201b2obo513bo62bo$202bob2o511b2ob2o58b3o$201b
 2o514b4o58bo2b2o$202bob2o514bo57b4obo$201b2obo516b3o55bob3o$204bo575b

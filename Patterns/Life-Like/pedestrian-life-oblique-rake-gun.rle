@@ -1,5 +1,5 @@
 #N pedestrian-life-oblique-rake-gun.rle
-#O Luka Okanishi, May 3 2016
+#O Luka Okanishi, 3 May 2016
 #C     In the realm of outer-totalistic Life-like cellular automata,
 #C the highest birth condition is B8. Adding that to the Game of Life
 #C gives Pedestrian Life, B38/S23, so named because the traffic light
@@ -14,9 +14,11 @@
 #C built, some of its output gliders are directed by series of Snarks
 #C and p6 bumpers so as to produce the next rake. In other words, it
 #C is essentially engine-less!
-#C Reference: https://www.conwaylife.com/forums/viewtopic.php?f=11&t=1661&p=30569#p30569
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=1661&p=30569#p30569
 #C For general description on this rule, see LifeWiki article:
-#C https://www.conwaylife.com/wiki/OCA:Pedestrian_Life
+#C https://conwaylife.com/wiki/OCA:Pedestrian_Life
 x = 314, y = 280, rule = B38/S23
 172b2o14bo$168b2obo14b3o$168b2o2bo2bo9bo$173bobo9b2o$174bo$181bo$173b
 2o5bobo$173b2o4bo2bo8bo2bo$148b2o30b2o12bo15bo$147bobo40bo4bo12b3o$

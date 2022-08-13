@@ -1,3 +1,5 @@
-#C A 6-cell double Sierpinski triangle builder found by dani.
+#C An early 6-cell double Sierpinski triangle builder found by drc.
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=33693#p33693
 x = 3, y = 3, rule = B3_S23-a4ei6
 b2o$obo$b2o!
