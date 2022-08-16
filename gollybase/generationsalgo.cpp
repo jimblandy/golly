@@ -582,7 +582,7 @@ void generationsalgo::createCanonicalName(const char *base64) {
             k |= c & (1 << m) ;
             m-- ;
          }
-         canonrule[p++] = base64_characters[c] ;
+         canonrule[p++] = base64_characters[k] ;
       }
    }
    else {
