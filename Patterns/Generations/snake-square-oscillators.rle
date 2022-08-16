@@ -18,7 +18,7 @@
 #C Reference: Oscillators 01-04,18,19 in MCell/Generations/Snake folder
 #C A package of patterns from MCell that got translated into Golly 
 #C format is available in the following post:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=44076#p44076
+#C https://conwaylife.com/forums/viewtopic.php?p=44076#p44076
 x = 255, y = 91, rule = 03467/25/6
 DCA13.DCA5.ACD5.DCA5.ACD5.DCA5.ACD21.A3.A3.A3.A3.A3.A3.A3.A3.A3.A3.A
 3.A3.A3.A3.A3.A3.A3.A3.A3.ACD17.A3.A3.A3.A3.A3.A3.A3.A3.A3.A3.A3.A3.A

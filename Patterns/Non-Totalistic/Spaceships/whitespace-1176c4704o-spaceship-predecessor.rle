@@ -1,5 +1,5 @@
 #N whitespace-1176c4704o-spaceship-predecessor.rle
-#O bubblegum, March 30 2021
+#O bubblegum, 30 March 2021
 #C     Whitespace is a class of isotropic non-totalistic rules
 #C characterized by a quaduatic spacefiller that expands at c/2
 #C orthogonal and develops a static agar with density 1. (Compare with
@@ -19,10 +19,10 @@
 #C final particularly enormous whitespace backfire to the west.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=127358#p127358
+#C   https://conwaylife.com/forums/viewtopic.php?p=127358#p127358
 #C
 #C For more whitespace rules, see 
-#C https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3293
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3293
 x = 2185, y = 527, rule = B3ai4ciw5aceqr6ck78/S3-kqr4ceq5eikq6-an7c8
 1920bo$1919b3o$1918b5o$1917b7o$1916b9o$1915b11o$1914b13o$1913b15o$
 1912b17o$1911b19o$1910b21o$1909b23o$1908b25o$1907b27o$1906b29o$1905b

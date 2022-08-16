@@ -1,6 +1,6 @@
 #C p1552 spaceship based on tDryLife pondpuffers
 #C Luka Okanishi, 21 June 2017
-#C http://www.conwaylife.com/forums/viewtopic.php?f=&p=44806#p44806
+#C https://conwaylife.com/forums/viewtopic.php?f=&p=44806#p44806
 x = 1879, y = 1900, rule = B37/S2-i34q
 1227b2o$1227bob2o$1227bo3b2o$1227b3ob2o4b2o$1227bo3b2o4b2o$1228bobo$
 1228b3o2$1238bo$1238bo$1202b2o27b3o3b3o$1201bo2bo25bo2bo2bo2bo$1201bo

@@ -1,0 +1,16 @@
+#N 20-cell-quadratic-growth.rle
+#O dani, 4 April 2022
+#C
+#C     This is the smallest known pattern by population that exhibits
+#C quadratic growth as of August 2022, improving on the record held
+#C since 2014 by switch-engine-ping-pong.rle. Starting from an unnamed
+#C 9-cell island on the left that turns into H+SE and an 11-cell GPSE
+#C (glider-producing switch engine) predecessor, the switch-engine-
+#C pair breeder produces a BLSE (block-laying switch engine) every
+#C 11136 generations. Its bounding box is significantly more compact
+#C than previous record holders as well.
+#C 
+#C Reference:
+#C https://conwaylife.com/wiki/20-cell_quadratic_growth
+x = 97, y = 33, rule = B3/S23
+94bo$92bobo$94b2o6$88b3o11$96bo$95b2o8$3bob2o$2bo3bo$bo$bo$obo!

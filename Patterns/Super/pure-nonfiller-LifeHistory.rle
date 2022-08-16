@@ -12,7 +12,7 @@
 #C As of late 2021, this pattern is the pure nonfiller with the
 #C   smallest known bounding box.
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=135872#p135872
+#C   https://conwaylife.com/forums/viewtopic.php?p=135872#p135872
 x = 33, y = 27, rule = LifeHistory
 17.3A6.A$11.A4.A2.A4.A2.A$11.3A6.A3.A4.A$5.A.A.A6.A2.A2.2A.A.A$8.2A3.
 A2.A.2A.2A2.2A$6.A.A9.A4.A.A2.A.A$2.A3.A.A3.2A.A2.2A5.2A2.A$4.A.A10.

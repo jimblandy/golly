@@ -8,7 +8,7 @@
 #C
 #C     More recent research results can be found in the Just Friends
 #C thread on the conwaylife.com forums:
-#C   https://www.conwaylife.com/forums/viewtopic.php?f=11&t=2442
+#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=2442
 x = 200, y = 140, rule = B2-a/S12
 6bo14bo$4b3o12b3o$bboo3bo9boo3bo$5b3o12b3o$bbo4bo7bo6bo$7bo13bo$4bobbo
 7boobobbo$boo3boo12boo78boo8b4o18boo$4b3o11b3o79bo12boo17bo$bo15bo13b

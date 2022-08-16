@@ -16,6 +16,6 @@
 #C for the block to be pushed another cell downwards.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=44012#p44012
+#C https://conwaylife.com/forums/viewtopic.php?p=44012#p44012
 x = 7, y = 10, rule = B3-jq5-iy6/S2-k35-qy6-ci
 bo$bo$bo2$bo$3o3$5bo$5b2o!

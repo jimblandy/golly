@@ -7,6 +7,6 @@
 #C cross. Compare whitespace-puffer.rle.
 #C
 #C Reference: 
-#C https://www.conwaylife.com/forums/viewtopic.php?p=75194#p75194
+#C https://conwaylife.com/forums/viewtopic.php?p=75194#p75194
 x = 7, y = 12, rule = B2ci3ae4e/S1c2i3y4et5e
 2bo$b3o$2bo2bo$5bo$4b3o$5bo4$bo$3o$bo!

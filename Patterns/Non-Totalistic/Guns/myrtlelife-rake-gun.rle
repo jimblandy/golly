@@ -1,5 +1,5 @@
 #N myrtlelife-rake-gun.rle
-#O silversmith, November 7 2020
+#O silversmith, 7 November 2020
 #C
 #C     Yet another bootstrapping rake gun, this time with
 #C many glider-reflecting still lives in a MirrorLife relative.
@@ -12,7 +12,7 @@
 #C than gliders or the T-tetromino spaceship).
 #C
 #C Reference:
-#C  https://www.conwaylife.com/forums/viewtopic.php?p=109627#p109627
+#C  https://conwaylife.com/forums/viewtopic.php?p=109627#p109627
 x = 246, y = 476, rule = B3-kq4j/S2-n36c
 165b2o$165b2o2$139b2o4b2o$139b2o4b2o2$165b2o$165b2o3$152b3o$142b2o8bo
 $142b2o9bo3$126b2o$126b2o15b2o$123b2o18b2o$124b2o$123bo4$142bobo$142b

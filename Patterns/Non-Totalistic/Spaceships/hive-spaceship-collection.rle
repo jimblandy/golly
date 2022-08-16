@@ -1,5 +1,5 @@
 #N hive-spaceship-collection.rle
-#C AforAmpere, February 16 2019
+#C AforAmpere, 16 February 2019
 #C
 #C     In B3-ry4ckn/S2-in3-cjn4it5aiky6-a7e8, a pre-beehive (the 2x3
 #C rectangle in Life) is a failed replicator that can be combined to
@@ -11,7 +11,9 @@
 #C 10c/510 and 3c/285 respectively.
 #C
 #C Reference:
-#C  https://www.conwaylife.com/forums/viewtopic.php?p=70853#p70853
+#C  https://conwaylife.com/forums/viewtopic.php?p=70853#p70853
+#C For miscellaneous spaceship collections, see 
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=5175
 x = 919, y = 99, rule = B3-ry4ckn/S2-in3-cjn4it5aiky6-a7e8
 3o3bo15bo18bo4bo11b2o7b2o14bo17bo68bo74b3o15b3o133bo31bo76b3o97bo73bo
 60bo8b3o43bo49bo66bobo$3o2b3o12bobobo12b2o2b2o2b2o2b2o6bo2bo5bo2bo12bo

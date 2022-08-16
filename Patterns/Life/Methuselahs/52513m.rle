@@ -11,7 +11,7 @@
 #C particular tendency to last longer than asymmetric ones.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/wiki/52513M
+#C   https://conwaylife.com/wiki/52513M
 x = 16, y = 16, rule = B3/S23
 3o2b2obob2ob3o$2obob3o4bobo$bo2bo2bobob3obo$2bo2b2o3bo2bo$2bo5bobo3b2o
 $o4b2o3b3obo$3b2o2bo2bobo2bo$2b4obo2bob2o$2ob2o2b2o5b2o$ob4obo4b3o$o3b

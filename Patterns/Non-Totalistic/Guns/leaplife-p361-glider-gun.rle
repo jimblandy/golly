@@ -1,5 +1,5 @@
 #N leaplife-p361-glider-gun.rle
-#O FWKnightship, March 27 2021
+#O FWKnightship, 27 March 2021
 #C     LeapLife is an isotropic non-totalistic rule with rulestring
 #C B2n3/S23-q. Its investigation began in January 2020, mostly led by
 #C Hunting and accepting contributions from many other forum users.
@@ -25,7 +25,7 @@
 #C   https://conwaylife.com/forums/viewtopic.php?p=127079#p127079
 #C
 #C A detailed progress summary and timeline animation on LeapLife is
-#C at https://www.conwaylife.com/forums/viewtopic.php?f=7&t=5059 .
+#C at https://conwaylife.com/forums/viewtopic.php?f=7&t=5059 .
 x = 1937, y = 2088, rule = B2n3/S23-q
 788b2o$788b2o2$786b4o$786bo2bo5$784b3o$783b2ob2o$782bob2o$782b2o7b2o$
 782b2o7b2o7$764bo$762b2o$763b2o65$849b2o$849bobo$849bo21$673bo$672bo$

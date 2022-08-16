@@ -12,7 +12,7 @@
 #C Compare the Life counterpart Life/Bounded-Grids/lightspeed-bubble.rle.
 #C 
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=40889#p40889
+#C https://conwaylife.com/forums/viewtopic.php?p=40889#p40889
 x = 128, y = 599, rule = B2c3i4in5r6i/S:T128,600
 128o2$128o2$128o2$128o2$128o2$128o2$128o2$128o2$128o2$128o2$128o2$128o
 2$128o2$128o2$128o2$128o2$128o2$60ob2ob10ob4ob36ob11o2$51ob7obo2bob8ob

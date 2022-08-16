@@ -1,5 +1,5 @@
 #N drylife-p480-rake-gun.rle
-#O Paul Tooke, August 31 2010
+#O Paul Tooke, 31 August 2010
 #C     DryLife is an outer-totalistic Life-like cellular automaton
 #C with rulestring B37/S23. It behaves explosively in nature, see for
 #C example evolution of the stairstep hexomino.
@@ -16,9 +16,9 @@
 #C for a p480 gun firing the 2-engine spaceship, and Paul Tooke again
 #C for the final assembly.
 #C 
-#C Reference: https://www.conwaylife.com/forums/viewtopic.php?f=11&t=490&p=3304#p3304
+#C Reference: https://conwaylife.com/forums/viewtopic.php?f=11&t=490&p=3304#p3304
 #C For general description on this rule, see LifeWiki article:
-#C https://www.conwaylife.com/wiki/OCA:DryLife
+#C https://conwaylife.com/wiki/OCA:DryLife
 x = 592, y = 354, rule = B37/S23
 258bo$257bobo$256bo3bo$256b2o2bo$256b2ob2o$257bobo$258bo19$282b2o$278b
 2o2b2o2b2o$278bobo2bo2b2o$279b3o$280b2o2$264b3o19bo5bo$264bobo19b2o3b

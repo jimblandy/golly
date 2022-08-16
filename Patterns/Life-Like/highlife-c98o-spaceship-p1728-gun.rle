@@ -1,5 +1,5 @@
 #N highlife-c98o-spaceship-p1728-gun.rle
-#O Luka Okanishi, June 13 2016
+#O Luka Okanishi, 13 June 2016
 #C     In February 2015, Ivan Fomichev discovered a new spaceship
 #C in the well-known rule HighLife. It has bilateral symmetry, 24 
 #C cells in the mimimum phase, travelling at a speed of c/98 
@@ -14,7 +14,7 @@
 #C sending gliders to alternate directions.
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=31908#p31908
+#C   https://conwaylife.com/forums/viewtopic.php?p=31908#p31908
 x = 583, y = 546, rule = B36/S23
 162b2o$162b2o34b2o183b2o$199bo183bo$199bobo179bobo$200b2o179b2o3$201bo
 179bo$201bo179bo5$211bo159bo$210b3o157b3o$102b2o105b2obo157bob2o$101bo

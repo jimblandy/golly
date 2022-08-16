@@ -2,7 +2,6 @@
 #C
 #C Discovery credits:
 #C AA = "AforAmpere"
-#C AP = Aidan F. Pierce
 #C BU = "Bullet51"
 #C DH = Dean Hickerson
 #C HH = Hartmut Holzwart
@@ -10,6 +9,7 @@
 #C JS = Jason Summers
 #C MM = Matthias Merzenich
 #C NB = Nicolay Beluchenko
+#C PR = "praosylen"
 #C RM = "rmmh"
 #C SS = Stephen Silver
 #C TC = Tim Coe
@@ -18,11 +18,11 @@
 #C 40 MM 27 Sep 2017
 #C    MM 27 Sep 2017
 #C 41 JB 19 Apr 2013
-#C 42 AP 19 Jan 2017
+#C 42 PR 19 Jan 2017
 #C    MM 27 Sep 2017
 #C    MM 27 Sep 2017
 #C 43 MM 18 Apr 2012
-#C 44 AP 26 Dec 2016
+#C 44 PR 26 Dec 2016
 #C 45 MM 20 Apr 2012
 #C    MM 20 Apr 2012
 #C    MM 18 Jan 2017
@@ -41,15 +41,15 @@
 #C 51 TC  3 May 1996
 #C    SS 11 Nov 2000
 #C    SS 11 Nov 2000
-#C 52 AP 26 Dec 2016
+#C 52 PR 26 Dec 2016
 #C 53 TC  6 Aug 1995
 #C    SS 10 Nov 2000
-#C    AP 10 Jan 2017
-#C    AP 10 Jan 2017
+#C    PR 10 Jan 2017
+#C    PR 10 Jan 2017
 #C    MM 28 Jan 2017
 #C    MM 28 Jan 2017
 #C 54 TC Between Dec 2015 and 21 Apr 2016
-#C    AP 19 Jan 2017
+#C    PR 19 Jan 2017
 #C 55 HH  2 Jan 2004
 #C    MM 20 Apr 2012
 #C    TC    Dec 2015
@@ -68,12 +68,12 @@
 #C    JB 15 Apr 2012 (tag by HH 18 Aug 1992)
 #C    JB 15 Apr 2012 (tag by HH 18 Aug 1992)
 #C    JB 15 Apr 2012 (tag by JS  1 Oct 2000)
-#C    AP 19 Jan 2017 (tag by HH no later than 2 Mar 2006)
+#C    PR 19 Jan 2017 (tag by HH no later than 2 Mar 2006)
 #C    MM 27 Sep 2017 (tag by HH no later than 2 Mar 2006)
 #C    MM 27 Sep 2017 (tag by HH no later than 2 Mar 2006)
 #C 58 MM 16 Jan 2017
 #C    MM 29 Dec 2016
-#C    AP 17 Jan 2017
+#C    PR 17 Jan 2017
 #C    MM 20 Apr 2012
 #C    TC Between Dec 2015 and 21 Apr 2016 (tag)
 #C    JB 19 Apr 2013 (tag by HH 18 Aug 1992)
@@ -86,7 +86,7 @@
 #C    MM 19 Jan 2017
 #C 59 MM 20 Apr 2012
 #C 60 TC Between Dec 2015 and 19 Mar 2016
-#C    AP  1 Jan 2017
+#C    PR  1 Jan 2017
 #C 61 JS 22 Sep 2000
 #C    MM  1 Oct 2017
 #C    MM  1 Oct 2017
@@ -131,7 +131,7 @@
 #C    MM 20 Apr 2012 (tag by HH 18 Aug 1992)
 #C    MM 20 Apr 2012 (tag by HH 18 Aug 1992)
 #C    TC Between Dec 2015 and 21 Apr 2016
-#C    AP 26 Dec 2016 (tag by DH    Dec 1989)
+#C    PR 26 Dec 2016 (tag by DH    Dec 1989)
 #C    MM 19 Jan 2017
 #C    MM 19 Jan 2017
 #C    MM 27 Sep 2017 (tag by TC Between Dec 2015 and 21 Apr 2016)
@@ -139,7 +139,7 @@
 #C 64 TC Between Dec 2015 and 19 Mar 2016
 #C    TC Between Dec 2015 and 19 Mar 2016
 #C    TC Between Dec 2015 and 19 Mar 2016
-#C    AP 19 Jan 2017
+#C    PR 19 Jan 2017
 #C    MM 18 Apr 2012
 #C    MM 16 Jan 2017
 #C    MM  4 Aug 2015 (tag)
@@ -153,9 +153,9 @@
 #C    MM    Aug 2015 (tag)
 #C    MM    Aug 2015 (tag)
 #C    TC Between Dec 2015 and 21 Apr 2016 (tag)
-#C    AP 26 Dec 2016 (tag by HH 18 Aug 1992)
-#C    AP 26 Dec 2016 (tag by HH 18 Aug 1992)
-#C    AP 26 Dec 2016 (tag by JS  1 Oct 2000)
+#C    PR 26 Dec 2016 (tag by HH 18 Aug 1992)
+#C    PR 26 Dec 2016 (tag by HH 18 Aug 1992)
+#C    PR 26 Dec 2016 (tag by JS  1 Oct 2000)
 #C    MM 18 Jan 2017 (tag by BU 19 Mar 2016)
 #C    MM 18 Jan 2017 (tag by BU 19 Mar 2016)
 #C    MM 27 Sep 2017 (tag by MM    Aug 2015)
@@ -208,9 +208,9 @@
 #C    TC Between Dec 2015 and 19 Mar 2016
 #C    SS  7 Oct 2000
 #C    SS  7 Oct 2000
-#C    AP  5 Jan 2017
-#C    AP 17 Jan 2017
-#C    AP 17 Jan 2017
+#C    PR  5 Jan 2017
+#C    PR 17 Jan 2017
+#C    PR 17 Jan 2017
 #C    TC Between Dec 2015 and 21 Apr 2016 (tag)
 #C    MM    Aug 2015 (tag)
 #C    MM    Aug 2015 (tag)
@@ -254,8 +254,8 @@
 #C    MM 18 Jan 2017 (tag by DH Dec 1989)
 #C 68 RM  9 Mar 2016
 #C    HH center: 5 Feb 1993; wings: no later than 2 Mar 2006
-#C    AP 28 Dec 2016
-#C    AP 29 Dec 2016
+#C    PR 28 Dec 2016
+#C    PR 29 Dec 2016
 #C    MM 23 Jan 2017
 #C    MM  1 Oct 2017 (tag)
 #C    MM  1 Oct 2017 (tag)
@@ -316,22 +316,26 @@
 #C 70 MM 18 Apr 2012
 #C    TC    Dec 2015
 #C    MM 28 Jan 2017
+#C    MM  4 Apr 2022 (based on a ship by HH on 4 Apr 2022)
+#C    MM  4 Apr 2022 (based on a ship by HH on 4 Apr 2022)
 #C    MM 28 Jan 2017 (tag)
 #C    SS 11 Nov 2000 (tag by SS 9 Oct 2000 based on a ship by HH 5 Feb 1993)
 #C    SS 11 Nov 2000 (tag by SS 9 Oct 2000 based on a ship by HH 5 Feb 1993)
 #C    JB 15 Apr 2012 (tags by HH 18 Aug 1992 and 2 Mar 2006)
 #C    JB 15 Apr 2012 (tags by HH 18 Aug 1992 and 2 Mar 2006)
 #C    BU 19 Mar 2016 (tag)
-#C    AP 26 Dec 2016 (tag by TC Between Dec 2015 and 21 Apr 2016)
-#C    AP 26 Dec 2016 (tag by HH 18 Aug 1992)
-#C    AP 26 Dec 2016 (tag by HH 18 Aug 1992)
+#C    PR 26 Dec 2016 (tag by TC Between Dec 2015 and 21 Apr 2016)
+#C    PR 26 Dec 2016 (tag by HH 18 Aug 1992)
+#C    PR 26 Dec 2016 (tag by HH 18 Aug 1992)
 #C    MM 18 Jan 2017 (tag by SS 9 Oct 2000 based on a ship by HH 5 Feb 1993)
 #C    MM 18 Jan 2017 (tag by SS 9 Oct 2000 based on a ship by HH 5 Feb 1993)
 #C    MM 18 Jan 2017 (tag by DH Dec 1989)
-#C    AP 19 Jan 2017 (tag)
-#C    AP 19 Jan 2017 (tag)
+#C    PR 19 Jan 2017 (tag)
+#C    PR 19 Jan 2017 (tag)
 #C    MM 18 Jan 2017 (tag by DH Dec 1989)
 #C    MM 18 Jan 2017 (tag by DH Dec 1989)
+#C Updated between April and July 2022 -- source:
+#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 1696, y = 652, rule = B3/S23
 252bo$252b2o2b2o$252bo2bo$255bo90bo$30bo277b2obobo24b2obob2obo$28bo2b
 2o222b3o48bo4bob2obo19bo4bobo$26b3o227bo48bo10bo18bo$25bobo225bobo48bo
@@ -1018,52 +1022,57 @@ b2obo17bob2obo21b2o123bo24b2o25b2o42b2o32b2o6bo95b2o32b2o6bo78b2o26b4o
 34bo3bo74b2o32b2o35b3o33b3o36b3o36b3o36b3o36b3o36b3o36b3o36b3o37bo$96b
 ob2o117bo2b2o24bobo24bobo295bo36b5o74bo34b3o33b3o33b3o36b3o36b3o36b3o
 36b3o36b3o36b3o36b3o37b2o$98b2o115b2o3bo26bo26bo296bobo35b2o111b3o379b
-o2b2o$217bo884b2o3bo$99bo1004bo$97b2o$97b2o$99bo4$29bo$27bo2b2o207bobo
-$25b3o209b2o3b2o$24bobo13bo196bobo$24bob2o10b2o3bo148bo24bo21bo$23bo4b
-o11bo2b2o145bo2b2o20bo2b2o16bo$22b2o19b2o143b3o22b3o20b2o3bo29bo21bobo
-22bobo16bo6b2o16bo6b2o$43bo143bobo22bobo27bo26b2o21bo2bo21bo2bo16b2ob
-2o2b3obo13b2ob2o2b3obo83bo34bo22bo$21bo4b2o14b2o66b2obo73bob2o21bob2o
-23b2ob2o27bo19bo3bo20bo3bo16bo4bo3bobo13bo4bo3bobo7bobo72b2o32b2o21b2o
-$25bo17bo62bobo3b2o72bo4bo19bo4bo23bob2o21bo3b2o19b2o23b2o23b2o2b3obo
-16b2o2b3obo7bo3bo51bo16bo2bo34bo22bo$22b3o15b3o61b2o4bo20bobo4b2o20bob
-o4b2o16b2o23b2o27b2obo20bo2b2obobo17bob2o21bob2o14bo11b2o11bo11b2o10bo
-2b2o5bo6b2obo35b2o2b2o6bo2b2o4b2o34b5o18b5o$24bo15b2o64bob3o20bo7bo2bo
-17bo7bo2bo70bo18b3o6b2o14bo24bo18b2o23b2o26bobo4b2o5bo3bo35bo2bo8b2obo
-9b2o31bo3b2o17bo3b2o$26bo12bobo18bo50b2o3bobo12bo2b3o5bo17bo2b3o5bo12b
-o4b2o18bo4b2o22bo2bo28b2o11bo2b2ob2obo15bo2b2ob2obo14bo24bo27bo10bo3bo
-15bo23bo8bo2bo2bo4bobo2bo29bo10bo11bo$obobo3bobobo13bo12bob4o13b2o3bo
-4b3o39bo4bo2bo14bo5bo2bo19bo5bo2bo16bo24bo24bo2b2o19b2o9bo8bobo7b2obo
-11bobo7b2obo13b6o19b6o19b2obobo4b3o18b2o35bo2bo4bo11bo22bo5bob2obo11bo
-5bobo$25bo3b2o8bobo17bobobob2o3b2o42bo3bo7b2o10b2o15b2o10b2o16b3o22b3o
-26b2o16b4o2bo9bo7bo13bo10bo13bo14bo4b2o18bo4b2o17bo2bobobob4o2bo13bo2b
-o23b3o10b2o5bobobobo4b2o21b2obobobobo13b2obobobob2obo$4bo3bo3bo12bobo
-16b2o12bo2bo6bo3b2o34bobobobo10b3o3b2o21b3o3b2o25bo24bo41bob3o3b3o6bo
-13bobo22bobo22bo11bo12bo23b3ob2obobo14bo2b2o4b2o22bo25bo4bo23bo22bo9bo
-$25bo3bo11b3o13bo6bobo8b2o22b3o4bobobo15b2obo4bo20b2obo4bo24bo12bo11bo
-39b2o7b4o3b2o11b2ob3o19b2ob3o22bo6bob2obo12bo6bobo15bo4bo3b3obo9b2obo
-9b2o11bobobobo25b3o4b2o$4bo3bo3bo16b2o9b2obo12b2o7bo7bo9b2o9bo2b2o4b2o
-bobo5b2o13bo4bo23bo4bo23b2o7bo2b3o10b2o7bo2b2o11b3o25bo5bo11bob2o21bob
+o2b2o$217bo884b2o3bo$99bo1004bo$97b2o$97b2o$99bo4$29bo97bobo$27bo2b2o
+95bo164bobo$25b3o99bobo160b2o3b2o$24bobo13bo90b2obo155bobo$24bob2o10b
+2o3bo87bobo2bo108bo24bo21bo$23bo4bo11bo2b2o87b2o3bo105bo2b2o20bo2b2o
+16bo$22b2o19b2o67bo2bo20bo104b3o22b3o20b2o3bo29bo21bobo22bobo16bo6b2o
+16bo6b2o$43bo64b2o2b4o17b2o105bobo22bobo27bo26b2o21bo2bo21bo2bo16b2ob
+2o2b3obo13b2ob2o2b3obo83bo34bo22bo$21bo4b2o14b2o63bob3obobob3o14bo28b
+2obo73bob2o21bob2o23b2ob2o27bo19bo3bo20bo3bo16bo4bo3bobo13bo4bo3bobo7b
+obo72b2o32b2o21b2o$25bo17bo64bo3bo4bo18bo22bobo3b2o72bo4bo19bo4bo23bob
+2o21bo3b2o19b2o23b2o23b2o2b3obo16b2o2b3obo7bo3bo51bo16bo2bo34bo22bo$
+22b3o15b3o60bo2b3o6bobo18bo20b2o4bo20bobo4b2o20bobo4b2o16b2o23b2o27b2o
+bo20bo2b2obobo17bob2o21bob2o14bo11b2o11bo11b2o10bo2b2o5bo6b2obo35b2o2b
+2o6bo2b2o4b2o34b5o18b5o$24bo15b2o61bobo6b4ob3o15bo3b2o18bob3o20bo7bo2b
+o17bo7bo2bo70bo18b3o6b2o14bo24bo18b2o23b2o26bobo4b2o5bo3bo35bo2bo8b2ob
+o9b2o31bo3b2o17bo3b2o$26bo12bobo18bo42bo8b2o21bobo26b2o3bobo12bo2b3o5b
+o17bo2b3o5bo12bo4b2o18bo4b2o22bo2bo28b2o11bo2b2ob2obo15bo2b2ob2obo14bo
+24bo27bo10bo3bo15bo23bo8bo2bo2bo4bobo2bo29bo10bo11bo$obobo3bobobo13bo
+12bob4o13b2o3bo4b3o33bo30bo3bo23bo4bo2bo14bo5bo2bo19bo5bo2bo16bo24bo
+24bo2b2o19b2o9bo8bobo7b2obo11bobo7b2obo13b6o19b6o19b2obobo4b3o18b2o35b
+o2bo4bo11bo22bo5bob2obo11bo5bobo$25bo3b2o8bobo17bobobob2o3b2o32bo34b2o
+26bo3bo7b2o10b2o15b2o10b2o16b3o22b3o26b2o16b4o2bo9bo7bo13bo10bo13bo14b
+o4b2o18bo4b2o17bo2bobobob4o2bo13bo2bo23b3o10b2o5bobobobo4b2o21b2obobob
+obo13b2obobobob2obo$4bo3bo3bo12bobo16b2o12bo2bo6bo3b2o28bo36b2o20bobob
+obo10b3o3b2o21b3o3b2o25bo24bo41bob3o3b3o6bo13bobo22bobo22bo11bo12bo23b
+3ob2obobo14bo2b2o4b2o22bo25bo4bo23bo22bo9bo$25bo3bo11b3o13bo6bobo8b2o
+24b2o32bo3bo12b3o4bobobo15b2obo4bo20b2obo4bo24bo12bo11bo39b2o7b4o3b2o
+11b2ob3o19b2ob3o22bo6bob2obo12bo6bobo15bo4bo3b3obo9b2obo9b2o11bobobobo
+25b3o4b2o$4bo3bo3bo16b2o9b2obo12b2o7bo7bo9b2o15bo2bo31bobo9bo2b2o4b2ob
+obo5b2o13bo4bo23bo4bo23b2o7bo2b3o10b2o7bo2b2o11b3o25bo5bo11bob2o21bob
 2o22b2obob2obobo14b2obob2obob2obo23b2o10bo2bo2bo4bobo2bo9bo42b2o$29b2o
-9b2o2bo16bo4bo3b2o2bo3bo2bo2bo2bo6b2o7bo84bo7bo2b2o12bo7bo2b3o13bobo
-10bob2obo24b3o22b3o25bo24bo10bo38bo2bo4bo14bobo2bo26bo8bobo2bo12b3o20b
-3o$4bo3bo3bo12bo3bo10b2o2bo11b2ob2o6bo3b2o2bo2b3o6bo6bo3bo6b3o21b6o23b
-6o24b2ob2o3bo16b2ob2o3bo4bo9bo2bobo11b2o3bo24bo2bo21bo2bo70b3o27b2o5bo
-bobobo10b2o25bo2bo8bo20bobo20bobo$25bobo13b2o12bo9bo9bo8bo2bo11b2o4bo
-2bo24b2o2bobo22b2o2bobo16bo2b2obob3o14bo2b2obob3o14bo3bo18bo24b2obo21b
-2obo73bobo38bo5b2o29b2o2b2o6bobobobo10bo2bobo5b2obo8bo2bobo5b2obo$4bo
-3bobobo12bo3b2o23b3o6b2o11b2o3bob2o19b2o2bo18bo2b2o5b2ob2o14bo2b2o5b2o
-b2o12b2o3bo3b4o12b2o3bo3b4o15bo16b2o29bo24bo23b3o22b3o20bo2bobo38b3o3b
-o31bo18bo8bo3bo6bob3o7bo3bo6bob3o$26bo16bo11b2o8bo14bo20b3o4bo16b2o3bo
-b2ob2o17b2o3bob2ob2o10bo8bo7bo16bo7bo18b2o14bo3bo24bobo22bobo26bobo22b
-obo16bo3bo45b2o49b3o8bo9b2o11bo9b2o$26bo16b3obo60bo18bo3b2o3bo5bobo11b
-o3b2o3bo5bob2obo61b3o13b2o24bo2b2o20bo2b2o22bo2bobo19bo2bobo18bo43bo5b
-o61b2o6bobo12b2o6bobo$24bo17bo2bo61b2o23bo6b2obob2obo13bo6b2obobo21bo
-24bo17b3o14bo24bo3bo3b3o14bo3bo3b3o15bo3bo20bo3bo21b2o38bo2bo55bo12b3o
-b3ob3o12b3ob3ob3o$22b3o16b2o4bo57bo2b2o26b2o9bo17b2o26bobo22bobo34b2o
-23bobo4bo3b2o12bobo4bo3b2o14bo24bo25b3o36b2o2b2o50bo2bo12b3obo4bo13b3o
-bo4bo$25bo14bo6bo55b2o88bo2bo21bo2bo30bo2b2o30bo10bo13bo20b2o23b2o23b
-3o36bo55b2o2b2o15b3obo18b3obo$21bo4b2o12b2o4bo58bo87bo2bo21bo2bo13b3o
-12b2o3bo32bo4bob2obo14bo4bobo13b3o22b3o116bo22b2o21b2o$46bo147bobo22bo
-bo16bobo11bo37b2obobo19b2obob2obo10b3o22b3o$22b2o18b3o147bo24bo16bo2bo
-bo83bo$23bo4bo12bo4b2o142b2o23b2o16bo3bo$24bob2o12b3o149bo24bo16bo$24b
-obo14b2o192b2o$25b3o208b3o$27bo2b2o204b3o$29bo!
+9b2o2bo16bo4bo3b2o2bo3bo2bo2bo2bo47bo3b2o6b2o7bo84bo7bo2b2o12bo7bo2b3o
+13bobo10bob2obo24b3o22b3o25bo24bo10bo38bo2bo4bo14bobo2bo26bo8bobo2bo
+12b3o20b3o$4bo3bo3bo12bo3bo10b2o2bo11b2ob2o6bo3b2o2bo2b3o6bo13b3o32bo
+10bo3bo6b3o21b6o23b6o24b2ob2o3bo16b2ob2o3bo4bo9bo2bobo11b2o3bo24bo2bo
+21bo2bo70b3o27b2o5bobobobo10b2o25bo2bo8bo20bobo20bobo$25bobo13b2o12bo
+9bo9bo8bo2bo48bo15b2o4bo2bo24b2o2bobo22b2o2bobo16bo2b2obob3o14bo2b2obo
+b3o14bo3bo18bo24b2obo21b2obo73bobo38bo5b2o29b2o2b2o6bobobobo10bo2bobo
+5b2obo8bo2bobo5b2obo$4bo3bobobo12bo3b2o23b3o6b2o11b2o3bob2o9b2o5bo32bo
+22b2o2bo18bo2b2o5b2ob2o14bo2b2o5b2ob2o12b2o3bo3b4o12b2o3bo3b4o15bo16b
+2o29bo24bo23b3o22b3o20bo2bobo38b3o3bo31bo18bo8bo3bo6bob3o7bo3bo6bob3o$
+26bo16bo11b2o8bo14bo13bob3o3bo30b2o19b3o4bo16b2o3bob2ob2o17b2o3bob2ob
+2o10bo8bo7bo16bo7bo18b2o14bo3bo24bobo22bobo26bobo22bobo16bo3bo45b2o49b
+3o8bo9b2o11bo9b2o$26bo16b3obo47bob2o3bo29bo2bo25bo18bo3b2o3bo5bobo11bo
+3b2o3bo5bob2obo61b3o13b2o24bo2b2o20bo2b2o22bo2bobo19bo2bobo18bo43bo5bo
+61b2o6bobo12b2o6bobo$24bo17bo2bo49bobobo60b2o23bo6b2obob2obo13bo6b2obo
+bo21bo24bo17b3o14bo24bo3bo3b3o14bo3bo3b3o15bo3bo20bo3bo21b2o38bo2bo55b
+o12b3ob3ob3o12b3ob3ob3o$22b3o16b2o4bo51bo33b3o22bo2b2o26b2o9bo17b2o26b
+obo22bobo34b2o23bobo4bo3b2o12bobo4bo3b2o14bo24bo25b3o36b2o2b2o50bo2bo
+12b3obo4bo13b3obo4bo$25bo14bo6bo47bo2bobo55b2o88bo2bo21bo2bo30bo2b2o
+30bo10bo13bo20b2o23b2o23b3o36bo55b2o2b2o15b3obo18b3obo$21bo4b2o12b2o4b
+o47b2o30b2o5bo24bo87bo2bo21bo2bo13b3o12b2o3bo32bo4bob2obo14bo4bobo13b
+3o22b3o116bo22b2o21b2o$46bo48bo30bob3o3bo112bobo22bobo16bobo11bo37b2ob
+obo19b2obob2obo10b3o22b3o$22b2o18b3o82bob2o3bo110bo24bo16bo2bobo83bo$
+23bo4bo12bo4b2o79bobobo111b2o23b2o16bo3bo$24bob2o12b3o88bo113bo24bo16b
+o$24bobo14b2o84bo2bobo155b2o$25b3o98b2o161b3o$27bo2b2o95bo161b3o$29bo!

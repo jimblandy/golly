@@ -1,6 +1,6 @@
 #C p210 gun for c/7 loafer spaceships
 #C Shannon Omick, 18 February 2013
-#C http://conwaylife.com/forums/viewtopic.php?f=2&t=1031#p7466
+#C https://conwaylife.com/forums/viewtopic.php?f=2&t=1031#p7466
 x = 226, y = 195, rule = B3/S23
 174b2o5bo20bo$174b2o5b3o18bobo$184bo5b2o11bobo7bo$183b2o5b2o11bo2bo6b
 2o$203bobo2b2o4b2o$202bobo3b2o4b3o7b2o$202bo5b2o4b2o8b2o$213b2o$213bo$

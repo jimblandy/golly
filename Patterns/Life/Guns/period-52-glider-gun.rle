@@ -1,8 +1,8 @@
 #C period-52-glider-gun.rle
 #C p13-assisted pure p52 glider gun by Entity Valkyrie, Chris Cain,
 #C   Matthias Merzenich, Adam P. Goucher and Dave Greene.
-#C http://www.conwaylife.com/forums/viewtopic.php?t=&p=65762#p65762
-#C http://www.conwaylife.com/wiki/Period-52_glider_gun
+#C https://conwaylife.com/forums/viewtopic.php?t=&p=65762#p65762
+#C https://conwaylife.com/wiki/Period-52_glider_gun
 x = 126, y = 97, rule = B3/S23
 64bo$62b3o$61bo$61b2o2$57bo$56bobo$46b3o2bo3bo2bo$43bo2b2obobo4b2o$42b
 obobo4bo$43bo3b3o31b2o$39bo6bo26bo7bo9bo$38bobo2bo2b2o13bo11b3o2b2obo

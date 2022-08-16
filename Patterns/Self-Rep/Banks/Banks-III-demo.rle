@@ -9,6 +9,9 @@
 #
 # See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
 #
+# (Addendum in 12 May 2022: in modern isotropic non-totalistic
+# notation, this rule is expressed as a long string:
+# B2ce3e4jr5cin6-en7c8/S012-ac3-cn4-eikny5-kr67c8 )
 x = 89, y = 54, rule = Banks-III
 30bo35bo$52bo$6b2ob26o14b4ob30o$5b4ob23o16b5ob30o$6b2ob23o17b4ob30o$
 31bo$31bo34bo5$6b2ob23o$5b4ob23o$6b2ob23o6$6b3ob22o$5b5ob22o$6b3ob22o

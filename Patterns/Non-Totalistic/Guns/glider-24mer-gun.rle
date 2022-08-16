@@ -8,7 +8,7 @@
 #C to produce a glider 24mer.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=128096#p128096
+#C https://conwaylife.com/forums/viewtopic.php?p=128096#p128096
 x = 250, y = 206, rule = B3-ky4jy5cr/S2-in3-aeky4cnrt5a6ekn
 220b2o$219bobo$219bobo$220b2o4$214bo$213bobo$214bo11$230bo$221b2o6bobo
 $178b2o8b4o30b2o6bo$41bo135bobo8bo2bo29b2obo$42bo134bobo9b2o32b3o$41bo

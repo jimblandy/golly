@@ -8,6 +8,6 @@
 #C 4th term of which has over 19000 digits.
 #C
 #C Reference:
-#C https://www.conwaylife.com/forums/viewtopic.php?p=20889#p20889
+#C https://conwaylife.com/forums/viewtopic.php?p=20889#p20889
 x = 2, y = 2, rule = 34568/2/10
 2A$2A!

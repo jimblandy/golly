@@ -1,5 +1,5 @@
 #N adjustable-slope-spaceships.rle
-#O AforAmpere, July 23 2018
+#O AforAmpere, 23 July 2018
 #C     The isotropic rule has a 3-cell c/2 orthogonal spaceship and a
 #C still life dot. Interestingly, one of the spaceship+dot collisions
 #C displaces a dot by (2,0) and reflects the spaceship to the adjacent
@@ -17,9 +17,9 @@
 #C adjusting the distance d of two dots, it attains all orthogonal
 #C speeds of the form 2c/(4d-12) for d>= 6.
 #C 
-#C Reference: https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3081&post=62131#p62131
+#C Reference: https://conwaylife.com/forums/viewtopic.php?f=11&t=3081&post=62131#p62131
 #C For other small adjustable spaceships in various rules, see
-#C https://www.conwaylife.com/forums/viewtopic.php?f=11&t=3081
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3081
 x = 205, y = 88, rule = B2ce3cen4ekt6kn/S01c2ae4cknr5akn
 2bo39bo39bo39bo50bo$9bo11bo27bo11bo27bo11bo27bo11bo50bo10bo$10bo39bo
 39bo39bo62bo$bo7bo31bo7bo31bo7bo31bo7bo62bo$obo17bo19bobo17bo19bobo17b

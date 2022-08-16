@@ -2,7 +2,7 @@
 #C Wick construction making use of all seven no-trail "Super" states.
 #C Same-color gliders collaborate to complete each construction stage.
 #C
-#C https://www.conwaylife.com/forums/viewtopic.php?p=89155#p89155
+#C https://conwaylife.com/forums/viewtopic.php?p=89155#p89155
 #C
 #C Run showinviewer.lua to activate the LifeViewer scripting commands.
 #C Run update-viewer.lua to retrieve the latest version of LifeViewer.

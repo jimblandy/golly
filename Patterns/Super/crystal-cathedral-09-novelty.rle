@@ -10,10 +10,10 @@
 #C The pattern's final fate is only determined after more than
 #C    314 million generations.  Until that time, the pairs of
 #C    backward glider streams from the receding arks
-#C    ( https://www.conwaylife.com/wiki/Ark )
+#C    ( https://conwaylife.com/wiki/Ark )
 #C    repeatedly drill through sections of the arks' ash clouds,
 #C    then gradually build up crystal structures
-#C    (https://www.conwaylife.com/wiki/Crystal)
+#C    (https://conwaylife.com/wiki/Crystal)
 #C    until the crystal comes into contact with another structure
 #C    and restarts the production of chaotic ash.
 #C

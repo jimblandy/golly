@@ -1,8 +1,8 @@
 #N 16engine-74,46c378-spaceship.rle
-#O FWKnightship, April 4 2021
+#O FWKnightship, 4 April 2021
 #C An engineered oblique spaceship with speed (74,46)c/378.
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=127728#p127728
+#C   https://conwaylife.com/forums/viewtopic.php?p=127728#p127728
 x = 3611, y = 3379, rule = B3-kq6cn8/S2-i3-a4ciyz8
 2163b2o$2185bo$2162bobob3o14bo2bo$2164b2obo18bo2bo$2162bob3o23bo$2183b
 3obobo$2167bo3b3o13b2o$2166bobo2b3o$2165bobo2bo3bo14bo4bo$2166bo3b2ob
