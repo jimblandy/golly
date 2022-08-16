@@ -87,8 +87,8 @@ unsigned char pxldata[maxbytes];
     // system (where 0,0 is top left corner of viewport and bottom right corner is
     // currwd,currht) into OpenGL ES 2's normalized coordinates (where 0.0,0.0 is in
     // middle of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
-    #define XCOORD(x)  (2.0 * (x) / float(currwd) - 1.0)
-    #define YCOORD(y) -(2.0 * (y) / float(currht) - 1.0)
+    #define XCOORD(x) static_cast<GLfloat>(  2.0 * (x) / float(currwd) - 1.0)
+    #define YCOORD(y) static_cast<GLfloat>(-(2.0 * (y) / float(currht) - 1.0))
 #else
     // the following 2 macros don't need to do anything because we've already
     // changed the viewport coordinate system to what Golly wants

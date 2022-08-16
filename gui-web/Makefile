@@ -109,13 +109,14 @@ OBJECTS = main.o webcalls.o \
     zlib/uncompr.o \
     zlib/zutil.o
 
-CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-declaration -O2
+CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-declaration \
+    -Wno-deprecated-non-prototype -O2
 
 CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip \
-    -DVERSION=4.2 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -O2
+    -DVERSION=4.2 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -Wno-deprecated \
+    -Wno-unused-but-set-variable -O2
 
-# NOTE 1: -O2 results in a much smaller golly.js and no .map file
-# NOTE 2: replace -O2 with the following settings to catch errors:
+# NOTE: replace -O2 with the following settings to catch errors:
 # -s ASSERTIONS=2 -s SAFE_HEAP=1
 
 TARGET = golly.html
@@ -137,8 +138,8 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     --preload-file ../gui-common/Help/algos.html@/Help/algos.html \
     --preload-file ../gui-common/Help/Algorithms@/Help/Algorithms \
     --preload-file ../gui-common/Help/Lexicon@/Help/Lexicon \
-    -s TOTAL_MEMORY=320*1024*1024 \
-    -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', '_ResizeCanvas', \
+    -s TOTAL_MEMORY=320mb \
+    -s EXPORTED_FUNCTIONS="[ '_main', '_ClearStatus', '_NewUniverse', '_ResizeCanvas', \
     '_SetViewport', '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', \
     '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Reset', \
     '_ToggleIcons', '_ModeChanged', '_StateChanged', '_DoMenuItem', '_UpdateMenuItems', \
@@ -148,13 +149,11 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     '_FileCreated', '_CancelProgress', '_CancelOpen', '_SaveFile', '_CancelSave', \
     '_StorePrefs', '_CancelPrefs', '_SaveLocalPrefs', '_FullScreen', '_ExitFullScreen', \
     '_UnsavedChanges' ]" \
+    -s EXPORTED_RUNTIME_METHODS="[ 'ccall', 'cwrap' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)
 
-# better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
-# (note that newer versions of Emscripten require TOTAL_MEMORY to be multiple of 16MB)
-
 clean:
-	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data golly.html.mem
+	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data golly.wasm
 
 depend:
 	@$(CXX) $(CXXFLAGS) -MM $(SOURCES)

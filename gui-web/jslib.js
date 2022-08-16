@@ -12,19 +12,19 @@ $GOLLY: {
 // -----------------------------------------------------------------------------
 
 jsAlert: function(msg) {
-    alert(Pointer_stringify(msg));
+    alert(UTF8ToString(msg));
 },
 
 // -----------------------------------------------------------------------------
 
 jsConfirm: function(query) {
-    return confirm(Pointer_stringify(query));
+    return confirm(UTF8ToString(query));
 },
 
 // -----------------------------------------------------------------------------
 
 jsSetBackgroundColor: function(id, color) {
-    document.getElementById(Pointer_stringify(id)).style.backgroundColor = Pointer_stringify(color);
+    document.getElementById(UTF8ToString(id)).style.backgroundColor = UTF8ToString(color);
 },
 
 // -----------------------------------------------------------------------------
@@ -38,9 +38,9 @@ jsSetStatus: function(line1, line2, line3) {
 
     // set the statusbar
     GOLLY.statusbar.value =
-        Pointer_stringify(line1) + '\n' +
-        Pointer_stringify(line2) + '\n' +
-        Pointer_stringify(line3);
+        UTF8ToString(line1) + '\n' +
+        UTF8ToString(line2) + '\n' +
+        UTF8ToString(line3);
 },
 
 // -----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ jsSetState: function(state, numstates) {
 // -----------------------------------------------------------------------------
 
 jsSetRule: function(oldrule) {
-    var newrule = prompt('Type in a new rule:', Pointer_stringify(oldrule));
+    var newrule = prompt('Type in a new rule:', UTF8ToString(oldrule));
     if (newrule == null) {
         return allocate(intArrayFromString('\0'), 'i8', ALLOC_STACK);
     } else {
@@ -81,7 +81,7 @@ jsSetRule: function(oldrule) {
 // -----------------------------------------------------------------------------
 
 jsGetSaveName: function(currname) {
-    var newname = prompt('Save current pattern in given file:', Pointer_stringify(currname));
+    var newname = prompt('Save current pattern in given file:', UTF8ToString(currname));
     if (newname == null) {
         return allocate(intArrayFromString('\0'), 'i8', ALLOC_STACK);
     } else {
@@ -92,7 +92,7 @@ jsGetSaveName: function(currname) {
 // -----------------------------------------------------------------------------
 
 jsShowMenu: function(id, x, y) {
-    var menu = document.getElementById(Pointer_stringify(id));
+    var menu = document.getElementById(UTF8ToString(id));
     var mrect = menu.getBoundingClientRect();
     // x,y coords are relative to canvas, so convert to window coords
     var crect = Module['canvas'].getBoundingClientRect();
@@ -110,7 +110,7 @@ jsShowMenu: function(id, x, y) {
 // -----------------------------------------------------------------------------
 
 jsSetClipboard: function(text) {
-    document.getElementById('cliptext').value = Pointer_stringify(text);
+    document.getElementById('cliptext').value = UTF8ToString(text);
 },
 
 // -----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ jsTextAreaIsActive: function() {
 // -----------------------------------------------------------------------------
 
 jsElementIsVisible: function(id) {
-    if (document.getElementById(Pointer_stringify(id)).style.visibility == 'visible') {
+    if (document.getElementById(UTF8ToString(id)).style.visibility == 'visible') {
         return true;
     } else {
         return false;
@@ -147,7 +147,7 @@ jsElementIsVisible: function(id) {
 // -----------------------------------------------------------------------------
 
 jsEnableButton: function(id, enable) {
-    var button = document.getElementById(Pointer_stringify(id));
+    var button = document.getElementById(UTF8ToString(id));
     if (enable) {
         button.disabled = false;
         button.style.color = '#000';
@@ -160,8 +160,8 @@ jsEnableButton: function(id, enable) {
 // -----------------------------------------------------------------------------
 
 jsEnableImgButton: function(id, enable) {
-    var button = document.getElementById(Pointer_stringify(id));
-    var img = document.getElementById('img' + Pointer_stringify(id));
+    var button = document.getElementById(UTF8ToString(id));
+    var img = document.getElementById('img' + UTF8ToString(id));
     if (enable) {
         button.disabled = false;
         img.style.opacity = 1.0;
@@ -178,7 +178,7 @@ jsEnableImgButton: function(id, enable) {
 // -----------------------------------------------------------------------------
 
 jsTickMenuItem: function(id, tick) {
-    var menuitem = document.getElementById(Pointer_stringify(id));
+    var menuitem = document.getElementById(UTF8ToString(id));
     if (tick) {
         menuitem.style.backgroundImage = 'url(images/item_tick.png)';
     } else {
@@ -189,13 +189,13 @@ jsTickMenuItem: function(id, tick) {
 // -----------------------------------------------------------------------------
 
 jsSetInputValue: function(id, num) {
-    document.getElementById(Pointer_stringify(id)).value = num.toString();
+    document.getElementById(UTF8ToString(id)).value = num.toString();
 },
 
 // -----------------------------------------------------------------------------
 
 jsGetInputValue: function(id) {
-    var num = parseInt(document.getElementById(Pointer_stringify(id)).value, 10);
+    var num = parseInt(document.getElementById(UTF8ToString(id)).value, 10);
     if (isNaN(num)) return -1;
     return num;
 },
@@ -203,37 +203,37 @@ jsGetInputValue: function(id) {
 // -----------------------------------------------------------------------------
 
 jsSetCheckBox: function(id, flag) {
-    document.getElementById(Pointer_stringify(id)).checked = flag;
+    document.getElementById(UTF8ToString(id)).checked = flag;
 },
 
 // -----------------------------------------------------------------------------
 
 jsGetCheckBox: function(id) {
-    return document.getElementById(Pointer_stringify(id)).checked;
+    return document.getElementById(UTF8ToString(id)).checked;
 },
 
 // -----------------------------------------------------------------------------
 
 jsSetInnerHTML: function(id, text) {
-    document.getElementById(Pointer_stringify(id)).innerHTML = Pointer_stringify(text);
+    document.getElementById(UTF8ToString(id)).innerHTML = UTF8ToString(text);
 },
 
 // -----------------------------------------------------------------------------
 
 jsMoveToAnchor: function(anchor) {
-    window.location.hash = Pointer_stringify(anchor);
+    window.location.hash = UTF8ToString(anchor);
 },
 
 // -----------------------------------------------------------------------------
 
 jsSetScrollTop: function(id, pos) {
-    document.getElementById(Pointer_stringify(id)).scrollTop = pos;
+    document.getElementById(UTF8ToString(id)).scrollTop = pos;
 },
 
 // -----------------------------------------------------------------------------
 
 jsGetScrollTop: function(id) {
-    return document.getElementById(Pointer_stringify(id)).scrollTop;
+    return document.getElementById(UTF8ToString(id)).scrollTop;
 },
 
 // -----------------------------------------------------------------------------
@@ -246,14 +246,14 @@ jsBeep: function() {
 // -----------------------------------------------------------------------------
 
 jsDeleteFile: function(filepath) {
-    FS.unlink(Pointer_stringify(filepath));
+    FS.unlink(UTF8ToString(filepath));
 },
 
 // -----------------------------------------------------------------------------
 
 jsMoveFile: function(inpath, outpath) {
     try {
-        FS.rename(Pointer_stringify(inpath), Pointer_stringify(outpath));
+        FS.rename(UTF8ToString(inpath), UTF8ToString(outpath));
         return true;
     } catch (e) {
         alert('FS.rename failed!');
@@ -266,9 +266,9 @@ jsMoveFile: function(inpath, outpath) {
 jsShowSaveDialog: function(filename, extensions) {
     document.getElementById('save_overlay').style.visibility = 'visible';
     document.getElementById('save_extensions').innerHTML =
-        'Valid extensions: ' + Pointer_stringify(extensions);
+        'Valid extensions: ' + UTF8ToString(extensions);
     var namebox = document.getElementById('save_name');
-    namebox.value = Pointer_stringify(filename);
+    namebox.value = UTF8ToString(filename);
     namebox.select();
     namebox.focus();
 },
@@ -276,7 +276,7 @@ jsShowSaveDialog: function(filename, extensions) {
 // -----------------------------------------------------------------------------
 
 jsSaveFile: function(filenameptr) {
-    var filename = Pointer_stringify(filenameptr);
+    var filename = UTF8ToString(filenameptr);
     var contents, blob;
     var gzext = '.gz';
     if (filename.length >= gzext.length && filename.substr(filename.length - gzext.length) == gzext) {
@@ -310,7 +310,7 @@ jsSaveFile: function(filenameptr) {
 
 jsStoreRule: function(rulepath) {
     // read contents of .rule file and save to local storage using rulepath as the key
-    var filepath = Pointer_stringify(rulepath);
+    var filepath = UTF8ToString(rulepath);
     try {
         var contents = FS.readFile(filepath, {encoding:'utf8'});
         localStorage.setItem(filepath, contents);
@@ -332,7 +332,7 @@ jsCancelProgress: function() {
 
 jsBeginProgress: function(title) {
     // DEBUG: Module.printErr('jsBeginProgress');
-    document.getElementById('progress_title').innerHTML = Pointer_stringify(title);
+    document.getElementById('progress_title').innerHTML = UTF8ToString(title);
     document.getElementById('progress_percent').innerHTML = ' ';
     // don't show the progress dialog immediately
     // document.getElementById('progress_overlay').style.visibility = 'visible';
@@ -377,8 +377,8 @@ jsEndProgress: function() {
 
 jsDownloadFile: function(urlptr, filepathptr) {
     // download file from given url and store its contents in filepath
-    var url = Pointer_stringify(urlptr);
-    var filepath = Pointer_stringify(filepathptr);
+    var url = UTF8ToString(urlptr);
+    var filepath = UTF8ToString(filepathptr);
     // DEBUG: Module.printErr('URL: '+url+' FILE: '+filepath);
 
     // prefix url with http://www.corsproxy.com/ so we can get file from another domain
