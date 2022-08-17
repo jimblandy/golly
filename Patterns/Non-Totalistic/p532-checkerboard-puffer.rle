@@ -3,7 +3,7 @@
 #C
 #C     This is a glide-symmetric c/2 p532 puffer that makes connected
 #C checkerboard pieces, inside which excited crystallographic defects
-#C lengthen themselve, push boundaries, and sometimes form a closed 
+#C lengthen themselves, push boundaries, and sometimes form a closed 
 #C loop and disappear. Compare moving-crystallographic-defects.rle.
 #C 
 #C References: 

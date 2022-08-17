@@ -1,6 +1,6 @@
 #C limited spacefiller from soup, in "organized explosion" rule
 #C Dave Greene, 10 July 2017
-#C https://conwaylife.com/forums/viewtopic.php?f=&p=46828#p46337
+#C https://conwaylife.com/forums/viewtopic.php?f=&p=46337#p46337
 #C rule found by dani, 4 June 2017
 #C https://conwaylife.com/forums/viewtopic.php?f=&p=44061#p44061
 x = 16, y = 16, rule = B2-a5/S1e2-a35678
