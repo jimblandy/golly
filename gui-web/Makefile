@@ -1,7 +1,7 @@
 # Makefile for creating web app version of Golly using Emscripten.
-# Type "emmake make" to build golly.html and golly.js.
+# Type "emmake make" to build golly.html, golly.js, golly.data, golly.wasm.
 
-SOURCES = main.cpp webcalls.cpp \
+SOURCES = \
     ../gollybase/bigint.cpp \
     ../gollybase/generationsalgo.cpp \
     ../gollybase/ghashbase.cpp \
@@ -53,9 +53,11 @@ SOURCES = main.cpp webcalls.cpp \
     zlib/inftrees.c \
     zlib/trees.c \
     zlib/uncompr.c \
-    zlib/zutil.c
+    zlib/zutil.c \
+    webcalls.cpp \
+    main.cpp
 
-OBJECTS = main.o webcalls.o \
+OBJECTS = \
     ../gollybase/bigint.o \
     ../gollybase/generationsalgo.o \
     ../gollybase/ghashbase.o \
@@ -107,17 +109,15 @@ OBJECTS = main.o webcalls.o \
     zlib/inftrees.o \
     zlib/trees.o \
     zlib/uncompr.o \
-    zlib/zutil.o
+    zlib/zutil.o \
+    webcalls.o \
+    main.o
 
-CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-declaration \
-    -Wno-deprecated-non-prototype -O2
+CFLAGS = -Izlib -Wall -Wno-deprecated-non-prototype -Wno-implicit-function-declaration -O2
 
 CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip \
     -DVERSION=4.2 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -Wno-deprecated \
     -Wno-unused-but-set-variable -O2
-
-# NOTE: replace -O2 with the following settings to catch errors:
-# -s ASSERTIONS=2 -s SAFE_HEAP=1
 
 TARGET = golly.html
 
@@ -151,6 +151,9 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     '_UnsavedChanges' ]" \
     -s EXPORTED_RUNTIME_METHODS="[ 'ccall', 'cwrap' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)
+
+# Include these link-time settings above to catch errors:
+# -s ASSERTIONS=2 -s SAFE_HEAP=1
 
 clean:
 	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data golly.wasm
