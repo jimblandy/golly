@@ -165,12 +165,32 @@ bool UnsavedChanges()
 
 // -----------------------------------------------------------------------------
 
+static int prevwheel = 0;
+
+extern "C" {
+
+void OnMouseWheel(int pos)
+{
+    int x, y;
+    glfwGetMousePos(&x, &y);
+    
+    // we use a threshold of 2 in below tests to reduce sensitivity
+    if (pos + 2 < prevwheel) {
+        ZoomInPos(x, y);
+        prevwheel = pos;
+    } else if (pos - 2 > prevwheel) {
+        ZoomOutPos(x, y);
+        prevwheel = pos;
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
 static void InitEventHandlers()
 {
     EM_ASM(
-        // the following code fixes bugs in emscripten/src/library_glfw.js:
-        // - onMouseWheel fails to use wheelDelta
-        // - the onmousewheel handler is assigned to the entire window rather than just the canvas
         var wheelpos = 0;
         function on_mouse_wheel(event) {
             // Firefox sets event.detail, other browsers set event.wheelDelta with opposite sign,
@@ -180,10 +200,10 @@ static void InitEventHandlers()
             _OnMouseWheel(wheelpos);
             return false;
         };
-        // for Firefox:
+        // for old versions of Firefox:
         Module['canvas'].addEventListener('DOMMouseScroll', on_mouse_wheel, false);
-        // for Chrome, Safari, etc:
-        Module['canvas'].onmousewheel = on_mouse_wheel;
+        // for all(?) modern browsers:
+        Module['canvas'].addEventListener('wheel', on_mouse_wheel, false);
     );
     
     EM_ASM(
@@ -1797,10 +1817,8 @@ static void OnMouseClick(int button, int action)
             return;
         }
         
-        // test for ctrl/right click in paste image or selection;
-        // button test should be for GLFW_MOUSE_BUTTON_RIGHT which is defined to be 1 in glfw.h
-        // but I actually get 2 when right button is pressed in all my browsers (report bug!!!)
-        if (button == 2 || ctrl_down) {
+        // test for ctrl/right-click in paste image or selection
+        if (button == GLFW_MOUSE_BUTTON_RIGHT || button == 2 || ctrl_down) {
             if (waitingforpaste && PointInPasteImage(x, y)) {
                 UpdateMenuItems("pastemenu");
                 jsShowMenu("pastemenu", x, y);
@@ -1850,29 +1868,6 @@ static void OnMouseMove(int x, int y)
         TouchMoved(x, y);
     }
 }
-
-// -----------------------------------------------------------------------------
-
-static int prevwheel = 0;
-
-extern "C" {
-
-void OnMouseWheel(int pos)
-{
-    int x, y;
-    glfwGetMousePos(&x, &y);
-    
-    // we use a threshold of 2 in below tests to reduce sensitivity
-    if (pos + 2 < prevwheel) {
-        ZoomInPos(x, y);
-        prevwheel = pos;
-    } else if (pos - 2 > prevwheel) {
-        ZoomOutPos(x, y);
-        prevwheel = pos;
-    }
-}
-
-} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -1940,7 +1935,7 @@ static void DoFrame()
     glfwSwapBuffers();
 
     // check the current mouse location continuously, but only after the 1st mouse-click or
-    // mouse-move event, because until then glfwGetMousePos returns 0,0 (report bug???!!!)
+    // mouse-move event, because until then glfwGetMousePos returns 0,0
     if (ok_to_check_mouse && over_canvas) {
         int x, y;
         glfwGetMousePos(&x, &y);
@@ -1975,11 +1970,11 @@ int EMSCRIPTEN_KEEPALIVE main()
     if (InitGL() == GL_TRUE) {
         ResizeCanvas();
         // we do our own keyboard event handling (see InitEventHandlers)
-        // glfwSetKeyCallback(OnKeyChanged);
+        // glfwSetKeyCallback(...);
         glfwSetMouseButtonCallback(OnMouseClick);
         glfwSetMousePosCallback(OnMouseMove);
         // we do our own mouse wheel handling (see InitEventHandlers)
-        // glfwSetMouseWheelCallback(OnMouseWheel);
+        // glfwSetMouseWheelCallback(...);
         emscripten_set_main_loop(DoFrame, 0, 1);
     }
 
