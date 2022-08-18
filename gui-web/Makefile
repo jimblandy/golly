@@ -153,7 +153,7 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     -o $@ $(LDFLAGS) $(OBJECTS)
 
 # Include these link-time settings above to catch errors:
-# -s ASSERTIONS=2 -s SAFE_HEAP=1
+# --profiling -s ASSERTIONS=2 -s SAFE_HEAP=1
 
 clean:
 	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data golly.wasm
@@ -163,28 +163,6 @@ depend:
 
 # type "emmake make depend" to generate these dependencies:
 
-main.o: main.cpp ../gollybase/bigint.h ../gollybase/lifealgo.h \
-  ../gollybase/viewport.h ../gollybase/liferender.h \
-  ../gollybase/lifepoll.h ../gollybase/readpattern.h \
-  ../gollybase/platform.h ../gollybase/qlifealgo.h \
-  ../gollybase/liferules.h ../gollybase/hlifealgo.h ../gollybase/util.h \
-  ../gollybase/generationsalgo.h ../gollybase/ghashbase.h \
-  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h ../gollybase/superalgo.h \
-  ../gollybase/ruleloaderalgo.h ../gollybase/ruletable_algo.h \
-  ../gollybase/ruletreealgo.h ../gui-common/algos.h \
-  ../gui-common/utils.h ../gui-common/prefs.h ../gui-common/layer.h \
-  ../gui-common/select.h ../gui-common/control.h ../gui-common/file.h \
-  ../gollybase/writepattern.h ../gui-common/view.h \
-  ../gui-common/status.h ../gui-common/undo.h ../gui-common/render.h \
-  webcalls.h
-webcalls.o: webcalls.cpp ../gollybase/util.h ../gui-common/utils.h \
-  ../gui-common/algos.h ../gollybase/lifealgo.h ../gollybase/bigint.h \
-  ../gollybase/viewport.h ../gollybase/liferender.h \
-  ../gollybase/lifepoll.h ../gollybase/readpattern.h \
-  ../gollybase/platform.h ../gui-common/prefs.h ../gui-common/layer.h \
-  ../gui-common/select.h ../gui-common/control.h ../gui-common/file.h \
-  ../gollybase/writepattern.h ../gui-common/view.h \
-  ../gui-common/status.h ../gui-common/undo.h webcalls.h
 bigint.o: ../gollybase/bigint.cpp ../gollybase/bigint.h \
   ../gollybase/util.h
 generationsalgo.o: ../gollybase/generationsalgo.cpp \
@@ -414,3 +392,25 @@ trees.o: zlib/trees.c zlib/deflate.h zlib/zutil.h zlib/zlib.h \
   zlib/zconf.h zlib/trees.h
 uncompr.o: zlib/uncompr.c zlib/zlib.h zlib/zconf.h
 zutil.o: zlib/zutil.c zlib/zutil.h zlib/zlib.h zlib/zconf.h zlib/gzguts.h
+webcalls.o: webcalls.cpp ../gollybase/util.h ../gui-common/utils.h \
+  ../gui-common/algos.h ../gollybase/lifealgo.h ../gollybase/bigint.h \
+  ../gollybase/viewport.h ../gollybase/liferender.h \
+  ../gollybase/lifepoll.h ../gollybase/readpattern.h \
+  ../gollybase/platform.h ../gui-common/prefs.h ../gui-common/layer.h \
+  ../gui-common/select.h ../gui-common/control.h ../gui-common/file.h \
+  ../gollybase/writepattern.h ../gui-common/view.h \
+  ../gui-common/status.h ../gui-common/undo.h webcalls.h
+main.o: main.cpp ../gollybase/bigint.h ../gollybase/lifealgo.h \
+  ../gollybase/viewport.h ../gollybase/liferender.h \
+  ../gollybase/lifepoll.h ../gollybase/readpattern.h \
+  ../gollybase/platform.h ../gollybase/qlifealgo.h \
+  ../gollybase/liferules.h ../gollybase/hlifealgo.h ../gollybase/util.h \
+  ../gollybase/generationsalgo.h ../gollybase/ghashbase.h \
+  ../gollybase/ltlalgo.h ../gollybase/jvnalgo.h ../gollybase/superalgo.h \
+  ../gollybase/ruleloaderalgo.h ../gollybase/ruletable_algo.h \
+  ../gollybase/ruletreealgo.h ../gui-common/algos.h \
+  ../gui-common/utils.h ../gui-common/prefs.h ../gui-common/layer.h \
+  ../gui-common/select.h ../gui-common/control.h ../gui-common/file.h \
+  ../gollybase/writepattern.h ../gui-common/view.h \
+  ../gui-common/status.h ../gui-common/undo.h ../gui-common/render.h \
+  webcalls.h
