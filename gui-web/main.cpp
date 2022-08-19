@@ -175,10 +175,10 @@ void OnMouseWheel(int pos)
     glfwGetMousePos(&x, &y);
     
     // we use a threshold of 2 in below tests to reduce sensitivity
-    if (pos + 2 < prevwheel) {
+    if (pos + wheelsens < prevwheel) {
         ZoomInPos(x, y);
         prevwheel = pos;
-    } else if (pos - 2 > prevwheel) {
+    } else if (pos - wheelsens > prevwheel) {
         ZoomOutPos(x, y);
         prevwheel = pos;
     }
@@ -926,6 +926,7 @@ static void OpenPrefs()
     jsSetInputValue("max_hash", maxhashmem);
     jsSetCheckBox("ask_to_save", asktosave);
     jsSetCheckBox("toggle_beep", allowbeep);
+    jsSetInputValue("wheel_sensitivity", wheelsens);
     
     // select random fill percentage (the most likely setting to change)
     EM_ASM(
@@ -968,8 +969,17 @@ void StorePrefs()
         return;
     }
     
+    int newwheelsens = jsGetInputValue("wheel_sensitivity");
+    if (newwheelsens < 1 || newwheelsens > MAX_SENSITIVITY) {
+        char msg[128];
+        sprintf(msg, "Mouse wheel sensitivity must be an integer from %d to %d.", 1, MAX_SENSITIVITY);
+        Warning(msg);
+        return;
+    }
+
     // all settings are valid
     randomfill = newrandfill;
+    wheelsens = newwheelsens;
     if (maxhashmem != newmaxhash) {
         // need to call setMaxMemory if maxhashmem changed
         maxhashmem = newmaxhash;

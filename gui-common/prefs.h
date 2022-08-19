@@ -25,6 +25,7 @@ const int MAX_DELAY = 5000;             // maximum mindelay or maxdelay
 const int MAX_RECENT = 100;             // maximum value of maxpatterns
 const int MIN_MEM_MB = 10;              // minimum value of maxhashmem
 const int MAX_MEM_MB = 300;             // maximum value of maxhashmem
+const int MAX_SENSITIVITY = 20;         // maximum value of wheelsens
 
 // These global paths must be set in platform-specific code before GetPrefs is called:
 
@@ -82,6 +83,7 @@ extern bool openremovesel;          // opening pattern removes selection?
 extern int mindelay;                // minimum millisec delay
 extern int maxdelay;                // maximum millisec delay
 extern int maxhashmem;              // maximum memory (in MB) for hashlife-based algos
+extern int wheelsens;               // mouse wheel sensitivity
 
 // Recent patterns:
 

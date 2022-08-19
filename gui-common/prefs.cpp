@@ -85,6 +85,7 @@ bool openremovesel = true;          // opening pattern removes selection?
 int mindelay = 250;                 // minimum millisec delay
 int maxdelay = 2000;                // maximum millisec delay
 int maxhashmem = 100;               // maximum memory (in MB) for hashlife-based algos
+int wheelsens = 2;                  // mouse wheel sensitivity
 
 int numpatterns = 0;                // current number of recent pattern files
 int maxpatterns = 20;               // maximum number of recent pattern files
@@ -180,6 +181,7 @@ void SavePrefs()
     fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
     fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
     fprintf(f, "max_hash_mem=%d\n", maxhashmem);
+    fprintf(f, "wheel_sens=%d\n", wheelsens);
 
     fputs("\n", f);
 
@@ -481,6 +483,11 @@ void GetPrefs()
             sscanf(value, "%d", &maxhashmem);
             if (maxhashmem < MIN_MEM_MB) maxhashmem = MIN_MEM_MB;
             if (maxhashmem > MAX_MEM_MB) maxhashmem = MAX_MEM_MB;
+
+        } else if (strcmp(keyword, "wheel_sens") == 0) {
+            sscanf(value, "%d", &wheelsens);
+            if (wheelsens < 1) wheelsens = 1;
+            if (wheelsens > MAX_SENSITIVITY) wheelsens = MAX_SENSITIVITY;
 
         } else if (strcmp(keyword, "rule") == 0) {
             strncpy(initrule, value, sizeof(initrule));
