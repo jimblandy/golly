@@ -174,7 +174,7 @@ void OnMouseWheel(int pos)
     int x, y;
     glfwGetMousePos(&x, &y);
     
-    // we use a threshold of 2 in below tests to reduce sensitivity
+    // we use wheelsens in below tests to reduce sensitivity
     if (pos + wheelsens < prevwheel) {
         ZoomInPos(x, y);
         prevwheel = pos;
@@ -193,9 +193,9 @@ static void InitEventHandlers()
     EM_ASM(
         var wheelpos = 0;
         function on_mouse_wheel(event) {
-            // Firefox sets event.detail, other browsers set event.wheelDelta with opposite sign,
-            // so set delta to a value between -1 and 1
-            var delta = Math.max(-1, Math.min(1, (event.detail || -event.wheelDelta)));
+            // set delta to a value between -1 and 1
+            // (old versions of Firefox use event.deltaY)
+            var delta = Math.max(-1, Math.min(1, (event.detail || -event.wheelDelta || -event.deltaY)));
             wheelpos += delta;
             _OnMouseWheel(wheelpos);
             return false;
@@ -1564,7 +1564,6 @@ void DoMenuItem(const char* id)
     if (item == "help_formats")  StopAndHelp("/Help/formats.html"); else
     if (item == "help_bounded")  StopAndHelp("/Help/bounded.html"); else
     if (item == "help_problems") StopAndHelp("/Help/problems.html"); else
-    if (item == "help_changes")  StopAndHelp("/Help/changes.html"); else
     if (item == "help_credits")  StopAndHelp("/Help/credits.html"); else
     if (item == "help_about")    StopAndHelp("/Help/about.html"); else
     
@@ -1963,7 +1962,7 @@ static void DoFrame()
 
 int EMSCRIPTEN_KEEPALIVE main()
 {
-    SetMessage("This is Golly 4.2 for the web (copyright 2005-2022 The Golly Gang).");
+    SetMessage("This is Golly 4.2.1 for the web (copyright 2005-2022 The Golly Gang).");
     InitPaths();                // init tempdir, prefsfile, etc
     MAX_MAG = 5;                // maximum cell size = 32x32
     maxhashmem = 300;           // enough for caterpillar
