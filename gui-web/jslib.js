@@ -382,14 +382,13 @@ jsDownloadFile: function(urlptr, filepathptr) {
     // DEBUG: Module.printErr('URL: '+url+' FILE: '+filepath);
 
     // prefix url with http://www.corsproxy.com/ so we can get file from another domain
-    // (note that we assume url starts with "http://")
-    url = 'http://www.corsproxy.com/' + url.substring(7);
+    // (no longer works!!!)
+    // url = 'http://www.corsproxy.com/' + url.substring(7);
 
     var xhr = new XMLHttpRequest();
     if (xhr) {
         // first send a request to get the file's size
-        /* doesn't work!!! -- get error 400 (bad request) probably because corsproxy.com
-           only supports GET requests
+        /* doesn't work!!!???
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
                 if (xhr.status == 200) {

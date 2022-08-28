@@ -4,6 +4,7 @@ import os
 from os.path import join, isfile
 
 def walkdir(dir):
+    result = ""
     for item in sorted(os.listdir(dir)):
         fullpath = join(dir, item)
         if isfile(fullpath):
@@ -14,10 +15,14 @@ def walkdir(dir):
                 # ignore Lua scripts and zip files
                 pass
             else:
-                print "addfile(\"" + fullpath[2:] + "\");"
+                result += "addfile(\"" + fullpath[2:] + "\");\n"
         else:
-            print "dirStart(\"" + item + "\");"
-            walkdir(fullpath)
-            print "dirEnd();"
+            temp = walkdir(fullpath)
+            # temp will be empty if dir has no files
+            if len(temp) > 0:
+                result += "dirStart(\"" + item + "\");\n"
+                result += temp
+                result += "dirEnd();\n"
+    return result
 
-walkdir("../Patterns")
+print(walkdir("../Patterns"))
