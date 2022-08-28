@@ -28,6 +28,12 @@ if baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
 -- If rulestring contains "History" suffix, remove it and continue
 if baserule:sub(-7) == "History" then baserule = baserule:sub(1, #baserule-7) end
 
+-- If rulestring is "LifeV" then convert it to B3/S23V
+if baserule:lower() == "lifev" then baserule = "B3/S23V" end
+
+-- If rulestring is "LifeH" then convert it to B3/S23H
+if baserule:lower() == "lifeh" then baserule = "B3/S23H" end
+
 ruletext = [[@RULE SuperToStandard
 @TABLE
 n_states:26
