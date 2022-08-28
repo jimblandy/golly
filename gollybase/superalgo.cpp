@@ -1968,8 +1968,7 @@ void superalgo::setSymmetrical(int value, bool survival, int lindex, int normal)
    // check for homogeneous bits
    if (value == 0 || value == 8) {
       setTotalistic(value, survival) ;
-   }
-   else {
+   } else {
       // update the rulebits
       if (survival) {
          offset = survival_offset ;
@@ -2173,8 +2172,7 @@ void superalgo::createRuleMap(const char *birth, const char *survival) {
 
       // set the totalistic surivival rule
       setTotalisticRuleFromString(survival, true) ;
-   }
-   else {
+   } else {
       // set the non-totalistic birth rule
       setRuleFromString(birth, false) ;
 
@@ -2226,8 +2224,7 @@ int superalgo::addLetters(int count, int p) {
       if (negative && !bits) {
          canonrule[p] = 0 ;
          p-- ;
-      }
-      else {
+      } else {
          // check whether to output minus
          if (negative) {
             canonrule[p++] = '-' ;
@@ -2289,8 +2286,7 @@ void superalgo::createCanonicalName(const char *base64, const char *postfix) {
          }
          canonrule[p++] = base64_characters[k] ;
       }
-   }
-   else {
+   } else {
       if (strcmp(base64, DEFAULTRULE) == 0) {
          canonrule[p++] = 'L' ;
          canonrule[p++] = 'i' ;
@@ -2410,8 +2406,7 @@ bool superalgo::lettersValid(const char *part) {
          if (nindex > 3) {
             nindex = 6 - nindex ;
          }
-      }
-      else {
+      } else {
          // ignore minus
          if (c != '-') {
             // not valid if 0 or 8
@@ -2521,7 +2516,20 @@ const char *superalgo::setrule(const char *rulestring) {
    if (strncasecmp(r, "life", 4) == 0) {
       r += 4 ;
       if (r != end) {
-         return "Bad character found." ;
+         c = tolower(*r++);
+         if (c == 'h') {
+               neighbormask = HEXAGONAL ;
+               neighbors = 6 ;
+         } else {
+            if (c == 'v') {
+               neighbormask = VON_NEUMANN ;
+               neighbors = 4 ;
+            } else {
+               return "Bad character found." ;
+            }
+         }
+         if (r != end)
+            return "Bad character found." ;
       }
       bpos = (char*) DEFAULTB ;
       spos = (char*) DEFAULTS ;
