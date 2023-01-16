@@ -30,14 +30,14 @@
 #C [[ COLOR LABEL Orange LABELSIZE 40 LABELALPHA 0.70 ]]
 #C [[ LABEL 50 165 3 "MWSS Corderrake\nDIB 23 Sep 2006" ]]
 #C
-#C [[ COLOR LABEL Orange LABELSIZE 24 LABELALPHA 0.70 ]]
-#C [[ LABEL 330 60 3 "switch engine Heisenburp reaction\nDIB 21 Jun 2005" ]]
+#C [[ COLOR LABEL Orange LABELSIZE 40 LABELALPHA 0.70 ]]
+#C [[ LABEL 200 0 3 "backward Corderrake\nDIB 21 Jun 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
 #C [[ LABEL 0 205 3 "LWSS Corderrake\nDIB 19 Jun 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 36 LABELALPHA 0.70 ]]
-#C [[ LABEL 10 350 3 "HWSS Corderrake\nDIB 2005" ]]
+#C [[ LABEL 10 342 3 "HWSS Corderrake\nDIB 12 Jun 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
 #C [[ LABEL 365 280 3 "sidways Corderrake\nDIB 27 Jun 2005" ]]
@@ -76,7 +76,7 @@
 #C
 #C [[ LABELTRACK -1/4 -1/4 ]]
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
-#C [[ LABEL 748 390 3 "rhombic greyship\nNB 13 Apr 2005" ]]
+#C [[ LABEL 748 390 3 "rhombic greyship\nNB 13 Apr 2006" ]]
 #C
 #C
 #C [[ LABELTRACK FIXED ]]
@@ -90,7 +90,10 @@
 #C [[ LABEL 384 347 3 "period doubler\nusing 3 p6 bouncers\nDG Nov 2006" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 12 LABELALPHA 0.70 ]]
-#C [[ LABEL 500 350 3 "Period-156 glider gun\nJS 28 Oct 2004" ]]
+#C [[ LABEL 499 342 3 "p156 glider gun\nJS 28 Oct 2004" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 10 LABELALPHA 0.70 ]]
+#C [[ LABEL 510 365 3 "eater DH 25 Sep 1998" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 17 LABELALPHA 0.70 ]]
 #C [[ LABEL 428 380 3 "Beehive as double\nglider stream eater\nDG 1 Nov 2004" ]]
@@ -107,13 +110,13 @@
 #C [[ LABEL 85 500 3 "triangle greyship\nHH 4 Jul 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 36 LABELALPHA 0.70 ]]
-#C [[ LABEL 336 587 3 "wickstretcher\nHH 3 May 2005" ]]
+#C [[ LABEL 336 587 3 "wick ship\nHH 3 May 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 36 LABELALPHA 0.70 ]]
 #C [[ LABEL 530 600 3 "greyship with wick\nHH 15 Dec 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
-#C [[ LABEL 645 570 3 "c/2 wickstretcher\nJS 4 May 2005" ]]
+#C [[ LABEL 645 570 3 "c/2 wickstretcher\nJS/HH 4 May 2005" ]]
 #C
 #C
 #C [[ LABELTRACK -2/5 0 ]]
@@ -132,18 +135,18 @@
 #C [[ LABELTRACK -1/4 0 ]]
 
 #C [[ COLOR LABEL Orange LABELSIZE 14 LABELALPHA 0.70 ]]
-#C [[ LABEL 620 460 3 "extensible\ngreyship\nHH 24 Mar 2006" ]]
+#C [[ LABEL 620 460 3 "c/4 greyship\nHH 24 Mar 2006" ]]
 #C
 #C
 #C [[ LABELTRACK 0 -1/2 ]]
-#C [[ COLOR LABEL Orange LABELSIZE 12 LABELALPHA 0.70 ]]
-#C [[ LABEL 782 490 3 "L/M/HWSS JHC 1970" ]]
+#C [[ COLOR LABEL Orange LABELSIZE 10 LABELALPHA 0.70 ]]
+#C [[ LABEL 793 490 3 "L/M/HWSS\nJHC 1970" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
-#C [[ LABEL 845 460 3 "pi ship AH 11 May 1994" ]]
+#C [[ LABEL 846 460 3 "pi ship AH/HH 11 May 1994" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
-#C [[ LABEL 755 620 3 "c/2 wickstretcher\nJS/HH 1 Jul 2005" ]]
+#C [[ LABEL 755 482 3 "c/2 wickstretcher\nJS/HH 1 Jul 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
 #C [[ LABEL 785 412 3 "p12 glide symmetric tagalong\nand p2 front end\nHH 28 Oct 2005" ]]
@@ -196,14 +199,20 @@
 #C [[ COLOR LABEL Orange LABELSIZE 17 LABELALPHA 0.70 ]]
 #C [[ LABEL 844 252 3 "anteater HH 4 Aug 2005" ]]
 #C
+#C [[ COLOR LABEL Orange LABELSIZE 12 LABELALPHA 0.70 ]]
+#C [[ LABEL 846 320 3 "crab tubstretcher\nNB 5 Aug 2005" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 12 LABELALPHA 0.70 ]]
+#C [[ LABEL 818 385 3 "tubeater\nHH 10 Nov 2004" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 36 LABELALPHA 0.70 ]]
+#C [[ LABEL 1033 320 3 "antstretcher/tubstretcher\nNB 7 Jan 2006" ]]
+#C
 #C [[ COLOR LABEL Orange LABELSIZE 14 LABELALPHA 0.70 ]]
-#C [[ LABEL 833 340 3 "c/4 diagonal\nwaveguide\nNB 2006" ]]
+#C [[ LABEL 978 345 3 "tubeater NB 15 Sep 2005" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 36 LABELALPHA 0.70 ]]
-#C [[ LABEL 1030 320 3 "antstretcher/tubstretcher\nNB 2006" ]]
-#C
-#C [[ COLOR LABEL Orange LABELSIZE 36 LABELALPHA 0.70 ]]
-#C [[ LABEL 1015 410 3 "modular c/4 wick spaceship\nNB 21 Mar 2006" ]]
+#C [[ LABEL 1020 410 3 "modular c/4 waveguide ship\nNB/HH 21 Mar 2006" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 8 LABELALPHA 0.70 ]]
 #C [[ LABEL 880 500 3 "Swan\ntubstretcher\nNE 20 Feb 1996" ]]
@@ -211,19 +220,19 @@
 #C [[ COLOR LABEL Orange LABELSIZE 10 LABELALPHA 0.70 ]]
 #C [[ LABEL 848 496 3 "Orion 2\nJS May 1999" ]]
 #C
-#C [[ COLOR LABEL Orange LABELSIZE 17 LABELALPHA 0.70 ]]
-#C [[ LABEL 880 565 3 "crab tubstretcher\nNB Aug 2005" ]]
-#C
-#C [[ COLOR LABEL Orange LABELSIZE 12 LABELALPHA 0.70 ]]
-#C [[ LABEL 946 486 3 "growing spaceship\nNB 12 Aug 2006" ]]
+#C [[ COLOR LABEL Orange LABELSIZE 14 LABELALPHA 0.70 ]]
+#C [[ LABEL 880 563 3 "crab tubstretcher\nNB 5 Aug 2005" ]]
 #C
 #C
 #C [[ LABELTRACK 1/5 -1/5 ]]
 #C [[ COLOR LABEL Orange LABELSIZE 14 LABELALPHA 0.70 ]]
-#C [[ LABEL 880 272 3 "309P5H1V1\nNB 15 Jul 2006" ]]
+#C [[ LABEL 874 269 3 "309P5H1V1\nNB 15 Jul 2006" ]]
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 12 LABELALPHA 0.70 ]]
 #C [[ LABEL 856 365 3 "67P5H1V1\nNB Jul 2006" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 10 LABELALPHA 0.70 ]]
+#C [[ LABEL 935 497 3 "c/5 double tubeater\nNB 17 Jul 2006" ]]
 #C
 #C
 #C [[ LABELTRACK 1/6 -1/6 ]]
@@ -240,6 +249,15 @@
 #C
 #C [[ COLOR LABEL Orange LABELSIZE 20 LABELALPHA 0.70 ]]
 #C [[ LABEL 890 583 3 "p256 gun\nDJB 26 Sep 1995" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 8 LABELALPHA 0.70 ]]
+#C [[ LABEL 878 598 3 "p8 bouncer\nNE 16 Sep 1998" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 8 LABELALPHA 0.70 ]]
+#C [[ LABEL 934 615 3 "tub-with-tail\neater" ]]
+#C
+#C [[ COLOR LABEL Orange LABELSIZE 8 LABELALPHA 0.70 ]]
+#C [[ LABEL 964 565 3 "long bookend\neater\nDH 1 Nov 1998" ]]
 #C
 #C
 #C [[ LABELTRACK 1/4 0 ]]
