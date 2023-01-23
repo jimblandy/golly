@@ -2516,7 +2516,7 @@ const char *superalgo::setrule(const char *rulestring) {
    if (strncasecmp(r, "life", 4) == 0) {
       r += 4 ;
       if (r != end) {
-         c = tolower(*r++);
+         c = (char)tolower(*r++);
          if (c == 'h') {
                neighbormask = HEXAGONAL ;
                neighbors = 6 ;
