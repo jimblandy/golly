@@ -2880,7 +2880,7 @@ const char *superalgo::setrule(const char *rulestring) {
    }
 
    // save the canonical rule name
-   if (strcmp(bpos, DEFAULTB) == 0 && strcmp(spos, DEFAULTS) == 0) {
+   if (strcmp(bpos, DEFAULTB) == 0 && strcmp(spos, DEFAULTS) == 0 && neighbormask == MOORE) {
       createCanonicalName(DEFAULTRULE, postfix) ;
    } else {
       createCanonicalName(bpos, postfix) ;
