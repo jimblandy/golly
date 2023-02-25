@@ -1,0 +1,9 @@
+#N single-cell-slow-ship.rle
+#O "gameoflifemaniac" and "blah", 31 May 2020
+#C In this non-isotropic B0 rule, a single cell will translate to the right at a
+#C a rate of one grid space per 714 generations.
+#C As of 2023, this is the current record holder for the slowest spaceship in
+#C a 2-state, range-1 rule with only one cell.
+#C Reference: https://conwaylife.com/forums/viewtopic.php?f=11&t=3089&p=98128#p98128
+x = 1, y = 1, rule = MAPhhPAmAASJAQAQgAACQCAAAEAAACAABEACAAEAAAAAAAAAQAAEAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+o!
