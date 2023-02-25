@@ -3,13 +3,14 @@
 #C     The following is a spaceship which moves orthogonally with a
 #C displacement of four cells every 273 954 generations, or
 #C approximately one cell every 68488.5 generations.
-#C This makes this spaceship the slowest known spaceship as of 2021,
-#C excluding spaceships made with universal construction technology,
-#C rules with adjustable-speed spaceship families, or custom rules
-#C specifically created to harbor slow spaceships.
+#C This makes this spaceship the slowest known spaceship as of
+#C February 2023, excluding spaceships made with universal construction
+#C technology, rules with adjustable-speed spaceship families, or
+#C custom rules specifically created to harbor slow spaceships.
 #C
-#C Reference:
+#C References:
 #C   https://conwaylife.com/forums/viewtopic.php?p=69941#p69941
+#C   https://conwaylife.com/forums/viewtopic.php?p=150128#p150128
 x = 100, y = 100, rule = R45,C2,S2884-4922,B2500-4973
 40b20o$36b9o10b9o$34b7o5b8o5b7o$32b6o6b12o6b6o$30b6o6b16o6b6o$28b6o5b
 22o5b6o$27b5o5b26o5b5o$25b6o3b32o3b6o$24b5o4b34o4b5o$22b6o3b38o3b6o$

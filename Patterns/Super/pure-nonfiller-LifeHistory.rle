@@ -9,7 +9,7 @@
 #C In other words, it's a 2-state pattern that, run in LifeHistory,
 #C   results in every cell eventually becoming blue state-2 forever.
 #C
-#C As of late 2021, this pattern is the pure nonfiller with the
+#C As of early 2023, this pattern is the pure nonfiller with the
 #C   smallest known bounding box.
 #C Reference:
 #C   https://conwaylife.com/forums/viewtopic.php?p=135872#p135872

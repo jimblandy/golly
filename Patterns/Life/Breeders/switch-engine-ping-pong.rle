@@ -3,7 +3,7 @@
 #C For several years this 23-cell pattern was the smallest known
 #C   pattern to exhibit quadratic population growth. In early 2022
 #C   a series of new discoveries with 22, 21, and 20 cells improved
-#C   on this record. The record holder as of August 2022 is
+#C   on this record. The record holder as of February 2023 is
 #C   20-cell-quadratic-growth.rle, also included in this folder.
 #C https://conwaylife.com/wiki/Switch_engine_ping-pong
 x = 210515, y = 183739, rule = B3/S23

@@ -7,7 +7,7 @@
 #C  the minimum of 14, and also for true period guns above p61
 #C  -- the period of 'true' guns matches the period of the output,
 #C  unlike pseudo-period guns such as this example.  As of this
-#C  writing [September 2006] true guns are unknown for 36 periods.
+#C  writing [February 2023] true guns are unknown for 16 periods.
 #C It is quite possible that true guns exist for all these periods,
 #C  but current search programs are unable to perform exhaustive
 #C  searches for oscillators at anywhere near the periods neede to
@@ -18,6 +18,9 @@
 #C  can be used.  See p97307852711.rle in the Oscillators folder,
 #C  which is trivial to convert to a prime-period gun.
 #C P34 traffic-light eater from Jason Summers' "jslife" collection.
+#C
+#C Reference:
+#C   https://conwaylife.com/wiki/Gun#True-period_guns
 x = 243, y = 157, rule = B3/S23
 185boboo$183b3obobbo9bo$182bo4boboo7b3o$178boobbooboobo8bo24bo$177bob
 3o3bobbo8boo22bobo$155boo7bo12bo4boobboboo18bo12bob3o$154bobo7b3o9boob
