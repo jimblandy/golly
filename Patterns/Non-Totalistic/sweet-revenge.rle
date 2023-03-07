@@ -1,0 +1,8 @@
+#N sweet-revenge.rle
+#O Oscar Cunningham, 19 October 2020
+#C Changing the rule to B3/S23 reveals the glider to be perfectly aligned.
+#C Reference:
+#C https://discord.com/channels/357922255553953794/370571046971244545/767766239891816519
+#C [[ GPS 10 ]]
+x = 13, y = 14, rule = B2cin3aejkq4j5-eknr6k7c/S12cei3-aciy4aiknqrz5cq6a7e
+bo$2bo$3o8$9b2o$9bo$10b3o$12bo!
