@@ -5,8 +5,8 @@
 #include "lifealgo.h"
 #include <cmath>
 
-cont int MAX_MAG = 4 ;   // default maximum cell size is 2^4
-cont int MIN_MAG = -1048576 ; // set some crazy high limit
+int MAX_MAG = 4 ;   // default maximum cell size is 2^4
+int MIN_MAG = -1048576 ; // set some crazy high limit
 
 using namespace std ;
 
