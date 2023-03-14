@@ -5,7 +5,8 @@
 #include "lifealgo.h"
 #include <cmath>
 
-int MAX_MAG = 4 ;   // default maximum cell size is 2^4
+cont int MAX_MAG = 4 ;   // default maximum cell size is 2^4
+cont int MIN_MAG = -1048576 ; // set some crazy high limit
 
 using namespace std ;
 
@@ -20,6 +21,14 @@ void viewport::init() {
    y0f = 0 ;
    xymf = 0 ;
 }
+void viewport::setmag(int magarg) {
+   if (magarg >= MAX_MAG)
+      magarg = MAX_MAG ;
+   else if (magarg < MIN_MAG)
+      magarg = MIN_MAG ;
+   mag = magarg ;
+}
+
 void viewport::zoom() {
    if (mag >= MAX_MAG)
       return ;
@@ -53,10 +62,14 @@ void viewport::zoom(int xx, int yy) {
    }
 }
 void viewport::unzoom() {
+   if (mag <= MIN_MAG)
+      return ;
    mag-- ;
    reposition() ;
 }
 void viewport::unzoom(int xx, int yy) {
+   if (mag <= MIN_MAG)
+      return ;
    pair<bigint, bigint> oldpos = at(xx, yy);    // save cell pos for use below
    mag-- ;
    int x2c = xx * 2 - getxmax() ;
@@ -197,7 +210,7 @@ void viewport::setpositionmag(const bigint &xarg, const bigint &yarg,
                               int magarg) {
    x = xarg ;
    y = yarg ;
-   mag = magarg ;
+   setmag(magarg) ;
    reposition() ;
 }
 /*
@@ -207,7 +220,7 @@ void viewport::setpositionmag(const bigint &xarg, const bigint &yarg,
 void viewport::setpositionmag(const bigint &xmin, const bigint &xmax,
                               const bigint &ymin, const bigint &ymax,
                               int magarg) {
-   mag = magarg ;
+   setmag(magarg) ;
    x = xmax ;
    x += xmin ;
    x += 1 ;

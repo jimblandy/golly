@@ -34,7 +34,7 @@ public:
    void resize(int newwidth, int newheight) ;
    void move(int dx, int dy) ;   // dx and dy are given in pixels
    int getmag() const { return mag ; }
-   void setmag(int magarg) { mag = magarg ; reposition() ; }
+   void setmag(int magarg) ;
    void setpositionmag(const bigint &xarg, const bigint &yarg, int magarg) ;
    void setpositionmag(const bigint &xlo, const bigint &xhi,
                        const bigint &ylo, const bigint &yhi, int magarg) ;
