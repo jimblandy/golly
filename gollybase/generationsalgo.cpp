@@ -860,6 +860,10 @@ const char *generationsalgo::setrule(const char *rulestring) {
          switch (c) {
          // birth
          case 'b':
+	      if (slashpos2) {
+			// b in state part
+			return "B not valid after second slash." ;
+		}
             if (bpos) {
                // multiple b found
                return "Only one B allowed." ;
@@ -871,6 +875,10 @@ const char *generationsalgo::setrule(const char *rulestring) {
    
          // survival
          case 's':
+		if (slashpos2) {
+			// s in state part
+			return "S not valid after second slash." ;
+		}
             if (spos) {
                // multiple s found
                return "Only one S allowed." ;
