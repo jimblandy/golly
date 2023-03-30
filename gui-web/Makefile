@@ -116,7 +116,7 @@ OBJECTS = \
 CFLAGS = -Izlib -Wall -Wno-deprecated-non-prototype -Wno-implicit-function-declaration -O2
 
 CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip \
-    -DVERSION=4.2.1 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -Wno-deprecated \
+    -DVERSION=4.3b1 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -Wno-deprecated \
     -Wno-unused-but-set-variable -O2
 
 TARGET = golly.html
