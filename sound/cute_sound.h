@@ -2293,7 +2293,12 @@ static void cs_position(cs_context_t* ctx, int* byte_to_lock, int* bytes_to_writ
 #else
 	HRESULT hr = ctx->buffer->lpVtbl->GetCurrentPosition(ctx->buffer, &play_cursor, &write_cursor);
 #endif
-	CUTE_SOUND_ASSERT(hr == DS_OK);
+	// AKT: CUTE_SOUND_ASSERT(hr == DS_OK);
+	// avoid possible crash on Windows if an audio device is disconnected
+	if (hr != DS_OK) {
+	    *bytes_to_write = 0; // so cs_mix won't attempt to write anything
+	    return;
+	}
 
 	DWORD lock = (ctx->running_index * ctx->bps) % ctx->buffer_size;
 	DWORD target_cursor = (write_cursor + ctx->latency_samples * ctx->bps);
