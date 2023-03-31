@@ -18,6 +18,7 @@
 static const char *DEFAULTRULE = "R1,C0,M0,S2..3,B3..3,NM";
 
 #define MAXRANGE 500
+#define MAXGAUSSIANRANGE 50
 #define DEFAULTSIZE 400     // must be >= 2
 
 // maximum number of columns in a cell's neighborhood (used in fast_Moore)
@@ -3579,6 +3580,11 @@ const char *ltlalgo::setrule(const char *s)
         }
     }
     
+    // Gaussian has a much smaller maximum range
+    if (n == 'G') {
+	if (r > MAXGAUSSIANRANGE) return "R value is too big";
+    }
+
     // compute neighborhood size without middle cell and populate tshape for relevant neighborhoods
     int tshape[2 * MAXRANGE + 1];
     memset(tshape, 0, (2 * MAXRANGE + 1) * sizeof(int));
