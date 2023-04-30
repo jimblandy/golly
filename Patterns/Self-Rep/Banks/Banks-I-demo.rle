@@ -22,7 +22,7 @@
 #
 # See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
 # 
-# (Addendum in 12 May 2022: in modern isotropic non-totalistic notation,
+# (Addendum on 12 May 2022: in modern isotropic non-totalistic notation,
 # this rule is expressed as B3e4ejr5cinqy6-ei78/S012-e3-ajk4-akqw5-ajk6-e78.
 # See https://conwaylife.com/wiki/OCA:Banks-I for more information.)
 x = 75, y = 123, rule = Banks-I

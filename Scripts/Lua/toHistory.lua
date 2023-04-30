@@ -5,6 +5,7 @@
 -- Replace 2k + 1-> 1 and 2k -> 0
 -- Preserves step and generation count
 -- v1.1: skip the SuperToHistory conversion unless the current name has a "Super" suffix
+-- v1.2: better error-checking and recovery by GUYTU6J, 30 April 2023
 
 local g = golly()
 
@@ -48,10 +49,6 @@ local function CreateRule()
     end
 end
 
-local function tryrule()
-    g.setrule(baserule.."History"..suffix)
-end
-
 -- deal with bounded-universe syntax appropriately
 suffix = ""
 baserule = rule
@@ -62,7 +59,9 @@ if ind then
 end
 
 -- No effect if the current rule ends with "History"
-if algo == "Super" and baserule:sub(-7) == "History" then g.exit("The current rule is already a [Rule]History rule.") end
+if algo == "Super" and baserule:sub(-7) == "History" then
+    g.exit("The current rule is already a [Rule]History rule.")
+end
 
 step = g.getstep()
 -- If rulestring contains "Super" suffix, remove it and continue
@@ -73,7 +72,11 @@ if algo == "Super" and baserule:sub(-5) == "Super" then
     g.run(1)
     g.setgen("-1")
 end
+
 -- attempt to set the new History rule to see if it is valid
+local function tryrule()
+    g.setrule(baserule.."History"..suffix)
+end
 local status, err = pcall(tryrule)
 if err then
     g.note("Conversion failed. This '"..baserule.."' rule is not supported by the Super algo.\n"
