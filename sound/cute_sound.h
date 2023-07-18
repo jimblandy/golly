@@ -625,7 +625,8 @@ cs_plugin_id_t cs_add_plugin(cs_context_t* ctx, const cs_plugin_interface_t* plu
 
 	#include <SDL2/SDL.h>
 	#ifndef _WIN32
-		#include <alloca.h>
+		// AKT: causes compilation error on FreeBSD
+		// #include <alloca.h>
 	#endif
 
 #else
