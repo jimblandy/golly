@@ -2472,10 +2472,12 @@ void UpdateCurrentColors()
         currlayer->cellg[0] = ad->algog[0];
         currlayer->cellb[0] = ad->algob[0];
     } else {
-        // the Super algo supports two rule families: Super and History
+        // the Super algo supports three rule families: Super, History and Investigator
         // the History default colors start at index 26 in the list
+	  // the Investigator default colors start at index 33 in the list
         int o = 0;
-        if (strcmp(ad->algoName, "Super") == 0 && rulename.EndsWith("History")) o = 26;
+        if (strcmp(ad->algoName, "Super") == 0 && rulename.rfind("History") != std::string::npos) o = 26;
+        if (strcmp(ad->algoName, "Super") == 0 && rulename.rfind("Investigator") != std::string::npos) o = 33;
 
         for (int n = 0; n <= maxstate; n++) {
             currlayer->cellr[n] = ad->algor[n + o];

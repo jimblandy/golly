@@ -6,7 +6,7 @@
 Super supports the same set of rules as
 <a href="QuickLife.html">QuickLife</a> (excluding Wolfram) and adds history and label states.
 
-The Super algorithm currently supports two rulename suffixes, "History" and "Super".
+The Super algorithm currently supports three rulename suffixes, "History", "Super" and "Investigator".
 
 <h2>History mode</h2>
 <p>A rule specific to Conway's Life, "LifeHistory", was added along with Golly 2.0, as soon as multistate rules were supported.
@@ -138,10 +138,14 @@ the new ON cell will be created in the lowest no-trail state, state 13.  A simil
 <tr><td>25</td><td>ON no-trail #7</td><td>red-magenta</td><td style="background-color:rgb(255, 0, 127);"></td><td>Patterns in this state leave no trail</td></tr>
 </table>
 
+<h2>Investigator mode</h2>
+<p>TBD</p>
+
 <h2>Changing default colors</h2>
 <p>The default colors for the Super algorithm can be changed by opening Preferencess > Colors and switching to the Super algorithm.
-The colors for Super rules will be states 0 to 25.  To allow the Super algo to support two different color schemes,
-default History colors are defined as states 26 to 32, so these colors can be changed independently of states 0 to 6.</p>
+To allow the Super algo to support different color schemes for each of the three rule families,
+the default colors for Super rules will be states 0 to 25, the default colors for History rules will be states 26 to 32, and the default colors for
+Investigator rules will be states 33 to 53.
 
 <h2>Conversion scripts</h2>
 <p>Four conversion scripts are included in Golly's Scripts/Lua folder:  <b>toSuper.lua</b>, <b>toHistory.lua</b>, <b>toStandard.lua</b>,

@@ -26,6 +26,12 @@ public:
       VON_NEUMANN = 0x0ba    // 4 orthogonal neighbors
    } ;
 
+   enum rule_types {
+	HISTORY = 0,
+	SUPER = 1,
+	INVESTIGATOR = 2
+   } ;
+   
    bool isHexagonal() const { return neighbormask == HEXAGONAL ; }
    bool isVonNeumann() const { return neighbormask == VON_NEUMANN ; }
 
@@ -46,7 +52,7 @@ private:
    const int *rule_neighborhoods[4] ; // isotropic neighborhoods per neighbor count
    char rule3x3[ALL3X3] ;             // all 3x3 cell mappings 012345678->4'
    const char *base64_characters ;    // base 64 encoding characters
-   bool is_history ;                  // whether rule is [R]History (true) or [R]Super (false)
+   rule_types rule_type ;             // whether the rule is [R]History, [R]Super or [R]Investigator
 
    void initRule() ;
    void setTotalistic(int value, bool survival) ;

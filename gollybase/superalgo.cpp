@@ -35,6 +35,10 @@ static const int superStates = 26 ;
 static const char *HISTORYPOSTFIX = "History" ;
 static const int historyStates = 7 ;
 
+// postfix and number of states for [R]Investigator rules
+static const char *INVESTIGATORPOSTFIX = "Investigator" ;
+static const int investigatorStates = 21 ;
+
 // bit masks for [R]Super neighboring cell states
 static const int aliveWith14 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) | (1 << 9) | (1 << 11) | (1 << 13) | (1 << 14) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
 static const int aliveWith14or18 = aliveWith14 | (1 << 18) ;
@@ -46,6 +50,14 @@ static const int alive1or5or7or9or11 = (1 << 1) | (1 << 5) | (1 << 7) | (1 << 9)
 static const int alive13or15or17or19or21or23or25 = (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
 static const int alive9or11 = (1 << 9) | (1 << 11) ;
 static const int alive1or3or5or13or15or17or19or21or23or25 = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 13) | (1 << 15) | (1 << 17) | (1 << 19) | (1 << 21) | (1 << 23) | (1 << 25) ;
+
+// bit masks for [R]Investigator neighboring cell states
+static const int deadForcer = (1 << 2) | (1 << 3) | (1 << 6) | (1 << 7) | (1 << 14) | (1 << 16) ;
+static const int birthForcer = (1 << 8) | (1 << 9) | (1 << 12) | (1 << 13) | (1 << 14) ;
+static const int requireState1 = (1 << 15) | (1 << 16) ;
+static const int treatIfDead = (1 << 1) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 8) | (1 << 10) | (1 << 12) | (1 << 15) |  (1 << 16) | (1 << 17) | (1 << 19) ;
+static const int treatIfAlive = treatIfDead ^ ((1 << 17) | (1 << 18) | (1 << 19) | (1 << 20)) ;
+static const state nextState[] = {0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 11, 10, 13, 12, 14, 15, 16, 17, 18, 20, 19};
 
 // XPM data for the 31x31 icons
 static const char* super31x31[] = {
@@ -1521,208 +1533,242 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
    }
 
    // check rule type
-   if (is_history) {
-      // [R]History
-      // handle state 6
-      process = true ;
-      if (typeMask & (1 << 6)) {
-         process = false ;
-         switch (c) {
-            case 1:
-               result = 2 ;
-               break ;
-
-            case 3:
-            case 5:
-               result = 4 ;
-               break ;
-
-            default:
-            process = true ;
-            break ;
-         }
-      }
-
-      // check whether state still needs processing
-      if (process) {
-         // create lookup index for next generation
-         int index = ((nw & 1) << 8) | ((n & 1) << 7) | ((ne & 1) << 6)
-            | ((w & 1) << 5) | ((c & 1) << 4) | ((e & 1) << 3)
-            | ((sw & 1) << 2) | ((s & 1) << 1) | (se & 1) ;
-
-         // get cell state
-         if (lookup[index]) {
-            // cell alive
-            // was cell alive in this generation
-            if ((c & 1) == 0) {
-               // cell was dead so has been born now
-               switch (c) {
-                  case 4:
-                     result = 3 ;
-                     break ;
-   
-                  case 6:
-                     break ;
-   
-                  default:
-                     result = 1 ;
-               }
-            }
-         } else {
-            // cell dead
-            // was cell alive in this generation
-            if ((c & 1) != 0) {
-               // cell was alive so has died
-               if (c == 5) {
-                  result = 4 ;
-               } else {
-                  result = c + 1 ;
-               }
-            }
-         }
-      }
-   } else {
-      // [R]Super
-      // handle state 6
-      process = true ;
-      if (typeMask & (1 << 6)) {
-         process = false ;
-         if (c == 7 || c == 8 || c >= 13) {
-            result = 0 ;
-         } else {
+   switch (rule_type) {
+	case HISTORY:
+         // [R]History
+         // handle state 6
+         process = true ;
+         if (typeMask & (1 << 6)) {
+            process = false ;
             switch (c) {
                case 1:
                   result = 2 ;
                   break ;
-               
+   
                case 3:
                case 5:
                   result = 4 ;
                   break ;
-               
-               case 9:
-                  result = 10 ;
-                  break ;
-   
-               case 11:
-                  result = 12 ;
-                  break ;
    
                default:
-                  // not handled here so process below
-                  process = true ;
-                  break ;
+               process = true ;
+               break ;
             }
          }
-      }
-
-      // check whether state still needs processing
-      if (process) {
-         // create lookup index for next generation
-         int index = ((nw & 1) << 8) | ((n & 1) << 7) | ((ne & 1) << 6)
-            | ((w & 1) << 5) | ((c & 1) << 4) | ((e & 1) << 3)
-            | ((sw & 1) << 2) | ((s & 1) << 1) | (se & 1) ;
-
-         // get cell state
-         if (lookup[index]) {
-            // cell alive
-            // was cell alive in this generation
-            if ((c & 1) == 0) {
-               // cell was dead so has been born now
-               switch (c) {
-                  case 4:
-                     result = 3 ;
-                     break ;
    
-                  case 6:
-                     break ;
+         // check whether state still needs processing
+         if (process) {
+            // create lookup index for next generation
+            int index = ((nw & 1) << 8) | ((n & 1) << 7) | ((ne & 1) << 6)
+               | ((w & 1) << 5) | ((c & 1) << 4) | ((e & 1) << 3)
+               | ((sw & 1) << 2) | ((s & 1) << 1) | (se & 1) ;
    
-                  case 8:
-                     result = 7 ;
-                     break ;
-   
-                  default:
-                     result = 1 ;
-                     calc = typeMask & alive9to25 ;
-                     // check if the neighbors are of just one state
-                     if (((typeMask & alive1or3or5or7) == 0) && (calc && ((calc & (calc - 1)) == 0))) {
-                        // the bit index gives the cell state
-                        firstbitset(result, calc) ;
-                     } else {
-                        calc = typeMask & alive13or15or17or19or21or23or25 ;
-                        if ((typeMask & (1 << 3)) && (calc && (calc & (calc - 1)) == 0) && ((typeMask & alive1or5or7or9or11) == 0)) {
-                           firstbitset(result, calc) ;
-                        } else {
-                           calc = typeMask & alive9or11 ;
-                           if ((typeMask & (1 << 7)) && (calc && (calc & (calc - 1)) == 0) && ((typeMask & alive1or3or5or13or15or17or19or21or23or25) == 0)) {
-                              firstbitset(result, calc) ;
-                           } else {
-                              calc = typeMask & alive7or13or15or17or19or21or23or25 ;
-                              if (calc && ((typeMask & alive1or3or5or9or11) == 0)) {
-                                 result = 13 ;
-                              }
-                           }
-                        }
-                     }
-                     break ;
+            // get cell state
+            if (lookup[index]) {
+               // cell alive
+               // was cell alive in this generation
+               if ((c & 1) == 0) {
+                  // cell was dead so has been born now
+                  switch (c) {
+                     case 4:
+                        result = 3 ;
+                        break ;
+      
+                     case 6:
+                        break ;
+      
+                     default:
+                        result = 1 ;
+                  }
                }
-            }
-         } else {
-            // cell dead
-            // was cell alive in this generation
-            if ((c & 1) != 0) {
-               // cell was alive so has died
-               if (c <= 11) {
+            } else {
+               // cell dead
+               // was cell alive in this generation
+               if ((c & 1) != 0) {
+                  // cell was alive so has died
                   if (c == 5) {
                      result = 4 ;
                   } else {
                      result = c + 1 ;
                   }
-               } else {
-                  result = 0 ;
+               }
+            }
+         }
+	   break ;
+
+	case SUPER:
+         // [R]Super
+         // handle state 6
+         process = true ;
+         if (typeMask & (1 << 6)) {
+            process = false ;
+            if (c == 7 || c == 8 || c >= 13) {
+               result = 0 ;
+            } else {
+               switch (c) {
+                  case 1:
+                     result = 2 ;
+                     break ;
+                  
+                  case 3:
+                  case 5:
+                     result = 4 ;
+                     break ;
+                  
+                  case 9:
+                     result = 10 ;
+                     break ;
+      
+                  case 11:
+                     result = 12 ;
+                     break ;
+      
+                  default:
+                     // not handled here so process below
+                     process = true ;
+                     break ;
+               }
+            }
+         }
+   
+         // check whether state still needs processing
+         if (process) {
+            // create lookup index for next generation
+            int index = ((nw & 1) << 8) | ((n & 1) << 7) | ((ne & 1) << 6)
+               | ((w & 1) << 5) | ((c & 1) << 4) | ((e & 1) << 3)
+               | ((sw & 1) << 2) | ((s & 1) << 1) | (se & 1) ;
+   
+            // get cell state
+            if (lookup[index]) {
+               // cell alive
+               // was cell alive in this generation
+               if ((c & 1) == 0) {
+                  // cell was dead so has been born now
+                  switch (c) {
+                     case 4:
+                        result = 3 ;
+                        break ;
+      
+                     case 6:
+                        break ;
+      
+                     case 8:
+                        result = 7 ;
+                        break ;
+      
+                     default:
+                        result = 1 ;
+                        calc = typeMask & alive9to25 ;
+                        // check if the neighbors are of just one state
+                        if (((typeMask & alive1or3or5or7) == 0) && (calc && ((calc & (calc - 1)) == 0))) {
+                           // the bit index gives the cell state
+                           firstbitset(result, calc) ;
+                        } else {
+                           calc = typeMask & alive13or15or17or19or21or23or25 ;
+                           if ((typeMask & (1 << 3)) && (calc && (calc & (calc - 1)) == 0) && ((typeMask & alive1or5or7or9or11) == 0)) {
+                              firstbitset(result, calc) ;
+                           } else {
+                              calc = typeMask & alive9or11 ;
+                              if ((typeMask & (1 << 7)) && (calc && (calc & (calc - 1)) == 0) && ((typeMask & alive1or3or5or13or15or17or19or21or23or25) == 0)) {
+                                 firstbitset(result, calc) ;
+                              } else {
+                                 calc = typeMask & alive7or13or15or17or19or21or23or25 ;
+                                 if (calc && ((typeMask & alive1or3or5or9or11) == 0)) {
+                                    result = 13 ;
+                                 }
+                              }
+                           }
+                        }
+                        break ;
+                  }
                }
             } else {
-               // cell is still dead
-               if (c == 14) {
-                  result = 0 ;
+               // cell dead
+               // was cell alive in this generation
+               if ((c & 1) != 0) {
+                  // cell was alive so has died
+                  if (c <= 11) {
+                     if (c == 5) {
+                        result = 4 ;
+                     } else {
+                        result = c + 1 ;
+                     }
+                  } else {
+                     result = 0 ;
+                  }
                } else {
-                  if (c > 14) {
-                     switch (c) {
-                        case 16:
-                           if ((typeMask & aliveWith14) != 0) {
-                              result = 14 ;
-                           }
-                           break ;
-   
-                        case 18:
-                           if ((typeMask & (1 << 22)) != 0) {
-                              result = 22 ;
-                           }
-                           break ;
-   
-                        case 20:
-                           if ((typeMask & (1 << 18)) != 0) {
-                              result = 18 ;
-                           }
-                           break ;
-   
-                        case 22:
-                           if ((typeMask & (1 << 20)) != 0) {
-                              result = 20 ;
-                           }
-                           break ;
-   
-                        case 24:
-                           if ((typeMask & aliveWith14or18) != 0) {
-                              result = 18 ;
-                           }
-                           break ;
+                  // cell is still dead
+                  if (c == 14) {
+                     result = 0 ;
+                  } else {
+                     if (c > 14) {
+                        switch (c) {
+                           case 16:
+                              if ((typeMask & aliveWith14) != 0) {
+                                 result = 14 ;
+                              }
+                              break ;
+      
+                           case 18:
+                              if ((typeMask & (1 << 22)) != 0) {
+                                 result = 22 ;
+                              }
+                              break ;
+      
+                           case 20:
+                              if ((typeMask & (1 << 18)) != 0) {
+                                 result = 18 ;
+                              }
+                              break ;
+      
+                           case 22:
+                              if ((typeMask & (1 << 20)) != 0) {
+                                 result = 20 ;
+                              }
+                              break ;
+      
+                           case 24:
+                              if ((typeMask & aliveWith14or18) != 0) {
+                                 result = 18 ;
+                              }
+                              break ;
+                        }
                      }
                   }
                }
             }
          }
-      }
+	   break ;
+
+      case INVESTIGATOR:
+         if (c >= 2) {
+            result = nextState[c] ;
+         } else {
+            // check for all cells dead
+            if (typeMask == 1 && c == 0) {
+               result = 0;
+            } else {
+               if (typeMask & (c ? deadForcer : birthForcer)) {
+                  result = 1 - c ;
+               } else {
+                  if (!c && (typeMask & requireState1) && !(typeMask & 2)) {
+                     result = 0 ;
+                  } else {
+                     calc = c ? treatIfAlive : treatIfDead ;
+                     result = lookup[(((calc >> nw) & 1) << 8) |
+                        (((calc >> n) & 1) << 7) |
+                        (((calc >> ne) & 1) << 6) |
+                        (((calc >> w) & 1) << 5) |
+                        (c << 4) |
+                        (((calc >> e) & 1) << 3) |
+                        (((calc >> sw) & 1) << 2) |
+                        (((calc >> s) & 1) << 1) |
+                        ((calc >> se) & 1)] ;
+                  }
+               }
+		}
+         }
+         break ;
    }
 
    // output new cell state
@@ -1735,8 +1781,9 @@ void superalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Super") ;
    ai.setAlgorithmCreator(&creator) ;
-   ai.minstates = superStates + historyStates ;
-   ai.maxstates = superStates + historyStates ;
+   ai.minstates = superStates + historyStates + investigatorStates ;
+   ai.maxstates = superStates + historyStates + investigatorStates ;
+
    // init default color scheme
    ai.defgradient = false ;             // use gradient
    ai.defr1 = 255 ;                     // start color = red
@@ -1745,7 +1792,7 @@ void superalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defr2 = 255 ;                     // end color = yellow
    ai.defg2 = 255 ;
    ai.defb2 = 0 ;
-   // if not using gradient then set all states to white
+
    // first 26 colors are for [R]Super rules
    ai.defr[0] = 48   ; ai.defg[0] = 48   ; ai.defb[0] = 48;
    ai.defr[1] = 0    ; ai.defg[1] = 255  ; ai.defb[1] = 0 ;
@@ -1773,6 +1820,7 @@ void superalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defr[23] = 0   ; ai.defg[23] = 255 ; ai.defb[23] = 127 ;
    ai.defr[24] = 1   ; ai.defg[24] = 1   ; ai.defb[24] = 1 ;
    ai.defr[25] = 255 ; ai.defg[25] = 0   ; ai.defb[25] = 127 ;
+
    // next 7 colors are for [R]History rules
    ai.defr[26] = 48   ; ai.defg[26] = 48   ; ai.defb[26] = 48;
    ai.defr[27] = 0    ; ai.defg[27] = 255  ; ai.defb[27] = 0 ;
@@ -1781,6 +1829,29 @@ void superalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defr[30] = 255  ; ai.defg[30] = 0    ; ai.defb[30] = 0 ;
    ai.defr[31] = 255  ; ai.defg[31] = 255  ; ai.defb[31] = 0 ;
    ai.defr[32] = 96   ; ai.defg[32] = 96   ; ai.defb[32] = 96 ;
+
+   // next 21 colors are for [R]Investigator rules
+   ai.defr[33] = 0    ; ai.defg[33] = 0    ; ai.defb[33] =  0 ;
+   ai.defr[34] = 0    ; ai.defg[34] = 236  ; ai.defb[34] =  91 ;
+   ai.defr[35] = 0    ; ai.defg[35] = 192  ; ai.defb[35] =  254 ;
+   ai.defr[36] = 254  ; ai.defg[36] = 0    ; ai.defb[36] =  0 ;
+   ai.defr[37] = 254  ; ai.defg[37] = 254  ; ai.defb[37] =  254 ;
+   ai.defr[38] = 75   ; ai.defg[38] = 75   ; ai.defb[38] =  75 ;
+   ai.defr[39] = 239  ; ai.defg[39] = 41   ; ai.defb[39] =  254 ;
+   ai.defr[40] = 64   ; ai.defg[40] = 0    ; ai.defb[40] =  128 ;
+   ai.defr[41] = 254  ; ai.defg[41] = 230  ; ai.defb[41] =  0 ;
+   ai.defr[42] = 150  ; ai.defg[42] = 128  ; ai.defb[42] =  0 ;
+   ai.defr[43] = 130  ; ai.defg[43] = 200  ; ai.defb[43] =  0 ;
+   ai.defr[44] = 0    ; ai.defg[44] = 120  ; ai.defb[44] =  40 ;
+   ai.defr[45] = 254  ; ai.defg[45] = 140  ; ai.defb[45] =  0 ;
+   ai.defr[46] = 140  ; ai.defg[46] = 70   ; ai.defb[46] =  0 ;
+   ai.defr[47] = 0    ; ai.defg[47] = 0    ; ai.defb[47] =  254 ;
+   ai.defr[48] = 192  ; ai.defg[48] = 192  ; ai.defb[48] =  192 ;
+   ai.defr[49] = 128  ; ai.defg[49] = 128  ; ai.defb[49] =  128 ;
+   ai.defr[50] = 254  ; ai.defg[50] = 112  ; ai.defb[50] =  140 ;
+   ai.defr[51] = 174  ; ai.defg[51] = 0    ; ai.defb[51] =  168 ;
+   ai.defr[52] = 0    ; ai.defg[52] = 152  ; ai.defb[52] =  127 ;
+   ai.defr[53] = 0    ; ai.defg[53] = 73   ; ai.defb[53] =  59 ;
 
    // init default icon data
    ai.defxpm7x7 = super7x7;
@@ -1866,7 +1937,7 @@ void superalgo::initRule() {
    neighbors = 8 ;
    totalistic = true ;
    using_map = false ;
-   is_history = false ;
+   rule_type = SUPER ;
 
    maxCellStates = superStates ;
 
@@ -2475,7 +2546,7 @@ const char *superalgo::setrule(const char *rulestring) {
    const char *postfix = NULL ;    // which postfix is being used
    char *bpos = 0 ;                // position of b
    char *spos = 0 ;                // position of s
-   bool history = false ;          // flag for [R]History rule
+   rule_types rule = SUPER ;       // rule type
 
    // initialize rule type
    initRule() ;
@@ -2491,16 +2562,24 @@ const char *superalgo::setrule(const char *rulestring) {
    if (postfixpos) {
       // [R]Super rule
       end = postfixpos ;
-      history = false ;
+      rule = SUPER ;
    } else {
       postfix = HISTORYPOSTFIX ;
       postfixpos = findPostfix(r, postfix) ;
       if (postfixpos) {
          // [R]History rule
          end = postfixpos ;
-         history = true ;
+	   rule = HISTORY ;
       } else {
-         return "Missing Super or History postfix." ;
+		postfix = INVESTIGATORPOSTFIX ;
+		postfixpos = findPostfix(r, postfix) ;
+		if (postfixpos) {
+			// [R]Investigator rule
+			end = postfixpos ;
+			rule = INVESTIGATOR ;
+		} else {
+			return "Missing Super, History or Investigator postfix." ;
+		}
       }
    }
 
@@ -2533,8 +2612,7 @@ const char *superalgo::setrule(const char *rulestring) {
       }
       bpos = (char*) DEFAULTB ;
       spos = (char*) DEFAULTS ;
-   }
-   else {
+   } else {
       // check for map
       if (strncasecmp(r, "map", 3) == 0) {
          // attempt to decode map
@@ -2592,8 +2670,7 @@ const char *superalgo::setrule(const char *rulestring) {
 
          // map looks valid
          using_map = true ;
-      }
-      else {
+      } else {
          // create lower case version of rule name without spaces
          while (r < end) {
             // get the next character and convert to lowercase
@@ -2696,15 +2773,13 @@ const char *superalgo::setrule(const char *rulestring) {
                      digit = int(charpos - valid_rule_letters) ;
                      if (digit > 8) {
                         totalistic = false ;
-                     }
-                     else {
+                     } else {
                         // update maximum digit found
                         if (digit > maxdigit) {
                            maxdigit = digit ;
                         }
                      }
-                  }
-                  else {
+                  } else {
                      return "Bad character found." ;
                   }
                }
@@ -2764,30 +2839,26 @@ const char *superalgo::setrule(const char *rulestring) {
                   bpos++ ;
                   *spos = 0 ;
                   spos++ ;
-               }
-               else {
+               } else {
                   // skip s and cut the string using b
                   spos++ ;
                   *bpos = 0 ;
                   bpos++ ;
                }
-            }
-            else {
+            } else {
                // just bpos
                if (bpos) {
                   bpos = t ;
                   removeChar(bpos, 'b') ;
                   spos = bpos + strlen(bpos) ;
-               }
-               else {
+               } else {
                   // just spos
                   spos = t ;
                   removeChar(spos, 's') ;
                   bpos = spos + strlen(spos) ;
                }
             }
-         }
-         else {
+         } else {
             // slash exists so set determine which part is b and which is s
             *slashpos = 0 ;
       
@@ -2798,8 +2869,7 @@ const char *superalgo::setrule(const char *rulestring) {
                   // birth then survival
                   bpos = t ;
                   spos = slashpos + 1 ;
-               }
-               else {
+               } else {
                   // survival then birth
                   bpos = slashpos + 1 ;
                   spos = t ;
@@ -2808,8 +2878,7 @@ const char *superalgo::setrule(const char *rulestring) {
                // remove b or s from rule parts
                removeChar(bpos, 'b') ;
                removeChar(spos, 's') ;
-            }
-            else {
+            } else {
                // no b or s so survival first
                spos = t ;
                bpos = slashpos + 1 ;
@@ -2859,8 +2928,7 @@ const char *superalgo::setrule(const char *rulestring) {
    if (using_map) {
       // generate the 3x3 map from the 512bit map
       createRuleMapFromMAP(bpos) ;
-   }
-   else {
+   } else {
       // generate the 3x3 map from the birth and survival rules
       createRuleMap(bpos, spos) ;
    }
@@ -2871,10 +2939,18 @@ const char *superalgo::setrule(const char *rulestring) {
       if (rule3x3[ALL3X3 - 1]) {
          setupB0Smax() ;
       } else {
-         if (history) {
-            return "History only supports B0 with Smax" ;
-         } else {
-            return "Super only supports B0 with Smax" ;
+	   switch (rule) {
+		case HISTORY:
+		   return "History only supports B0 with Smax" ;
+		   break ;
+
+	      case SUPER:
+               return "Super only supports B0 with Smax" ;
+		   break ;
+
+		case INVESTIGATOR:
+		   return "Investigator only supports B0 with Smax" ;
+		   break ;
          }
       }
    }
@@ -2887,12 +2963,20 @@ const char *superalgo::setrule(const char *rulestring) {
    }
 
    // setup number of states based on rule family
-   if (history) {
-      maxCellStates = historyStates ;
-   } else {
-      maxCellStates = superStates ;
+   switch (rule) {
+      case HISTORY:
+         maxCellStates = historyStates ;
+	   break ;
+
+	case SUPER:
+         maxCellStates = superStates ;
+	   break ;
+
+	case INVESTIGATOR:
+	   maxCellStates = investigatorStates ;
+	   break ;
    }
-   is_history = history ;
+   rule_type = rule ;
 
    // set grid_type
    if (neighbormask == HEXAGONAL)
