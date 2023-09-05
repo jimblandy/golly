@@ -22,11 +22,12 @@ void viewport::init() {
    xymf = 0 ;
 }
 void viewport::setmag(int magarg) {
-   if (magarg >= MAX_MAG)
+   if (magarg > MAX_MAG)
       magarg = MAX_MAG ;
    else if (magarg < MIN_MAG)
       magarg = MIN_MAG ;
    mag = magarg ;
+   reposition() ;
 }
 
 void viewport::zoom() {
@@ -210,8 +211,7 @@ void viewport::setpositionmag(const bigint &xarg, const bigint &yarg,
                               int magarg) {
    x = xarg ;
    y = yarg ;
-   setmag(magarg) ;
-   reposition() ;
+   setmag(magarg) ; // calls reposition()
 }
 /*
  *   This is only called by fit.  We find an x/y location that
@@ -220,7 +220,11 @@ void viewport::setpositionmag(const bigint &xarg, const bigint &yarg,
 void viewport::setpositionmag(const bigint &xmin, const bigint &xmax,
                               const bigint &ymin, const bigint &ymax,
                               int magarg) {
-   setmag(magarg) ;
+   if (magarg > MAX_MAG)
+      magarg = MAX_MAG ;
+   else if (magarg < MIN_MAG)
+      magarg = MIN_MAG ;
+   mag = magarg ;
    x = xmax ;
    x += xmin ;
    x += 1 ;
