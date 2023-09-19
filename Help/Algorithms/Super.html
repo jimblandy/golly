@@ -6,8 +6,9 @@
 Super supports the same set of rules as
 <a href="QuickLife.html">QuickLife</a> (excluding Wolfram) and adds history and label states.
 
-The Super algorithm currently supports three rulename suffixes, "History", "Super" and "Investigator".
+The Super algorithm currently supports three rulename suffixes, <a href="#History">History</a>, <a href="#Super">Super</a> and <a href="#Investigator">Investigator</a>.
 
+<a name="History"></a>
 <h2>History mode</h2>
 <p>A rule specific to Conway's Life, "LifeHistory", was added along with Golly 2.0, as soon as multistate rules were supported.
 It largely duplicated the functionality of a "HistoricalLife" rule included in a previous CA editor, MCell 4.20.</p>
@@ -63,6 +64,7 @@ behave radically differently from the base non-History version.  The other five 
 but can not make a pattern evolve essentially differently.  By contrast, in standard Conway's Life, scatterings of gray cells
 have been used to build extremely small guns, glider reflectors, and other types of signal circuitry.</p>
 
+<a name="Super"></a>
 <h2>Super mode</h2>
 <p>The "Super" rules were conceived as a superset of the History cell states, to be used in cases where -- for example -- two extra ON states
 and two extra OFF states are not enough to clearly annotate a very large or complex pattern.</p>
@@ -138,8 +140,35 @@ the new ON cell will be created in the lowest no-trail state, state 13.  A simil
 <tr><td>25</td><td>ON no-trail #7</td><td>red-magenta</td><td style="background-color:rgb(255, 0, 127);"></td><td>Patterns in this state leave no trail</td></tr>
 </table>
 
+<a name="Investigator"></a>
 <h2>Investigator mode</h2>
-<p>TBD</p>
+<p>The Investigator aglo has the following states:</p>
+
+<table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>&nbsp;&nbsp;&nbsp;</b></td><td><b>Description</b></td></tr>
+<tr><td>0</td><td>OFF</td><td>black</td><td style="background-color:rgb(0, 0, 0);"></td><td>default background OFF state</td></tr>
+<tr><td>1</td><td>ON</td><td>green</td><td style="background-color:rgb(0, 236, 91);"></td><td>default ON state</td></tr>
+<tr><td>2</td><td>killer ON</td><td>cyan</td><td style="background-color:rgb(0, 192, 254);"></td><td>turns off all adjacent state 1 cells, is treated as ON</td></tr>
+<tr><td>3</td><td>killer OFF</td><td>red</td><td style="background-color:rgb(254, 0, 0);"></td><td>turns off all adjacent state 1 cells, is treated as OFF, equivalent to [Rule]History state 6</td></tr>
+<tr><td>4</td><td>eternal ON</td><td>white</td><td style="background-color:rgb(254, 254, 254);"></td><td>is treated as ON</td></tr>
+<tr><td>5</td><td>eternal OFF</td><td>dark gray</td><td style="background-color:rgb(75, 75, 75);"></td><td>is treated as OFF</td></tr>
+<tr><td>6</td><td>P2 killer ON</td><td>magenta</td><td style="background-color:rgb(233, 41, 254);"></td><td>turns off all adjacent state 1 cells, is treated as on, changes into state 7 on next generation</td></tr>
+<tr><td>7</td><td>P2 killer OFF</td><td>dark purple</td><td style="background-color:rgb(64, 0, 128);"></td><td>turns off all adjacent state 1 cells, is treated as off, changes into state 6 on next generation</td></tr>
+<tr><td>8</td><td>egg OFF</td><td>yellow</td><td style="background-color:rgb(254, 230, 0);"></td><td>turns on all adjacent state 0 cells, is treated as ON</td></tr>
+<tr><td>9</td><td>egg ON</td><td>gold</td><td style="background-color:rgb(150, 128, 0);"></td><td>turns on all adjacent state 0 cells, is treated as OFF</td></tr>
+<tr><td>10</td><td>P2 ON</td><td>mid green</td><td style="background-color:rgb(130, 200, 0);"></td><td>is treated as ON, changes into state 11 on next generation</td></tr>
+<tr><td>11</td><td>P2 OFF</td><td>dark green</td><td style="background-color:rgb(0, 120, 40);"></td><td>is treated as OFF, changes into state 10 on next generation</td></tr>
+<tr><td>12</td><td>P2 egg ON</td><td>orange</td><td style="background-color:rgb(254, 140, 0);"></td><td>turns on all adjacent state 0 cells, is treated as ON, changes into state 13 on next generation</td></tr>
+<tr><td>13</td><td>P2 egg OFF</td><td>dark orange</td><td style="background-color:rgb(140, 70, 0);"></td><td>turns on all adjacent state 0 cells, is treated as OFF, changes into state 12 on next generation</td></tr>
+<tr><td>14</td><td>inverter</td><td>blue</td><td style="background-color:rgb(0, 0, 254);"></td><td>turns off all adjacent state 1 cells, turns on all adjacent state 0 cells</td></tr>
+<tr><td>15</td><td>catalyst</td><td>silver</td><td style="background-color:rgb(192, 192, 192);"></td><td>is treated as ON but requires state 1 cells to give birth</td></tr>
+<tr><td>16</td><td>catalyst killer</td><td>gray</td><td style="background-color:rgb(128, 128, 128);"></td><td>turns off all adjacent state 1 cells, is treated as ON but requires state 1 cells to give birth</td></tr>
+<tr><td>17</td><td>ON births</td><td>pink</td><td style="background-color:rgb(254, 112, 140);"></td><td>is treated as ON for births, is treated as OFF for deaths</td></tr>
+<tr><td>18</td><td>OFF births</td><td>dark magenta</td><td style="background-color:rgb(174, 0, 168);"></td><td>is treated as OFF for births, is treated as ON for deaths</td></tr>
+<tr><td>19</td><td>ON P2 births</td><td>dull cyan</td><td style="background-color:rgb(0, 152, 127);"></td><td>is treated as ON for births, is treated as OFF for deaths, changes into state 20 on next generation</td></tr>
+<tr><td>20</td><td>OFF P2 births</td><td>dark cyan</td><td style="background-color:rgb(0, 73, 59);"></td><td>is treated as OFF for births, is treated as ON for deaths, changes into state 19 on next generation</td></tr>
+</table>
+
+<p>State 2-5, 8-9 and 14-18 never change. States 6-7, 10-11, 12-13 and 19-20 always toggle.</p>
 
 <h2>Changing default colors</h2>
 <p>The default colors for the Super algorithm can be changed by opening Preferencess > Colors and switching to the Super algorithm.
