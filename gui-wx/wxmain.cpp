@@ -2383,13 +2383,17 @@ void MainFrame::CreateMenus()
     if (numpatterns > 0) {
         // set keyboard shortcut for most recent pattern
         int item = ID_OPEN_RECENT + 1;
-        menuBar->SetLabel(item, wxMenuItem::GetLabelText(menuBar->GetLabel(item)) + GetAccelerator(DO_OPENRECENT));
+        wxString label = wxMenuItem::GetLabelText(menuBar->GetLabel(item));
+        label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+        menuBar->SetLabel(item, label + GetAccelerator(DO_OPENRECENT));
     }
     
     if (numscripts > 0) {
         // set keyboard shortcut for most recent script
         int item = ID_RUN_RECENT + 1;
-        menuBar->SetLabel(item, wxMenuItem::GetLabelText(menuBar->GetLabel(item)) + GetAccelerator(DO_RUNRECENT));
+        wxString label = wxMenuItem::GetLabelText(menuBar->GetLabel(item));
+        label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+        menuBar->SetLabel(item, label + GetAccelerator(DO_RUNRECENT));
     }
     
     // attach menu bar to the frame

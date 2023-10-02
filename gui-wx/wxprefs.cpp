@@ -1067,7 +1067,9 @@ void RemoveAccelerator(wxMenuBar* mbar, int item, action_id action)
 {
     if (!accelerator[action].IsEmpty()) {
         // remove accelerator from given menu item
-        mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)));
+        wxString label = wxMenuItem::GetLabelText(mbar->GetLabel(item));
+        label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+        mbar->SetLabel(item, label);
     }
 }
 
@@ -1096,7 +1098,9 @@ void SetAccelerator(wxMenuBar* mbar, int item, action_id action)
     }
 
     // we need to remove old accelerator string from GetLabel text
-    mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + accel);
+    wxString label = wxMenuItem::GetLabelText(mbar->GetLabel(item));
+    label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+    mbar->SetLabel(item, label + accel);
 }
 
 // -----------------------------------------------------------------------------
@@ -1606,8 +1610,6 @@ void SavePrefs()
             wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
             if (item) {
                 wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-                // remove duplicate ampersands
-                path.Replace(wxT("&&"), wxT("&"));
                 fprintf(f, "recent_pattern=%s\n", (const char*)path.mb_str(wxConvLocal));
             }
         }
@@ -1620,8 +1622,6 @@ void SavePrefs()
             wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
             if (item) {
                 wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-                // remove duplicate ampersands
-                path.Replace(wxT("&&"), wxT("&"));
                 fprintf(f, "recent_script=%s\n", (const char*)path.mb_str(wxConvLocal));
             }
         }

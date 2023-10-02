@@ -879,6 +879,7 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
             wxMenuItem* previtem = patternSubMenu->FindItem(id - 1);
             wxString prevpath = wxMenuItem::GetLabelText(previtem->GetItemLabel());
             item = patternSubMenu->FindItem(id);
+            prevpath.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
             item->SetItemLabel(prevpath);
             id--;
         }
@@ -890,7 +891,9 @@ void MainFrame::AddRecentPattern(const wxString& inpath)
     if (mbar) {
         // set keyboard shortcut for most recent pattern
         int item = ID_OPEN_RECENT + 1;
-        mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_OPENRECENT));
+        wxString label = wxMenuItem::GetLabelText(mbar->GetLabel(item));
+        label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+        mbar->SetLabel(item, label + GetAccelerator(DO_OPENRECENT));
     }
 }
 
@@ -905,7 +908,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
         path.erase(0, gollydir.length());
     }
     
-    // duplicate ampersands so they appear in menu
+    // duplicate any ampersands so they appear in menu
     path.Replace(wxT("&"), wxT("&&"));
     
     // put given path at start of scriptSubMenu
@@ -931,6 +934,7 @@ void MainFrame::AddRecentScript(const wxString& inpath)
             wxMenuItem* previtem = scriptSubMenu->FindItem(id - 1);
             wxString prevpath = wxMenuItem::GetLabelText(previtem->GetItemLabel());
             item = scriptSubMenu->FindItem(id);
+            prevpath.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
             item->SetItemLabel(prevpath);
             id--;
         }
@@ -942,7 +946,9 @@ void MainFrame::AddRecentScript(const wxString& inpath)
     if (mbar) {
         // set keyboard shortcut for most recent script
         int item = ID_RUN_RECENT + 1;
-        mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_RUNRECENT));
+        wxString label = wxMenuItem::GetLabelText(mbar->GetLabel(item));
+        label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+        mbar->SetLabel(item, label + GetAccelerator(DO_RUNRECENT));
     }
 }
 
@@ -1353,9 +1359,7 @@ void MainFrame::OpenRecentPattern(int id)
     
     wxMenuItem* item = patternSubMenu->FindItem(id);
     if (item) {
-        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-        // remove duplicate ampersands
-        path.Replace(wxT("&&"), wxT("&"));
+        wxString path = item->GetItemLabelText();
         
         // if path isn't absolute then prepend Golly directory
         wxFileName fname(path);
@@ -1379,9 +1383,7 @@ void MainFrame::OpenRecentScript(int id)
     
     wxMenuItem* item = scriptSubMenu->FindItem(id);
     if (item) {
-        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-        // remove duplicate ampersands
-        path.Replace(wxT("&&"), wxT("&"));
+        wxString path = item->GetItemLabelText();
         
         // if path isn't absolute then prepend Golly directory
         wxFileName fname(path);
@@ -1399,9 +1401,7 @@ void MainFrame::ClearMissingPatterns()
     int pos = 0;
     while (pos < numpatterns) {
         wxMenuItem* item = patternSubMenu->FindItemByPosition(pos);
-        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-        // remove duplicate ampersands
-        path.Replace(wxT("&&"), wxT("&"));
+        wxString path = item->GetItemLabelText();
         
         // if path isn't absolute then prepend Golly directory
         wxFileName fname(path);
@@ -1415,7 +1415,9 @@ void MainFrame::ClearMissingPatterns()
             int nextpos = pos + 1;
             while (nextpos < numpatterns) {
                 wxMenuItem* nextitem = patternSubMenu->FindItemByPosition(nextpos);
-                item->SetItemLabel( wxMenuItem::GetLabelText(nextitem->GetItemLabel()) );
+                wxString label = nextitem->GetItemLabelText();
+                label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+                item->SetItemLabel(label);
                 item = nextitem;
                 nextpos++;
             }
@@ -1431,7 +1433,9 @@ void MainFrame::ClearMissingPatterns()
         if (numpatterns > 0) {
             // set keyboard shortcut for most recent pattern
             int item = ID_OPEN_RECENT + 1;
-            mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_OPENRECENT));
+            wxString label = wxMenuItem::GetLabelText(mbar->GetLabel(item));
+            label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+            mbar->SetLabel(item, label + GetAccelerator(DO_OPENRECENT));
         }
     }
 }
@@ -1443,9 +1447,7 @@ void MainFrame::ClearMissingScripts()
     int pos = 0;
     while (pos < numscripts) {
         wxMenuItem* item = scriptSubMenu->FindItemByPosition(pos);
-        wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-        // remove duplicate ampersands
-        path.Replace(wxT("&&"), wxT("&"));
+        wxString path = item->GetItemLabelText();
         
         // if path isn't absolute then prepend Golly directory
         wxFileName fname(path);
@@ -1459,7 +1461,9 @@ void MainFrame::ClearMissingScripts()
             int nextpos = pos + 1;
             while (nextpos < numscripts) {
                 wxMenuItem* nextitem = scriptSubMenu->FindItemByPosition(nextpos);
-                item->SetItemLabel( wxMenuItem::GetLabelText(nextitem->GetItemLabel()) );
+                wxString label = nextitem->GetItemLabelText();
+                label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+                item->SetItemLabel(label);
                 item = nextitem;
                 nextpos++;
             }
@@ -1475,7 +1479,9 @@ void MainFrame::ClearMissingScripts()
         if (numscripts > 0) {
             // set keyboard shortcut for most recent script
             int item = ID_RUN_RECENT + 1;
-            mbar->SetLabel(item, wxMenuItem::GetLabelText(mbar->GetLabel(item)) + GetAccelerator(DO_RUNRECENT));
+            wxString label = wxMenuItem::GetLabelText(mbar->GetLabel(item));
+            label.Replace(wxT("&"), wxT("&&")); // duplicate any ampersands
+            mbar->SetLabel(item, label + GetAccelerator(DO_RUNRECENT));
         }
     }
 }
