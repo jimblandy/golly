@@ -1606,10 +1606,6 @@ void SavePrefs()
             wxMenuItem* item = patternSubMenu->FindItemByPosition(i);
             if (item) {
                 wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-#ifdef __WXGTK__
-                // remove duplicate underscores
-                path.Replace(wxT("__"), wxT("_"));
-#endif
                 // remove duplicate ampersands
                 path.Replace(wxT("&&"), wxT("&"));
                 fprintf(f, "recent_pattern=%s\n", (const char*)path.mb_str(wxConvLocal));
@@ -1624,10 +1620,6 @@ void SavePrefs()
             wxMenuItem* item = scriptSubMenu->FindItemByPosition(i);
             if (item) {
                 wxString path = wxMenuItem::GetLabelText(item->GetItemLabel());
-#ifdef __WXGTK__
-                // remove duplicate underscores
-                path.Replace(wxT("__"), wxT("_"));
-#endif
                 // remove duplicate ampersands
                 path.Replace(wxT("&&"), wxT("&"));
                 fprintf(f, "recent_script=%s\n", (const char*)path.mb_str(wxConvLocal));
