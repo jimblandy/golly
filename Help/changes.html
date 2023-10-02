@@ -8,11 +8,14 @@
 <p>
 <ul>
 <li> Added the new Investigator rule family to the <a href="Algorithms/Super.html">Super</a> algorithm.
-<li> Fixed a crash on Windows that could occur after disconnecting an audio device.
 <li> Minor improvements to error-checking and recovery in toHistory.lua and toSuper.lua.
-<li> Updated in Non-Totalistic folder:
-<a href="open:Patterns/Non-Totalistic/whitespace-puffer.rle">whitespace-puffer.rle</a>
+<li> Fixed a crash on Windows that could occur after disconnecting an audio device.
+<li> Fixed a crash by limiting the scale to no more than 2^(2^20) cells per pixel.
+<li> Fixed a bug that affected all multi-state hashlife algorithms
+     (changing a cell in a very large pattern could result in a corrupted universe).
 <li> Fixed some bugs handling filenames with underscores or ampersands in the Open/Run Recent submenus.
+<li> Updated pattern in Non-Totalistic folder:
+<a href="open:Patterns/Non-Totalistic/whitespace-puffer.rle">whitespace-puffer.rle</a>.
 </ul>
 
 <p>
@@ -88,7 +91,8 @@ Updated in Life folder:
 <a href="open:Patterns/Non-Totalistic/Replicators/sierpinski-builder.rle">sierpinski-builder.rle</a>,
 <a href="open:/Patterns/Other-Rules/wolfram22.mc">wolfram22.mc</a>.
 <li> Reorganized patterns in HashLife folder into subfolders "Construction", "Eventful", and "Metacell".
-<li> Links and dates in many pattern comments updated to standard format (e.g., "https" instead of "http", no "www" before "conwaylife.com").
+<li> Links and dates in many pattern comments updated to standard format
+(e.g., "https" instead of "http", no "www" before "conwaylife.com").
 </ul>
 
 <p>
