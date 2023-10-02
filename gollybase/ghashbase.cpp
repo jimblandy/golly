@@ -786,17 +786,6 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
          ghnode *sw = (nptr == &(n->sw) ? s : n->sw) ;
          ghnode *ne = (nptr == &(n->ne) ? s : n->ne) ;
          ghnode *se = (nptr == &(n->se) ? s : n->se) ;
-         if (x < 0) {
-            if (y < 0)
-               sw = s ;
-            else
-               nw = s ;
-         } else {
-            if (y < 0)
-               se = s ;
-            else
-               ne = s ;
-         }
          n = save(find_ghnode(nw, ne, sw, se)) ;
       } else {
          *nptr = s ;
