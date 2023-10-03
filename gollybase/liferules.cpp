@@ -1131,6 +1131,10 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
             if (c && (c < '0' || c > '8')) {
                return "Non-totalistic survival must start with a digit." ;
             }
+            // one of birth or survival must be at the start of the rule
+            if (!(bpos == tidystring || spos == tidystring)) {
+               return "Invalid characters at start of rule." ;
+            }
          }
       
          // if not totalistic then neighborhood must be Moore
