@@ -95,7 +95,7 @@
 #C
 #C Here are definitions of some terminology and notation used below; for
 #C a more extensive glossary, see Stephen Silver's Life Lexicon, at
-#C  http://www.argentum.freeserve.co.uk/lex_home.htm 
+#C  https://conwaylife.com/ref/lexicon/lex_home.htm
 #C 
 #C The 'rotor' consists of all cells in an oscillator which change state.
 #C The 'stator' consists of all cells which are alive in all generations.

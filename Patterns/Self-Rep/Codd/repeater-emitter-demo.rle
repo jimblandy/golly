@@ -16,8 +16,8 @@
 #
 # By putting the 7-0..6-0 signal trains in a repeater-emitter loop, the
 # extending operation happens again and again. This simple but useful
-# component became the inspiration for Langton's Loops (see 
-# Patterns/Loops).
+# component became the inspiration for Langton's Loops (see
+# Patterns/Loops/Langtons-Loops.rle).
 #
 x = 21, y = 11, rule = Codd
 .9B$B9AB$BA7BAB$BFB5.BAB$B.B5.BAB$BAB5.B.B$BAB5.BGB$BAB5.BAB$BA7BA10B
