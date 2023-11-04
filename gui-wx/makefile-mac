@@ -11,8 +11,8 @@
 # change WXLIB_DIR to where you built the wx libraries, and change
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
-WX_RELEASE = 3.1
-WX_DIR = /Users/akt/HD/wxWidgets/wxWidgets-3.1.5
+WX_RELEASE = 3.2
+WX_DIR = /Users/akt/HD/wxWidgets/wxWidgets-3.2.2
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
