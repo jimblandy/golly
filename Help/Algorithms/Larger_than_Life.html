@@ -39,7 +39,7 @@ R<i>r</i>,C<i>c</i>,M<i>m</i>,S<i>smin</i>..<i>smax</i>,B<i>bmin</i>..<i>bmax</i
 </dd>
 
 <p>
-R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for <a href="#triangular">Triangular</a> where <i>r</i> is from 1 to 250 and <a href="#gaussian">Gaussian</a> where <i>r</i> is from 1 to 50).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
@@ -67,6 +67,7 @@ Hexagonal grid:
 Use <a href="open:Scripts/Lua/hexgrid.lua">hexgrid.lua</a> or <a href="open:Scripts/Lua/showinviewer.lua">showinviewer.lua</a> to view Hexagonal, Asterisk or Tripod neighborhoods on a hexagonal grid.
 <p>
 Triangular grid:
+<a name="triangular"></a>
 <table cellspacing=6 cellpadding=0>
    <tr><th>Type</th><th>Diagram</th></tr>
    <tr><td>Triangular<br/>(NL)</td><td><img src="images/NL.png"></td></tr>
