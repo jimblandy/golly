@@ -166,7 +166,7 @@ void ParseXRLELine(char *line, int *xoff, int *yoff, bool *sawpos, bigint &gen) 
 /*
  *   Read an RLE pattern into given life algorithm implementation.
  */
-const char *readrle(lifealgo &imp, char *line) {
+const char *readrle(lifealgo &imp, char *line, size_t nwsindex) {
    int n=0, x=0, y=0 ;
    char *p ;
    char *ruleptr;
@@ -175,17 +175,31 @@ const char *readrle(lifealgo &imp, char *line) {
    bigint gen = bigint::zero;
    bool sawpos = false;             // xoff and yoff set in ParseXRLELine?
    bool sawrule = false;            // saw explicit rule?
+   char *buffer = line;             // save pointer to line buffer
+
+   // skip any whitespace at the beginning of the line
+   line += nwsindex;
 
    // parse any #CXRLE line(s) at start
    while (strncmp(line, "#CXRLE", 6) == 0) {
       ParseXRLELine(line, &xoff, &yoff, &sawpos, gen);
       imp.setGeneration(gen);
+      line = buffer;   // reset line to the start of the buffer
       if (getline(line, LINESIZE) == NULL) return 0;
+
+      // skip any whitespace at the beginning of the line
+      nwsindex = strspn(line, " \t");
+      line += nwsindex;
    }
 
    do {
+      // skip whitepsace at the beginning of the line
+      nwsindex = strspn(line, " \t");
+      line += nwsindex;
+
       if (line[0] == '#') {
-         if (line[1] == 'r') {
+         // only attempt to decode rule if rule not already seen
+         if (line[1] == 'r' && !sawrule) {
             ruleptr = line;
             ruleptr += 2;
             while (*ruleptr && *ruleptr <= ' ') ruleptr++;
@@ -200,7 +214,7 @@ const char *readrle(lifealgo &imp, char *line) {
          // starts with 'x'; we only treat it as a dimension line if the
          // next char is whitespace or '=', since 'x' will only otherwise
          // occur as a two-char token followed by an upper case alphabetic.
-      } else if (line[0] == 'x' && (line[1] <= ' ' || line[1] == '=')) {
+      } else if (line[0] == 'x' && (line[1] <= ' ' || line[1] == '=') && !sawrule) {
          // extract wd and ht
          p = line;
          while (*p && *p != '=') p++;
@@ -257,54 +271,72 @@ const char *readrle(lifealgo &imp, char *line) {
          int gwd = (int)imp.gridwd;
          int ght = (int)imp.gridht;
          for (p=line; *p; p++) {
-            char c = *p ;
-            if ('0' <= c && c <= '9') {
-               n = n * 10 + c - '0' ;
-            } else {
-               if (n == 0)
-                  n = 1 ;
-               if (c == 'b' || c == '.') {
-                  x += n ;
-               } else if (c == '$') {
-                  x = 0 ;
-                  y += n ;
-               } else if (c == '!') {
-                  return 0;
-               } else if (('o' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
-                  int state = -1 ;
-                  if (c == 'o')
-                     state = 1 ;
-                  else if (c < 'o') {
-                     state = c - 'A' + 1 ;
-                  } else {
-                     state = 24 * (c - 'p' + 1) ;
-                     p++ ;
-                     c = *p ;
-                     if ('A' <= c && c <= 'X') {
-                        state = state + c - 'A' + 1 ;
-                     } else {
-                        // return "Illegal multi-char state" ;
-                        // be more forgiving so we can read non-standard rle files like
-                        // those at http://home.interserv.com/~mniemiec/lifepage.htm
-                        state = 1 ;
-                        p-- ;
-                     }
-                  }
-                  // write run of cells to grid checking cells are within any bounded grid
-                  if (ght == 0 || y < ght) {
-                     while (n-- > 0) {
-                        if (gwd == 0 || x < gwd) {
-                           if (imp.setcell(xoff + x, yoff + y, state) < 0)
-                              return "Cell state out of range for this algorithm" ;
-                        }
-                        x++;
-                     }
-                  }
+            char c = *p;
+            // check for whitespace
+            if (c == ' ' || c == '\t') {
+               // ignore whitespace unless during or after count definition
+               if (n != 0) {
+                  return "Illegal whitespace after count";
                }
-               n = 0 ;
+            } else {
+               if ('0' <= c && c <= '9') {
+                  if (c == '0' && n == 0) {
+                     return "Leading zero in count";
+                  }
+                  n = n * 10 + c - '0';
+               } else {
+                  if (n == 0)
+                     n = 1;
+                  if (c == 'b' || c == '.') {
+                     x += n;
+                  } else if (c == '$') {
+                     x = 0;
+                     y += n;
+                  } else if (c == '!') {
+                     return 0;
+                  } else if (('o' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+                     int state = -1;
+                     if (c == 'o')
+                        state = 1;
+                     else if (c < 'o') {
+                        state = c - 'A' + 1;
+                     } else {
+                        state = 24 * (c - 'p' + 1);
+                        p++;
+                        c = *p;
+                        if ('A' <= c && c <= 'X') {
+                           state = state + c - 'A' + 1;
+                        } else {
+                           // return "Illegal multi-char state";
+                           // be more forgiving so we can read non-standard rle files like
+                           // those at http://home.interserv.com/~mniemiec/lifepage.htm
+                           state = 1;
+                           p--;
+                        }
+                     }
+                     // write run of cells to grid checking cells are within any bounded grid
+                     if (ght == 0 || y < ght) {
+                        while (n-- > 0) {
+                           if (gwd == 0 || x < gwd) {
+                              if (imp.setcell(xoff + x, yoff + y, state) < 0)
+                                 return "Cell state out of range for this algorithm";
+                           }
+                           x++;
+                        }
+                     }
+                  }
+                  n = 0;
+               }
             }
          }
+
+         // check if count still in progress when end of line reached
+         if (n > 0) {
+            return "Illegal whitespace after count";
+         }
       }
+
+      line = buffer;   // reset line to the start of the buffer
    } while (getline(line, LINESIZE));
 
    return 0;
@@ -646,6 +678,7 @@ static bool isplainrle(const char *line) {
 const char *loadpattern(lifealgo &imp) {
    char line[LINESIZE + 1] ;
    const char *errmsg = 0;
+   size_t nwsindex = 0;   // index of first non-whitespace character in line
 
    // set rule to Conway's Life (default if explicit rule isn't supplied,
    // such as a text pattern like "...ooo$$$ooo")
@@ -666,9 +699,12 @@ const char *loadpattern(lifealgo &imp) {
    else
       lifebeginprogress("Reading pattern file");
 
-   // skip any blank lines at start to avoid problem when copying pattern
-   // from Internet Explorer
-   while (getline(line, LINESIZE) && line[0] == 0) ;
+   // skip any blank or whitespace only lines at start to avoid problem
+   // when copying pattern from Internet Explorer or forums
+   while (getline(line, LINESIZE) && line[strspn(line, " \t")] == 0);
+
+   // get the index of the first non-whitespace character
+   nwsindex = strspn(line, " \t");
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
@@ -701,8 +737,8 @@ const char *loadpattern(lifealgo &imp) {
          }
       }
 
-   } else if (line[0] == '#' || line[0] == 'x') {
-      errmsg = readrle(imp, line) ;
+   } else if (line[nwsindex] == '#' || line[nwsindex] == 'x') {
+      errmsg = readrle(imp, line, nwsindex);
       if (errmsg == 0) {
          imp.endofpattern() ;
          if (getedges && !imp.isEmpty()) {
@@ -737,12 +773,17 @@ const char *loadpattern(lifealgo &imp) {
          }
       }
 
-   } else if (isplainrle(line)) {
-      errmsg = readrle(imp, line) ;
+   } else if (isplainrle(line + nwsindex)) {
+      errmsg = readrle(imp, line, nwsindex);
       if (errmsg == 0) {
          imp.endofpattern() ;
          if (getedges && !imp.isEmpty()) {
             imp.findedges(&top, &left, &bottom, &right) ;
+
+            // for headerless rle set the top and left to 0 to allow
+            // initial blank rows and/or columns when pasting
+            top = bigint::zero;
+            left = bigint::zero;
          }
       }
 
