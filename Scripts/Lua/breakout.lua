@@ -620,7 +620,11 @@ local function notify(message, flag)
     -- create the text clip
     updatemessage("notify", notification.message)
     if notification.current ~= 0 then
-        notification.current = notification.trans
+        if notification.current > notification.duration - notification.trans then
+            notification.current = notification.duration - notification.current
+        else
+            notification.current = notification.trans
+        end
     end
 end
 
