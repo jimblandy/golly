@@ -134,6 +134,19 @@ when the user clicks the "information" button in Golly's tool bar.
 Any comment lines interspersed with the pattern data will not be
 displayed.
 
+<p><a name="lvconsistency"></a>
+A few more points are worth mentioning (these ensure that Golly is consistent with LifeViewer):
+
+<p>
+<ul>
+<li> Blank lines containing only whitespace (spaces or tabs) are ignored.
+<li> Leading whitespace on any line is ignored.
+<li> A "#r" rule definition is ignored if a rule is already defined.
+<li> An error occurs if there is whitespace between a count and symbol in the pattern data.
+<li> An error occurs if a count has a leading zero.
+<li> Initial empty rows or columns in the pattern data are respected when pasting headerless RLE.
+</ul>
+
 
 <p><a name="mc"></a>&nbsp;<br>
 <font size=+1><b>Macrocell format</b></font>
