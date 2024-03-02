@@ -7,7 +7,6 @@
 #SPEED 20
 #WRAP 0
 #D 8-bit multiplier by Nick Gardner, Aug 2002.
-#D (see http://www.maa.org/editorial/mathgames/mathgames_05_24_04.html)
 #D 
 #D C15 to C0 consist of 16 half-adders each made of an AND gate and an XOR gate.
 #D When set to one, a C-bit is represented by a looping electron.

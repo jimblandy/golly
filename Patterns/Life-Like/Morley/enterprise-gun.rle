@@ -1,7 +1,7 @@
 #C An almost-state-of-the-art enterprise gun.
 #C The dotted sections can be moved away from each other to create
 #C space for the construction of enterprise salvos.
-#C By Stephen Morley -- http://www.safalra.com/special/b368s245/
+#C By Stephen Morley.
 x = 509, y = 559, rule = B368/S245
 obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
 obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob

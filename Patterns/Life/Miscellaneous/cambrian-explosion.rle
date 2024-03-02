@@ -6,8 +6,8 @@
 #C or rather an 'a-plus-plus' variant shown in Hensel's Java applet.
 #C Most additional patterns are from 2004-2006, and were selected
 #C (somewhat at random) from Koenig's Life News weblog.  For details
-#C on individual patterns, see http://pentadecathlon.com/lifeNews
-#C or the relevant LifeWiki articles at https://conwaylife.com/wiki/ .
+#C on individual patterns, see the relevant LifeWiki articles at
+#C https://conwaylife.com/wiki/
 #C See also ordovician-radiation.rle for more recent discoveries.
 #C
 #C Press 'm' in Golly to center the view on the column of spaceships

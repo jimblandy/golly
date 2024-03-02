@@ -4,7 +4,6 @@
 # ``Simple systems that exhibit self-directed replication.'' 
 # Science, Vol. 259, pages 1282-1287, February 1993. 
 #
-# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
 # credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
 #
 # Loops history at a glance:

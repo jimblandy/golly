@@ -1,7 +1,6 @@
 [M2] (golly 2.0)
 #C Broken lines pattern - does it work forever?
 #C Dean Hickerson, 7 May 2005
-#C See also http://yucs.org/~gnivasch/life/broken_lines/
 #C
 #C A p48 gun sends LWSSs eastward, while an eastward p24 puffer sends LWSSs
 #C westward, and a northward p24 rake sends gliders southeastward.  When LWSSs
