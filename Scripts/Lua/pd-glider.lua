@@ -18,7 +18,7 @@ local all = gp.pattern()
 for i = -7, 7 do
     for j = -9, 9 do
         all = all + collision(i, j).t(100 * i, 100 * j)
-	end
+    end
 end
 
 all.display("") -- don't change name

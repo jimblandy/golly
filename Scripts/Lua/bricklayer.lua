@@ -23,6 +23,6 @@ o$9bo2bo2bo4b2o$8b2o!]])
 local pre_lom = pattern("2bo$2ob2o$2ob2o2$b2ob2o$b2ob2o$3bo!")
 
 local all = gun154[210].t(-52, -38) + gun154[254].t(52, -38, gp.flip_x) +
-	p7_reflector.t(8, 23) + pre_lom.t(-3, 30)
+    p7_reflector.t(8, 23) + pre_lom.t(-3, 30)
 
 all.display("") -- don't change name
