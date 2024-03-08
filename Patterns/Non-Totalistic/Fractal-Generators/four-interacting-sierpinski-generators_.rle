@@ -1,8 +1,8 @@
-#N four-interacting-Sierpinski-generators.rle
+#N four-interacting-sierpinski-generators.rle
 #O Connor Steppie, 1 November 2018
 #C Four Sierpinski-generating replicator puffers interact to form
-#C a series of concentric oscillators, which produce complex
-#C looking skewed phantom triangles under the main ones.
+#C   a series of concentric oscillators, which produce complex
+#C   looking skewed phantom triangles under the main ones.
 #C Reference:
 #C   https://conwaylife.com/forums/viewtopic.php?p=65226#p65226
 x = 9, y = 9, rule = B2a3ej6k/S2c3r

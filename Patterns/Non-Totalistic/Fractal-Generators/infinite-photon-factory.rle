@@ -1,11 +1,11 @@
 #N infinite-photon-factory.rle
 #O Connor Steppie, 7 May 2021
 #C A pattern, which cannot be easily classified as a
-#C gun nor a rake, which fires an infinite number of
-#C distinct right-moving photons, each made of two
-#C replicators (with extra displacement perpendicular
-#C to their replication direction) colliding with each
-#C other to annihilate each other at their ends.
+#C   gun nor a rake, which fires an infinite number of
+#C   distinct right-moving photons, each made of two
+#C   replicators (with extra displacement perpendicular
+#C   to their replication direction) colliding with each
+#C   other to annihilate each other at their ends.
 #C Reference:
 #C   https://conwaylife.com/forums/viewtopic.php?p=129802#p129802
 x = 6, y = 13, rule = B2a4w/S2e3j

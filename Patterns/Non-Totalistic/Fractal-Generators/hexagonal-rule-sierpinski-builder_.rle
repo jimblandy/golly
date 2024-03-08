@@ -1,4 +1,4 @@
-#N hexagonal-rule-Sierpinski-builder.rle
+#N hexagonal-rule-sierpinski-builder.rle
 #O Connor Steppie, 26 January 2020
 #C A displacing replicator that fires spaceships out behind it that
 #C   print out a Sierpiński triangle. The same rule also contains a
