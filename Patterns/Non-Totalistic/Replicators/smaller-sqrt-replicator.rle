@@ -1,0 +1,10 @@
+#N smaller-sqrt-replicator.rle
+#O AforAmpere, 12 April 2020
+#C A pattern that follows the strange replication habit of the
+#C   famous "sqrt replicator" found in B36/S245, with a growth rate
+#C   proportional to the square root of the length of time it is run.
+#C   This is the second known replicator to do this.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=94136#p94136
+x = 2, y = 3, rule = B2a3eny4at/S01c2ci3i4e5e
+bo$o$bo!

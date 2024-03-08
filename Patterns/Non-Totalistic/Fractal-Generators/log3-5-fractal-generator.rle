@@ -1,0 +1,24 @@
+#N log3-5-fractal-generator.rle
+#O wwei23, 20 October 2019
+#C This rule contains a replicator, which, when stacked next to other
+#C copies, creates a fractal whose fractal dimension is log3(5). This
+#C is lower than the fractal dimension of the Sierpiński triangle, as
+#C well as that of the log5(12) fractal also included among these
+#C example patterns.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=84333#p84333
+x = 100, y = 67, rule = B2e3-ckq4cz5y7c/S1c2ac3ajn4ejrwz5c6i
+15b3o10bo2bo$28b4o$15b3o10bo2bo4$18b2o2b2o2b2o2b2o$20bob2o2bo2b3o$18b
+2o2bob2ob2ob2o2$2o12b2o7b4o$o13bo$31bo$bo2b2o24bobo$3b3o8b2o6b2o6bo$bo
+2b2o7bobo6b2o16bo2bo$36b2obob2obob2o$36b5o2b5o$36bo3bo2b2ob2o$10bo27bo
+2$8b2obo$8b2o23bo12b2o$15b2o15b2o12b2o$16bo9b2o4b2o12b2o$25bo2bo$16b3o
+7b2o25b2o$15bo2bo$53b2o$47bo12bo$22b2o2b2o18bo3bo6bo3bo$21bo2b2o2bo18b
+o12bo$22b2o2b2o17bo7b2o$72bo2bo$43bo7b2o15b2obob2obob2o$51bo2bo2bo2bo
+7b5o2b5o$50bo2bo4bo2bo6b2obob2obob2o$10bo36bo3bo2bo2bo2bo11bo2bo$10b2o
+12b2o3b2o7bo8bo7b2o$24b2o3b2o8bo5bo18b3o$39b2o3b3o18bo6bo2b2o2bo$12b2o
+25b2o23bo7b3o2b3o$12bo4b3o18b2o17b3o12bo2b2o2bo13b2o2b2o$19bo29b2o13bo
+bo25bo2b2o2bo$18bo30b2o10bo3bo27b2o2b2o$26b6o25b3o$23bo10bo24bo$22b2o
+2bo4b2o2bo50bo2bo$23bo3bo2bo3bo52b3o7b2o$96bo2bo$87bo9b2o$50bobobobo5b
+obo6b2o13b2o$19b2o12b2o14bo7bo4b2o7b2o6b2o$20b2o10bo2bo14bobobobo22b2o
+bo$19b2o12b2o$49b2o12b2o15bo$50bo13bo$69b2o$69b2o8bo2bo$70bo7bo4bo$69b
+o9bo2bo$70bo3$75bobo2bobo$74bo3b2o3bo$75bobo2bobo!

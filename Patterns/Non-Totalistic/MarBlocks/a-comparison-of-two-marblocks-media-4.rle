@@ -1,0 +1,43 @@
+#N a-comparison-of-two-marblocks-media-4.rle
+#O Various; arrangement by Connor Steppie
+#C A simple demonstration of how it's possible to change only one
+#C   transition to obtain a rule that contains two oscillator families
+#C   following two distinct MarBlocks rules. In this case, the diagonal
+#C   lines follow M11, and the blocky oscillators follow M10.
+#C
+#C Open this pattern with showinviewer.lua to see labels which
+#C   indicate the period of each of these oscillators. They can be
+#C   seen to follow Sloane's A085587 (linked below).
+#C
+#C MarBlocks octal naming system thread:
+#C   https://conwaylife.com/forums/viewtopic.php?t=3243
+#C MarBlocks forum thread:
+#C   https://conwaylife.com/forums/viewtopic.php?t=5204
+#C A085587 on the OEIS database:
+#C   https://oeis.org/A085587
+#C Reference for oscillator period lengths:
+#C   https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
+#C A summary of the Margolus rulespace can be found here:
+#C   https://conwaylife.com/wiki/Margolus_neighbourhood
+#C A summary by Arie Paap of of some of the many places where
+#C XOR-type oscillators can be found:
+#C   https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
+#C
+#C [[ GRID ZOOM 5 ]]
+#C [[ LABEL 15 2 4 "💀" ]]
+#C [[ LABEL 15 12 4 "2" ]]
+#C [[ LABEL 15 22 4 "💀" ]]
+#C [[ LABEL 15 32 4 "6" ]]
+#C [[ LABEL 15 42 4 "4" ]]
+#C [[ LABEL 75 2 4 "14" ]]
+#C [[ LABEL 75 22 4 "💀" ]]
+#C [[ LABEL 75 42 4 "14" ]]
+#C [[ LABEL 75 62 4 "12" ]]
+#C [[ LABEL 75 82 4 "62" ]]
+x = 90, y = 90, rule = B2e3i4e/S5i
+8b2o10bo37b12o10bo$8b2o48b12o11bo$82bo$83bo$84bo$85bo5$6b4o10bo$6b4o
+11bo9$4b6o10bo35b14o10bo$4b6o11bo34b14o11bo$22bo59bo$83bo$84bo$85bo$
+86bo4$2b8o10bo$2b8o11bo$22bo$23bo7$10o10bo33b16o10bo$10o11bo32b16o11bo
+$22bo59bo$23bo59bo$24bo59bo$85bo$86bo$87bo13$52b18o10bo$52b18o11bo$82b
+o$83bo$84bo$85bo$86bo$87bo$88bo12$50b20o10bo$50b20o11bo$82bo$83bo$84bo
+$85bo$86bo$87bo$88bo$89bo!

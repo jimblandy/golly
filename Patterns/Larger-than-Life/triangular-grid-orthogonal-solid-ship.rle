@@ -1,0 +1,9 @@
+#N triangular-grid-orthogonal-solid-ship.rle
+#O Saka, 18 October 2020
+#C A 2c/15 orthogonal "solid ship" in a range-10 triangular rule.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=106928#p106928
+x = 35, y = 20, rule = R10,C0,S230-392,B200-398,NL
+11b13o$8b19o$7b23o$4b27o$3b29o$2b31o$b16ob16o$bob11o7b14o$b11o11b12o$
+12o11b12o$12o11b12o$b11o11b12o$bob11o7b14o$b16ob16o$2b31o$3b29o$4b27o$
+7b23o$8b19o$11b13o!

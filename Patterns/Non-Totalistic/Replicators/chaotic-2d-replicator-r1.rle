@@ -1,0 +1,12 @@
+#N chaotic-2d-replicator-r1.rle
+#O Luka Okanishi, 23 December 2016
+#C In this rule, an R-pentomino is an atypical "replicator" which
+#C   appears to emulate some unidentified explosive rule, without
+#C   degrading into chaos itself. Okanishi classifies it as class-U
+#C   (unusual). It last replicates "normally" around 1400 generations
+#C   in, giving way to chaotic behaviour while still remaining
+#C   perfectly structured out of replicator units.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=38600#p38600
+x = 3, y = 3, rule = B35a6ae78/S23
+b2o$2o$bo!

@@ -1,0 +1,17 @@
+#N big-pseudocyclic-whitespace-oscillator.rle
+#O jimmyChen2013, 27 May 2022
+#C This is a predecessor of a quite large oscillator in the
+#C   "Whitespace" rulespace. Use showinviewer.lua and
+#C   Settings > Pattern > Identify to view how the different periodic
+#C   areas of this oscillator interact with each other.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=146090#p146090
+x = 40, y = 50, rule = B3aeikr4cekrtwy5ckq6cei7/S2cen3-jr4cei5eikq6-a7c8
+16bo$15b3o$14b5o$13b7o$12b9o$11b2o2b3o2b2o$10b3o3bo3b3o$9b2o5bo4b3o$8b
+5o8b4o$7b4o11b4o$6b4o15b2o$5b2obo16b3o$4b2ob2o7bo7bo2b2o$3b2obo8b3o9b
+3o$2b3o9b5o10b2o$b3o9b7o8bob2o$2obo8b9o9b3o$2bobo6b5o2bob2o4bo4b3o$2o
+8b5o4b4o9b3o$2bo6b5o7b3o8b4o$8b5o6bobob2o7bob3o$9b5o8b4o9b3o$10b5o8b4o
+8b4o$11b5o7b5o6b6o$12b3o8b4o6bob4o$13bo8b4o9b3o$23b2o7bo2b2o$32b4o$32b
+3o$32b2o$30b3o$29b3o$27bob2o$28b2o$24b5o$23b5o$22b5o$22b4o$22b3o$21b3o
+$18bo2b2o$19b3o$6bo12b2o$9b4o4b3o$8b3o6b2o$9b4ob4o$10b7o$11b5o$12b3o$
+13bo!

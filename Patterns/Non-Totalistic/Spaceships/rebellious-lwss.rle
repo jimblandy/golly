@@ -1,0 +1,12 @@
+#N rebellious-lwss.rle
+#O toroidalet, 13 March 2017
+#C A 2c/4 glide reflective orthogonal spaceship. Both of its phases are
+#C   completely identical to that of the familiar lightweight spaceship
+#C   in B3/S23 and similar rules. However, the direction this spaceship
+#C   travels in is perpendicular to the direction in which a "true"
+#C   lightweight spaceship would travel.
+#C Middleweight and heavyweight equivalents of this spaceship do not work.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=41588#p41588
+x = 5, y = 4, rule = B3/S23-ijn4a
+bo2bo$o$o3bo$4o!

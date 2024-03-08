@@ -1,0 +1,14 @@
+#N coverleaf-chain-emulation.rle
+#O pzq_alex, 27 October 2022
+#C This non-isotropic rule emulates a chain of coverleaf oscillators
+#C    as in the pattern coverleaf-chain.rle.
+#C This example pattern emulates a chain of 54 such coverleaves,
+#C   the current maximum length that LifeViewer can Identify as of
+#C   February 2024. The period map of this oscillator is quite
+#C   aesthetically pleasing. Compare the first ten columns of the
+#C   period map to the period map ofcoverleaf-chain.rle and note
+#C   the similarities.
+#C Source:
+#C   https://conwaylife.com/forums/viewtopic.php?p=152733#p152733
+x = 54, y = 1, rule = MAPAAD//zAwPz8AAP//MDA/PwAA//8AAP//AAD//wAA//8AAD8/AAD//wAAPz8AAP//wMD//wAA///AwP//AAD//w
+54o! 

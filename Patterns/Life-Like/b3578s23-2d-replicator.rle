@@ -1,0 +1,10 @@
+#N b3578s23-2d-replicator.rle
+#O Dominique Giard, 1999
+#C B3578/S23 is a remarkable rule in that not only is it one of the
+#C    few outer-totalistic rules to support a clean two-dimensional
+#C   replicator, but that it almost supports a second one, as well
+#C   as a one-dimensional one. Both are made of pre-beehives.
+#C Reference:
+#C   https://ics.uci.edu/~eppstein/ca/replicators/b3578s23.html
+x = 7, y = 7, rule = B3578/S23
+3o$obo$3o2$4b3o$bo2bobo$4b3o!

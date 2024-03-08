@@ -1,0 +1,8 @@
+#N circle-generator.rle
+#O AforAmpere, 21 May 2021
+#C A pattern that generates a circle from a single dot. In generation n,
+#C   the perimeter of the pattern is the circle x^2+y^2≤n.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=130653#p130653
+x = 1, y = 1, rule = Circle
+C!

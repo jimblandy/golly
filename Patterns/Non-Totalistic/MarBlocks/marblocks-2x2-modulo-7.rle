@@ -1,0 +1,11 @@
+#N marblocks-2x2-modulo-7.rle
+#O Connor Steppie, 17 January 2022
+#C Arrangements of 2×2 blocks of state-1 cells of widths 0 to 40 in
+#C   a 7-state rule. See MarBlocks-oscillator-with-replicator-mod-7.rle
+#C   for a diagonal versionof this family of oscillators.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=140424#p140424
+x = 458, y = 2, rule = MarBlocks7-OT-2x2-minimal
+2o2b4o2b6o2b8o2b10o2b12o2b14o2b16o2b18o2b20o2b22o2b24o2b26o2b28o2b30o
+2b32o2b34o2b36o2b38o2b40o$2o2b4o2b6o2b8o2b10o2b12o2b14o2b16o2b18o2b20o
+2b22o2b24o2b26o2b28o2b30o2b32o2b34o2b36o2b38o2b40o!

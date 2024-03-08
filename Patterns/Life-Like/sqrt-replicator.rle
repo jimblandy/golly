@@ -1,0 +1,8 @@
+#N sqrt-replicator.rle
+#O Mark Niemiec, 199X
+#C A "replicator" with a remarkably nonstandard replication
+#C habit that defies the behaviour seen in more common types.
+#C for more information on this rule visit
+#C   https://conwaylife.com/wiki/OCA:Sqrt_replicator_rule
+x = 3, y = 19, rule = B36/S245
+2o$obo$obo$obo$obo$2o8$2o$obo$obo$obo$obo$2o!

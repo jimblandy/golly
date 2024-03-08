@@ -1,0 +1,10 @@
+#N chaotic-hexagonal-replicator.rle
+#O Saka, 20 April 2018
+#C A highly chaotic replicator in a hexagonal rule composed of two
+#C   interacting oscillators.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=59285#p59285
+x = 43, y = 43, rule = B2o3o4o/S2o3-m46H
+b2o5b2o$2o8b2o$b2o7b2o$bo10bo$2bo3b3o3bo$7b2o$8bo4$8bobobo$9b4o$11bo
+18$31b2o5b2o$30b2o8b2o$31b2o7b2o$31bo10bo$32bo3b3o3bo$37b2o$38bo4$38bo
+bobo$39b4o$41bo!

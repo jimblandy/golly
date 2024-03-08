@@ -1,14 +1,13 @@
 #N sparse-c7.rle
-#O 2718281828, 2 March 2019
+#O conwaylife.com forum user with handle "2718281828", 2 March 2019
 #C 
-#C     A sparse elementary c/7 orthogonal spaceship in an INT rule 
-#C with three transitions. The rule tends to explode, with common
-#C 4c/10 dot puffers emerging from chaos and occasionally caught up
-#C by burning fuse. Try starting with the rule and see if you can 
-#C tame it by adjusting transitions.
-#C 
+#C A sparse elementary c/7 orthogonal spaceship in an INT rule 
+#C   with three transitions. The rule tends to explode, with common
+#C   4c/10 dot puffers emerging from chaos and occasionally caught up
+#C   by burning fuse. Try starting with the rule and see if you can 
+#C   tame it by adjusting transitions.
 #C Reference:
-#C https://conwaylife.com/forums/viewtopic.php?p=72335#p72335
+#C   https://conwaylife.com/forums/viewtopic.php?p=72335#p72335
 x = 19, y = 12, rule = B2ce/S0
 4bo9bo$bo5bo3bo5bo2$9bo$2bo5bobo5bo$4bobo5bobo$9bo2$3bobo7bobo$o6bo3bo
 6bo2$2bo2bo7bo2bo!

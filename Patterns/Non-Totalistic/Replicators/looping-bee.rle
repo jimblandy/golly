@@ -1,0 +1,8 @@
+#N looping-bee.rle
+#O LaundryPizza03, 10 June 2022
+#C A B-heptomino in this rule will loop around and make copies
+#C   of itself to fill the plane.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=146871#p146871
+x = 5, y = 3, rule = B3-c5k/S2-i3-acky4iz
+o2b2o$b3o$2bo!

@@ -1,0 +1,10 @@
+#N hexagonal-rro.rle
+#O AlephAlpha, 26 March 2019
+#C A period-30, mod-5 reflectorless rotating oscillator in a hexagonal
+#C   rule that loops around the center of a hexagonal tile.
+#C This has a maximum loopability of 3, allowing for derivative
+#C   p15 and p10 oscillators.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=73919#p73919
+x = 48, y = 9, rule = B2o3o4m5/S2H
+bo19bo19bo$3o17b3o17b3o3$46bo$41bo4bo$41b2o3b2o$24b3o16bo$25bo!

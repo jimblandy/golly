@@ -1,0 +1,9 @@
+#N hexagonal-rule-Sierpinski-builder.rle
+#O Connor Steppie, 26 January 2020
+#C A displacing replicator that fires spaceships out behind it that
+#C   print out a Sierpiński triangle. The same rule also contains a
+#C   reflectorless rotating oscillator (AlephAlpha, 2019).
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=88222#p88222
+x = 4, y = 3, rule = B2o3o4m5/S2H
+4o$b3o$b2o!

@@ -1,0 +1,16 @@
+#N 4c-212-roomba-bug.rle
+#O "Saka", 12 December 2017
+#C A "Roomba bug" which happens to be a valid spaceship, travelling
+#C   orthogonally at a speed of 4c/212 (c/53).
+#C See r50-unknown-fate-bug.rle for a Roomba bug whose actual nature
+#C   as a pattern is unknown.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=53580#p53580
+x = 47, y = 46, rule = R25,C0,S849-1323,B777-1600
+16bob3o5b3obo$14b4ob9ob4o$13b21o$13b21o$12b23o$11b25o$10b27o$9b29o$6bo
+b31obo$5bob33obo$4b39o$4b39o$3b41o$2b43o$2b43o$b18ob2o3b2ob18o$b17ob2o
+5b2ob17o$17ob2o7b2ob17o$16ob3o7b3ob16o$20o7b20o$20o7b20o$ob19o5b19obo$
+ob14o3b9o3b14obo$ob14o4b7o4b14obo$ob15o3bob3obo3b15obo$2b15o3b7o3b15o$
+bob15o4b3o4b15obo$bob16ob7ob16obo$2b43o$2bob39obo$3b41o$5b37o$4bob35ob
+o$5b37o$6b35o$7b33o$8b31o$9b29o$10b27o$11b25o$12b23o$13b21o$14b19o$16b
+2ob9ob2o$17b4o5b4o$18b11o!

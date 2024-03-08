@@ -1,0 +1,10 @@
+#N partial-fractal-tracer.rle
+#O Plasmath, 6 November 2023
+#C This is a strange object which generates partial images of a
+#C Sierpinski triangle at a time. At some times, it looks as though
+#C it acts as a gun for moving replicators, but this gun also
+#C creates copies of itself, making the gun itself a replicator.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=170621#p170621
+x = 4, y = 3, rule = B2n3acijr4ijqt5ry6i7e8/S2aek3ijnqr4cei5eijnr6-ac7e
+2obo$o2bo$b3o!

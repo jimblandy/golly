@@ -1,0 +1,82 @@
+@RULE Circle
+
+@TABLE
+n_states:17
+neighborhood:Moore
+symmetries:rotate4reflect
+var a={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var b=a
+var c=a
+var d=a
+var e=a
+var f=a
+var g=a
+var h=a
+
+var j={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
+var k=a
+var l=a
+var m=a
+var n=a
+var o=a
+var p=a
+var q=a
+
+var t={12,13,14,15,16}
+var u={12,5,6,7,8}
+
+0,4,2,4,0,0,0,0,0,12
+0,4,2,5,a,b,c,d,e,16
+0,4,2,6,a,b,c,d,e,16
+0,4,2,7,a,b,c,d,e,16
+0,4,2,8,a,b,c,d,e,16
+0,4,2,12,a,b,c,d,e,8
+0,4,2,13,a,b,c,d,e,8
+0,4,2,14,a,b,c,d,e,8
+0,4,2,15,a,b,c,d,e,8
+0,4,2,16,a,b,c,d,e,8
+1,3,b,8,c,d,e,8,f,10
+2,4,b,8,c,d,e,8,f,11
+1,3,b,16,c,d,e,16,f,10
+2,4,b,16,c,d,e,16,f,11
+1,10,b,8,c,d,e,8,f,10
+2,11,b,8,c,d,e,8,f,11
+1,10,b,16,c,d,e,16,f,10
+2,11,b,16,c,d,e,16,f,11
+10,a,b,c,d,e,f,g,h,2
+11,a,b,c,d,e,f,g,h,1
+2,11,a,b,c,d,e,f,g,4
+1,10,a,b,c,d,e,f,g,3
+0,10,a,b,c,d,e,f,g,4
+1,8,a,b,c,d,e,f,g,9
+2,8,a,b,c,d,e,f,g,9
+9,1,a,b,c,d,e,f,g,1
+9,2,a,b,c,d,e,f,g,2
+1,16,a,b,c,d,e,f,g,9
+2,16,a,b,c,d,e,f,g,9
+0,3,a,b,c,d,e,f,g,4
+1,3,a,b,c,d,e,f,g,3
+2,4,a,4,b,4,c,4,d,3
+2,4,a,b,c,d,e,f,g,4
+3,a,b,c,d,e,f,g,h,2
+4,a,b,c,d,e,f,g,h,1
+0,7,12,7,0,0,0,0,0,12
+0,15,12,15,0,0,0,0,0,12
+6,12,a,12,b,c,d,e,f,12
+14,12,a,12,b,c,d,e,f,12
+0,7,t,j,c,d,e,f,g,8
+0,15,u,j,c,d,e,f,g,16
+5,7,a,b,c,d,e,f,g,7
+5,9,a,b,c,d,e,f,g,7
+5,10,a,b,c,d,e,f,g,7
+5,11,a,b,c,d,e,f,g,7
+6,8,a,b,c,d,e,f,g,8
+7,a,b,c,d,e,f,g,h,6
+8,a,b,c,d,e,f,g,h,5
+13,15,a,b,c,d,e,f,g,15
+13,9,a,b,c,d,e,f,g,15
+13,10,a,b,c,d,e,f,g,15
+13,11,a,b,c,d,e,f,g,15
+14,16,a,b,c,d,e,f,g,16
+15,a,b,c,d,e,f,g,h,14
+16,a,b,c,d,e,f,g,h,13

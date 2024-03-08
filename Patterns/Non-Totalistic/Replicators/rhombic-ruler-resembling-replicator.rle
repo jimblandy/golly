@@ -1,0 +1,7 @@
+#N rhombic-ruler-resembling-replicator.rle
+#O wwei23
+#C A linear replicator that produces large rhombus shapes of
+#C   oscillating zebra stripes agar, which die out orthogonally
+#C   at the same speed as the replicator moves.
+x = 4, y = 3, rule = B2e3ei4itz5akry6ci/S1c2ac3ajy4in6aen8
+b2o$o2bo$b2o!

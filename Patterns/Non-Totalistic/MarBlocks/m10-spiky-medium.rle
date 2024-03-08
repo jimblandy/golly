@@ -1,0 +1,11 @@
+#N m10-spiky-medium.rle
+#O Connor Steppie, 21 February 2024
+#C A period-3066 M10 oscillator using a spiky B2a-based medium.
+#C A pattern composed entirely of plus shapes will remain made
+#C   entirely of plus shapes on every third generation.
+#C   Evolves very slightly differently if B4c is added.
+x = 54, y = 54, rule = B2an3a4aw8/S3iy5c
+52bo$51b3o$52bo$49bo$48b3o$49bo$46bo$45b3o$46bo$43bo$42b3o$43bo$40bo$
+39b3o$40bo$37bo$36b3o$37bo$34bo$33b3o$34bo$31bo$30b3o$31bo$28bo$27b3o$
+28bo$25bo$24b3o$25bo$22bo$21b3o$22bo$19bo$18b3o$19bo$16bo$15b3o$16bo$
+13bo$12b3o$13bo$10bo$9b3o$10bo$7bo$6b3o$7bo$4bo$3b3o$4bo$bo$3o$bo!

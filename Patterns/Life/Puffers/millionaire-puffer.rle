@@ -1,0 +1,11 @@
+#N millionaire-puffer.rle
+#O pigeon, 18 April 2023
+#C A switch-engine based puffer fires backward gliders, creating
+#C   honeyfarm crystals. Unlike most patterns of this form, it becomes
+#C   a puffer with period 229,689,152.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=160614#p160614
+x = 150, y = 74, rule = B3/S23
+127bobo$126bo$127bo2bo$129b3o7$120b3o2$121bo$121b2o25b2o$122b2o24bo$
+120bo2b2o44$11bobo$2o8bo$2o9bo2bo$13b3o6$69bobo$68bo$69bo2bo$71b3o$94b
+2o$94b2o!

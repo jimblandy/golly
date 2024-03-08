@@ -1,28 +1,26 @@
 #N whitespace-1176c4704o-spaceship-predecessor.rle
 #O bubblegum, 30 March 2021
-#C     Whitespace is a class of isotropic non-totalistic rules
-#C characterized by a quaduatic spacefiller that expands at c/2
-#C orthogonal and develops a static agar with density 1. (Compare with
-#C 'Max' in the Game of Life, which grows similarly and constructs a 
-#C zebra stripes agar with density only 0.5.) A spacefiller can start
-#C from an X-pentomino, which may be produced from its own remains
-#C after being disturbed by ash and having collapsed. This unique
-#C mechanism leads to beautiful natural dynamics.
-#C     The following pattern is in one of the whitespace rules, which
-#C is inhabited by a massive 1176c/4704 orthogonal spaceship. Its
-#C front engine (the symmetric 87x171 region) propagates at c/4,
-#C period 168. The trailing space dust is asymmetric and messy, and
-#C eventually scales up the period 28-fold.
-#C     To help keep Golly's installation files to a reasonable size,
-#C the pattern shown here is a predecessor of the spaceship. It will
-#C converge to a phase of the full spaceship at T=38,500, after a
-#C final particularly enormous whitespace backfire to the west.
-#C
+#C Whitespace is a class of isotropic non-totalistic rules
+#C   characterized by a quaduatic spacefiller that expands at c/2
+#C   orthogonal and develops a static agar with density 1. (Compare with
+#C   'Max' in the Game of Life, which grows similarly and constructs a 
+#C   zebra stripes agar with density only 0.5.) A spacefiller can start
+#C   from an X-pentomino, which may be produced from its own remains
+#C   after being disturbed by ash and having collapsed. This unique
+#C   mechanism leads to beautiful natural dynamics.
+#C The following pattern is in one of the whitespace rules, which
+#C   is inhabited by a massive 1176c/4704 orthogonal spaceship. Its
+#C   front engine (the symmetric 87x171 region) propagates at c/4,
+#C   period 168. The trailing space dust is asymmetric and messy, and
+#C   eventually scales up the period 28-fold.
+#C To help keep Golly's installation files to a reasonable size,
+#C   the pattern shown here is a predecessor of the spaceship. It will
+#C   converge to a phase of the full spaceship at T=38,500, after a
+#C   final particularly enormous whitespace backfire to the west.
 #C Reference:
 #C   https://conwaylife.com/forums/viewtopic.php?p=127358#p127358
-#C
 #C For more whitespace rules, see 
-#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3293
+#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=3293
 x = 2185, y = 527, rule = B3ai4ciw5aceqr6ck78/S3-kqr4ceq5eikq6-an7c8
 1920bo$1919b3o$1918b5o$1917b7o$1916b9o$1915b11o$1914b13o$1913b15o$
 1912b17o$1911b19o$1910b21o$1909b23o$1908b25o$1907b27o$1906b29o$1905b

@@ -1,0 +1,40 @@
+#N factorio-small-objects.rle
+#O H. H. P. M. P. Cole, 3 February 2024
+#C This is a compendium of all the known objects in Factorio which
+#C   have a minimum population of between 4 to 7 cells. There are a
+#C   total of 20 still-lifes, 104 p2s, 3 p4s, 1 p6, and 1 c/1o in
+#C   this collection.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=177188#p177188
+x = 264, y = 190, rule = R3,C2,S2,B3,N+
+2o7bobo6bo2bo46b2o7b2o7bobo7b2o7bobo7b2o13b2o7b2o7bobo6b2o6b2o16bo$2o
+7bobo6bo2bo45bo2bo5bo3bo4bo3bo4bo4bo4bobo6b2o15bobo6bo2bo5bo2bo6b2o6b
+obo14bo$183bo3$183bo2$9bobo6bo2bo46b2o7b2o7bobo7b2o7bobo7b2o13b2o7b2o
+7bobo6b2o6b2o2$9bobo6bo2bo45bo2bo5bo3bo4bo3bo4bo4bo4bobo6b2o15bobo6bo
+2bo5bo2bo6b2o6bobo5$18bo2bo46b2o7b2o7bobo7b2o7bobo7b2o13b2o7b2o7bobo6b
+2o6b2o3$18bo2bo45bo2bo5bo3bo4bo3bo4bo4bo4bobo6b2o15bobo6bo2bo5bo2bo6b
+2o6bobo10$67b2obo5b2obo5b2obo$68b2o6bobo8b2o6$67b2obo5b2obo5b2obo2$68b
+2o6bobo8b2o5$67b2obo5b2obo5b2obo3$68b2o6bobo8b2o10$42bo$2o16b2o21bob2o
+22bo9bo7bo8bo11bo$obo16b2o21bo8bobo2bo11bo10bo5b2o10bo7b2o13b2o3bo6b2o
+3bo5bobo2bo$b2o15bobo21bo8bo2bobo10bobo6b2o9bo6b2o7bo15bo3b2o6bo2bobo
+6bobo2bo$68bobo7b2o7b2o7b2o5b2o6$2o16b2o7bobo21bobo2bo11bo10bo7bo9bo8b
+o$o2bo15bobo7b2o36bo9bo7b2o7bo9bobo13b2o3bo6b2o3bo5bobo2bo$bobo14bo2b
+o5bo2bo20bo2bobo10bobo6b2o7bo8b2o7bo$68bobo7b2o7b2o7b2o5bobo13bo3b2o6b
+o2bobo6bobo2bo4$2o7b2o7b2o7bobo5bobo13bobo2bo$o2bo33b2o81b2o3bo6b2o3b
+o5bobo2bo$9bo2bo6bobo7b2o37bo9bo8bo9bo$bobo6bobo5bo2bo5bo2bo4bo2bo12b
+o2bobo10bo8bo10b2o7b2o$68bobo5bo2bo5bo8b2o23bo3b2o6bo2bobo6bobo2bo$67b
+obo7b2o6b2o7bo6$67bo8bo10bo6bo$68bo9bo7b2o8b2o$68bobo5bo2bo5bo8b2o$67b
+obo7b2o6bo2bo8bo6$69bo8bo$68bo7bobo$69b2o6bo$67b2o8bobo6$68bo9bo$69bo
+8b2o$69b2o6bo$67b2o7b2o6$68bo25b2o$67b2o25bo$69b2o26bo$69bo26b2o6$69b
+o24bobo$67bobo24bo$68bobo26bo$68bo26bobo12$79b2o22bobo10b2o29bobo7b2o
+17bobo9b2o19bo12bo15bo3bo15b2o3bo$207bo4bo7b2o2b2o37bo$76bo24bo11bo31b
+o8bo52b2o2b2o7bo4bo13b2o3bo11bo3bo2bo$77bo3bo20bo3bo7bo4bo26bo2bo5bo2b
+o16bobobo7bo2b2o$76bo24bo11bo31bo8bo87b2o$76bo24bo11bo31bo8bo$176bobo
+9b2o5$175bobobo7bo2b2o17bo12bo15bo3bo$69b2o8b2o23bobo20bobo9b2o7bobo$
+207bo4bo7b2o2b2o$66bo9bo24bo22bo11bo8bo30bo11bo18b2o2b2o7bo4bo13b2o3b
+o$68bo2bo6bo3bo20bo3bo18bobo9bobo6bo2bo$66bo9bo24bo22bo11bo8bo$66bo9b
+o24bo22bo11bo8bo29bobobo7bo2b2o50b2o6$113bo95bo29bo2bo$117b2o68bo2b2o
+15bo4bo$113bobo4bo$113bo93b2o2b2o26bo2bobo$189bo2$242bobo$187bo2b2o2$
+76bo11bo12bo11bo$80b2o11b2o10bobo10b2o$76bo2bo3bo4bo2bo3bo5bo2bo3bo4b
+o2bo4bo$76bo11bo12bo11bo6$77b2o$79bo22bobo$76bo3bo22bo$79bo21bo3bo$79b
+o23bo$103bo6$77b2o23bobo$79bo23bo$79bo23bo$76bo3bo20bo3bo$79bo23bo!

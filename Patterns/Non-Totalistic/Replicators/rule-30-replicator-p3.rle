@@ -1,0 +1,14 @@
+#N rule-30-replicator-p3.rle
+#O Arie Paap, 14 February 2024
+#C Wolfram 30 is perhaps one of the simplest cellular automata
+#C   in which simple starting conditions such as a single cell
+#C   can result in explosively chaotic overall behaviour. While
+#C   the rule is uninteresting in terms of engineering, unlike
+#C   Rule 110, it excels in generating random numbers from
+#C   simple initial conditions.
+#C   This is a period-3 lightspeed replicator which functions
+#C   as a Rule 30 unit cell. A period-2 version is also included.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=178071#p178071
+x = 2, y = 5, rule = B2aei3aei4rtyz5e7e/S2k3en4ait
+o$2o$bo$2o$o!

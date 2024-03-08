@@ -1,0 +1,12 @@
+#N chaotic-1d-replicator.rle
+#O Connor Steppie, 12 October 2017
+#C A line of five is a highly irregular replicator in this rule.
+#C   While it replicates cleanly, the one-dimensional rule it emulates
+#C   is explosive.
+#C It can either be analysed as simulating Rule 1839132 with a
+#C   half-integer neighbourhood, or Rule 1208925819614629174771760
+#C   with an integer neighbourhood.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=51894#p51894
+x = 1, y = 5, rule = B2ei3aein4e5e/S1e2aek3-cein4ikz
+o$o$o$o$o!

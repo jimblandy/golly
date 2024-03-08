@@ -1,0 +1,7 @@
+#N gems-c5648-spaceship.rle
+#O possibly David Eppstein
+#C This is the slowest known spaceship in any outer-totalistic rule
+#C   that does not use universal construction technology.
+x = 12, y = 14, rule = B3457/S4568
+4bo2bo$4b4o$2b8o$2b2ob2ob2o$obobo2bobobo$2ob6ob2o$ob3o2b3obo$3ob4ob3o$
+2ob6ob2o$b3o4b3o$b3o4b3o$3b2o2b2o$3bo4bo$5b2o!

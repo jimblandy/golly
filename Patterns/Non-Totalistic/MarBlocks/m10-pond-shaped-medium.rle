@@ -1,0 +1,25 @@
+#N m10-pond-shaped-medium.rle
+#O wwei23, 30 March 2021
+#C A pattern composed entirely of a rectangle of isolated ponds will
+#C   remain entirely composed of isolated ponds on every seventh
+#C   generation.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=127354#p127354
+x = 108, y = 174, rule = B2en3ijq4w6aen/S2cek3aceny4ejqr5jk6a
+b2o48b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o$o2bo46bo2bo2bo2bo2bo2bo2bo2bo2bo
+2bo2bo2bo2bo2bo2bo2bo$o2bo46bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo
+2bo2bo$b2o48b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o7$b2o4b2o$o2bo2bo2bo$o2bo2b
+o2bo$b2o4b2o17$b2o4b2o4b2o$o2bo2bo2bo2bo2bo$o2bo2bo2bo2bo2bo$b2o4b2o4b
+2o27$b2o4b2o4b2o4b2o30b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o$o2bo2bo2bo2b
+o2bo2bo2bo28bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo$o2bo
+2bo2bo2bo2bo2bo2bo28bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo
+2bo$b2o4b2o4b2o4b2o30b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o27$b2o4b2o4b2o
+4b2o4b2o$o2bo2bo2bo2bo2bo2bo2bo2bo2bo$o2bo2bo2bo2bo2bo2bo2bo2bo2bo$b2o
+4b2o4b2o4b2o4b2o27$51b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o4b2o$50bo2bo2b
+o2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo$50bo2bo2bo2bo2bo
+2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo$51b2o4b2o4b2o4b2o4b2o4b
+2o4b2o4b2o4b2o4b2o7$b2o4b2o4b2o4b2o4b2o4b2o$o2bo2bo2bo2bo2bo2bo2bo2bo
+2bo2bo2bo$o2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo$b2o4b2o4b2o4b2o4b2o4b2o
+37$b2o4b2o4b2o4b2o4b2o4b2o4b2o$o2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2b
+o$o2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo$b2o4b2o4b2o4b2o4b2o4b2o4b2o
+!

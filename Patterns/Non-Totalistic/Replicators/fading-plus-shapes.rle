@@ -1,0 +1,8 @@
+#N fading-plus-shapes.rle
+#O bibunsekibun, 22 July 2023
+#C This quadratic replicator produces plus signs made of an agar,
+#C which converts to another agar in four directions as it decays.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=164012#p164012
+x = 3, y = 3, rule = B2e3aij4aceknq5-e678/S1c3ajkn4acknqyz5-c6-ce7e8
+2o$2o$2bo!

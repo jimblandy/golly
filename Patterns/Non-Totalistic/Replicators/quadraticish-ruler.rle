@@ -1,0 +1,4 @@
+#N quadraticish-ruler.rle
+#C Replicating rakes create a series of binary rulers at around every power of two.
+x = 2, y = 2, rule = B2a3i4i/S1e2i3e5i6i7e8
+2o$bo!

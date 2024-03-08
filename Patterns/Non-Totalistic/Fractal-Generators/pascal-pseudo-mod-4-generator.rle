@@ -1,0 +1,17 @@
+#N pascal-pseudo-mod-4-generator.rle
+#O wwei23, 27 October 2018
+#C A beehive in this rule is an unusual replicator which will make
+#C   four copies of itself before collapsing back down to two distant
+#C   copies. A moving mechanism can print copies of this replicator
+#C   behind it to create a fractal pattern from this replicator.
+#C Note, however, that this is not actually identical to Pascal's
+#C   triangle modulo 4, since that fractal contains extra internal
+#C   shapes, absent on this fractal. See pascal-mod-3-generator.rle
+#C   for a similar replicator generating pattern.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=65074#p65074
+x = 56, y = 33, rule = B2ei3-akny4acnqrw5aqy6aen/S1c2-ik3ack4cjknrw5acjk6c7
+2b2o12b2o$2bo13b2o$2bo13b2o$5bo$7bo$2o4bobo$2o4bo2bo9b6o$18bo6bo$19b6o
+$6bo2bo2$23bo6bo$21bo10bo$21b2o8b2o$21bo10bo$23b2o5bo$25bo$24bo$26bo
+11b2o$23bobo11bo2bo$38b2o3$42b4o$40bo6bo$40b2o4b2o$40bo6bo$42b4o2$13b
+2o5b2o5b2o5b2o$13b2o5b2o5b2o5b2o7b2o8b2o$42bo12bo$43b2o8b2o!

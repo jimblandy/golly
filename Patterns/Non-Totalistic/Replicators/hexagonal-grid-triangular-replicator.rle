@@ -1,0 +1,8 @@
+#N hexagonal-grid-triangular-replicator.rle
+#O AlephAlpha, 24 March 2019
+#C A replicator in a hexagonal rule that traces put a triangular shape.
+#C   With respect to time, this builds a Sierpiński tetrahedron.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=73811#p73811
+x = 4, y = 4, rule = B2o3op4m5/S13m4p6H
+2bo$bobo$o2bo$b2o!

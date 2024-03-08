@@ -1,0 +1,17 @@
+#N pascal-mod-5-generator.rle
+#O wwei23, 27 October 2018
+#C A beehive in this rule is an unusual replicator which will make
+#C   five copies of itself before collapsing back down to two distant
+#C   copies. A moving mechanism can print copies of this replicator
+#C   behind it to create a fractal pattern which is identical to that
+#C   of the Pascal triangle modulo 5 (nicknamed "decapinski"). See
+#C   pascal-mod-3-generator.rle for a similar replicator generating
+#C   pattern.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=65074#p65074
+x = 29, y = 29, rule = B2e3-cnqy4rwyz5y6ace7c/S1c2ac3aiq4eiknrwy5cn6ekn7c8
+20bo2b2o2bo$20b3o2b3o$20bo2b2o2bo$16b2o$16b2o$20bo2b2o2bo$20b3o2b3o$
+20bo2b2o2bo3$6b2o6bo11b2o$6b2o7b2o8bo2bo$14bobobo7b2o$6b2o7b2o$6b2o7bo
+3bo$15bo$23bo2bo$7b2o14b4o$6bo2bo13bo2bo$7b2o$2o$2o16bobo2bobo$7b2o8bo
+3b2o3bo$6bo2bo8bobo2bobo$7b2o5b2o$14b2o$18bobo2bobo$17bo3b2o3bo$18bobo
+2bobo!

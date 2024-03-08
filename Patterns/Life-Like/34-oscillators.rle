@@ -1,0 +1,42 @@
+#N 34-oscillators.rle
+#O Mark Niemiec, Jack Eisenmann
+#C A selection of oscillators in the rule B34/S34, also known as
+#C   '3/4 Life' due to its rulestring.
+#C Adapted from https://conwaylife.com/ref/mniemiec/rule34.htm.
+#C   A more complete collection of patterns in this rule can be found
+#C   there.
+x = 91, y = 167, rule = B34/S34
+8bo6b2o5b2ob2o8b2ob2o$15b2o4bob3obo6bob3obo$6bobo12b2o3bobo4bobo3bobo$
+22bob2ob2o4b2ob3ob2o$8bo12b2ob2obo6bobobobo$21bobo3b2o4b2ob3ob2o$8bo
+13bob3obo4bobo3bobo$23b2ob2o6bob3obo$6bobobo24b2ob2o5$6bobo6b2o5bo7bo
+6bo5b2o6bobo6b2o7bobo7bo$16b2o5b2o18bob2o5bob2o4bob2o4b2ob2o4b3o$10bo
+12bo5b3o4b3o4b2o7bobo5bobo7bo8b2o$78bo$8bo2$6bo2$6bobobo4bobo6bobobo4b
+obo6bobo6bo4bo4bo10bo10bo$15b2ob2o5bobo5b2ob2o4bo3bo4bob2obo4bobo2bo7b
+3o$16bobo6b3o5bobo6bo3bo4bo4bo4bo2bobo4b3o7b2ob2o$44bobo19bo8bo$82b3o
+5$15bo9bo9bo9bobobo4b3ob3o4bobo7bobo5b3o2b3o$16b2o8b2o8b2o7b2ob2o7bo7b
+2o2bo5bobo8b2o$16bo2bo6bo9bo9bobo6bo3bo5bo3bo4b2ob2o5bo4bo$18b2o9bo8bo
+28bobo6bo$20bo7b2o9b2o$30bo8bo5$15b2o6bobo7b3o6b2o6bobo8bo8b3o6bo$15bo
+b2o4bo2b2o5bobo6bob2o5bob2o6b3o6bobo7b2o$15b2obo4b2o2bo4b2ob2o4b2obo6b
+2obo5b2obo5b2ob2o4b3o$17b2o6bobo6bo8b2o8bobo7b2o6bo9b3o$62bo8bo8b2o$
+82bo5$16bo12bo9bo11bobo$16b3o8bobo7b3o9b3ob3o$15bo2bo12bo6bobo2bo7bobo
+$17bo2bo4b2o11bo2bobo5b3ob3o$17b3o11b2o9b3o6bobo$19bo6bo15bo$28bobo$
+28bo5$7bobo16b3o8b4o8b4o11b6o$25bo3b2o6bo3b2o6bo3b2o7b2o6b2o$11bo5bo7b
+o4bo6bo4bo6bo4bo7bo8bo$16b3o6bo5bo5bo5bo5bo5bo5bo3b4o3bo$9bo7bo8bo4bo
+6bo4bo6bo4bo5bo2bo4bo2bo$26b2o3bo6b2o3bo6b2o3bo5bo2bob2obo2bo$11bo16b
+3o9b3o9b4o5bo2bob2obo2bo$61bo2bo4bo2bo$7bobo51bo3b4o3bo$62bo8bo$62b2o
+6b2o$64b6o2$17bo10bo7bo$16b3o8b3o5b3o$17bo2bob2obo2bo7bo2bob2o$22b2o
+17b2obo2bo$46b3o$47bo4$72bobobo$11bo5bo5bobo6bo2bo5b3o7bobobo4bobobo8b
+obo$17b3o11bob2obo4bob2o6b2ob2o4b2ob2o5bo2bobo2bo$9bobo4bo5b2o3bo4bo2b
+o4b2ob3o6bobo6bobo7b3ob3o$18bo5b3o5bo2bo9bo4bobobobo2b3obobo4bo3bo3bo$
+7bobobo14bo4bob2obo6b3o5bobobo4bobobo6b3ob3o$32bo2bo7bo7bobobo4bobobo
+5bo2bobo2bo$11bo61bobo$72bobobo$11bo5$9bobo6bo5bo7bo$17b4o3b3o5b2o7b3o
+4b3o$7bo11bo3bo2bo4b2o11b4o$26b2o4bo3bo5bo6bo$7bobo15bo10b2o$35b2o$7bo
+3bo24bo$46bo$9bo6bo12bo16b2o$17b2o8b2o15b3o$17bo10bo4b2o9bo$19b2o4b2o
+6bob4o3b3o5bo$21b4o8bo4bo4bo5b3o$33bobobo11bo$32bo4bo9b3o$32b4obo8b2o$
+36b2o9bo5$8bobo6b3o11bo$16bo2bo6b4ob2o$7bo3bo5b4o5b2ob4o$18bo8bo$8bobo
+2$7bo3bo2$8bobo5$2bo5bobo7bobo$16b3obo$obo4bo3bo8b2o6bob3o$16b2o8b2o4b
+o$2bo4bo3bo5bob3o5bo4b2o$17bobo7b3obo$2bo4bo3bo2$obobo3bobo4$34b2obo6b
+o$2bo4bobo6b3o4b4o7b2o2bo5b2o3b3o5b3o$16b2o7b4o3b2o4bo5b3o4bo5b2o$obo
+8bo4bo16bo4b2o8bo2bo5bo$33bo2b2o11b3o$2bo6bo24bob2o2$2bo4bo2$obobo2bob
+obo5$obo5bobo5b2o3bo$16b3o$4bo2bo3bo5bo$20bo$2bo4bo3bo7b3o$16bo3b2o$o
+6bo3bo2$obobo3bobo!

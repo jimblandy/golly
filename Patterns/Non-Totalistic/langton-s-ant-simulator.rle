@@ -1,0 +1,11 @@
+#N langton-s-ant-simulator.rle
+#O silversmith, 26 December 2021
+#C Langton's Ant, as simulated in a 2-state isotropic rule with simple
+#C   starting conditions.
+#C The left turn mechanism was found by hand, with the right turn
+#C   being completed via the EnumPattEvo program. The highway can be
+#C   seen to emerge around generation 220,000.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=179823#p179823
+x = 4, y = 2, rule = B3-cjkq4knqy5cnr7/S02-cn3-ak4eiq5kq6e7e
+o2bo$3o!

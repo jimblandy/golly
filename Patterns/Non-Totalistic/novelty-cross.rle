@@ -1,0 +1,39 @@
+#N novelty-cross.rle
+#O toroidalet, December 18 2017
+#C A tiny X-pentomino in this non-totalisic rule is a long-lived,
+#C   prolific hotspring, spawning a cross-shaped configuration with
+#C   a scattering of objects everywhere. 
+#C At T=868, four X-pentominoes 37 cells away from center forms,
+#C   later disrupted to give sixteen of these seeds at T=1221. From
+#C   their interaction arises several transient 6-cell c/2o spaceships.
+#C At T=2252, four triangular 9-cell c/3o spaceships appears,
+#C   travelling backward to be consumed at the center.
+#C At T=3160, sixteen seeds begin to expand perpendicularly,
+#C   creating 9-cell 8c/76o spaceships towards the axes.
+#C At T=3781, the first four escaping c/3o spaceships emerges. Later,
+#C   if removing the debris 140 cells away from the center, the pattern
+#C   would converge to a massive four-barrelled period-5040 gun.
+#C At T=16758, a c/3o spaceship catches up with a 8c/76o one along
+#C   the axis, dropping a seed at a whopping 908 cells away from the 
+#C   center. But multiple spaceship collisions terminate its activity
+#C   at T=28433. Similar events will happen a lot of times soon.
+#C Sometimes the center may temporarily settle into a simple still
+#C   life or an oscillator, but after a while it will be re-ignited by
+#C   spaceships from four directions. The generation counts are listed
+#C   below:
+#C 1755681 4bo$2b5o$b7o$b2obob2o$9o$b2obob2o$b7o$2b5o$4bo! 1760440 
+#C 2444797 2obob2o$7o$bobobo$7o$bobobo$7o$2obob2o! 2719552 
+#C 2822812 3bo3bo$2b2o3b2o$bob5obo$3o5b3o$2bob3obo$2bob3obo$2bob3obo$3o5b3o$bob5obo$2b2o3b2o$3bo3bo! 2875606 
+#C 3210741 b2obob2o$ob5obo$2o5b2o$bob3obo$2ob3ob2o$bob3obo$2o5b2o$ob5obo$b2obob2o! 4092264 
+#C 4274117 b2obob2o$ob5obo$2o5b2o$bob3obo$2ob3ob2o$bob3obo$2o5b2o$ob5obo$b2obob2o! 4275201 
+#C 5353175 4bo$2b5o$b7o$b2obob2o$9o$b2obob2o$b7o$2b5o$4bo! /
+#C 
+#C Eventually the center is extinguished at T=5353175, and soon no
+#C   further interesting events will take place.
+#C 
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=53857#p53857
+#C A screenshot for the settled pattern at generation 2^24 is available:
+#C   https://conwaylife.com/forums/download/file.php?id=5000
+x = 3, y = 3, rule = B35cj6ce7/S34-cry5-jnr6ci78
+bo$3o$bo!

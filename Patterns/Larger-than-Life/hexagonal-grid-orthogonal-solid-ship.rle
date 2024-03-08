@@ -1,0 +1,9 @@
+#N hexagonal-grid-orthogonal-solid-ship.rle
+#O Saka, 18 October 2020
+#C A c/11 orthogonal "solid ship" in a range-10 hexagonal rule.
+#C Reference:
+#C   https://conwaylife.com/forums/viewtopic.php?p=106928#p106928
+x = 21, y = 21, rule = R10,C0,S114-200,B100-200,NH
+3b4o$2bo5bo$bob5o2bo$o2b7o2bo$2b11obo$b13obo$b14obo$b7ob8o$ob5o4b7o$2b
+5o5b5obo$bob4o6b6o$3b5o5b5obo$2bob5o4b7o$4b7ob8o$5b14obo$6b13obo$8b11o
+bo$7bo2b7o2bo$9bob5o2bo$11bo5bo$13b4o!
