@@ -135,11 +135,7 @@ InfoFrame::InfoFrame(char *comments)
     if (comments[0] == 0) {
         textctrl->WriteText(_("No comments found."));
     } else {
-        textctrl->WriteText(wxString(comments,wxConvLocal));
-#if defined(__WXMAC__)
-        // sigh... wxOSX seems to ignore SetDefaultStyle
-        textctrl->SetStyle(0, strlen(comments), textattr);
-#endif
+        textctrl->WriteText(wxString(comments,wxConvUTF8));
     }
 
     textctrl->ShowPosition(0);

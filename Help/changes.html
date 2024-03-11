@@ -16,6 +16,7 @@
 <li> Fixed a bug that affected all multi-state hashlife algorithms
      (changing a cell in a very large pattern could result in a corrupted universe).
 <li> Fixed some bugs handling filenames with underscores or ampersands in the Open/Run Recent submenus.
+<li> The Pattern Info window displays Unicode characters correctly (assuming the comments are UTF-8 encoded).
 <li> Updated Lua to version 5.4.6.
 <li> Updated pattern in Non-Totalistic folder:
 <a href="open:Patterns/Non-Totalistic/whitespace-puffer.rle">whitespace-puffer.rle</a>.
@@ -341,7 +342,7 @@ a Python 3.x (64-bit) installation to run .py scripts.
      to make zooming in/out easier to control.
 <li> Fixed a bug when setting/getting cell values in very big hash-based universes.
 <li> Fixed a bug where patterns larger than <a href="bounded.html">bounded grids</a> were not correctly clipped.
-<li> Fixed various problems with UTF8-encoded text in the clipboard and in Lua/Python scripts.
+<li> Fixed various problems with UTF-8 encoded text in the clipboard and in Lua/Python scripts.
 <li> Fixed a bug that could crash Golly if a .rule file contained invalid XPM data.
 <li> The new credits.lua script displays animated credits and can be launched from a link in
      <a href="credits.html">Help > Credits</a>.
