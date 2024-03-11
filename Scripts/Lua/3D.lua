@@ -142,6 +142,7 @@ local xyline = { "lines" }          -- coordinates for batch line draw
 local xyln = 2                      -- index of next position in xyline
 local showhistory = HISTORYOFF      -- cell history longevity: 0 = off, >0 = on
 local fadehistory = true            -- whether to fade history cells
+local pattinfo = ""                 -- comments from a pattern file or clipboard
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -522,7 +523,6 @@ function SaveGollyState()
     oldstate.edit = g.setoption("showeditbar", 0)
     oldstate.tile = g.setoption("tilelayers", 0)
     oldstate.stack = g.setoption("stacklayers", 0)
-    oldstate.files = g.setoption("showfiles", 0)
     oldstate.filesdir = g.getdir("files")
     return oldstate
 end
@@ -539,8 +539,10 @@ function RestoreGollyState(oldstate)
     g.setoption("showeditbar", oldstate.edit)
     g.setoption("tilelayers", oldstate.tile)
     g.setoption("stacklayers", oldstate.stack)
-    g.setoption("showfiles", oldstate.files)
-    g.setdir("files", oldstate.filesdir)
+    -- only reset files directory if user's startup script changed it
+    if g.getdir("files") ~= oldstate.filesdir then
+        g.setdir("files", oldstate.filesdir)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1571,6 +1573,7 @@ function DrawMenuBar()
         mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
         mbar.enableitem(3, 3, popcount > 0)     -- Next Step
         mbar.enableitem(3, 4, gencount > startcount)    -- Reset
+        mbar.enableitem(4, 15, #pattinfo > 0)   -- Pattern Info
     end
 
     mbar.radioitem(4, 5, celltype == "cube")
@@ -2444,6 +2447,7 @@ end
 
 function NewPattern(title)
     pattname = title or "untitled"
+    pattinfo = ""
     SetCursor(drawcursor)
     gencount = 0
     startcount = 0
@@ -2668,9 +2672,7 @@ function OpenPattern(filepath)
             -- pattern ok so use info in newpattern to update current grid;
             -- set pattname to file name at end of filepath
             pattname = filepath:match("^.+"..pathsep.."(.+)$")
-            if #comments > 0 then
-                message = comments
-            end
+            pattinfo = comments -- for ShowPatternInfo
             UpdateCurrentGrid(newpattern)
         end
     else
@@ -2715,9 +2717,7 @@ function OpenClipboard()
         else
             -- pattern ok so use info in newpattern to update current grid
             pattname = "clipboard"
-            if #comments > 0 then
-                message = comments
-            end
+            pattinfo = comments -- for ShowPatternInfo
             UpdateCurrentGrid(newpattern)
         end
     end
@@ -4948,6 +4948,76 @@ end
 
 --------------------------------------------------------------------------------
 
+function ModifyComments(comments)
+    comments = comments:gsub("\n", "<br>\n")
+    comments = "\n"..comments -- simplifies the following changes
+    
+    comments = comments:gsub("\n#N ", "\nName: ", 1)
+    comments = comments:gsub("\n#O ", "\nAuthor: ", 1)
+    
+    -- remove "#C " or "# " from start of each line
+    comments = comments:gsub("\n#[C] ", "\n")
+    comments = comments:gsub("\n# ", "\n")
+    -- fix lines with only #C/#
+    comments = comments:gsub("\n#[C]<br>", "\n<p>\n")
+    comments = comments:gsub("\n#<br>", "\n<p>\n")
+    
+    -- replace space(s) at start of each line with non-breaking spaces
+    comments = comments:gsub("\n  ", "\n&nbsp;&nbsp;&nbsp;")
+    comments = comments:gsub("\n ", "\n&nbsp;&nbsp;&nbsp;&nbsp;")
+
+    -- this makes tabular info less ugly
+    comments = comments:gsub("  ", "\n&nbsp;&nbsp;&nbsp;")
+    
+    -- escape % for later use as replacement string
+    comments = comments:gsub("%%", "%%%%")
+    
+    -- go thru comments line by line to convert http links
+    local newlines = {}
+    local nextline = comments:gmatch("(.-)\n")
+    while true do
+        local line = nextline()
+        if not line then break end
+        local prefix, link, suffix = line:match("^(.*)(http[^ <%),]+)(.+)$")
+        if link then
+            line = prefix.."<a href=\""..link.."\">"..link.."</a>"..suffix
+        end
+        newlines[#newlines+1] = line
+    end
+    
+    return table.concat(newlines)
+end
+
+--------------------------------------------------------------------------------
+
+function ShowPatternInfo()
+    if #pattinfo > 0 then
+        -- create a temporary html file
+        local htmlname = g.getdir("temp").."pattern_info.html"
+        local f = io.open(htmlname, "w")
+        if f then
+            local htmldata =
+[[
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Pattern Info</title>
+<body bgcolor="#FFFFCE">
+<p>COMMENTS</p>
+</body>
+</html>
+]]
+            htmldata = htmldata:gsub("COMMENTS", ModifyComments(pattinfo), 1)
+            f:write(htmldata)
+            f:close()
+        else
+            g.exit("Failed to create temporary html file!")
+        end
+        g.open(htmlname)
+    end
+end
+
+--------------------------------------------------------------------------------
+
 function ShowHelp()
     local htmldata = [[
 <html><title>Golly Help: 3D.lua</title>
@@ -5081,6 +5151,7 @@ shortcuts):
 <tr><td align=right> K &nbsp;</td><td>&nbsp; remove selection </td></tr>
 <tr><td align=right> B &nbsp;</td><td>&nbsp; back view (rotate 180 deg about Y axis) </td></tr>
 <tr><td align=right> I &nbsp;</td><td>&nbsp; restore initial view </td></tr>
+<tr><td align=right> ctrl-I &nbsp;</td><td>&nbsp; show pattern info </td></tr>
 <tr><td align=right> F &nbsp;</td><td>&nbsp; fit entire grid within view </td></tr>
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
@@ -5348,6 +5419,12 @@ If ticked then history cells are shown.
 <dd>
 If ticked then history cells fade each generation. They do not fade
 away completely so you can always see where live cells have been.
+</dd>
+
+<a name="info"></a><p><dt><b>Pattern Info</b></dt>
+<dd>
+If enabled then the comments in the current pattern file will be displayed
+in the help window.
 </dd>
 
 <a name="help"></a><p><dt><b>Help</b></dt>
@@ -7565,6 +7642,7 @@ function CreateMenuBar()
     mbar.additem(4, "Show History", ToggleShowHistory)
     mbar.additem(4, "Fade History", ToggleFadeHistory)
     mbar.additem(4, "---", nil)
+    mbar.additem(4, "Pattern Info", ShowPatternInfo)
     mbar.additem(4, "Help", ShowHelp)
 end
 
@@ -7917,6 +7995,7 @@ function HandleKey(event)
     elseif key == "{" and mods == "none" then ZoomHalf()
     elseif key == "}" and mods == "none" then ZoomDouble()
     elseif key == "i" and mods == "none" then InitialView()
+    elseif key == "i" and mods == CMDCTRL then ShowPatternInfo()
     elseif key == "f" and mods == "none" then FitGrid()
     elseif key == "p" and mods == "none" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()

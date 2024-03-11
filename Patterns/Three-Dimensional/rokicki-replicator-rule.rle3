@@ -1,12 +1,13 @@
 3D version=1 size=50 pos=4,4,33
 #N rokicki-replicator-rule.rle3
 #O Tomas Rokicki, March 2018
-#C This rule contains a simple 12-cell 1D replicator. It is possible
-#C   to add cells behind this replicator as to create lightspeed
-#C   spaceships.
+#C 
+#C This rule contains a simple 12-cell 1D replicator.  It is possible
+#C to add cells behind this replicator to create lightspeed spaceships.
+#C 
 #C The (7,0,0)c/7 and (10,0,0)c/10 spaceships were discovered by
-#C   Andrew Trevorrow in April 2018, and the (30,0,0)c/30 spaceship
-#C   by Arie Paap on the 16th of May 2018.
+#C Andrew Trevorrow in April 2018, and the (30,0,0)c/30 spaceship
+#C by Arie Paap on the 16th of May 2018.
 x=5 y=23 z=12 rule=3D4,7/5,8
 20$bbo/$4bo$3boo8$o3bo$ooboo$bbo6$boo$4bo$4bo/4bo$4bo$4bo$4bo6$4bo$
 bobbo$bb3o$ooboo5$bbo$4bo$4bo$4bo$boboo$bbo/4bo$4bo$4bo$4bo6$4bo$4b

@@ -1,19 +1,23 @@
 3D version=1 size=50 pos=19,14,19
 #N p126-christmas-tree.rle3
 #O Brian D. Eubanks, 25 December 2018
+#C 
 #C This is a period-126 oscillator in a face-centered cubic rule
-#C   entitled FCC3333. At generation 63, it becomes an inverted
-#C   copy of itself.
+#C entitled FCC3333. At generation 63, it becomes an inverted
+#C copy of itself.
+#C 
 #C Andrew Trevorrow noted that by adding layers to this oscillator,
-#C   the periods varied, matching that of MarBlocks oscillators
-#C   and other objects bound by Rule 90.
+#C the periods varied, matching that of MarBlocks oscillators
+#C and other objects bound by Rule 90.
+#C 
 #C Forum user BlinkerSpawn has pointed out that individual slices
-#C   of this oscillator can directly resemble 2D MarBlocks
-#C   oscillators.
+#C of this oscillator can directly resemble 2D MarBlocks oscillators.
+#C 
 #C FCC3333 forum thread:
-#C   https://conwaylife.com/forums/viewtopic.php?t=3757
+#C https://conwaylife.com/forums/viewtopic.php?t=3757
+#C 
 #C Reference:
-#C   https://web.archive.org/web/20200813080904/https://www.brianeubanks.com/2018/12/25/the-126-generation-oscillator-in-face-centered-cubic-cellular-automata/
+#C https://web.archive.org/web/20200813080904/www.brianeubanks.com/2018/12/25/the-126-generation-oscillator-in-face-centered-cubic-cellular-automata/
 x=12 y=23 z=12 rule=3D3/3H
 11bo$$10bo$$9bo$$8bo$$7bo$$6bo$$5bo$$4bo$$3bo$$bbo$$bo$$o/10boo$$9b
 oo$$8boo$$7boo$$6boo$$5boo$$4boo$$3boo$$bboo$$boo$$oo/9b3o$$8b3o$$7b
