@@ -118,6 +118,7 @@ local update_grid = false           -- need to call setpattern3d?
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- pattern name
+local pattinfo = ""                 -- comments from current pattern file or clipboard
 local currtitle = ""                -- current window title
 local showaxes = true               -- draw axes?
 local showlines = true              -- draw lattice lines?
@@ -142,7 +143,6 @@ local xyline = { "lines" }          -- coordinates for batch line draw
 local xyln = 2                      -- index of next position in xyline
 local showhistory = HISTORYOFF      -- cell history longevity: 0 = off, >0 = on
 local fadehistory = true            -- whether to fade history cells
-local pattinfo = ""                 -- comments from a pattern file or clipboard
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -1928,6 +1928,7 @@ function SaveState()
     -- save current pattern
     state.savedirty = dirty
     state.savename = pattname
+    state.saveinfo = pattinfo
     state.savegencount = gencount
     state.savepopcount = popcount
     state.savecells = {}
@@ -2002,6 +2003,7 @@ function RestoreState(state)
     -- restore pattern
     dirty = state.savedirty
     pattname = state.savename
+    pattinfo = state.saveinfo
     gencount = state.savegencount
     popcount = state.savepopcount
     grid1 = {}
@@ -2058,6 +2060,7 @@ function SameState(state)
     if rulestring ~= state.saverule then return false end
     if dirty ~= state.savedirty then return false end
     if pattname ~= state.savename then return false end
+    if pattinfo ~= state.saveinfo then return false end
     if gencount ~= state.savegencount then return false end
     if popcount ~= state.savepopcount then return false end
     if selcount ~= state.saveselcount then return false end
@@ -2885,6 +2888,7 @@ function SavePattern(filepath)
         else
             -- set pattname to file name at end of filepath
             pattname = filepath:match("^.+"..pathsep.."(.+)$")
+            pattinfo = comments
             dirty = false
             Refresh()
         end
@@ -3073,6 +3077,7 @@ function RandomPattern(percentage, fill, sphere)
     end
 
     pattname = "untitled"
+    pattinfo = ""
     SetCursor(movecursor)
     gencount = 0
     startcount = 0
