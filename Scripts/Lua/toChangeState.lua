@@ -9,6 +9,7 @@ local split = gp.split
 local oldsecs
 local newsecs
 local oldeditbar = g.setoption("showeditbar",1)
+local count
 
 local function savestate(filename, state)
     local f = io.open(filename, "w")
@@ -99,7 +100,7 @@ g.getevent(false)
 if oldstate == 0 then
     -- special handling for state-0 cells, which don't show up in cell lists
     --   so they must be tested individually by scanning the entire bounding box
-    changed = 0
+    count = 0
     total = sizex * sizey
     oldsecs = os.clock()
     for row = miny, maxy do
@@ -116,11 +117,10 @@ if oldstate == 0 then
         for col = minx, maxx do
             if g.getcell(col, row) == oldstate then
                 g.setcell(col, row, newstate)
+                count = count + 1
             end
-            changed = changed + 1
         end
     end
-    g.show("Changed "..changed.." state "..oldstate.." cells to state "..newstate..".")
 else
     -- faster handling for changing nonzero states to another state (including zero)
     oldsecs = os.clock()
@@ -142,8 +142,9 @@ else
             count = count + 1
         end
     end
-    g.show("Changed "..count.." state "..oldstate.." cells to state "..newstate..".")
 end
+
+g.show("Changed "..count.." state "..oldstate.." cells to state "..newstate..".")
 
 -- return to previous Edit Bar setting
 g.setoption("showeditbar", oldeditbar)
