@@ -362,6 +362,8 @@ void AddDefaultKeyActions()
     keyaction[(int)'l'][mk_ALT].file =     wxT("Help\\Lexicon\\lex.htm");
     keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
     keyaction[(int)'s'][mk_SHIFT].file =   wxT("Scripts\\Lua\\shift.lua");
+    keyaction[(int)'o'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'o'][mk_ALT].file =     wxT("Scripts\\Lua\\safeopenclip.lua");
 #else
     keyaction[(int)'g'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'g'][mk_ALT].file =     wxT("Scripts/Lua/toSuper.lua");
@@ -375,6 +377,8 @@ void AddDefaultKeyActions()
     keyaction[(int)'l'][mk_ALT].file =     wxT("Help/Lexicon/lex.htm");
     keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
     keyaction[(int)'s'][mk_SHIFT].file =   wxT("Scripts/Lua/shift.lua");
+    keyaction[(int)'o'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'o'][mk_ALT].file =     wxT("Scripts/Lua/safeopenclip.lua");
 #endif
 
     // File menu
