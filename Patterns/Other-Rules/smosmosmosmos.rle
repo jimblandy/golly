@@ -1,14 +1,17 @@
 #N smosmosmosmos.rle
 #O FWKnightship, 26 August 2023
+#C
 #C This rule features a remarkable pattern: a spaceship comprised of
-#C   two colliding spaceships, which are in turn made of two smaller
-#C   colliding spaceships, which themselves are made of two even
-#C   smaller colliding spaceships, which are finally composed of two
-#C   absolutely tiny spaceships continuously ramming into each other.
+#C two colliding spaceships, which are in turn made of two smaller
+#C colliding spaceships, which themselves are made of two even
+#C smaller colliding spaceships, which are finally composed of two
+#C absolutely tiny spaceships continuously ramming into each other.
+#C
 #C The current record in a two-state rule is a "SMOSMOS", which is two
-#C   "levels" below this specimen.
+#C "levels" below this specimen.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=165761#p165761
+#C https://conwaylife.com/forums/viewtopic.php?p=165761#p165761
 x = 154, y = 20, rule = SMOSMOSMOSMOS_Rule
 2B24.B21.B8.B32.A23.A35.A$.A24.BA19.AB8.BA30.2B23.2B33.2B2$23.2B25.2B
 2.2B36.BA17.AB39.BA$24.A25.A4.A36.B19.B39.B3$92.B19.B39.B$92.BA17.AB

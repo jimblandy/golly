@@ -1,17 +1,18 @@
 #N art-on-a-torus-LifeSuper.rle
 #O chenterodri, 17 March , 2020
-#C https://conwaylife.com/forums/viewtopic.php?p=94835r#p94835
 #C
 #C Sample pattern using all of the Super algorithm's extra states.
 #C See Help > Algorithms for a description of the function of each.
 #C
 #C A careful inspection of the early behavior of this pattern will
-#C   provide a good overview of the various OFF states' functions.
-#C   Examples of the three "trail" states and seven "no-trail" states
-#C   are also shown.
+#C provide a good overview of the various OFF states' functions.
+#C Examples of the three "trail" states and seven "no-trail" states
+#C are also shown.
 #C
 #C By T=850, all the temporary label states have been erased, and
-#C   the pattern is displayed more as originally intended.
+#C the pattern is displayed more as originally intended.
+#C
+#C https://conwaylife.com/forums/viewtopic.php?p=94835r#p94835
 x = 312, y = 156, rule = LifeSuper:T312,156
 25.O8.O201.O4.O28.4S3.4S14.4O3.4O$23.2O10.2O23.G36.A8.A7.A7.A7.A7.A7.
 A7.A7.A7.A7.A7.A7.A7.A35.2O30.S3.S.S3.S14.O3.O.O3.O$55.3A2.G.G32.A.A

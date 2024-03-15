@@ -1,12 +1,14 @@
 #N so-many-ships-2.rle
 #O FWKnightship, 17 December 2023
+#C
 #C This 3-state rule, SoManyShips2, clearly lives up to its name.
-#C   More than 50 replicator-based and elementary ships are shown here,
-#C   as well as an unusual almost-SMOS (spaceship made of spaceships).
-#C   Most are between 3 and 6 cells. Some have relatives in nearby
-#C   2-state rules, but most are entirely new 3-state spaceships.
+#C More than 50 replicator-based and elementary ships are shown here,
+#C as well as an unusual almost-SMOS (spaceship made of spaceships).
+#C Most are between 3 and 6 cells. Some have relatives in nearby
+#C 2-state rules, but most are entirely new 3-state spaceships.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=173530#p173530
+#C https://conwaylife.com/forums/viewtopic.php?p=173530#p173530
 x = 342, y = 96, rule = SoManyShips2
 156.2A$155.4A2$156.2B$156.2B$154.2A2.2A$156.2B$156.2B$162.4A$155.4A3.
 A2.A$156.2A4.4A5$163.2B$55.A$54.ABA105.B2.B2$54.A.A106.2B$157.B$55.B102.

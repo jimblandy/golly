@@ -1,22 +1,23 @@
 #N p108-2ship-gun-MirrorTLifeSuper.rle
 #O Jackk / iNoMed, 5 October 2020
-#C https://conwaylife.com/forums/viewtopic.php?p=105682#p105682
 #C
 #C This is a sample circuitry pattern showing how the Super algo
-#C   can be applied to many other rules besides Conway's Life.
+#C can be applied to many other rules besides Conway's Life.
 #C
 #C If you have the standard keyboard shortcuts mapped to the
-#C   toSuper.lua, toHistory.lua, and toStandard.lua Lua scripts,
-#C   press Alt+H to convert this "Super" pattern to "History" only;
-#C   press Alt+J to convert to plain two-state MirrorTLife;
-#C   or press Alt+G to convert MirrorTLife or MirrorTLifeHistory
-#C   back to MirrorTLifeSuper.
+#C toSuper.lua, toHistory.lua, and toStandard.lua Lua scripts,
+#C press Alt+H to convert this "Super" pattern to "History" only;
+#C press Alt+J to convert to plain two-state MirrorTLife;
+#C or press Alt+G to convert MirrorTLife or MirrorTLifeHistory
+#C back to MirrorTLifeSuper.
 #C
 #C If you're starting from a two-state pattern, you can use Alt+K
-#C   on selections to alter cell colors, as described under
-#C   Help > Algorithms > Super.
+#C on selections to alter cell colors, as described under
+#C Help > Algorithms > Super.
 #C
 #C On Macintosh systems the "Option" key is the equivalent of "Alt".
+#C
+#C https://conwaylife.com/forums/viewtopic.php?p=105682#p105682
 x = 281, y = 268, rule = B3-kq4j/S2-i34qSuper
 116.2pA3.2pA4.2pA12.2pA4.2pA3.2pA$116.2pA3.2pA4.2pA12.2pA4.2pA3.2pA7$
 129.2pA8.2pA60.2U23.2U$68.2pA3.2pA4.2pA12.2pA4.2pA3.2pA23.2pA8.2pA60.
