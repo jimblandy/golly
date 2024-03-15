@@ -1,21 +1,27 @@
 #N crystal-chaos.rle
 #O Connor Steppie, 17 November 2020
+#C
 #C This rule has the remarkable property of containing boringly chaotic
-#C   explosive patterns from small starting conditions, which are
-#C   unusually fragile and will unravel and rapidly stabilise in response
-#C   to tiny disturbances, unlike other explosive rules.
+#C explosive patterns from small starting conditions, which are
+#C unusually fragile and will unravel and rapidly stabilise in response
+#C to tiny disturbances, unlike other explosive rules.
+#C
 #C In this demonstration, the object on the left explodes rapidly and
-#C   asymmetrically, until around 1200 generations in where it collided
-#C   with a tiny oscillator on the right. Upon collision, the explosion
-#C   rapidly dissipates beginning from the point of contact, eventually
-#C   becoming stable ash at generation 4630.
+#C asymmetrically, until around 1200 generations in where it collided
+#C with a tiny oscillator on the right. Upon collision, the explosion
+#C rapidly dissipates beginning from the point of contact, eventually
+#C becoming stable ash at generation 4630.
+#C
 #C See chaos-boxes.rle and von-Neumann-merge.rle for similar behaviour in
-#C   in range-1 rules.
+#C in range-1 rules.
+#C
 #C Thread for discussing this rule:
-#C   https://conwaylife.com/forums/viewtopic.php?t=5499
+#C https://conwaylife.com/forums/viewtopic.php?t=5499
+#C
 #C Arrangement by Dave Greene:
-#C   https://conwaylife.com/forums/viewtopic.php?p=139057#p139057
+#C https://conwaylife.com/forums/viewtopic.php?p=139057#p139057
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=111210#p111210
+#C https://conwaylife.com/forums/viewtopic.php?p=111210#p111210
 x = 256, y = 4, rule = R2,C0,S4-7,9-12,B4,11-12,NB
 3o251bo$3o252bo$b2o251bo$2o253bo!

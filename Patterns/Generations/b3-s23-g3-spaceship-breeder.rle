@@ -1,7 +1,7 @@
 #N b3-s23-g3-spaceship-breeder.rle
 #O Francisco, 27 June 2021
 #C
-#C     23/3/3 (or B3/S23/G3) is a Generations rule that augments
+#C 23/3/3 (or B3/S23/G3) is a Generations rule that augments
 #C the well-known Conway's Game of Life by one dying state. There
 #C is a unique 2c/4 orthogonal spaceship that is distant from the 
 #C weighted spaceships in Life. Two of this spaceship can support a
@@ -11,7 +11,7 @@
 #C rake-breeder.rle.
 #C 
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=132721#p132721
+#C https://conwaylife.com/forums/viewtopic.php?p=132721#p132721
 x = 1332, y = 1903, rule = 23/3/3
 1075.B$1073.B.3A$1076.BA$1075.ABA$1034.B22.BA15.3A$1032.B.3A19.A2.A
 13.B$1035.BA9.A8.2B2.2A12.B$957.BA67.A7.ABA8.B2A10.2A25.A$946.A9.A2.A

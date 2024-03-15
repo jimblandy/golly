@@ -1,10 +1,12 @@
 #N 50c-spaceships.rle
 #O AforAmpere and praosylen, 18 September 2017
+#C
 #C Two remarkably fast spaceships in a 2-state rule. The left is
-#C   200c/4 orthogonal, and the right is 1000c/20 orthogonal.
-#C   Both simplify to 50c.
+#C 200c/4 orthogonal, and the right is 1000c/20 orthogonal.
+#C Both simplify to 50c.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=51069#p51069
+#C https://conwaylife.com/forums/viewtopic.php?p=51069#p51069
 x = 498, y = 102, rule = R50,C2,S50-90,B51
 19b51o228b51o$19b51o228b51o79b51o$19b51o228b51o79b51o$19b51o228b51o78b
 o33b18o$19b51o228b30o21bo76bo34b18o$19b51o228b30o22bo74bo35b18o$19b51o

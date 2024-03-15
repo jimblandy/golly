@@ -1,7 +1,7 @@
 #N unusual-ruler.rle
 #O gameoflifeboy, 30 June 2015
 #C
-#C     A single block appears to create a normal ruler sequence for a
+#C A single block appears to create a normal ruler sequence for a
 #C while, but at generation 2^19 wickstretchers extend out and form a
 #C square. As it turns out, squares form at generations 8*4, 8*(4 + 
 #C 2^4), 8*(4 + 2^4 + 2^2^4), 8*(4 + 2^4 + 2^2^4 + 2^2^2^4)..., the 

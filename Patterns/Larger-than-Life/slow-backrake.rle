@@ -1,8 +1,10 @@
 #N slow-backrake.rle
 #O Yoel Matveyev, 2021
+#C
 #C This backrake more closely resembles many solid
 #C oscillators in rules such as Pigs than an actual backrake.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=132878#p132878
+#C https://conwaylife.com/forums/viewtopic.php?p=132878#p132878
 x = 6, y = 8, rule = R3,C2,S13-25,B8-9
 2bo2$2b4o$obob2o$obob2o$2b4o2$2bo!

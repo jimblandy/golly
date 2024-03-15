@@ -1,9 +1,11 @@
 #N quadratic-replicating-bug.rle
 #O AforAmpere, 10 August 2017
+#C
 #C This range-6 variant of the Bugs rule has a bug which is a
 #C clean two-dimensional replicator.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=48531#p48531
+#C https://conwaylife.com/forums/viewtopic.php?p=48531#p48531
 x = 14, y = 14, rule = R6,C0,S46-80,B47-61
 7bo$4b6o$2b6ob2o$b6o3b2o$6o5b2o$5o7bo$5o6b3o$5o5b3o$b5o3b4o$2b11o$3b9o
 $4b8o$5b6o$6b4o!

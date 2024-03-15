@@ -1,9 +1,11 @@
 #N 996c-2-spaceship.rle
 #O AforAmpere, 3 August 2017
+#C
 #C An extremely fast spaceship. It is possible to construct spaceships
-#C   like this for any speed (2N)c/2, where N+1 is a prime number.
+#C like this for any speed (2N)c/2, where N+1 is a prime number.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=47857#p47857
+#C https://conwaylife.com/forums/viewtopic.php?p=47857#p47857
 x = 1495, y = 1992, rule = R498,C3,S8649,B499
 498.499A498$498.499B$A497.499B497.A$498.499B$498.499B$498.499B$498.
 499B$498.499B$498.499B$498.499B$498.499B$498.499B$498.499B$498.499B$

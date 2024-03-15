@@ -1,9 +1,11 @@
 #N quadratic-bugs-spaceships.rle
 #O FWKnightship and toroidalet, 25 July 2020
+#C
 #C Two orthogonal spaceships which use the quadratically-replicating
-#C   bug from quadratic-replicating-bug.rle as an engine.
+#C bug from quadratic-replicating-bug.rle as an engine.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=101067#p101067
+#C https://conwaylife.com/forums/viewtopic.php?p=101067#p101067
 x = 599, y = 154, rule = R6,C0,S46-80,B47-61
 48b2o144b2o216b5o$46b6o140b6o213b7o$46b7o139b7o212b8o$45b8o138b8o211b
 10o$43b11o135b11o209b12o$42b6o2b4o134b6o2b4o209b3o4b5o$42b5o4b4o133b5o

@@ -1,12 +1,13 @@
 #N p8009-gun.rle
 #O 77topaz, 23 March 2018
 #C 
-#C     A D8_1-symmetric four-barrelled period-8009 gun giving eight
+#C A D8_1-symmetric four-barrelled period-8009 gun giving eight
 #C copies of 3c/13 orthogonal spaceship. During a cycle (period is
 #C prime), the core expands and shrinks slowly.
 #C
 #C Reference:
 #C https://conwaylife.com/forums/viewtopic.php?p=58347#p58347
+#C
 #C For more discoveries in this rule, see catagolue census:
 #C https://catagolue.hatsya.com/census/g9b3456s235678
 x = 17, y = 17, rule = 235678/3456/9

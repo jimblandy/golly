@@ -7,7 +7,7 @@
 #CCOLORS 25
 #COLORING 2
 #D 
-#D      Here is a a beautiful 'waffle' for the range 7 Box Larger than Life rule
+#D Here is a a beautiful 'waffle' for the range 7 Box Larger than Life rule
 #D with birth interval [75,170] and survival interval [100,200], after 90
 #D updates, with all 0's boundary conditions. The initial configuration is
 #D a central lattice circle of occupied sites with radius 12.

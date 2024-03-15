@@ -1,19 +1,22 @@
 #N g3b3s23-breeder.rle
 #O "Francisco", 27 June 2021
-#C Breeder in rule B3/S23/3
+#C
 #C The Generations rule B3/S23/3 is a simple modification of Conway's
 #C Game of Life into the Generations rulespace. This change results in
 #C a significantly less active rule, in which spaceships are rare.
 #C This pattern is a breeder that uses p168 rakes that fire a 4c/8
 #C spaceship to synthesise p28 boat puffers.
+#C
 #C The first version of the breeder, completed in 22 May 2021, had a
 #C starting population of 230,511 and a bounding box of 3916*3600. The
 #C construction of smaller rakes allowed the breeder to be reduced in
 #C size significantly.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=132721#p132721
+#C https://conwaylife.com/forums/viewtopic.php?p=132721#p132721
+#C
 #C For more discussion of this rule, see
-#C   https://conwaylife.com/forums/viewtopic.php?t=5093
+#C https://conwaylife.com/forums/viewtopic.php?t=5093
 #CXRLE Pos=-10,-10
 x = 1443, y = 1705, rule = 23/3/3
 1078.2A$1078.2BA$1076.2A.BA$1076.2B.2A$1061.A14.3B$1060.B2A13.3A$

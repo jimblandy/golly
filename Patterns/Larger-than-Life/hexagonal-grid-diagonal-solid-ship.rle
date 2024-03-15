@@ -1,9 +1,11 @@
 #N hexagonal-grid-diagonal-solid-ship.rle
 #O Saka, 18 October 2020
+#C
 #C A 4c/106 diagonal "solid ship" in a range-10 hexagonal rule.
 #C Despite what is said in the post, this spaceship moves diagonally.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=106928#p106928
+#C https://conwaylife.com/forums/viewtopic.php?p=106928#p106928
 x = 19, y = 19, rule = R10,C0,S114-196,B99-200,NH
 3b4o$2bo$bob6o$ob8o$b11obo$b12obo$14o$ob13o$b7o2b5o$3b5o3b5o$2b7o2b6o$
 4b13o$3b14obo$5b12obo$6b11obo$6bob9obo$8bob6obo$10bob3obo$11b2o2bo!

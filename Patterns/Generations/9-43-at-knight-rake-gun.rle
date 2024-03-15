@@ -1,12 +1,13 @@
 #N 9-43-at-knight-rake-gun.rle
 #O Eric Goldstein, 10 March 2012
 #C
-#C     The Generations rule is called "9:43 at Knight" because of its
+#C The Generations rule is called "9:43 at Knight" because of its
 #C very useful 9c/43 orthogonal ship and (7,1)c/17 knightship. There 
 #C is also a period-124 spinning oscillator that can be used to make
 #C stationary spaceship reflectors and converters between 9c/43, 3c/6
 #C and (7,1)c/17 spaceships.
-#C     The following gun works by colliding two c/2 ships with each
+#C
+#C The following gun works by colliding two c/2 ships with each
 #C other to make a natural rake. The first 9c/43 ship fired by the rake
 #C is converted into a knightship and is sent back into a loop that
 #C supplies one of the c/2 ships. The 9c/43 ship -> knightship
@@ -16,7 +17,8 @@
 #C loop to supply the other c/2 ship. The rake is then eaten, but not
 #C before one of the 9c/43 ships is allowed to escape and is then
 #C converted to a knightship.
-#C     The gun is something of a Swiss Army knife -- by arranging the
+#C
+#C The gun is something of a Swiss Army knife -- by arranging the
 #C eaters for the 9c/43 ships and by choosing when the natural rake is
 #C eaten, the gun can have any number of barrels shooting a variety of
 #C different spaceships. Shown below is an example gun that shoots

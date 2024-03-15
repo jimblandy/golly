@@ -1,7 +1,8 @@
 #N wire-construction-gun.rle
 #O silversmith, 21 March 2021
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=103244#p103244
+#C https://conwaylife.com/forums/viewtopic.php?p=103244#p103244
 x = 137, y = 70, rule = 1e2-a3-cij4aijkrtz5cnqr/2ce3aejnr4aj5y6a/3
 4.77A$4.A2.BA5.BA4.BA4.BA4.BA4.BA4.BA4.BA4.BA22.A3.4A$4.A75.A3.A2.A$
 4.A75.A3.A2.A.BA5.BA11.BA5.BA$4A.A5.AB5.AB5.AB8.AB14.AB5.AB5.AB13.A2.
