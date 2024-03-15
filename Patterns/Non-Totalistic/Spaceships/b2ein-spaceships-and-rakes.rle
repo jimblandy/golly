@@ -1,15 +1,18 @@
 #N b2ein-spaceships-and-rakes.rle
 #C Left: small fast Orthogonoid by AforAmpere, 17 April 2019
-#C   Speed is 48c/3066, or slightly faster than  C/64 (~C/63.87).
-#C     https://conwaylife.com/forums/viewtopic.php?p=75164#p75164
+#C
+#C Speed is 48c/3066, or slightly faster than C/64 (~C/63.87).
+#C https://conwaylife.com/forums/viewtopic.php?p=75164#p75164
+#C
 #C Right, top to bottom: small spaceships and rakes by Luka Okanishi;
-#C   see https://conwaylife.com/forums/viewtopic.php?p=75667#p75667
-#C     Individual 4-rep (3,0)c/20 p80 G-loop spaceship
-#C     3-rep (3,0)c/20 p80 spaceship:
-#C     2 different 2-rep (3,0)c/20 p80 G/L trans-backrakes
-#C     2-rep (3,0)c/20 p80 trans-backG-sideA-rake
-#C     2-rep (3,0)c/20 p160 cis_double-barreled G backrake
-#C     2-rep (3,0)c/20 p80 G backrake 
+#C see https://conwaylife.com/forums/viewtopic.php?p=75667#p75667
+#C
+#C Individual 4-rep (3,0)c/20 p80 G-loop spaceship
+#C 3-rep (3,0)c/20 p80 spaceship:
+#C 2 different 2-rep (3,0)c/20 p80 G/L trans-backrakes
+#C 2-rep (3,0)c/20 p80 trans-backG-sideA-rake
+#C 2-rep (3,0)c/20 p160 cis_double-barreled G backrake
+#C 2-rep (3,0)c/20 p80 G backrake 
 x = 747, y = 862, rule = B2ein3cijn4cnrwy5cnq6e/S1c2-ai3acny4anqy5c6ek8
 110bo2$112b2o$114bo$109bo2bobo$113bo$110bo15$543bo11bo$107b3o431b2ob2o
 7b2ob2o$107bobo430b7o5b7o$127bo412b2o3b2o5b2o3b2o$126b2o412b2o3b2o5b2o

@@ -1,10 +1,12 @@
 #N chaotic-2d-replicator-q2.rle
 #O Connor Steppie, 5 May 2021
+#C
 #C In this rule, a plus replicates highly symmetrically. However, the
-#C   manner in which is does so is nonetheless extremely chaotic and
-#C   irregular, and never partitions itself into four separated units
-#C   past a certain point.
+#C manner in which is does so is nonetheless extremely chaotic and
+#C irregular, and never partitions itself into four separated units
+#C past a certain point.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=129624#p129624
+#C https://conwaylife.com/forums/viewtopic.php?p=129624#p129624
 x = 3, y = 3, rule = B3ai4ct5aj7c8/S1e2eik3ikry4i8
 bo$3o$bo!

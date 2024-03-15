@@ -1,12 +1,15 @@
 #N less-obvious-medium.rle
 #O gmc_nxtman, 25 December 2017
+#C
 #C Arrangements of diagonal cells emulate the same behaviour as
-#C   MarBlocks oscillators.
+#C MarBlocks oscillators.
+#C
 #C If S2n is removed, the medium will evolve differently, but still
 #C remain valid. B3i and S5i are added to permit the 2×2 oscillators
 #C as to allow a direct comparison for each generation.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54189#p54189
+#C https://conwaylife.com/forums/viewtopic.php?p=54189#p54189
 x = 82, y = 101, rule = B2-a3/S01c2n5i
 72bo$73bo$74bo$75bo$7b4o12bo19b20o13bo$7b4o32b20o14bo$78bo$79bo$80bo5$
 22bo$5b8o10bo$5b8o11bo15$71bo$72bo$73bo$21bo52bo$4b10o8bo19b22o11bo$4b

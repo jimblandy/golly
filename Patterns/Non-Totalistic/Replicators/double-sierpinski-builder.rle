@@ -1,7 +1,7 @@
 #N double-sierpinski-builder.rle
 #O toroidalet, 12 November 2016
 #C 
-#C     From a one-dimensional replicator found by Bullet51 on October
+#C From a one-dimensional replicator found by Bullet51 on October
 #C 31st, toroidalet made a double Sierpinski builder. Note how the
 #C blocks produce another complicated fractal, and also compare the
 #C two-dimensional counterpart in fractal-making-replicator.rle.

@@ -2,13 +2,13 @@
 #N bubbles-in-phoenician-agar.rle
 #O Saka, 24 February 2017
 #C
-#C     In this phoenician rule (rule without survival conditions),
+#C In this phoenician rule (rule without survival conditions),
 #C zebra stripes agar has a period of 2 (like the Venetian blinds in
 #C Game of Life). A large variety of lightspeed bubbles travel against
 #C the grain at different periods. Also note that the fifth class of
 #C oscillators in five-margolus-media.rle are supported in this rule.
 #C 
-#C     Note: to reduce file size, the pattern has been rotated. 
+#C Note: to reduce file size, the pattern has been rotated. 
 #C Compare the Life counterpart Life/Bounded-Grids/lightspeed-bubble.rle.
 #C 
 #C Reference:

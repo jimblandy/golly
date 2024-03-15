@@ -1,15 +1,18 @@
 #N rro-interactions-and-glider-gun.rle
 #O various; June 2016
+#C
 #C A rule discovered by Luka Okanishi contains a small period-88
-#C   nrv symmetric oscillator. This oscillator can interact with a
-#C   block-on-loaf to become a glider gun, first spotted in a
-#C   random soup.
+#C nrv symmetric oscillator. This oscillator can interact with a
+#C block-on-loaf to become a glider gun, first spotted in a
+#C random soup.
+#C
 #C In another random soup, it was found that two of these period-88
-#C   oscillators can interact to form a period-244 .v+v symmetric
-#C   oscillator, which can interact with a block-on-loaf in the exact
-#C   same way to produce a period-244 gun.
+#C oscillators can interact to form a period-244 .v+v symmetric
+#C oscillator, which can interact with a block-on-loaf in the exact
+#C same way to produce a period-244 gun.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=32024
+#C https://conwaylife.com/forums/viewtopic.php?p=32024
 x = 63, y = 105, rule = B36ce7c/S23-y
 60bo$55bo3bobo$54b2o3bo2bo$54bobo3b2o2$2b2o44b2o10b2o$3bobo43bobo8b2o$
 4b2o44b2o75$60bo$55bo3bobo$54b2o3bo2bo$54bobo3b2o2$2b2o44b2o10b2o$3bob

@@ -1,9 +1,11 @@
 #N 1-cell-methuselah-538.rle
 #O toroidalet, 20 Nov 2023
+#C
 #C This is a 1-cell methuselah with a remarkable lifespan of
-#C   538 generations, the longest lifespan of a 1-cell methuselah 
-#C   known as of Feb 2024.
+#C 538 generations, the longest lifespan of a 1-cell methuselah 
+#C known as of Feb 2024.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=171540#p171540
+#C https://conwaylife.com/forums/viewtopic.php?p=171540#p171540
 x = 1, y = 1, rule = B1e2in3ck4-iknty5q7c8/S12-e3-ai4-ejkqy5ry6ce8
 o!

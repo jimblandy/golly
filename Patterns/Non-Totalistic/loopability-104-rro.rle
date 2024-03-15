@@ -1,27 +1,29 @@
 #N loopability-104-rro.rle
 #O AforAmpere, 21 September 2021
-#C     An RRO (reflectorless rotating oscillator) is a moving pattern
+#C
+#C An RRO (reflectorless rotating oscillator) is a moving pattern
 #C that travels in a closed loop, returning to its starting point
 #C without any external guiding mechanism.  See
 #C https://conwaylife.com/wiki/Reflectorless_rotating_oscillator
 #C
-#C     The formal definition of an RRO also technically requires that
+#C The formal definition of an RRO also technically requires that
 #C multiple copies of the pattern should be able to follow each other
 #C at regular intervals without any mutual interference, producing an
 #C oscillator with a lower period than the original.  If N copies of
 #C an RRO can follow each other in this way, the RRO is said to have
 #C a "loopability" of N.
 #C
-#C     Many RROs have been found in many different INT (isotropic
+#C Many RROs have been found in many different INT (isotropic
 #C non-totalistic) rules, with a wide range of loopability values.
 #C This one has loopability of 1, 2, 4, 8, 13, 26, 52, 61, and 104,
 #C with a total period of 61*104 = 6344.  Here 104 copies of the RRO
 #C are shown, reducing the oscillator's period to 61.
 #C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=135905#p135905
+#C https://conwaylife.com/forums/viewtopic.php?p=135905#p135905
+#C
 #C For the conwaylife.com forum thread on RROs, see
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=3447
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3447
 x = 927, y = 927, rule = B2n3-k4cejz5ek6-e7/S3-jky4-cjnwz5cr678
 855b3o$854bob2o$854b3o$855b2o$854bob2o$855b4obo$856b5o$858b2o$857bo7$
 858bo$858bo14$856bo$855b3o$854b5o$855b5o$855b4o$855b4o$855b4o$854b3obo

@@ -1,14 +1,14 @@
 #N glitter2-p312-2c12d-gun.rle
 #O EvinZL, 2 April 2021
 #C
-#C     Glitter is a non-totalistic rule devised by dani that is named
+#C Glitter is a non-totalistic rule devised by dani that is named
 #C after the glider-splitting block. The following pattern is in a
 #C close relative that has a glide-symmetric c/6 diagonal spaceship,
 #C three of which can capture and adopt a glider. This is a period-312
 #C gun for the resulting 2c/12 diagonal spaceship.
 #C 
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=127670#p127670
+#C https://conwaylife.com/forums/viewtopic.php?p=127670#p127670
 x = 250, y = 213, rule = B3-ekqy4j5acy6cn7c/S2-in3aijnr4aw6ci7c8
 170b2o3b2o$170b2o3b2o$168b2o$168b2o9$155b2o$155b2o2$145b2o3b2o$145b2o
 3b2o$143b2o10b2o$143b2o10b2o$157b2o$157b2o6$198b2o$130b2o66b2o$130b2o

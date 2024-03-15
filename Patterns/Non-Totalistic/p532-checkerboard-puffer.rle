@@ -1,7 +1,7 @@
 #N p532-checkerboard-puffer
 #O Feng Geng (shouldsee), 7 March 2017
 #C
-#C     This is a glide-symmetric c/2 p532 puffer that makes connected
+#C This is a glide-symmetric c/2 p532 puffer that makes connected
 #C checkerboard pieces, inside which excited crystallographic defects
 #C lengthen themselves, push boundaries, and sometimes form a closed 
 #C loop and disappear. Compare moving-crystallographic-defects.rle.

@@ -1,9 +1,11 @@
 #N polyglot-replicator.rle
 #O GUYTYU6J, 10 May 2022
+#C
 #C This replicator follows the usual parity rule across one
 #C diagonal, but follows a different, chaotic rule on the
 #C opposite diagonal.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=145355#p145355
+#C https://conwaylife.com/forums/viewtopic.php?p=145355#p145355
 x = 3, y = 3, rule = B2k3aiq4ej5i/S2aek3ijnqr4i5r
 b2o$2o$o!

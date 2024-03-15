@@ -1,11 +1,12 @@
 #N replicator-blooming-spaceships.rle
 #O GUYTU6J, 19 October 2019
-#C     A quadratic replicator emitting tons of gliders and 10c/20o
+#C
+#C A quadratic replicator emitting tons of gliders and 10c/20o
 #C spaceships that annihilate cleanly. To see its beauty, run at a
 #C high step in HashLife. It shows slightly different evolution if
 #C the condition S7e is changed to S7c.
 #C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=3752&start=125#p84306
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3752&start=125#p84306
 x = 5, y = 4, rule = B3-ky8/S2-in3-acy4iqtz5r6a7e
 b3o$bo2bo$bo$2o!

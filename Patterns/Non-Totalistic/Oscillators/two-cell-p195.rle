@@ -1,9 +1,11 @@
 #N two-cell-p195.rle
 #O Arie Paap, 12 March 2019
+#C
 #C As of September 2023, this is the highest-known odd period for an
-#C    oscillator with two cells in a range-1 2-state 2D Moore
-#C    isotropic rule.
+#C oscillator with two cells in a range-1 2-state 2D Moore
+#C isotropic rule.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=72969#p72969
+#C https://conwaylife.com/forums/viewtopic.php?p=72969#p72969
 x = 3, y = 1, rule = B2-ck3-acij4-acqy5-aik6-ae7c8/S01e2n3cr4aceqt5einq6c7e8
 obo!

@@ -1,10 +1,11 @@
 #N justfriends-p384drifter.rle
 #O Dean Hickerson, August 2000
-#C    A period 384 drifter oscillator that uses copies of a
+#C
+#C A period 384 drifter oscillator that uses copies of a
 #C 27-generation 90 degree turn component and a 23-generation
 #C flipping component.
 #C
-#C     The JustFriends rule, B2-a/S12, is a member of the family of
+#C The JustFriends rule, B2-a/S12, is a member of the family of
 #C isotropic non-totalistic (INT) rules -- one of the earliest such
 #C rules explored by Lifenthusiasts.
 x = 88, y = 64, rule = B2-a/S12

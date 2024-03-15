@@ -1,10 +1,12 @@
 #N chaotic-2d-replicator-r2.rle
 #O GUYTU6J, 23 September 2017
+#C
 #C Similarly to the first chaotic 2D replicator, this replicates
-#C   "normally" for around 2100 generations before giving way to
-#C   chaotic behaviour which is still identifiably composed solely
-#C   of intact replicator units.
+#C "normally" for around 2100 generations before giving way to
+#C chaotic behaviour which is still identifiably composed solely
+#C of intact replicator units.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=51230#p51230
+#C https://conwaylife.com/forums/viewtopic.php?p=51230#p51230
 x = 4, y = 4, rule = B2ik3aeikr4ceijqry78/S23-a4city78
 b3o$o2bo$o$2o!

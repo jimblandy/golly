@@ -1,28 +1,32 @@
 #N leaplife-p361-glider-gun.rle
 #O FWKnightship, 27 March 2021
-#C     LeapLife is an isotropic non-totalistic rule with rulestring
+#C
+#C LeapLife is an isotropic non-totalistic rule with rulestring
 #C B2n3/S23-q. Its investigation began in January 2020, mostly led by
 #C Hunting and accepting contributions from many other forum users.
 #C Like tlife, the rule is a non-totalistic close-Life variant, meant
 #C to be a "Meta-discovery: An attempt to reproduce the development of
 #C CGoL (and see how much can we accelerate this process with [modern]
 #C tools and blueprints) with much success." according to Hunting.
-#C     In this rule, a small sparky period-19 oscillator exists.
+#C
+#C In this rule, a small sparky period-19 oscillator exists.
 #C (Interestingly, at the time this comment was written, there is no
 #C Life oscillator that operates at this particular prime period!)
 #C It can reflect a glider 90-degrees with several timing options.
-#C     The following pattern is a period-361 glider gun making heavy
+#C
+#C The following pattern is a period-361 glider gun making heavy
 #C use of the p19. It is driven by seven glider-duplicating reactions
 #C that are assisted by three middleweight spaceships and two p19
 #C oscillators. As each MWSS needs three gliders to synthesize, and an
 #C MWSS can be converted to a glider easily, there is a net gain of
 #C one MWSS, which is converted into the final SE glider output. 
-#C     The Life counterpart of this design is a period-1100 MWSS gun
+#C
+#C The Life counterpart of this design is a period-1100 MWSS gun
 #C built by Bill Gosper circa 1984 using the period-100 centinal,
 #C which can be retrieved by running Scripts/Lua/p1100-MWSS-gun.lua.
 #C 
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=127079#p127079
+#C https://conwaylife.com/forums/viewtopic.php?p=127079#p127079
 #C
 #C A detailed progress summary and timeline animation on LeapLife is
 #C at https://conwaylife.com/forums/viewtopic.php?f=7&t=5059 .

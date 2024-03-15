@@ -1,10 +1,12 @@
 #N branching-triangles.rle
 #O NimbleRogue, 10 January 2024
+#C
 #C This pattern travels to the top left, ejecting replicating
-#C   objects behind it. It is unclear what shape is being traced,
-#C   as it is either constantly changing, or only some layers
-#C   are being shown at a time.
+#C objects behind it. It is unclear what shape is being traced,
+#C as it is either constantly changing, or only some layers
+#C are being shown at a time.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=175364#p175364
+#C https://conwaylife.com/forums/viewtopic.php?p=175364#p175364
 x = 3, y = 3, rule = B3aijr4ekz5er/S2-ci3-acy4einrtz5n6c7
 2o$b2o$bo!

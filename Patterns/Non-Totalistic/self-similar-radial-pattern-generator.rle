@@ -1,10 +1,13 @@
 #N self-similar-radial-pattern-generator.rle
 #O Connor Steppie, 12 January 2022
+#C
 #C This pattern creates a formation which appears the same as itself
-#C   upon zooming out after sufficiently many generations.
+#C upon zooming out after sufficiently many generations.
+#C
 #C Based on toroidalet's 2017 fourfold wickstretcher rule:
-#C   https://conwaylife.com/forums/viewtopic.php?p=52868#p52868
+#C https://conwaylife.com/forums/viewtopic.php?p=52868#p52868
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=140158#p140158
+#C https://conwaylife.com/forums/viewtopic.php?p=140158#p140158
 x = 7, y = 7, rule = B2ce3ce4e6c/S01c2i3ciy4ct5ey6i7e8
 o2$o4$4bobo!

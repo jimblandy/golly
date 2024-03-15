@@ -1,9 +1,11 @@
 #N two-cell-p410.rle
 #O Arie Paap, 12 March 2019
+#C
 #C As of September 2023, this is the highest-known even period for an
-#C   oscillator with two cells in a range-1 2-state 2D Moore
-#C   isotropic rule.
+#C oscillator with two cells in a range-1 2-state 2D Moore
+#C isotropic rule.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=72969#p72969
+#C https://conwaylife.com/forums/viewtopic.php?p=72969#p72969
 x = 3, y = 1, rule = B2aei3-aijy4-actyz5cjny6-en7c8/S01e3r4acejtw5einy6cn7e8
 obo!

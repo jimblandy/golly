@@ -1,8 +1,10 @@
 #N flying-sierpinski-triangles.rle
 #O pipsqueek, 10 February 2023
+#C
 #C Replicators in this rule interact to form fractals
 #C which phase through each other across an axis of blocks.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=157304#p157304
+#C https://conwaylife.com/forums/viewtopic.php?p=157304#p157304
 x = 9, y = 11, rule = B3ai4kqy56i8/S2-ci3-ek4an5i6c
 2o$o$o$2o6$5b4o$5bo2bo!

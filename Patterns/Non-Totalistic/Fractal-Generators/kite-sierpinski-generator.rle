@@ -1,10 +1,11 @@
 #N kite-sierpinski-generator.rle
 #O wwei23
+#C
 #C This is a replicator-producing pattern where the replicator created
-#C   follows the usual rules, but also leaves a dying wick in the
-#C   middle, resulting in the fractal produced containing thick,
-#C   smaller triangles, turning the empty triangular zones in the
-#C   Sierpinski triangles into concave kites.
+#C follows the usual rules, but also leaves a dying wick in the
+#C middle, resulting in the fractal produced containing thick,
+#C smaller triangles, turning the empty triangular zones in the
+#C Sierpinski triangles into concave kites.
 x = 376, y = 358, rule = B2e3aeijn4ntz5aky6ei7e8/S1c2acn3aknq4aejnry5cjnqy6cik7e8
 254bo$237b4o$233bo2bo11b3o2bob2o$161bo2b2o2bo34b5o25b3o4bo6b3obobo2bo$
 161b3o2b3o19bo2bo11bo3bo25bo2bo2bo8bobo2bo2bo$161bo2b2o2bo20b2o12b2ob

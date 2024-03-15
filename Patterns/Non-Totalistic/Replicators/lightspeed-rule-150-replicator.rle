@@ -1,9 +1,11 @@
 #N lightspeed-rule-150-replicator.rle
 #O Connor Steppie, 23 January 2020
+#C
 #C A one-dimensional replicator that behaves according to Wolfram's
-#C   rule 150, as opposed to the more commonly seem habit of "Rule 90"
-#C   (more accurately described as rule 6, range 1/2).
+#C rule 150, as opposed to the more commonly seem habit of "Rule 90"
+#C (more accurately described as rule 6, range 1/2).
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=88013#p88013
+#C https://conwaylife.com/forums/viewtopic.php?p=88013#p88013
 x = 1, y = 5, rule = B2a/S1e3eiy5i
 o$o2$o$o!

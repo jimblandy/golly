@@ -1,12 +1,15 @@
 #N checkerboard-spaceships-and-growth.rle
 #O bibunsekibun, 25 October 2021
+#C
 #C Various spaceships, wickstretchers and rakes operating on a
-#C   checkerboard agar. These eventually crash into the edges of the
-#C   checkerboard, creating an expanding diamond-shaped checkerboard
-#C   with still lifes, spaceships and other active patterns inside it.
+#C checkerboard agar. These eventually crash into the edges of the
+#C checkerboard, creating an expanding diamond-shaped checkerboard
+#C with still lifes, spaceships and other active patterns inside it.
+#C
 #C Rule discovered by conwaylife.com forum user bibunsekibun.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=132791#p132791
+#C https://conwaylife.com/forums/viewtopic.php?p=132791#p132791
 x = 248, y = 89, rule = B2cn3acnry4cjry5e/S01c2cn3-qry4cey5en6e
 obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
 obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob

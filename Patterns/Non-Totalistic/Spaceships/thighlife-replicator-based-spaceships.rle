@@ -1,12 +1,14 @@
 #N thighlife-replicator-based-spaceships.rle
 #O various; June 2016 to February 2021
+#C
 #C tHighLife is a variant of the rule tlife, created by the addition
-#C   of a B6 transition. Much like HighLife, tHighLife features an
-#C   elementary replicator not present in the original tlife rule.
-#C   This replicator moves at a speed of c/4 orthogonal.
+#C of a B6 transition. Much like HighLife, tHighLife features an
+#C elementary replicator not present in the original tlife rule.
+#C This replicator moves at a speed of c/4 orthogonal.
+#C
 #C It is possible to combine these replicators together to create
-#C   modestly-sized engineered spaceships of many speeds, eight of
-#C   which have been explicitly constructed as of February 2024.
+#C modestly-sized engineered spaceships of many speeds, eight of
+#C which have been explicitly constructed as of February 2024.
 #C
 #C (16,0)c/ 44: "FWKnightship", 20 February  2021
 #C (32,0)c/ 88: "FWKnightship", 20 February  2021
@@ -17,8 +19,9 @@
 #C ( 8,0)c/110:  Luka Okanishi, 18 September 2017
 #C ( 8,0)c/132:  Luka Okanishi, 18 September 2017
 #C ( 8,0)c/154: "FWKnightship",  7 December  2023
-#C Reference:  tHighLife forum thread --
-#C   https://conwaylife.com/forums/viewtopic.php?t=2265
+#C
+#C Reference: tHighLife forum thread --
+#C https://conwaylife.com/forums/viewtopic.php?t=2265
 x = 1580, y = 2986, rule = B36/S2-i34q
 15b5o27b5o$15b5o27b5o$15b5o27b5o2$43b3o$44b2o$14bo28bo2bo$13bobo28b3ob
 o$10b2o5b2o25b2o$10b2obobob2o29bo$9bo9bo19bo$10b2obobob2o20b2o$10b2o5b

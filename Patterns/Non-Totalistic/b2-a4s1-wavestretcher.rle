@@ -1,7 +1,7 @@
 #N b2-a4s1-wavestretcher.rle
 #O Nico Brown, 20 July 2017
 #C
-#C     In B2-a4/S1, there is a near-replicator that travels at c/2 and
+#C In B2-a4/S1, there is a near-replicator that travels at c/2 and
 #C a tiny c/4 diagonal spaceship. The following is a wavestretcher 
 #C that produces many bounded segments of the near-replicator. Left
 #C end is c/2 and top end is c/6.

@@ -1,9 +1,11 @@
 #N quadratic-replicator-puffer.rle
 #O Connor Steppie, 4 December 2018
+#C
 #C This pattern creates a trail of quadratic replicators behind
 #C itself, which interact to create a downward-moving fractal
 #C pattern.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=66178#p66178
+#C https://conwaylife.com/forums/viewtopic.php?p=66178#p66178
 x = 24, y = 7, rule = B2a3ir5aik7e/S2k4z
 bo20bo$2o20b2o4$7bo8bo$6b2o8b2o!

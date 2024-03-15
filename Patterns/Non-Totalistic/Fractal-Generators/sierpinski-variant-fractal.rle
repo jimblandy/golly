@@ -1,13 +1,15 @@
 #N sierpinski-variant-fractal.rle
 #O wwei23, 6 October 2020
+#C
 #C This rule contains a replicator almost like the usually-encountered
 #C kind, but which produces an extra spaceship, lengthening its
 #C evolutionary cycle. This results in a nonstandard fractal when a
 #C series of replicators are placed sequentially.
+#C
 #C Arrangement by FWKnightship:
-#C   https://conwaylife.com/forums/viewtopic.php?p=105822#p105822
+#C https://conwaylife.com/forums/viewtopic.php?p=105822#p105822
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=105791#p105791
+#C https://conwaylife.com/forums/viewtopic.php?p=105791#p105791
 x = 36, y = 62, rule = B2ek3-cknr4qrty5-acj6aik/S1c2acn3-ceiy5ejky6i
 25bo4bo$24bobo2bobo2$6b3o2b3o$6b3o2b3o10bobo2bobo$25bo4bo$6b3o2b3o$6bo
 bo2bobo$6bobo2bobo$6b3o2b3o2$6b3o2b3o$6b3o2b3o11b6o$23b2o2b2o2b2o2$6b

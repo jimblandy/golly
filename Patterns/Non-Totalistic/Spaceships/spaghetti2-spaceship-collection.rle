@@ -1,17 +1,21 @@
 #N spaghetti2-spaceship-collection.rle
+#C
 #C "Spaghetti2" is an isotropic non-totalistic (INT) rule
-#C   investigated by conwaylife.com forum user 'dani' in 2018.
-#C   About one in ten soups produce strange, elongated tables that
-#C   react chaotically.
+#C investigated by conwaylife.com forum user 'dani' in 2018.
+#C About one in ten soups produce strange, elongated tables that
+#C react chaotically.
+#C
 #C The dynamics of Spaghetti2, most notably due to the lack of B3i, 
-#C   allows for easy construction of greyships. Below the main list is 
-#C   a series of these found by Goldtiger997, covering all the "perfect"
-#C   orthogonal speeds between c/2 and c/11.
+#C allows for easy construction of greyships. Below the main list is 
+#C a series of these found by Goldtiger997, covering all the "perfect"
+#C orthogonal speeds between c/2 and c/11.
+#C
 #C References:
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=3403
-#C   https://conwaylife.com/forums/viewtopic.php?p=60119#p60119
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3403
+#C https://conwaylife.com/forums/viewtopic.php?p=60119#p60119
+#C
 #C For miscellaneous spaceship collections, see 
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=5175
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=5175
 x = 612, y = 946, rule = B2cei3ary4aeiry5any/S2-c3-inq4ikry5eijr6i
 607bo$609b2o$607bo2bo$607bo$607b3obo26$582b6o6b2o2b6o2b6o$582bob4o6b2o
 2bob4o2bob2obo$582b2o10b2o2b2o6b2o2b2o$582b2o14b2o6b2o2b2o$582b2o8b2o

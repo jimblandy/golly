@@ -1,10 +1,12 @@
 #N strange-x.rle
 #O Jiaohu Yu, 29 December 2022
+#C
 #C A strange pattern that slowly grows a giant X. The center is p32,
-#C   but the full period goes through cycles where it is 2^n-2^m.
-#C   If you run it at a high step size, it makes a weird backwards
-#C   strobe effect.
+#C but the full period goes through cycles where it is 2^n-2^m.
+#C If you run it at a high step size, it makes a weird backwards
+#C strobe effect.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=155378#p155378
+#C https://conwaylife.com/forums/viewtopic.php?p=155378#p155378
 x = 1, y = 3, rule = B2cin3aer4eijqr5i6-ak7c8/S01c2cn3k4kqtwy5ajky6ei78
 o2$o!

@@ -1,7 +1,7 @@
 #N w110-rosary-example.rle
 #O FWKnightship, 22 November 2020
 #C
-#C     W110 (or Wolfram's Rule 110) is a one-dimensional elementary
+#C W110 (or Wolfram's Rule 110) is a one-dimensional elementary
 #C cellular automaton notable for its Turing-completeness proved by
 #C Matthew Cook in the 1990s. This implies that any cellular 
 #C automaton wtih adequate signal circuitry to simulate Rule 110 is
@@ -10,7 +10,8 @@
 #C post for a new rule in Other Cellular Automata subforum, as it
 #C demonstrates useful basic mechanisms with potential for further 
 #C constructions.
-#C     The following pattern is taken from an unnamed rule devised by
+#C
+#C The following pattern is taken from an unnamed rule devised by
 #C silversmith, where a small 2c/5 orthogonal spaceship can be easily
 #C shifted and reflected by vessels (the extensible family starting
 #C with tub, barge and long barge). The "rosary" design means that 
@@ -27,6 +28,7 @@
 #C
 #C Reference:
 #C https://conwaylife.com/forums/viewtopic.php?p=111913#p111913
+#C
 #C For more Rule-110-simulator constructions, see thread
 #C https://conwaylife.com/forums/viewtopic.php?f=11&t=2597
 x = 403, y = 186, rule = B3aeiy4cwz5acry/S2-in3-ky4ijrw5aci6ik

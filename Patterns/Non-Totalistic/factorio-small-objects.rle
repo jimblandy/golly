@@ -1,11 +1,13 @@
 #N factorio-small-objects.rle
 #O H. H. P. M. P. Cole, 3 February 2024
+#C
 #C This is a compendium of all the known objects in Factorio which
-#C   have a minimum population of between 4 to 7 cells. There are a
-#C   total of 20 still-lifes, 104 p2s, 3 p4s, 1 p6, and 1 c/1o in
-#C   this collection.
+#C have a minimum population of between 4 to 7 cells. There are a
+#C total of 20 still-lifes, 104 p2s, 3 p4s, 1 p6, and 1 c/1o in
+#C this collection.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=177188#p177188
+#C https://conwaylife.com/forums/viewtopic.php?p=177188#p177188
 x = 264, y = 190, rule = R3,C2,S2,B3,N+
 2o7bobo6bo2bo46b2o7b2o7bobo7b2o7bobo7b2o13b2o7b2o7bobo6b2o6b2o16bo$2o
 7bobo6bo2bo45bo2bo5bo3bo4bo3bo4bo4bo4bobo6b2o15bobo6bo2bo5bo2bo6b2o6b

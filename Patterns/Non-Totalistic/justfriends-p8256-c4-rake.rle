@@ -1,19 +1,19 @@
 #N justfriends-p8256-c4-rake.rle
 #C
-#C     The JustFriends rule, B2-a/S12, is a member of the family of
+#C The JustFriends rule, B2-a/S12, is a member of the family of
 #C isotropic non-totalistic (INT) rules -- one of the earliest such
 #C rules explored by Lifenthusiasts.
 #C
-#C     In July 2000, David I. Bell constructed a slightly dirty
+#C In July 2000, David I. Bell constructed a slightly dirty
 #C period-8256 forward rake for the 3-cell glider, which consists of
 #C a flotilla of c/4 orthogonal spaceships that circulate and duplicate
 #C gliders to burn a wick repeatedly. In August 2019, forums user
 #C FWKnightship completed its cleanup system, giving a clean rake.
 #C
-#C     Compare with Life/Rakes/c4-sideways-rake.rle.
+#C Compare with Life/Rakes/c4-sideways-rake.rle.
 #C 
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=80733#p80733
+#C https://conwaylife.com/forums/viewtopic.php?p=80733#p80733
 x = 1829, y = 866, rule = B2-a/S12
 12b2o$12bo$12bo2bo824bo$13b3o824bo2$2b2o3bo2b819o$2bo4b3o$2bo2bobo2b
 818o$3b3o$12b2obo$b2obo$11bo$o10b2o$2o5$460b3o$459bo2b2o$460bo2bo$460b

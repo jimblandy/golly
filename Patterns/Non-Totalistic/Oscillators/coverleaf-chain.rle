@@ -1,15 +1,18 @@
 #N coverleaf-chain.rle
 #O GUYTU6J, 26 October 2022
+#C
 #C The rule "Glimmering Garden" contains a common period-240
-#C   reflectorless rotating oscillator. It can interact with copies
-#C   of itself offset in one direction, but that copy cannot interact
-#C   with the previous oscillator, allowing for period-multiplying
-#C   chains of these oscillators, which grow by powers of three
-#C   in an irregular pattern.
+#C reflectorless rotating oscillator. It can interact with copies
+#C of itself offset in one direction, but that copy cannot interact
+#C with the previous oscillator, allowing for period-multiplying
+#C chains of these oscillators, which grow by powers of three
+#C in an irregular pattern.
+#C
 #C This period-12960 oscillator is a chain of ten. The first oscillates
-#C   at period 240, the next 480, the two after that 1440, followed by
-#C   two at 4320 and a final set of four oscillating at period 12960.
-#C   Dividing each by 240 gets us periods of 1, 2, 6, 18 and 54.
+#C at period 240, the next 480, the two after that 1440, followed by
+#C two at 4320 and a final set of four oscillating at period 12960.
+#C Dividing each by 240 gets us periods of 1, 2, 6, 18 and 54.
+#C
 #C Source:
 #C  https://conwaylife.com/forums/viewtopic.php?p=152700#p152700
 x = 285, y = 62, rule = B3-jknr4ity5ijk6i8/S23-a4city6c7c

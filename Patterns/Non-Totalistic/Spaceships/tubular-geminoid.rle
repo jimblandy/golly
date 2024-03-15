@@ -1,19 +1,22 @@
 #N tubular-geminoid.rle
 #O cvojan, 6 September 2020
+#C
 #C Tubular is the name of an isotropic rule found by cvojan in
-#C   August 2020, in which there are small spaceships travelling at
-#C   c/2 orthogonal, c/3 diagonal and 2c/12 diagonal. Its significance
-#C   lies in that a tub can reflect and duplicate c/2 orthogonal 
-#C   spaceships at a repeat time of only 15 ticks, allowing for very
-#C   simple single-channel construction. This pattern is a Lilliputian
-#C   relative of the Gemini in Game of Life with a speed of (700,100)
-#C   c/72300, being several orders of magnitude smaller! (To compare,
-#C   see LifeWiki article: https://conwaylife.com/wiki/Gemini)
+#C August 2020, in which there are small spaceships travelling at
+#C c/2 orthogonal, c/3 diagonal and 2c/12 diagonal. Its significance
+#C lies in that a tub can reflect and duplicate c/2 orthogonal 
+#C spaceships at a repeat time of only 15 ticks, allowing for very
+#C simple single-channel construction. This pattern is a Lilliputian
+#C relative of the Gemini in Game of Life with a speed of (700,100)
+#C c/72300, being several orders of magnitude smaller! (To compare,
+#C see LifeWiki article: https://conwaylife.com/wiki/Gemini)
+#C
 #C A number of isotropic rules have similar construction
-#C   capability, and microscopic Orthogonoids have been built as well.
-#C   A previous example is in b2ein-spaceships-and-rakes.rle.
+#C capability, and microscopic Orthogonoids have been built as well.
+#C A previous example is in b2ein-spaceships-and-rakes.rle.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=103556#p103556
+#C https://conwaylife.com/forums/viewtopic.php?p=103556#p103556
 x = 1783, y = 18809, rule = B2c3aeij4krtyz5cij6-ak7/S2-ik3-aek4aeiknw5a6ikn7
 1410b2o$1410b3o$1414bo$1411bobo$1409b2ob2o$1409b2obobo$1411b3o$1413bob
 o20$1410b3o$1410bobo2$1411bo4$1411bo$1410b3o$1410b3o12$1410b3o$1410bob

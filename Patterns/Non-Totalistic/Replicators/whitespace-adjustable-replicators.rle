@@ -1,7 +1,7 @@
 #N whitespace-adjustable-replicators.rle
 #O bibunsekibun, 8 June 2021
 #C
-#C     The growing/shrinking nature of whitespace results in a family
+#C The growing/shrinking nature of whitespace results in a family
 #C of adjustable one-dimensional replicators, each consisting of two
 #C whitespace cores. Data for the first nine are listed below:
 #C
@@ -10,7 +10,7 @@
 #C Period        17 25 33  49  57  73  81  97 105
 #C Thickness     49 65 82 113 130 161 178 209 226
 #C
-#C     Let k be a positive integer 1,2,... , then two whitespace cores
+#C Let k be a positive integer 1,2,... , then two whitespace cores
 #C separated by (12k-2) cells constitute a replicator with speed 12kc/
 #C (24k+1) and thickness (48k+17) cells, and two cores separated by
 #C (12k+3) cells result in one with speed (12k+4)c/(24k+9) and thick-

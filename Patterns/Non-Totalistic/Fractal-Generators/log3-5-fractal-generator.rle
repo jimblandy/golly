@@ -1,12 +1,14 @@
 #N log3-5-fractal-generator.rle
 #O wwei23, 20 October 2019
+#C
 #C This rule contains a replicator, which, when stacked next to other
 #C copies, creates a fractal whose fractal dimension is log3(5). This
 #C is lower than the fractal dimension of the Sierpiński triangle, as
 #C well as that of the log5(12) fractal also included among these
 #C example patterns.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=84333#p84333
+#C https://conwaylife.com/forums/viewtopic.php?p=84333#p84333
 x = 100, y = 67, rule = B2e3-ckq4cz5y7c/S1c2ac3ajn4ejrwz5c6i
 15b3o10bo2bo$28b4o$15b3o10bo2bo4$18b2o2b2o2b2o2b2o$20bob2o2bo2b3o$18b
 2o2bob2ob2ob2o2$2o12b2o7b4o$o13bo$31bo$bo2b2o24bobo$3b3o8b2o6b2o6bo$bo

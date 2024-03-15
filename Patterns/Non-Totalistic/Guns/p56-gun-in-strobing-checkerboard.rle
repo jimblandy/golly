@@ -2,7 +2,7 @@
 #N p56-gun-in-strobing-checkerboard.rle
 #O Feng Geng (shouldsee), 24 February 2017
 #C
-#C     The rule has a period-2 checkerboard agar that expands toward 
+#C The rule has a period-2 checkerboard agar that expands toward 
 #C vacuum at its chaotic boundaries. A period-56 rotating gun for a
 #C c/2 diagonal "spaceship" (or rather agar crawler) lives inside.
 #C

@@ -1,14 +1,17 @@
 #N rectangle-with-crystallographic-defect.rle
 #O Connor Steppie, 29 June 2018
+#C
 #C This rotationally symmetric pattern contains two "phases" of a
-#C   period-2 checkerboard agar conflicting with each other across a
-#C   river-like curve of intersection, resulting in the size of the
-#C   violently gyrating rectangle containing this river changing
-#C   erratically.
+#C period-2 checkerboard agar conflicting with each other across a
+#C river-like curve of intersection, resulting in the size of the
+#C violently gyrating rectangle containing this river changing
+#C erratically.
+#C
 #C For another crystallographic defect demonstration, refer to
-#C   moving-crystallographic-defects.rle.
+#C moving-crystallographic-defects.rle.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=61470#p61470
+#C https://conwaylife.com/forums/viewtopic.php?p=61470#p61470
 x = 134, y = 141, rule = B2e3-nqry4ejkry5ck6cn/S2aik3aen4jwz6c7c8
 56bobobobobobobobobobobobobobobobobobobobo$55bobobobobobobobobobobobob
 obobobobobobobo$56bobobobobobobobobobobobobobobobobobobobo$55bobobobob

@@ -1,10 +1,12 @@
 #N ironic-spaceship.rle
 #O Connor Steppie, 16 September 2017
+#C
 #C A lament of motorists worldwide, the traffic light is a very commonly
-#C   encountered object by Lifenthusiasts of all kinds. To the chagrin of
-#C   many drivers, a freak mutation of Life has resulted in two of them
-#C   joining forces to become a (7,0)c/34 spaceship together.
+#C encountered object by Lifenthusiasts of all kinds. To the chagrin of
+#C many drivers, a freak mutation of Life has resulted in two of them
+#C joining forces to become a (7,0)c/34 spaceship together.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=803&p=51007#p51007
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=803&p=51007#p51007
 x = 9, y = 17, rule = B36-in7e/S23
 4bo$4bo$4bo2$3o3b3o2$4bo$4bo$4bo2$3b3o2$bo5bo$bo5bo$bo5bo2$3b3o!

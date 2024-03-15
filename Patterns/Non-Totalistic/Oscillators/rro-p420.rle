@@ -1,11 +1,13 @@
 #N rro-p420.rle
 #O conwaylife forums user with handle "2718281828", 17 July 2019
+#C
 #C 420 is the lowest possible period for a reflectorless rotating
-#C   oscillator such that it can fit one, two, three, four, five,
-#C   six or seven copies of itself in aloop in such a way that the
-#C   overall period is reduced in such a case.
+#C oscillator such that it can fit one, two, three, four, five,
+#C six or seven copies of itself in aloop in such a way that the
+#C overall period is reduced in such a case.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=79713#p79713
+#C https://conwaylife.com/forums/viewtopic.php?p=79713#p79713
 x = 952, y = 136, rule = B2n3-kq4ejz5eky6-en78/S2n3-jk4-cjnwy5cey678History
 90.2B134.2B134.2B134.2B134.2B134.2B134.2B$89.4B132.4B132.4B132.4B132.
 4B132.4B132.2BAB$89.4B132.4B132.4B132.4B132.4B132.4B132.B3A$89.5B131.

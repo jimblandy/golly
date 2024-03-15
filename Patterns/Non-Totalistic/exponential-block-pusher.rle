@@ -1,14 +1,15 @@
 #N exponential-block-pusher.rle
 #O Daniel R. Collazo, 3 June 2017
 #C
-#C     Earlier that day, wwei47 (formerly wwei23) found a rule where
+#C Earlier that day, wwei47 (formerly wwei23) found a rule where
 #C a T-tetromino is a novel blinker puffer. It "sends pulses through 
 #C the blinkers. The pulses go to the tail end of the blinkers and 
 #C push them one cell back. Then the rest of the pulses do the same 
 #C for the rest of the blinkers. Then they crash into the puffer, only
 #C to push the blinkers back again. Therefore the back end progresses 
 #C at a logarithmetic rate".
-#C     Later, Daniel R. Collazo (drc) modified the rule and discovered
+#C
+#C Later, Daniel R. Collazo (drc) modified the rule and discovered
 #C a block-pushing reaction at the tail of the puffer. Adam P. Goucher
 #C remarked that, the number of generations between consecutive block 
 #C pushes is given by the formula 114632 * (8192 ** n) - 6 for n in

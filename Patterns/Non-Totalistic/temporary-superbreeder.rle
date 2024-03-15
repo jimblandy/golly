@@ -1,12 +1,14 @@
 #N temporary-superbreeder.rle
 #O dani, 7 January 2018
+#C
 #C In a two-dimensional rule with a fixed range, growth rates faster
-#C   than quadratic growth are impossible. This pattern is a would-be
-#C   MMMS breeder whose output intersects itself to form a
-#C   checkerboard, demonstrating that there's just not enough space
-#C   in 2D to accommodate growth greater than O(t^2).
+#C than quadratic growth are impossible. This pattern is a would-be
+#C MMMS breeder whose output intersects itself to form a
+#C checkerboard, demonstrating that there's just not enough space
+#C in 2D to accommodate growth greater than O(t^2).
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54787#p54787
+#C https://conwaylife.com/forums/viewtopic.php?p=54787#p54787
 x = 95, y = 122, rule = B2k3/S23-a4eitz
 91b2o$91b3o$85b2o6b2o$84bo8bo$71b2o11bo2bo4bo$72b2o11b3o$72b2o2$74b3o
 2$3o9b3o9b3o9b3o9b3o9b3o9b2ob2o$75b2o57$30bo8b4o$28bo2bo3b2o2b2obo$28b

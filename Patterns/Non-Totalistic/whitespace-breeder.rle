@@ -1,8 +1,10 @@
 #N whitespace-breeder.rle
 #O J1MC83N, 12 March 2023
+#C
 #C This is a breeder that creates puffers which themselves increase in
-#C   period over time, creating larger and larger triangles of dominoes.
+#C period over time, creating larger and larger triangles of dominoes.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=179823#p179823
+#C https://conwaylife.com/forums/viewtopic.php?p=179823#p179823
 x = 85, y = 263, rule = B2i3air4citz5cek6ci7/S1e2n3-jkqr4eknwy5eiqry6cei7c8
 o$o259$82b3o$82b3o$82b3o!

@@ -1,13 +1,14 @@
 #N flying-and-oscillating-diamonds.rle
 #O Goldtiger997, 3 September 2017
 #C
-#C     In this rule, there are two adjustable mechanisms for spaceships
+#C In this rule, there are two adjustable mechanisms for spaceships
 #C and oscillators. For an odd integer N at least 3, the RLE bNo$oNbo! 
 #C encodes a 2c/(2N+4) orthogonal spaceship, and No! (a N-cell line) is
 #C a period-(N+1) oscillator, both of which are diamond-shaped.
 #C 
 #C Reference:
 #C https://conwaylife.com/forums/viewtopic.php?p=50441#p50441
+#C
 #C For other rules with small adjustable spaceships, see forums thread
 #C https://conwaylife.com/forums/viewtopic.php?f=11&t=3081
 x = 137, y = 21, rule = B2ik3-kqry4-ijky5-i6i7/S02a4i

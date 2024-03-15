@@ -1,11 +1,13 @@
 #N m10-self-similarity.rle
+#C
 #C One remarkable quality of some MarBlocks rules such as M10 and M11
-#C   is that an arrangement of 4×4 blocks will behave identically to
-#C   the equivalent arrangement of 2×2 blocks, at half the speed.
+#C is that an arrangement of 4×4 blocks will behave identically to
+#C the equivalent arrangement of 2×2 blocks, at half the speed.
+#C
 #C In this demonstration, we have the basic period-2 oscillator
-#C    upscaled by a factor of two to create a period-4 oscillator.
-#C    This is repeated as to create period-8, period-16 and period-32
-#C    oscillators.
+#C upscaled by a factor of two to create a period-4 oscillator.
+#C This is repeated as to create period-8, period-16 and period-32
+#C oscillators.
 x = 126, y = 64, rule = B3i/S5i
 94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o
 $94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o$94b32o

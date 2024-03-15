@@ -1,19 +1,22 @@
 #N tlife-8c282-spaceship.rle
 #O Luka Okanishi, 1 September 2018
+#C
 #C tlife is an isotropic rule with rulestring B3/S2-i34q, whose
-#C   investigation began in 2015 as a non-totalistic close-Life variant.
-#C   This rule is inhabited by the c/4 diagonal glider, a slightly
-#C   bigger ant (also a c/4 diagonal), and a c/5 orthogonal T.
+#C investigation began in 2015 as a non-totalistic close-Life variant.
+#C This rule is inhabited by the c/4 diagonal glider, a slightly
+#C bigger ant (also a c/4 diagonal), and a c/5 orthogonal T.
+#C
 #C Three years after inception, a glide-symmetric 8c/282 orthogonal
-#C   puffer was discovered accidentally by dani, which consists of an
-#C   ant bouncing back and forth between two boats, producing blocks
-#C   and forward T's in the process. Luka Okanishi soon combined dozens
-#C   of copies of the engine to construct the following spaceship.
+#C puffer was discovered accidentally by dani, which consists of an
+#C ant bouncing back and forth between two boats, producing blocks
+#C and forward T's in the process. Luka Okanishi soon combined dozens
+#C of copies of the engine to construct the following spaceship.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=63228#p63228
+#C https://conwaylife.com/forums/viewtopic.php?p=63228#p63228
 #C
 #C For a general description of this rule, see the LifeWiki article
-#C   https://conwaylife.com/wiki/OCA:Tlife
+#C https://conwaylife.com/wiki/OCA:Tlife
 x = 875, y = 147, rule = B3/S2-i34q
 127bo$127bo$15b2o6b2o6b2o6b2o6b2o6b2o6b2o6b2o6b2o$15b2o6b2o6b2o6b2o6b
 2o6b2o6b2o6b2o6b2o$146bo$146b2o$102b3o41bo$100b2o2bo$99bo3b2o$98bo2b2o

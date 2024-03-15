@@ -1,7 +1,9 @@
 #N whitespace-quadratic-replicator.rle
 #O FWKnightship, 30 March 2021
+#C
 #C A high-period 2D replicator made of two Whitespace cores.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=127356#p127356
+#C https://conwaylife.com/forums/viewtopic.php?p=127356#p127356
 x = 59, y = 3, rule = B3ai4ciw5aceqr6ck7/S3-kqr4ceq5eikq6-an7c8
 3o53b3o$3o53b3o$3o53b3o!

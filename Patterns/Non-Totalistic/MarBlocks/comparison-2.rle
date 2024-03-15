@@ -1,37 +1,38 @@
 #N comparison-2.rle
 #O Various; arrangement by Connor Steppie
+#C
 #C This is a comparison of two "MarBlocks" oscillator families
-#C   listed next to each other for behavioural comparison.
-#C   This pattern is identical to the previous file, but two rule
-#C   transitions have been changed to modify the behaviour of these
-#C   oscillators: now the cores will remain solid instead of instantly
-#C   dying out when they fill in. Note how the periods for each line
-#C   remain exactly the same despite this change, as the edge
-#C   behaviour is identical here.
+#C listed next to each other for behavioural comparison.
+#C This pattern is identical to the previous file, but two rule
+#C transitions have been changed to modify the behaviour of these
+#C oscillators: now the cores will remain solid instead of instantly
+#C dying out when they fill in. Note how the periods for each line
+#C remain exactly the same despite this change, as the edge
+#C behaviour is identical here.
 #C
 #C A system for naming MarBlocks rules was proposed in 2018 by
-#C   conwaylife.com forums member 77topaz, with help from Dave
-#C   Greene, which would classify each rule using an octal system.
-#C   The rule emulated by this pattern would therefore be "M11",
-#C   and the previous example would be rule "M10".
+#C conwaylife.com forums member 77topaz, with help from Dave
+#C Greene, which would classify each rule using an octal system.
+#C The rule emulated by this pattern would therefore be "M11",
+#C and the previous example would be rule "M10".
 #C
 #C Open this pattern with showinviewer.lua to see labels which
-#C   indicate the period of each of these oscillators. They can be
-#C   seen to follow Sloane's A085587 (linked below).
+#C indicate the period of each of these oscillators. They can be
+#C seen to follow Sloane's A085587 (linked below).
 #C
 #C MarBlocks octal naming system thread:
-#C   https://conwaylife.com/forums/viewtopic.php?t=3243
+#C https://conwaylife.com/forums/viewtopic.php?t=3243
 #C MarBlocks forum thread:
-#C   https://conwaylife.com/forums/viewtopic.php?t=5204
+#C https://conwaylife.com/forums/viewtopic.php?t=5204
 #C A085587 on the OEIS database:
-#C   https://oeis.org/A085587
+#C https://oeis.org/A085587
 #C Reference for oscillator period lengths:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
+#C https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
 #C A summary of the Margolus rulespace can be found here:
-#C   https://conwaylife.com/wiki/Margolus_neighbourhood
+#C https://conwaylife.com/wiki/Margolus_neighbourhood
 #C A summary by Arie Paap of of some of the many places where
 #C XOR-type oscillators can be found:
-#C   https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
+#C https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
 #C
 #C [[ GRID ZOOM 5 ]]
 #C [[ LABEL 15 2 4 "💀" ]]

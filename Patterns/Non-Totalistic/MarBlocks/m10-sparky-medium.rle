@@ -1,9 +1,10 @@
 #N M10-sparky-medium.rle
 #O Connor Steppie, 21 February 2024
+#C
 #C A period-3066 M10 oscillator using a sparky B2a-based medium.
 #C A pattern composed entirely of plus shapes will remain made
-#C   entirely of plus shapes on every third generation, alongside
-#C   some isolated dots.
+#C entirely of plus shapes on every third generation, alongside
+#C some isolated dots.
 x = 54, y = 54, rule = B2acn3a4a5a8/S3ir5a
 52bo$51b3o$52bo$49bo$48b3o$49bo$46bo$45b3o$46bo$43bo$42b3o$43bo$40bo$
 39b3o$40bo$37bo$36b3o$37bo$34bo$33b3o$34bo$31bo$30b3o$31bo$28bo$27b3o$

@@ -1,7 +1,7 @@
 #N glider-24mer-gun.rle
 #O wwei47, 12 April 2021
 #C
-#C     The non-totalistic rule is inhabited by gliders and glider
+#C The non-totalistic rule is inhabited by gliders and glider
 #C polymers, especially tetramers (from a V-pentomino) and dimers.
 #C Additionally, a ship or a tub can split a glider tetramer to two.
 #C The following gun aligns six copies of 2-glider tetramer synthesis

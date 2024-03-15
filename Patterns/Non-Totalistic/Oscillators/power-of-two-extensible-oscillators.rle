@@ -1,12 +1,15 @@
 #N power-of-two-extensible-oscillators.rle
 #O Connor Steppie, 9 January 2018
+#C
 #C In this rule, a diagonal tie of a power of two number of blocks
-#C   will become an oscillator.
+#C will become an oscillator.
+#C
 #C For 2^n blocks, where n is a non-negative integer, the oscillator
-#C   will have a period of (2^(n+2))-2, except for when n=0, in which
-#C   case the period is 1.
+#C will have a period of (2^(n+2))-2, except for when n=0, in which
+#C case the period is 1.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54894#p54894
+#C https://conwaylife.com/forums/viewtopic.php?p=54894#p54894
 x = 70, y = 32, rule = B2e3a4w/S1c3a4q
 38b2o$38b2o$40b2o$40b2o$42b2o$42b2o$44b2o$44b2o$20b2o24b2o$20b2o24b2o
 $22b2o24b2o$22b2o24b2o$10b2o12b2o24b2o$10b2o12b2o24b2o$4b2o6b2o12b2o24b

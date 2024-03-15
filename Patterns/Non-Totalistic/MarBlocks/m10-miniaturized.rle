@@ -1,14 +1,19 @@
 #N m10-miniaturized.rle
 #O Luka Okanishi, 30 June 2016
+#C
 #C The pattern M10-self-similarity.rle demonstrates that doubling the
-#C   size of a pattern will preserve its behaviour at twice the period.
+#C size of a pattern will preserve its behaviour at twice the period.
+#C
 #C This specific non-totalistic rule allows the reverse to be true -
-#C   a region of 2×2 blocks can be shrunk down to individual 1×1 cells,
-#C   causing the pattern to run at twice the speed as a result. This 
-#C   permits odd-period oscillators. The self-similarity still permits
-#C   the existence of normal 2×2 MarBlocks oscillators.
+#C a region of 2×2 blocks can be shrunk down to individual 1×1 cells,
+#C causing the pattern to run at twice the speed as a result. This 
+#C permits odd-period oscillators. The self-similarity still permits
+#C the existence of normal 2×2 MarBlocks oscillators.
+#C
 #C It is not currently known if this rule is omniperiodic.
-#C Source: https://conwaylife.com/forums/viewtopic.php?p=32526#p32526
+#C
+#C Source:
+#C https://conwaylife.com/forums/viewtopic.php?p=32526#p32526
 x = 190, y = 188, rule = B3i4int5ey6k7e/S1e2k3ey4irt5i
 20b2o18b2o58b2o38b2o18b2o18b2o$2bo19bo19bo16bo2bo36bo39bo22bo16bo2bo$
 2bo19bo19bo16bo2bo36bo39bo22bo16bo2bo$20b2o18b2o18b2o38b2o38b2o38b2o$

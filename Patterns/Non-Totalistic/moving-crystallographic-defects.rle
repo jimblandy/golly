@@ -1,27 +1,28 @@
 #N moving-crystallographic-defects.rle
 #O GUYTU6J, January 27 2020
 #C 
-#C     This is a 16x16 soup identified by apgsearch as zz_linear: 
+#C This is a 16x16 soup identified by apgsearch as zz_linear: 
 #C https://catagolue.hatsya.com/hashsoup/C1/k_pzG6NuYMwAv54020/b2kn3-ekqr4i5eq6n8s23-aeny4cikqr5ek6ace7c
 #C
-#C     A piece of checkerboard agar arises from this random initial
+#C A piece of checkerboard agar arises from this random initial
 #C configuration and expands spontaneously towards vacuum. In the
 #C matrix there are static point defects, moving dislocations and
 #C reactive external surface (terms borrowed from crystallography).
-#C     Previously the phenomena have been observed in many other
+#C
+#C Previously the phenomena have been observed in many other
 #C isotropic non-totalistic rules; an intermittent discussion about
 #C the "rivers", "snakes", "loops" or crystallographic defects on
 #C various similar backgrounds can be found in the following thread,
 #C along with a much larger variety of interesting dynamics:
 #C https://conwaylife.com/forums/viewtopic.php?f=11&t=3120
 #C
-#C     As for this particular rule, it was found unexpectedly in an
+#C As for this particular rule, it was found unexpectedly in an
 #C oscillator search; there is a squarish rotating engine spattering
 #C many smaller objects, resulting an overall period of 16,848. The
 #C engine appears in (for example) generation ~13,100 in the southeast
 #C of this soup, but it does not survive long to show a full cycle.
 #C
-#C     Several other occuring events are also noted:
+#C Several other occuring events are also noted:
 #C   * At gen. ~1,400, the first nucleation of checkerboard agar 
 #C happens; two small nuclei of opposite parity and beyond some 
 #C "critical mass" collide at gen. ~1,700, forming an active
@@ -51,7 +52,7 @@
 #C thus simulation may eventually become fairly slow.
 #C 
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=88262#p88262
+#C https://conwaylife.com/forums/viewtopic.php?p=88262#p88262
 x = 16, y = 16, rule = B2kn3-ekqr4i5eq6n8/S23-aeny4cikqr5ek6ace7c
 ob2ob2o2b4o2bo$o2b3ob3obo$ob2o2b6o3bo$2b2o2bo5bob2o$ob2obo3b2obob2o$4o
 2bo3b2o2bo$2bob7obobo$bob2o3b4obobo$4b4ob3ob3o$2b3ob3o2b2obo$5bobob5ob

@@ -1,9 +1,11 @@
 #N glider-emitting-linear-replicator.rle
 #O wwei23, 6 January 2021
+#C
 #C This linear replicator produces a series of gliders as it evolves,
 #C which remain perfectly cocolumnar and identically-phased. This
 #C results in a binary ruler pattern being created.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=118253#p118253
+#C https://conwaylife.com/forums/viewtopic.php?p=118253#p118253
 x = 4, y = 3, rule = B35qy6a7e/S23-ey4et5e6c
 b2o$o2bo$b2o!

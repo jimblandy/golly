@@ -1,8 +1,10 @@
 #N space-filling-Sierpinski-triangle-replicator.rle
 #O LaundryPizza03, 26 December 2017
+#C
 #C This replicator fills out a solid right triangle at generation
-#C   (2^t)-2, shortly after displaying the Sierpinski triangle.
+#C (2^t)-2, shortly after displaying the Sierpinski triangle.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54221#p54221
+#C https://conwaylife.com/forums/viewtopic.php?p=54221#p54221
 x = 3, y = 2, rule = B1e2i3a4i5eiq6i/S2a3eiq4inr
 bo$3o!

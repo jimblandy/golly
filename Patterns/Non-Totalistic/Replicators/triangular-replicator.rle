@@ -1,16 +1,18 @@
 #N triangular-replicator.rle
 #O dani, 28 June 2019
-#C   The R-pentomino in this rule is a novel two-dimensional quadratic
+#C
+#C The R-pentomino in this rule is a novel two-dimensional quadratic
 #C replicator.
-#C   Let current generation be gen 0. The first child copy comes into
+#C
+#C Let current generation be gen 0. The first child copy comes into
 #C being at gen 42, centered at (3,8), and rotated 180 degrees. The 
 #C second one occurs at gen 46, centered at (6,19), rotated 90 degrees
 #C clockwise. They continue to replicate, forming larger and larger
-#C  arrays of child copies in the shape of isosceles right triangles.
+#C arrays of child copies in the shape of isosceles right triangles.
 #C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=78510#p78510
+#C https://conwaylife.com/forums/viewtopic.php?p=78510#p78510
 #C For other quadratic replicators, see
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=2648
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=2648
 x = 3, y = 3, rule = B3aijr4ciq7c/S2-i3-a4i5q
 2o$b2o$bo!

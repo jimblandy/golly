@@ -1,27 +1,28 @@
 #N comparison-3.rle
 #O Various; arrangement by Connor Steppie
+#C
 #C A simple demonstration of how it's possible to change only one
-#C   transition to obtain a rule that contains two oscillator families
-#C   following two distinct MarBlocks rules. In this case, the diagonal
-#C   lines follow M10, and the blocky oscillators follow M11.
+#C transition to obtain a rule that contains two oscillator families
+#C following two distinct MarBlocks rules. In this case, the diagonal
+#C lines follow M10, and the blocky oscillators follow M11.
 #C
 #C Open this pattern with showinviewer.lua to see labels which
-#C   indicate the period of each of these oscillators. They can be
-#C   seen to follow Sloane's A085587 (linked below).
+#C indicate the period of each of these oscillators. They can be
+#C seen to follow Sloane's A085587 (linked below).
 #C
 #C MarBlocks octal naming system thread:
-#C   https://conwaylife.com/forums/viewtopic.php?t=3243
+#C https://conwaylife.com/forums/viewtopic.php?t=3243
 #C MarBlocks forum thread:
-#C   https://conwaylife.com/forums/viewtopic.php?t=5204
+#C https://conwaylife.com/forums/viewtopic.php?t=5204
 #C A085587 on the OEIS database:
-#C   https://oeis.org/A085587
+#C https://oeis.org/A085587
 #C Reference for oscillator period lengths:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
+#C https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
 #C A summary of the Margolus rulespace can be found here:
-#C   https://conwaylife.com/wiki/Margolus_neighbourhood
+#C https://conwaylife.com/wiki/Margolus_neighbourhood
 #C A summary by Arie Paap of of some of the many places where
 #C XOR-type oscillators can be found:
-#C   https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
+#C https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
 #C
 #C [[ GRID ZOOM 5 ]]
 #C [[ LABEL 15 2 4 "💀" ]]

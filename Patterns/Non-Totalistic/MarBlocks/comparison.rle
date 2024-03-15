@@ -1,62 +1,63 @@
 #N comparison.rle
 #O Various; arrangement by Connor Steppie
+#C
 #C This is a comparison of two "MarBlocks" oscillator families
-#C   listed next to each other for behavioural comparison.
-#C   "MarBlocks" oscillators are named in reference to several rules
-#C   where patterns made of solid 2×2 blocks remain composed of 2×2
-#C   blocks emulating a simpler cellular automaton which uses the
-#C   Margolus neighbourhood and partitioning scheme.
+#C listed next to each other for behavioural comparison.
+#C "MarBlocks" oscillators are named in reference to several rules
+#C where patterns made of solid 2×2 blocks remain composed of 2×2
+#C blocks emulating a simpler cellular automaton which uses the
+#C Margolus neighbourhood and partitioning scheme.
 #C
 #C The most known rule of its kind, B36/S125, has many interesting
-#C   oscillators composed of these 2×2 blocks. For example, starting
-#C   configurations made of continuous rows of 2×2 blocks (that is, 
-#C   solid rectangles two cells high and an even number of cells
-#C   long) generally evolve into oscillators of increasingly high
-#C   periods. These are the oscillators which can be seen on the left.
-#C   The simplest rule to harbour these is B3i/S5i.
+#C oscillators composed of these 2×2 blocks. For example, starting
+#C configurations made of continuous rows of 2×2 blocks (that is, 
+#C solid rectangles two cells high and an even number of cells
+#C long) generally evolve into oscillators of increasingly high
+#C periods. These are the oscillators which can be seen on the left.
+#C The simplest rule to harbour these is B3i/S5i.
 #C
 #C At any given time, one of these oscillators can be described as
-#C   a XOR of other even-by-even rectangles in such a way that the
-#C   the resulting pattern can still be broken down into 2×2 blocks.
-#C   In addition, the edges of said oscillators can be analysed as
-#C   emulating Rule 90, a rule many common replicators are bound by.
+#C a XOR of other even-by-even rectangles in such a way that the
+#C the resulting pattern can still be broken down into 2×2 blocks.
+#C In addition, the edges of said oscillators can be analysed as
+#C emulating Rule 90, a rule many common replicators are bound by.
 #C
 #C A family of oscillators exists in the isotropic rule B2e/S which
-#C   behave identically to the 2×2 block oscillators found in B36/S125.
-#C   Specifically, any configuration composed of correctly-aligned 2×2
-#C   blocks in B36/S125 has a functionally identical equivalent in the
-#C   the rule B2e/S. For example, a diagonal line of length n cells in
-#C   B2e/S will oscillate with the same period (and mod) as a rectangle
-#C   with height 2 and width 2n in B36/S125.
+#C behave identically to the 2×2 block oscillators found in B36/S125.
+#C Specifically, any configuration composed of correctly-aligned 2×2
+#C blocks in B36/S125 has a functionally identical equivalent in the
+#C the rule B2e/S. For example, a diagonal line of length n cells in
+#C B2e/S will oscillate with the same period (and mod) as a rectangle
+#C with height 2 and width 2n in B36/S125.
 #C
 #C Several other rules exist with families of oscillators exhibiting
-#C   this exact behaviour, and such oscillator families are thus
-#C   referred to as "MarBlocks".
+#C this exact behaviour, and such oscillator families are thus
+#C referred to as "MarBlocks".
 #C
 #C As the length increases, the oscillator periods change radically,
-#C   occasionally becoming very large.  See also horiship-guns.rle.
+#C occasionally becoming very large.  See also horiship-guns.rle.
 #C
 #C Both the "2×2 block" and "diagonal line" MarBlocks oscillators
-#C   can coexist in a single rule, making a visual proof of their
-#C   functional equivalency simple.
+#C can coexist in a single rule, making a visual proof of their
+#C functional equivalency simple.
 #C
 #C Open this pattern with showinviewer.lua to see labels which
-#C   indicate the period of each of these oscillators. They can be
-#C   seen to follow Sloane's A085587 (linked below).
+#C indicate the period of each of these oscillators. They can be
+#C seen to follow Sloane's A085587 (linked below).
 #C
 #C Nathaniel Johnston's analysis of oscillators in 2×2:
-#C   http://www.nathanieljohnston.com/2009/05/rectangular-oscillators-in-the-2x2-b36s125-cellular-automaton
+#C http://www.nathanieljohnston.com/2009/05/rectangular-oscillators-in-the-2x2-b36s125-cellular-automaton
 #C MarBlocks forum thread:
-#C   https://conwaylife.com/forums/viewtopic.php?t=5204
+#C https://conwaylife.com/forums/viewtopic.php?t=5204
 #C A085587 on the OEIS database:
-#C   https://oeis.org/A085587
+#C https://oeis.org/A085587
 #C Reference for oscillator period lengths:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
+#C https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
 #C A summary of the Margolus rulespace can be found here:
-#C   https://conwaylife.com/wiki/Margolus_neighbourhood
+#C https://conwaylife.com/wiki/Margolus_neighbourhood
 #C A summary by Arie Paap of of some of the many places where
 #C XOR-type oscillators can be found:
-#C   https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
+#C https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
 #C
 #C [[ GRID ZOOM 5 ]]
 #C [[ LABEL 15 2 4 "💀" ]]

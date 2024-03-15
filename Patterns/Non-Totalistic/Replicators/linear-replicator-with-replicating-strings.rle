@@ -1,8 +1,10 @@
 #N linear-replicator-with-replicating-strings.rle
 #O Saka, 10 March 2017
+#C
 #C A linear replicator that gives off line-shaped sparks which
-#C   themselves replicate as they shrink inwards into nothing.
+#C themselves replicate as they shrink inwards into nothing.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=41453#p41453
+#C https://conwaylife.com/forums/viewtopic.php?p=41453#p41453
 x = 6, y = 3, rule = B3ai45i6n/S2-k3-a46c7c
 b4o$2o2b2o$b4o!

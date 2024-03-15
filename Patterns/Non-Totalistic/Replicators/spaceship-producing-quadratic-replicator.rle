@@ -1,11 +1,14 @@
 #N spaceship-producing-quadratic-replicator.rle
 #O Connor Steppie, 16 August 2018
+#C
 #C A quadratic replicator that constantly produces small natural
-#C   spaceships, which cleanly annihilate as to not obstruct further
-#C   replication. Four outward Sierpinski triangles are generated
-#C   by this replicator.
+#C spaceships, which cleanly annihilate as to not obstruct further
+#C replication. Four outward Sierpinski triangles are generated
+#C by this replicator.
+#C
 #C See replicator-blooming-spaceships.rle for a similar example.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=62683#p62683
+#C https://conwaylife.com/forums/viewtopic.php?p=62683#p62683
 x = 5, y = 2, rule = B2e3i4a6i/S1c2-an3i
 o3bo$b3o!

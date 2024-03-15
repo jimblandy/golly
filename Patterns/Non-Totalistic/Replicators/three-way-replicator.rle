@@ -1,10 +1,12 @@
 #N three-way-replicator.rle
 #O LaundryPizza03, 26 December 2017
+#C
 #C A rare square-grid example of a replicator that splits into
-#C   three identical copies instead of two or four, tracing out
-#C   a Sierpinski triangle in the process.
-#C   The envelope at t=2^n somewhat resembles Rule 150.
+#C three identical copies instead of two or four, tracing out
+#C a Sierpinski triangle in the process.
+#C The envelope at t=2^n somewhat resembles Rule 150.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54221#p54221
+#C https://conwaylife.com/forums/viewtopic.php?p=54221#p54221
 x = 3, y = 2, rule = B2a3iry4y5aiky7e/S2k4cz
 3o$obo!
