@@ -1,22 +1,23 @@
 #N marblocks-oscillator-with-replicator-mod-2.rle
 #O Various; arrangement by Connor Steppie
+#C
 #C This is a period-4194302 "MarBlocks" oscillator juxtaposed with
 #C a period-4194302 domino replicator shuttle. Refer to 
-#C a-comparison-of-two-MarBlocks-media.rle for an explanation of the
-#C "MarBlocks" families of oscillators.
+#C comparison.rle for an explanation of the MarBlocks families
+#C of oscillators.
 #C
-#C Since these "MarBlocks" oscillators are bound by Rule 90, like
-#C   many replicators are, this pattern demonstrates how they are
-#C   connection. Note how, at anygiven generation, the arrangement
-#C   of replicator units in the shuttle (top) perfectly match the
-#C   configuration of cells in the top row of the MarBlocks
-#C   oscillator (bottom).
+#C Since these MarBlocks oscillators are bound by Rule 90, like
+#C many replicators are, this pattern demonstrates how they are
+#C connected. Note how, at any given generation, the arrangement
+#C of replicator units in the shuttle (top) perfectly match the
+#C configuration of cells in the top row of the MarBlocks
+#C oscillator (bottom).
 #C
 #C Variants of the rule exist with higher numbers of states, which
-#C   can also be found in this folder.
+#C can also be found in this folder.
 #C
 #C MarBlocks forum thread:
-#C   https://conwaylife.com/forums/viewtopic.php?f=11&t=5204
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=5204
 x = 54, y = 55, rule = B2ae/S
 bo48bobo$o49bo2bo6$50bo$49bo$48bo$47bo$46bo$45bo$44bo$43bo$42bo$41bo$
 40bo$39bo$38bo$37bo$36bo$35bo$34bo$33bo$32bo$31bo$30bo$29bo$28bo$27bo$

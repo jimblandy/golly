@@ -1,10 +1,12 @@
 #N m10-duoplet-shaped-medium.rle
 #O LaundryPizza03, 9 November 2022
+#C
 #C M10 oscillators in this rule are made of duoplets and larger
-#C    diagonal strings.This still works if S2n is removed, evolving
-#C    slightly differently.
+#C diagonal strings. This still works if S2n is removed, evolving
+#C slightly differently.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=153311#p153311
+#C https://conwaylife.com/forums/viewtopic.php?p=153311#p153311
 x = 128, y = 20, rule = B2-a3ae4nr5e/S123en4nr
 109bo$89bo18bo$71bo16bo22bo$55bo14bo20bo18bo$41bo12bo18bo16bo22bo$29b
 o10bo16bo14bo20bo18bo$19bo8bo14bo12bo18bo16bo22bo$11bo6bo12bo10bo16bo

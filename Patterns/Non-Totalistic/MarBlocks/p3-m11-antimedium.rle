@@ -1,9 +1,11 @@
 #N p3-m11-antimedium.rle
 #O "wwei23", 19 April 2021
+#C
 #C This rule supports a period-3 medium for M27, which therefore is
-#C an antimedium of M11, as this toridal case demonstrates.
+#C an antimedium of M11, as this toroidal case demonstrates.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=128499#p128499
+#C https://conwaylife.com/forums/viewtopic.php?p=128499#p128499
 #C [[ STEP 3 NOTHROTTLE ]]
 x = 120, y = 90, rule = B1e2i3er4e5i6cn/S2ac:T120,90
 bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2bo2b

@@ -1,9 +1,11 @@
 #N three-halves-growth.rle
 #O Martin Grant, 15 July 2013
+#C
 #C The growth rate of this pattern is O(t^1.5) or O(t^(3/2)), placing
-#C it exactly halfway betwee linear and quadratic growth, in a sense.
+#C it exactly halfway between linear and quadratic growth, in a sense.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?t=1145
+#C https://conwaylife.com/forums/viewtopic.php?t=1145
 x = 832, y = 282, rule = B3/S23
 285b2o5bo2bo$284b4o8bo$284b2ob2o3bo3bo$286b2o5b4o3$276bo$274bo2bo13b2o
 $274bo3bo11b2ob2o$274bo3bo12bo2bo$274bo3bo12bo2bo$275bobo3b2o9b2o$276b

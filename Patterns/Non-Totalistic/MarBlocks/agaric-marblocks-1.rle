@@ -1,10 +1,12 @@
 #N agaric-marblocks-1.rle
 #O praosylen, 9 January 2018
+#C
 #C An example of a MarBlocks oscillator embedded in a stable
-#C   checkerboard agar. Modify its size and compare the resulting
-#C   behaviour to non-agaric versions.This example follows M10.
+#C checkerboard agar. Modify its size and compare the resulting
+#C behaviour to non-agaric versions. This example follows M10.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=54893#p54893
+#C https://conwaylife.com/forums/viewtopic.php?p=54893#p54893
 x = 17, y = 17, rule = B4c/S02en3ce4ci5e
 17o$obobobobobobobobo$2obobobobobobob2o$obobobobobobobobo$2obobobobob
 obob2o$obobobobobobobobo$2obobobobobobob2o$obobobobobobobobo$2obo9bob
