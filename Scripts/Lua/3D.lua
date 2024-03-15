@@ -204,6 +204,7 @@ local resetbutton                   -- Reset
 local fitbutton                     -- Fit
 local undobutton                    -- Undo
 local redobutton                    -- Redo
+local infobutton                    -- i
 local helpbutton                    -- ?
 local exitbutton                    -- X
 local drawbox                       -- radio button for draw mode
@@ -1607,6 +1608,7 @@ function DrawToolBar()
         resetbutton.enable(gencount > startcount)
         undobutton.enable(#undostack > 0)
         redobutton.enable(#redostack > 0)
+        infobutton.enable(#pattinfo > 0)
     end
 
     local x = gap
@@ -1648,11 +1650,13 @@ function DrawToolBar()
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
 
-    -- last 2 buttons are at right end of tool bar
+    -- last 3 buttons are at right end of tool bar
     x = ovwd - gap - exitbutton.wd
     exitbutton.show(x, y)
     x = x - gap - helpbutton.wd
     helpbutton.show(x, y)
+    x = x - gap - infobutton.wd
+    infobutton.show(x, y)
 end
 
 --------------------------------------------------------------------------------
@@ -6359,8 +6363,9 @@ function ToggleToolBar()
         selectbox.hide()
         movebox.hide()
         stepslider.hide()
-        exitbutton.hide()
+        infobutton.hide()
         helpbutton.hide()
+        exitbutton.hide()
     else
         toolbarht = mbarht+buttonht+gap*2
         midy = int(ovht/2 + toolbarht/2)
@@ -7661,6 +7666,7 @@ function CreateToolBar()
     fitbutton = op.button("Fit", FitGrid)
     undobutton = op.button("Undo", Undo)
     redobutton = op.button("Redo", Redo)
+    infobutton = op.button(" i ", ShowPatternInfo)
     helpbutton = op.button("?", ShowHelp)
     exitbutton = op.button("X", ExitScript)
 
