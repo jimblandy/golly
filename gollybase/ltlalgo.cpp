@@ -32,7 +32,7 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 #define SMALL_NN_RANGE 4
 
 // valid neighborhoods (upper case)
-static const char *VALIDNEIGHBORHOODS = "MNC+X*2HB#@3ALGW";
+static const char *VALIDNEIGHBORHOODS = "MNC+X*2HBD#@3ALGW";
 
 // hex digits (upper case)
 static const char *HEXCHARACTERS = "0123456789ABCDEF";
@@ -1970,7 +1970,7 @@ void ltlalgo::fast_Hash(int mincol, int minrow, int maxcol, int maxrow)
 
 // -----------------------------------------------------------------------------
 
-void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
+void ltlalgo::fast_CheckerBoth(int mincol, int minrow, int maxcol, int maxrow, int start)
 {
     int topoffset = range * outerwd;
     for (int y = minrow; y <= maxrow; y++) {
@@ -1981,7 +1981,7 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
         int x = mincol;
         int ncount = 0;
         int ncount2 = 0;
-        int offset = 1;
+        int offset = start;
         unsigned char* cp1 = cellptr - topoffset;
         for (int j = -range; j <= range; j++, cp1 += outerwd) {
             for (int i = -range + offset; i <= range - offset; i += 2) {
@@ -1989,7 +1989,11 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
             }
             offset = 1 - offset;
         }
-        if (cellptr[x] == 1) ncount++;
+
+	  // check for survival
+	  if (start == 1) {
+            if (cellptr[x] == 1) ncount++;
+	  }
 
         update_next_grid(x, y, yoffset+x, ncount);
         x++;
@@ -1997,7 +2001,7 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
         // check if there are two cells in the row
         if (x <= maxcol) {
             ncount2 = 0;
-            offset = 1;
+            offset = start;
             unsigned char* cp1 = cellptr - topoffset;
             for (int j = -range; j <= range; j++, cp1 += outerwd) {
                 for (int i = -range + offset; i <= range - offset; i += 2) {
@@ -2005,14 +2009,18 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
                 }
                 offset = 1 - offset;
             }
-            if (cellptr[x] == 1) ncount2++;
+
+		// check for survival
+		if (start == 1) {
+                if (cellptr[x] == 1) ncount2++;
+		}
 
             update_next_grid(x, y, yoffset+x, ncount2);
             x++;
 
             // for the remaining cell pairs on the row subtract the left and add the right cells
             while (x <= maxcol) {
-                offset = 1;
+                offset = start;
                 unsigned char* cp1 = cellptr - topoffset;
                 for (int j = -range; j <= range; j++, cp1 += outerwd) {
                     if (cp1[x - range + offset - 2] == 1) ncount--;
@@ -2021,13 +2029,15 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
                 }
 
                 // check for survival
-                if (cellptr[x - 2] == 1) ncount--;
-                if (cellptr[x] == 1) ncount++;
+		    if (start == 1) {
+                    if (cellptr[x - 2] == 1) ncount--;
+                    if (cellptr[x] == 1) ncount++;
+		    }
                 update_next_grid(x, y, yoffset+x, ncount);
                 x += 1;
 
                 if (x <= maxcol) {
-                    offset = 1;
+                    offset = start;
                     unsigned char* cp1 = cellptr - topoffset;
                     for (int j = -range; j <= range; j++, cp1 += outerwd) {
                         if (cp1[x - range + offset - 2] == 1) ncount2--;
@@ -2036,14 +2046,30 @@ void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
                     }
 
                     // check for survival
-                    if (cellptr[x - 2] == 1) ncount2--;
-                    if (cellptr[x] == 1) ncount2++;
+			  if (start == 1) {
+                        if (cellptr[x - 2] == 1) ncount2--;
+                        if (cellptr[x] == 1) ncount2++;
+			  }
                     update_next_grid(x, y, yoffset+x, ncount2);
                     x += 1;
                 }
             }
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Aligned(int mincol, int minrow, int maxcol, int maxrow)
+{
+	fast_CheckerBoth(mincol, minrow, maxcol, maxrow, 0);
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Checker(int mincol, int minrow, int maxcol, int maxrow)
+{
+	fast_CheckerBoth(mincol, minrow, maxcol, maxrow, 1);
 }
 
 // -----------------------------------------------------------------------------
@@ -2510,6 +2536,10 @@ void ltlalgo::do_gen(int mincol, int minrow, int maxcol, int maxrow)
 
         case 'B':
             fast_Checker(mincol, minrow, maxcol, maxrow);
+            break;
+
+        case 'D':
+            fast_Aligned(mincol, minrow, maxcol, maxrow);
             break;
 
         case 'H':
@@ -3002,6 +3032,11 @@ int ltlalgo::max_neighbors(const int range, const char neighborhood, const int c
 
         case 'B':
             // checkerboard
+            result = ((range * 2 + 1) * (range * 2 + 1) - 1) / 2;
+            break;
+
+        case 'D':
+            // aligned checkerboard
             result = ((range * 2 + 1) * (range * 2 + 1) - 1) / 2;
             break;
 
