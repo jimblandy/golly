@@ -121,6 +121,8 @@ private:
     void fast_Weighted(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Custom(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Hash(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_CheckerBoth(int mincol, int minrow, int maxcol, int maxrow, int start);
+    void fast_Aligned(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Checker(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Hex(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Saltire(int mincol, int minrow, int maxcol, int maxrow);
