@@ -1,0 +1,30 @@
+#N replicator-mod-7.rle
+#O Connor Steppie, 22 April 2021
+#C
+#C This is a period-294 "MarBlocks" oscillator juxtaposed with
+#C a period-294 domino replicator shuttle. The arrangement is the
+#C same as in replicator-mod-2.rle and the replicator imitates the
+#C oscillator as expected.
+#C
+#C Nathaniel Johnston's 2009 article on 2×2 oscillators and their
+#C association with the mod-2 replicator rule inspired the
+#C investigation into the existence of higher-modulo MarBlocks
+#C patterns, of which this family was the third.
+#C
+#C There are currently no known 2-state rules that contain a mod-7
+#C MarBlocks oscillator series.
+#C
+#C Rule 206968711034748555365673889122449783979099 (the
+#C one-dimensional rule describing the edge behaviour):
+#C https://www.wolframalpha.com/input?i=k%3D7%2C+r%3D1%2F2+rule+206968711034748555365673889122449783979099
+#C
+#C Nathaniel Johnston's analysis of oscillators in 2×2:
+#C http://www.nathanieljohnston.com/2009/05/rectangular-oscillators-in-the-2x2-b36s125-cellular-automaton
+#C
+#C MarBlocks forum thread:
+#C https://conwaylife.com/forums/viewtopic.php?t=5204
+x = 54, y = 55, rule = MarBlocks-7-rep
+bo48bobo$o49bo2bo6$50bo$49bo$48bo$47bo$46bo$45bo$44bo$43bo$42bo$41bo$
+40bo$39bo$38bo$37bo$36bo$35bo$34bo$33bo$32bo$31bo$30bo$29bo$28bo$27bo$
+26bo$25bo$24bo$23bo$22bo$21bo$20bo$19bo$18bo$17bo$16bo$15bo$14bo$13bo$
+12bo$11bo$10bo$9bo$8bo$7bo$6bo$5bo$4bo$3bo!

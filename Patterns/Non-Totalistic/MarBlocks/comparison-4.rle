@@ -1,9 +1,9 @@
-#N a-comparison-of-two-MarBlocks-media-3.rle
+#N comparison-4.rle
 #O Various; arrangement by Connor Steppie
 #C A simple demonstration of how it's possible to change only one
 #C   transition to obtain a rule that contains two oscillator families
 #C   following two distinct MarBlocks rules. In this case, the diagonal
-#C   lines follow M10, and the blocky oscillators follow M11.
+#C   lines follow M11, and the blocky oscillators follow M10.
 #C
 #C Open this pattern with showinviewer.lua to see labels which
 #C   indicate the period of each of these oscillators. They can be
@@ -34,7 +34,7 @@
 #C [[ LABEL 75 42 4 "14" ]]
 #C [[ LABEL 75 62 4 "12" ]]
 #C [[ LABEL 75 82 4 "62" ]]
-x = 90, y = 90, rule = B2e3i/S5i8
+x = 90, y = 90, rule = B2e3i4e/S5i
 8b2o10bo37b12o10bo$8b2o48b12o11bo$82bo$83bo$84bo$85bo5$6b4o10bo$6b4o
 11bo9$4b6o10bo35b14o10bo$4b6o11bo34b14o11bo$22bo59bo$83bo$84bo$85bo$
 86bo4$2b8o10bo$2b8o11bo$22bo$23bo7$10o10bo33b16o10bo$10o11bo32b16o11bo

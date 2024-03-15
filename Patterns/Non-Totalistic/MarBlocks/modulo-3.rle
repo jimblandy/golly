@@ -1,9 +1,13 @@
-#N marblocks-2x2-modulo-2.rle
+#N modulo-3.rle
+#O Connor Steppie, 3 February 2020
 #C
 #C Arrangements of 2×2 blocks of state-1 cells of widths 0 to 40 in a
-#C 2-state rule. See replicator-mod-2.rle for a diagonal version of
+#C 3-state rule. See replicator-mod-3.rle for a diagonal version of
 #C this family of oscillators.
-x = 458, y = 2, rule = B3i/S5i
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=88755#p88755
+x = 458, y = 2, rule = MarBlocks3-OT-2x2-minimal
 2o2b4o2b6o2b8o2b10o2b12o2b14o2b16o2b18o2b20o2b22o2b24o2b26o2b28o2b30o
 2b32o2b34o2b36o2b38o2b40o$2o2b4o2b6o2b8o2b10o2b12o2b14o2b16o2b18o2b20o
 2b22o2b24o2b26o2b28o2b30o2b32o2b34o2b36o2b38o2b40o!

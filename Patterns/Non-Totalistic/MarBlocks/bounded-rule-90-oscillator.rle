@@ -1,0 +1,11 @@
+#N bounded-rule-90-oscillator.rle
+#O Various; arrangement by Connor Steppie
+#C
+#C Objects with Rule 90 behaviour at the very edges are common in
+#C other rules. This pattern demonstrates how the cells in this
+#C tube correspond to the edge behaviour of a MarBlocks oscillator.
+#C
+#C See replicator-mod-2.rle for a very similar concept.
+x = 24, y = 26, rule = B2e7e/S1e2ai3er4ir5i
+24o$bo$24o2$bo$2bo$3bo$4bo$5bo$6bo$7bo$8bo$9bo$10bo$11bo$12bo$13bo$14b
+o$15bo$16bo$17bo$18bo$19bo$20bo$21bo$22bo!
