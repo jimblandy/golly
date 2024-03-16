@@ -1,10 +1,12 @@
 #N b3578s23-failed-2d-replicator.rle
 #O possibly Dominique Giard, 1999
+#C
 #C This is the failed quadratic replicator mentioned in
-#C   b3578s23-2d-replicator.rle. Adding the transition S6k makes this
-#C   a true replicator, while still preserving the replicator shown in
-#C   b3578s23-2d-replicator.rle.
+#C b3578s23-2d-replicator.rle. Adding the transition S6k makes this
+#C a true replicator, while still preserving the replicator shown in
+#C b3578s23-2d-replicator.rle.
+#C
 #C Reference:
-#C   https://ics.uci.edu/~eppstein/ca/replicators/b3578s23.html
+#C https://ics.uci.edu/~eppstein/ca/replicators/b3578s23.html
 x = 9, y = 3, rule = B3578/S23
 2o5b2o$2o5b2o$2o5b2o!

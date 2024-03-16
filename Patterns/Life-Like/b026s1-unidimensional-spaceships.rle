@@ -1,10 +1,11 @@
 #N b026s1-unidimensional-spaceships.rle
 #O Rocknlol, 2 April 2020
 #C
-#C     B026/S1 is an explosive rule with the special property that 
+#C B026/S1 is an explosive rule with the special property that 
 #C one-cell-thick soups are bound to move only on the symmetrical
 #C axis, leading to large amounts of unidimensional spaceships.
-#C     The following partial collection was found by using a custom
+#C
+#C The following partial collection was found by using a custom
 #C gfind clone to perform a breadth-first search. Results are sorted
 #C by displacement first and period next. The list does not necessarily
 #C have every possible spaceship, so it is somewhat incomplete, but

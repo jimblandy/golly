@@ -1,13 +1,13 @@
 #C Shows spaceships of all periods < 32 for which examples are known.
-#C  Minimum populations are listed below, each spaceship having been
-#C  chosen to minimize this minimum population.  (Often there are
-#C  small variations of the given spaceship that have the same
-#C  minimum population.)
+#C Minimum populations are listed below, each spaceship having been
+#C chosen to minimize this minimum population.  (Often there are
+#C small variations of the given spaceship that have the same
+#C minimum population.)
 #C
 #C Spaceships are arranged in period order, reading right then down.
-#C  Gaps between spaceships do not correlate with gaps in the known
-#C  spaceship periods -- the extra space just prevents fast higher-
-#C  period spaceships from crashing into slow lower-period ones.
+#C Gaps between spaceships do not correlate with gaps in the known
+#C spaceship periods -- the extra space just prevents fast higher-
+#C period spaceships from crashing into slow lower-period ones.
 #C
 #C Period  Min population
 #C ------  --------------
@@ -90,9 +90,10 @@
 #C      on 30 May 1998.  The variant obtained by moving one side
 #C      forward two spaces has the same minimum population.  (This
 #C      variant was noticed by Alan Hensel.)
+#C
 #C small_p.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
-#C Updated on 5 July 2022 -- -- source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C Updated on 5 July 2022 -- source:
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 294, y = 272, rule = B3/S23
 22b3o15b3o46bob2o95b3o10b3o47b3o$21bo3bo13bo3bo41b3ob2obob2o44bo42b3ob
 o7b2o7bob3o19bo22bo2bo4b3o$20b2o4bo11bo4b2o39bo6b2o2b4o40b3o45bo3bo2bo

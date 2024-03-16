@@ -1,26 +1,30 @@
 #C Pseudo p34 gun based on two p102 Herschel factories.
 #C Karel Suhajda, 18 Apr 2003 -- from Jason Summers' "guns1j"
-#C  collection, which now contains the smallest known glider gun of
-#C  every period between 14 and 999.  A separate "guns2j" collection
-#C  contains a selection of small higher-period guns.
+#C collection, which now contains the smallest known glider gun of
+#C every period between 14 and 999.  A separate "guns2j" collection
+#C contains a selection of small higher-period guns.
+#C
 #C Construction methods are known for glider guns of all periods above
-#C  the minimum of 14, and also for true period guns above p61
-#C  -- the period of 'true' guns matches the period of the output,
-#C  unlike pseudo-period guns such as this example.  As of this
-#C  writing [February 2023] true guns are unknown for 16 periods.
+#C the minimum of 14, and also for true period guns above p61
+#C -- the period of 'true' guns matches the period of the output,
+#C unlike pseudo-period guns such as this example.  As of this
+#C writing [February 2023] true guns are unknown for 16 periods.
+#C
 #C It is quite possible that true guns exist for all these periods,
-#C  but current search programs are unable to perform exhaustive
-#C  searches for oscillators at anywhere near the periods neede to
-#C  make direct glider generation possible.
+#C but current search programs are unable to perform exhaustive
+#C searches for oscillators at anywhere near the periods neede to
+#C make direct glider generation possible.
+#C
 #C In general, prime period guns need more space than composite
-#C  numbers, especially multiples of large powers of two or three;
-#C  in the latter case, various doubling and counting mechanisms
-#C  can be used.  See p97307852711.rle in the Oscillators folder,
-#C  which is trivial to convert to a prime-period gun.
+#C numbers, especially multiples of large powers of two or three;
+#C in the latter case, various doubling and counting mechanisms
+#C can be used.  See p97307852711.rle in the Oscillators folder,
+#C which is trivial to convert to a prime-period gun.
+#C
 #C P34 traffic-light eater from Jason Summers' "jslife" collection.
 #C
 #C Reference:
-#C   https://conwaylife.com/wiki/Gun#True-period_guns
+#C https://conwaylife.com/wiki/Gun#True-period_guns
 x = 243, y = 157, rule = B3/S23
 185boboo$183b3obobbo9bo$182bo4boboo7b3o$178boobbooboobo8bo24bo$177bob
 3o3bobbo8boo22bobo$155boo7bo12bo4boobboboo18bo12bob3o$154bobo7b3o9boob

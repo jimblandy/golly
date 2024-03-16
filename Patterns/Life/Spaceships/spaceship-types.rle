@@ -1,14 +1,15 @@
 #C A period p spaceship which displaces itself (m,n) during its
-#C  period, where m >= n, is said to be of type (m,n)c/p.  It can be
-#C  shown that p >= 2m+2n.  The number of possible types of spaceship
-#C  of period p is therefore [k(k+4)/4], where k = [p/2].
-#C  (Here, [x] denotes the floor of x, i.e., the greatest integer
-#C  not exceeding x.) Note, however, that no-one has ever proved
-#C  that all these "possible" types really are possible, so the
-#C  above formula may only be an upper bound.
+#C period, where m >= n, is said to be of type (m,n)c/p.  It can be
+#C shown that p >= 2m+2n.  The number of possible types of spaceship
+#C of period p is therefore [k(k+4)/4], where k = [p/2].
+#C (Here, [x] denotes the floor of x, i.e., the greatest integer
+#C not exceeding x.) Note, however, that no-one has ever proved
+#C that all these "possible" types really are possible, so the
+#C above formula may only be an upper bound.
+#C
 #C The following table shows the mininum number of cells for
-#C  spaceships of all types with period < 10.  Those marked [*] are
-#C  known to be best possible.
+#C spaceships of all types with period < 10.  Those marked [*] are
+#C known to be best possible.
 #C
 #C  (1,0)c/2  64 cells                Dean Hickerson       28 Jul 1989
 #C  (1,0)c/3  25 cells [*]            Dean Hickerson          Aug 1989
@@ -47,7 +48,7 @@
 #C
 #C types.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
 #C Updated on 16 May 2022 -- source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 279, y = 368, rule = B3/S23
 225b5o$225bo4bo$225bo$226bo4bo$228bo$229b2o2bo$227bo2bo3bo$225bo7bo$
 224bo5bo2bo$224bo3b2o$224b4o2b2o17$202b2o$201bob2o$200b2ob2ob2obo$199b

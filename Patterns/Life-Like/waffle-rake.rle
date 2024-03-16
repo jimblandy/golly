@@ -1,7 +1,7 @@
 #N waffle-rake.rle
 #O Eric Goldstein, 8 June 2012
 #C
-#C     An outer-totalistic rule in the "B0/D8 rulespace" is inhabited 
+#C An outer-totalistic rule in the "B0/D8 rulespace" is inhabited 
 #C by rakes, breeders, and wickstretchers. Curiously, if two moons 
 #C collide face-to-face with an even-cell gap, they will not only
 #C pass each other completely unaffected, but also emit two other

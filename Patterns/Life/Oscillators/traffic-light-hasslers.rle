@@ -1,15 +1,19 @@
 #C Traffic light hasslers
+#C
 #C There is an unusual proliferation of oscillators engineered this
-#C   way, because there are many ways to perturb a traffic light in
-#C   such a way that it reappears somewhere nearby.
+#C way, because there are many ways to perturb a traffic light in
+#C such a way that it reappears somewhere nearby.
+#C
 #C This collection is split into two parts:
-#C   The top contains standard traffic light hasslers.
-#C   The bottom contains "pre-pulsar" hasslers.
+#C The top contains standard traffic light hasslers.
+#C The bottom contains "pre-pulsar" hasslers.
+#C
 #C A pre-pulsar is a pair of pre-traffic lights whose centers are
-#C   5 cells apart.  If left to evolve, they would not form traffic
-#C   lights, but would instead form the period-3 pulsar oscillator.
+#C 5 cells apart.  If left to evolve, they would not form traffic
+#C lights, but would instead form the period-3 pulsar oscillator.
+#C
 #C Source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 870, y = 838, rule = B3/S23
 820b2o$819bobo12bo$307b2o4b2o504bo$307bo5b2o156b2o314b2o25bob2ob2o4b2o
 5bob3o$308bo124b2o36bo297bo15bob2o25b2obo2bo3bobo7b2obo$244b2o5b2o54b

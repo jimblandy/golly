@@ -1,29 +1,37 @@
 #C A small spacefiller.
+#C
 #C Spacefillers are the fastest-growing known pattern in Conway's
-#C  Game of Life (probably the fastest possible).  They fill space
-#C  to a density of 1/2, conjectured to be the maximum density,
-#C  and they do it at a speed of c/2 in each of the 4 directions,
-#C  which has been proven to be the maximum possible speed.
+#C Game of Life (probably the fastest possible).  They fill space
+#C to a density of 1/2, conjectured to be the maximum density,
+#C and they do it at a speed of c/2 in each of the 4 directions,
+#C which has been proven to be the maximum possible speed.
+#C
 #C This pattern starts with 200 cells, not the record lowest number
-#C  of starting cells for a spacefiller (at the time of this writing,
-#C  the record is 151).  Quadratic-growth patterns that start with
-#C  as few as 20 ON cells are now known, but their growth rate is
-#C  comparatively slow.
+#C of starting cells for a spacefiller (at the time of this writing,
+#C the record is 151).  Quadratic-growth patterns that start with
+#C as few as 20 ON cells are now known, but their growth rate is
+#C comparatively slow.
+#C
 #C The population of spacefillers are easy to compute.  This one's
-#C  equations are:
-#C       [(t+17)^2+511]/4 for t divisible by 4;
-#C       [(t+17)^2+608]/4 for t mod 4 = 1;
-#C       [(t+17)^2+563]/4 for t mod 4 = 2;
-#C       [(t+17)^2+580]/4 for t mod 4 = 3.
+#C equations are:
+#C
+#C     [(t+17)^2+511]/4 for t divisible by 4;
+#C     [(t+17)^2+608]/4 for t mod 4 = 1;
+#C     [(t+17)^2+563]/4 for t mod 4 = 2;
+#C     [(t+17)^2+580]/4 for t mod 4 = 3.
+#C
 #C Most spacefillers at this time have p2 stretchers on the left and
-#C  right instead of the flipper stretchers in this pattern.
+#C right instead of the flipper stretchers in this pattern.
+#C
 #C Original idea and middle part by Al Hensel; original construction
-#C  and top/bottom stretchers by Hartmut Holzwart; size optimization
-#C  by David Bell, Al Hensel, and Tim Coe.
+#C and top/bottom stretchers by Hartmut Holzwart; size optimization
+#C by David Bell, Al Hensel, and Tim Coe.
+#C
 #C This spacefiller by Hartmut Holzwart, 4 Nov 1998.
 #C From Alan Hensel's "lifebc" pattern collection.
+#C
 #C Updated 16 May 2022 -- source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 49, y = 26, rule = B3/S23
 20b3o3b3o$19bo2bo3bo2bo$4o18bo3bo18b4o$o3bo17bo3bo17bo3bo$o8bo12bo3bo
 12bo8bo$bo2bo2b2o2bo25bo2b2o2bo2bo$6bo5bo7b3o3b3o7bo5bo$6bo5bo8bo5bo8b

@@ -1,18 +1,21 @@
 #N crystallizing-dirty-superstring.rle
 #O GUYTU6J, 25 April 2016
 #C
-#C     This is a lightspeed wave with a crystalline backend that moves
+#C This is a lightspeed wave with a crystalline backend that moves
 #C knightwise apparently. In the first 4,000 ticks those crystals grow
 #C to about twice as large by outrunning the chaos behind.
-#C     At T= 4159 a temporary snake appears at the chaotic frontier.
+#C
+#C At T= 4159 a temporary snake appears at the chaotic frontier.
 #C An identical snake appears at T = 4275, 116 ticks later, offset by
 #C 116 cells horizontally (like the leading wave, the chaotic frontier
 #C is now traveling at lightspeed) and 24 cells vertically.  At this
 #C point the pattern has stabilized into a messy periodic puffer.
-#C     For some other widths and starting patterns, the period and
+#C
+#C For some other widths and starting patterns, the period and
 #C offset of the eventual periodicity is not known.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=137357#p137357
+#C https://conwaylife.com/forums/viewtopic.php?p=137357#p137357
 x = 518, y = 128, rule = B3/S23:T0,128
 bo5bob4ob2o2b2o33bo27bo2b14o10b3o2bo2b3o2b3o5b3o2bo5bo4b2o13b4o9bo10bo
 7b4o9b6o6bo2bo2b2obobo3bo2b2o4b5o4b9o5bo9b4o2bo9bo7bobobo3bo2bo2bobo4b

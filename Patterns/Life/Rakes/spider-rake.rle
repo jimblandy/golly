@@ -1,15 +1,18 @@
 #C p360 Spider Rake
+#C
 #C Nine gliders travel in a figure-8 loop, trapped by c/5 spiders,
-#C  liberating one glider each time. The gliders in the loop collide
-#C  with the prepulsar part of a c/5 spider combo to form a Herschel
-#C  traveling downwards. The Herschel is guided by other spiders,
-#C  producing a glider with the correct parity to form a large period
-#C  spaceship - in this case, p3240, which can be divided by 9 to form
-#C  a p360 spaceship. The Herschel on the left side is then killed,
-#C  but the Herschel on the right side is pushed a little further to
-#C  liberate one more glider before it is killed.
+#C liberating one glider each time. The gliders in the loop collide
+#C with the prepulsar part of a c/5 spider combo to form a Herschel
+#C traveling downwards. The Herschel is guided by other spiders,
+#C producing a glider with the correct parity to form a large period
+#C spaceship - in this case, p3240, which can be divided by 9 to form
+#C a p360 spaceship. The Herschel on the left side is then killed,
+#C but the Herschel on the right side is pushed a little further to
+#C liberate one more glider before it is killed.
+#C
 #C On the far right side, another c/5 spider-prepulsar spaceship
-#C  reflects the forward gliders, making this a backward rake.
+#C reflects the forward gliders, making this a backward rake.
+#C
 #C By David Bell, June 3, 1998
 #C From Alan Hensel's "lifebc" pattern collection.
 x = 500, y = 127, rule = B3/S23

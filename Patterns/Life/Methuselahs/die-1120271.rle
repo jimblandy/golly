@@ -1,12 +1,14 @@
 #N die-1120271.rle
 #O Tim Coe, 14 September 2023
+#C
 #C A "diehard" where gliders bounce off of still lifes and a retreating
-#C   c/5 spaceship. Five bounces happen before the spaceship is
-#C   destroyed and a single glider returns to clean up a beehive,
-#C   leaving nothing behind in generation 1,120,271.  Remarkably,
-#C   it all fits in a 32 by 32 box at the start.
+#C c/5 spaceship. Five bounces happen before the spaceship is
+#C destroyed and a single glider returns to clean up a beehive,
+#C leaving nothing behind in generation 1,120,271.  Remarkably,
+#C it all fits in a 32 by 32 box at the start.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=167008#p167008
+#C https://conwaylife.com/forums/viewtopic.php?p=167008#p167008
 x = 32, y = 32, rule = B3/S23
 obo2bob2obo9bo$2o3b2ob2obo6b3o8b2o$bo9bo5bo11bo$11b2o5bo6b2o4bo$3bo2b
 2o4bo4b2o5bobo3b2o$2bo2bobo3bo9bo2bo$5obo5b3o6b3obo$2bo2bo3b3o2bo9bo4b

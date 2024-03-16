@@ -1,7 +1,7 @@
 #N Sawtooth 177
 #O thunk, 27 October 2015
 #C
-#C     A sawtooth is a pattern with population that reaches new heights
+#C A sawtooth is a pattern with population that reaches new heights
 #C infinitely often, but also infinitely often drops to some fixed
 #C value.  This sawtooth has the lowest known minimum repeating
 #C population, 177, which occurs at generations 48 * (121^n - 1).

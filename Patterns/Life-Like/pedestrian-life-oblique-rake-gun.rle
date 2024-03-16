@@ -1,6 +1,7 @@
 #N pedestrian-life-oblique-rake-gun.rle
 #O Luka Okanishi, 3 May 2016
-#C     In the realm of outer-totalistic Life-like cellular automata,
+#C
+#C In the realm of outer-totalistic Life-like cellular automata,
 #C the highest birth condition is B8. Adding that to the Game of Life
 #C gives Pedestrian Life, B38/S23, so named because the traffic light
 #C constellation is much less common. A large number of Life patterns
@@ -9,7 +10,8 @@
 #C different behaviour that allows for them to be combined akin to
 #C the switch engine in Life. The result is a class of spaceships, 
 #C puffers and rakes travelling obliquely at a speed of (5,2)c/190.
-#C     The following pattern is a bootstrapping period-1326 gun for 
+#C
+#C The following pattern is a bootstrapping period-1326 gun for 
 #C one of those rakes based on an 8-glider synthesis. After a rake is
 #C built, some of its output gliders are directed by series of Snarks
 #C and p6 bumpers so as to produce the next rake. In other words, it
@@ -17,6 +19,7 @@
 #C
 #C Reference:
 #C https://conwaylife.com/forums/viewtopic.php?f=11&t=1661&p=30569#p30569
+#C
 #C For general description on this rule, see LifeWiki article:
 #C https://conwaylife.com/wiki/OCA:Pedestrian_Life
 x = 314, y = 280, rule = B38/S23

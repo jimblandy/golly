@@ -3,7 +3,7 @@
 #C Keith Amling, 2 May 2022
 #C With reductions by Hartmut Holzwart and "iNoMed"
 #C Source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 108, y = 60, rule = B3/S23
 2bo$b3o5b3o12bo5bo$2obo4bo2bo5b3o3b3o3b3o$3o4b3obo4bo2bo3bob2ob2obo$3o
 2bo6bo3bo2bo4b3ob3o$b2o5bo4bo4b4o2b3o2b2o$7bo6bobobob2o2b3o$14bobob2o

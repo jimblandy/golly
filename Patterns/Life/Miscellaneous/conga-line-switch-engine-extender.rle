@@ -1,19 +1,20 @@
 #N conga-line-switch-engine-extender.rle
 #O Luka Okanishi, 26 September 2020
 #C
-#C     In a September 2020 conwaylife.com forum discussion, Ian07
+#C In a September 2020 conwaylife.com forum discussion, Ian07
 #C found that a single switch engine could be stabilized by another
 #C switch engine following closely behind it:
-#C   https://conwaylife.com/forums/viewtopic.php?p=104435#p104435
+#C https://conwaylife.com/forums/viewtopic.php?p=104435#p104435
+#C
 #C Soon wwei23 constructed a factory that produces an extending
 #C "conga line" or "Cordercolumn" of switch engines. The pattern shown
 #C here, constructed by Luka Okanishi ("AbhpzTa" on the forums),
 #C is a more compact form of the factory.
 #C
-#C     Compare with Signal-Circuitry/traffic-lights-extruder.rle.
+#C Compare with Signal-Circuitry/traffic-lights-extruder.rle.
 #C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=104919#p104919
+#C https://conwaylife.com/forums/viewtopic.php?p=104919#p104919
 x = 221, y = 256, rule = B3/S23
 91bo73b2o$89b3o72bobo$88bo69b2o4bo$88b2o66bo2bo2b2ob4o$156b2obobobobo
 2bo$84bo74bobobobo$74bo8bobo73bobob2o$74bo3bo3bo2bo74bo$70b2ob2ob3o4b

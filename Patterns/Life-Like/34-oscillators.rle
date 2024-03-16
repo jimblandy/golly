@@ -1,10 +1,12 @@
 #N 34-oscillators.rle
 #O Mark Niemiec, Jack Eisenmann
+#C
 #C A selection of oscillators in the rule B34/S34, also known as
-#C   '3/4 Life' due to its rulestring.
+#C '3/4 Life' due to its rulestring.
+#C
 #C Adapted from https://conwaylife.com/ref/mniemiec/rule34.htm.
-#C   A more complete collection of patterns in this rule can be found
-#C   there.
+#C A more complete collection of patterns in this rule can be found
+#C there.
 x = 91, y = 167, rule = B34/S34
 8bo6b2o5b2ob2o8b2ob2o$15b2o4bob3obo6bob3obo$6bobo12b2o3bobo4bobo3bobo$
 22bob2ob2o4b2ob3ob2o$8bo12b2ob2obo6bobobobo$21bobo3b2o4b2ob3ob2o$8bo

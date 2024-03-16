@@ -1,7 +1,8 @@
-#C the 71 distinct 2-glider collisions, grouped by what they produce
+#C The 71 distinct 2-glider collisions, grouped by what they produce.
+#C
 #C Thirteen preblocks (3-cell patterns that become blocks in one tick)
-#C  have been added to keep active patterns from getting out of hand:
-#C  see GLIDER, B, PI, TL+GLIDER, and 2-GLIDER MESS.
+#C have been added to keep active patterns from getting out of hand:
+#C see GLIDER, B, PI, TL+GLIDER, and 2-GLIDER MESS.
 #C PI=pi-heptomino; B=B-heptomino; TL=traffic light; HF=honeyfarm;
 #C LOM='lumps of muck': Jason Summers, 29 January 2005
 #C ---
@@ -17,8 +18,9 @@
 #C * The 1st and 3rd "Pi" collisions and the first "Misc" collision
 #C   are rewound 4 ticks, and the "Teardrop" collision is rewound 8
 #C   ticks, to avoid overlap between gliders and final pattern.
+#C
 #C To convert a History pattern to standard two-state, use the
-#C   toStandard.lua script (keyboard shortcut Alt+J / Option+J)
+#C toStandard.lua script (keyboard shortcut Alt+J / Option+J)
 x = 379, y = 375, rule = LifeHistory
 248.B$247.3B$245.5B$243.8B$242.9B$154.A36.A18.A30.11B$58.A18.A19.A16.
 A19.A18.A2B17.A16.A2B16.A2B28.6BA5B$57.A2B16.A2B17.A2B14.A2B17.A2B16.

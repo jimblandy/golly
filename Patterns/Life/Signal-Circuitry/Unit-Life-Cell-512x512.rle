@@ -1,29 +1,29 @@
 #C Width-512 Unit Life Cell, rebuilt from David Bell's original
-#C  width-500 version to better match Golly's qlife/hlife algorithm.
-#C  Very minor changes to circuitry; period is still 5760 generations.
-#C  The original version, with some background info, can be found at
-#C  http://radicaleye.com/lifepage/patterns/unitcell/ucdesc.html.
+#C width-500 version to better match Golly's qlife/hlife algorithm.
+#C Very minor changes to circuitry; period is still 5760 generations.
+#C The original version, with some background info, can be found at
+#C http://radicaleye.com/lifepage/patterns/unitcell/ucdesc.html
+#C
 #C From David Bell's original pattern notes:
+#C
 #C Here are some approximate generation numbers for important events
-#C  which occur during the 5760 generations which make up one
-#C  generation. Some of these events only occur if the Cell is LIVE. 
+#C which occur during the 5760 generations which make up one
+#C generation. Some of these events only occur if the Cell is LIVE. 
 #C    0: Current state glider starts from pair of long boats
-#C  400:  Current state glider arrives at fanout device
-#C  600:  Output gliders escape from the fanout device
-#C  900:  Missing LWSS turned into boat to hold Cell's current state
+#C  400: Current state glider arrives at fanout device
+#C  600: Output gliders escape from the fanout device
+#C  900: Missing LWSS turned into boat to hold Cell's current state
 #C 1800: First glider arrives at the glider detector to be turned
-#C        into a block
+#C       into a block
 #C 4000: Last glider arrives at the glider detector to be turned
-#C        into a block, and the high period glider guns fire
+#C       into a block, and the high period glider guns fire
 #C 4700: Stream of 10 gliders starts sweep through glider detector
-#C        to count the number of blocks in the detector
+#C       to count the number of blocks in the detector
 #C 5200: Gliders from stream react in the Life Logic circuit to
-#C        calculate the new current state glider
+#C       calculate the new current state glider
 #C 5700: New current state glider arrives back at the pair of long
-#C        boats
-
-
-
+#C       boats
+#C
 #C Dave Greene, 17 September 2005
 x = 511, y = 511, rule = B3/S23
 oo507boo$obo505bobo$bobo503bobo$bbo505bo6$130bo$128b3o$127bo63boo$127b

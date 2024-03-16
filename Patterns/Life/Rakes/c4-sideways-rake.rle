@@ -1,16 +1,20 @@
 #C p4508+32N c/4 adjustable-period sideways glider rake.
+#C
 #C This rake has an engine convoy at the front, two convoys
-#C  forming lines behind that, and a V-shaped convoy at the back.
-#C  The recipe to create the next rake in the series is:
+#C forming lines behind that, and a V-shaped convoy at the back.
+#C The recipe to create the next rake in the series is:
 #C   - Move the top line convoy orthogonally right by 6 cells.
 #C   - Move the left line convoy orthogonally down by 6 cells.
 #C   - Move the V-shaped convoy diagonally back by 6 cells.
-#C  This will increase the period by 32 generations.
+#C This will increase the period by 32 generations.
+#C
 #C The modifications can be be made in the opposite direction
-#C  to form the earlier rakes in the series. Moving the convoys
-#C  by 300 cells creates the first rake in the series (period 4508).
+#C to form the earlier rakes in the series. Moving the convoys
+#C by 300 cells creates the first rake in the series (period 4508).
+#C
 #C Note that each rake has to be run a few cycles before it becomes
-#C  fully populated and begins to emit gliders.
+#C fully populated and begins to emit gliders.
+#C
 #C David Bell, 14 October 2005
 x = 3285, y = 3306, rule = B3/S23
 18boo$17boo$19bo$21boo$20bo$$19bobbo$11boo5boo$10boo5bo$12bo4bobo$8bo

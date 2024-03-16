@@ -1,13 +1,15 @@
 #C c2-orthogonal.rle
+#C
 #C A collection of c/2 spaceships (of any period) up
 #C to 50 cells.  Spaceships that consist entirely of
 #C components found in smaller ships are not included.
+#C
 #C From ships-c2-small.rle, from Matthias Merzenich's updated copy
-#C   of ships-c2small.lif from Jason Summers' 'jslife' collection:
-#C   https://github.com/Matthias-Merzenich/jslife-moving/blob/master/velocity-c2/ships-c2-small.rle
+#C of ships-c2small.lif from Jason Summers' 'jslife' collection:
+#C https://github.com/Matthias-Merzenich/jslife-moving/blob/master/velocity-c2/ships-c2-small.rle
 #C
 #C Collection updated in 2022 by Matthias Merzenich -- source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 #C 
 #C Discovery credits:
 #C BG = Bill Gosper

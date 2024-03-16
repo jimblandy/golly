@@ -1,9 +1,9 @@
 #C Honey farm hasslers.
 #C There is an unusual proliferation of oscillators engineered this
-#C   way, because there are many ways to perturb a honey farm in
-#C   such a way that it reappears in the same location.
+#C way, because there are many ways to perturb a honey farm in
+#C such a way that it reappears in the same location.
 #C Source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 1169, y = 622, rule = B3/S23
 677b2o4b2o$677bo5b2o419b2o3b2o$678bo424bobo3b2o$677b2o2b4o415bobobo$
 675bo2bobo4bo226b2o11b2o167b2o5bo$675b2o3bob4o227bo3b2ob2o3bo168b2o3b

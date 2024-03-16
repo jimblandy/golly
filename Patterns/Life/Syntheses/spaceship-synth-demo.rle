@@ -1,7 +1,8 @@
 #N Spaceship synthesis demo pattern
 #O Goldtiger997, 30 November 2022
+#C
 #C Syntheses of the cheapest spaceships of every
-#C   currently synthesisable velocity as of February 2023:
+#C currently synthesisable velocity as of February 2023:
 #C https://conwaylife.com/wiki/Glider_synthesis#Spaceship_syntheses
 #C https://conwaylife.com/forums/viewtopic.php?f=7&t=5498&p=154266#p154266
 #C

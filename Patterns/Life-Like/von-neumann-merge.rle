@@ -1,14 +1,17 @@
-#N von-Neumann-merge.rle
+#N von-neumann-merge.rle
 #O "kaarel", 22 May 2022
+#C
 #C Two boxes of bound cells merge together in a von Neumann rule.
-#C   The lower big rectangle is the upper big rectangle shifted one
-#C   generation forward.  We can see that for the upper example, the
-#C   two rectangles merge seamlessly, whereas for the bottom example,
-#C   the internal structure is destroyed, leaving massive gaps.
+#C The lower big rectangle is the upper big rectangle shifted one
+#C generation forward.  We can see that for the upper example, the
+#C two rectangles merge seamlessly, whereas for the bottom example,
+#C the internal structure is destroyed, leaving massive gaps.
+#C
 #C Similar structural collapses can be seen in the files
-#C   crystal-chaos.rle and chaos-boxes.rle.
+#C crystal-chaos.rle and chaos-boxes.rle.
+#C
 #C Reference:
-#C   https://conwaylife.com/forums/viewtopic.php?p=145856#p145856
+#C https://conwaylife.com/forums/viewtopic.php?p=145856#p145856
 x = 53, y = 162, rule = B2/S23V
 44o$ob3o3b2o2bob2obo2b3obobobobob2ob3ob3obo$3ob2ob2ob5ob3o3b3ob6ob3ob
 3ob3o$2o3b3ob3ob4obo2b2ob4obob3ob2ob4obo$ob4ob3o2b2obob3obo2b2o2b3o2bo

@@ -1,15 +1,15 @@
 #C Creator: Lifestat application
 #C Author : Andrew Okrasinski
-#C Dies out completely after 658 gens
+#C Dies out completely after 658 gens.
 #C
 #C Much longer-lasting 16x16 diehards have since been found by
 #C Adam P. Goucher's apgsearch, and can be found on Catagolue:
-#C   https://catagolue.hatsya.com/census/b3s23/C1/messless
+#C https://catagolue.hatsya.com/census/b3s23/C1/messless
 #C
 #C Other symmetries besides C1 (asymmetric soups) tend to
 #C produce significantly longer-lasting diehards, as can be
 #C seen in the LifeWiki article:
-#C   https://conwaylife.com/wiki/Die_hard
+#C https://conwaylife.com/wiki/Die_hard
 x = 20, y = 20, rule = B3/S23
 6bo3bo4bo3bo$bo3bobob3o2bo$obo8bobo$2bo3bo2bo6bo$b2o2bo7bo4b2o
 $b2o5b2o2bo2b2ob2o$b2o6bo2bo3b2o$2bo2bob2o5bobo$3b2o2b2obo6bo

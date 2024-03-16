@@ -1,23 +1,28 @@
 #C From thin.rle (left side of pattern):
+#C
 #C This table shows the minimum possible width of those types of
-#C  spaceships for which this has been determined.  The width is
-#C  measured over all time, so that, for example, the width of a
-#C  LWSS is counted as 5 even though each individual phase has
-#C  width 4.
+#C spaceships for which this has been determined.  The width is
+#C measured over all time, so that, for example, the width of a
+#C LWSS is counted as 5 even though each individual phase has
+#C width 4.
+#C
 #C A period p spaceship which displaces itself (m,n) during its
-#C  period, where m >= n, is said to be of type (m,n)c/p.
-#C  the "width" of a non-orthogonal spaceship is considered to be
-#C  along the same direction as that of the least displacement.
-#C  For example, the width of a (2,1)c/6 spaceship is parallel
-#C  to the direction of travel that is 1 cell per period.
+#C period, where m >= n, is said to be of type (m,n)c/p.
+#C the "width" of a non-orthogonal spaceship is considered to be
+#C along the same direction as that of the least displacement.
+#C For example, the width of a (2,1)c/6 spaceship is parallel
+#C to the direction of travel that is 1 cell per period.
+#C
 #C For each type I also give the minimum known length for a spaceship
-#C  of minimal width.  The length here is defined as the length of the
-#C  union of n successive generations (where n is the period), the
-#C  starting generation being chosen to minimise this figure.
+#C of minimal width.  The length here is defined as the length of the
+#C union of n successive generations (where n is the period), the
+#C starting generation being chosen to minimise this figure.
+#C
 #C Lengths marked with an asterisk (*) indicate that they are the
-#C  minimum possible for the given width.
+#C minimum possible for the given width.
+#C
 #C For types where the minimum width is not known, the maximum width
-#C  that has been fully searched is given, preceded by ">".
+#C that has been fully searched is given, preceded by ">".
 #C
 #C            | minimum |
 #C     type   |  width  | minimum length for this width
@@ -42,14 +47,17 @@
 #C  (3,0)c/7  |  >14    |
 #C
 #C From short.rle (right side of pattern):
+#C
 #C This table shows the minimum possible length of those types
-#C  of orthogonal spaceship for which this has been determined.
-#C  For each type I also give the minimum known width for a
-#C  spaceship of minimal length.
+#C of orthogonal spaceship for which this has been determined.
+#C For each type I also give the minimum known width for a
+#C spaceship of minimal length.
+#C
 #C Widths marked with an asterisk (*) indicate that they are the
-#C  minimum possible.
+#C minimum possible.
+#C
 #C For types where the minimum length is not known, the maximum length
-#C  that has been fully searched is given, preceded by ">".
+#C that has been fully searched is given, preceded by ">".
 #C
 #C            | minimum |
 #C     type   |  length | minimum width for this length
@@ -75,7 +83,7 @@
 #C
 #C Patterns and comments from Stephen Silver's 12 Jan 2004 'ships.zip'
 #C Updated on 21 Nov 2021 -- -- source:
-#C   https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
 x = 406, y = 163, rule = B3/S23
 b2o23b3o34bo26b2o27b2ob2o24bo33b2o26b2o27bo28bo29bo3bo78bo17bo$2o23bo
 36bobo27bobo23bo3bobo22b3o29b2ob2o22b2obo2bob2o22bobo26b3o27b3ob3o76b

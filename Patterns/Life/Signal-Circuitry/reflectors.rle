@@ -36,7 +36,6 @@
 #C
 #C https://conwaylife.com/wiki/Bumper
 #C https://conwaylife.com/wiki/Bouncer
-#C
 x = 528, y = 416, rule = B3/S23
 35b2o139bo14b2o$34bobo139b3o12b2o2b2o65b2o$28b2o4bo144bo9b2obo2b2o65bo
 bo$26bo2bo2b2ob4o139b2o9b3o72bo4b2o$26b2obobobobo2bo221b4ob2o2bo2bo$

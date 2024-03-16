@@ -1,13 +1,16 @@
 #N drylife-p480-rake-gun.rle
 #O Paul Tooke, 31 August 2010
-#C     DryLife is an outer-totalistic Life-like cellular automaton
+#C
+#C DryLife is an outer-totalistic Life-like cellular automaton
 #C with rulestring B37/S23. It behaves explosively in nature, see for
 #C example evolution of the stairstep hexomino.
-#C     In this rule, copies of R-pentomino can be combined to make
+#C
+#C In this rule, copies of R-pentomino can be combined to make
 #C spaceships, puffers and rakes travelling at 9c/28 orthogonal, akin
 #C to the switch engines in Life. There is also a small period-32
 #C reflectorless rotating oscillator called spinner.
-#C     The following pattern is a period-480 gun for a 5-engine 9c/28o
+#C
+#C The following pattern is a period-480 gun for a 5-engine 9c/28o
 #C rake. Credit goes to Jason Summers for the base p480 glider gun
 #C (which uses four engines similar to the twirling T-tetsons 2 in
 #C Life to circulate and duplicate gliders, and a blocker and a
@@ -16,7 +19,9 @@
 #C for a p480 gun firing the 2-engine spaceship, and Paul Tooke again
 #C for the final assembly.
 #C 
-#C Reference: https://conwaylife.com/forums/viewtopic.php?f=11&t=490&p=3304#p3304
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=490&p=3304#p3304
+#C
 #C For general description on this rule, see LifeWiki article:
 #C https://conwaylife.com/wiki/OCA:DryLife
 x = 592, y = 354, rule = B37/S23
