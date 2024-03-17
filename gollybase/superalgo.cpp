@@ -2898,7 +2898,8 @@ const char *superalgo::setrule(const char *rulestring) {
                return "Non-totalistic survival must start with a digit." ;
             }
             // one of birth or survival must be at the start of the rule
-            if (!(bpos == tidystring || spos == tidystring)) {
+            t = tidystring + (slashpos ? 0 : 1) ;
+            if (!(bpos == t || spos == t)) {
                return "Invalid characters at start of rule." ;
             }
          }
