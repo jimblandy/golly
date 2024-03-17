@@ -171,11 +171,25 @@ local function safeopen()
 
         -- if a rule was found then see if it is in the list to convert
         if rule ~= "" then
+		-- check if the rule contains a bounded grid definition
+		local boundedpos = rule:find(":")
+		local boundeddef = ""
+		if boundedpos ~= nil then
+			-- isolate the bounded grid definition so it can be added later
+			boundeddef = rule:sub(boundedpos)
+
+			-- remove the bounded grid definition from the rule
+			rule = rule:sub(1, boundedpos -1)
+		end
+
+		-- see if there is a mapping for the rule
             local mapping = mappings[rule:lower()]
             if mapping ~= nil then
                 -- mapping found so convert states and switch to new rule
                 swapcells(g.getrect(), mapping.map)
-                g.setrule(mapping.rule)
+
+		    -- add back any bounded grid definition to the new rule
+                g.setrule(mapping.rule..boundeddef)
 
                 -- display the canonical name of the new rule
                 g.show("Converted pattern from rule "..rule.." to "..g.getrule()..".")
