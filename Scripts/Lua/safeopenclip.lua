@@ -118,7 +118,7 @@ local function getrule(text)
     local pos = text:find("rule%s*=")
     if pos ~= nil then
         -- if found then find the end of line following it
-        local newline = text:find("\n", pos)
+        local newline = text:find("[\r\n]", pos)
         if newline ~= nil then
             -- isolate the rule definition
             rule = text:sub(pos, newline - 1):gsub("rule%s*=%s*", ""):gsub(" *$", "")
