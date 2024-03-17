@@ -143,17 +143,18 @@ local function safeopen()
         -- remove leading blank lines
         text = text:gsub("^%s+", "")
 
-        -- start position of pattern body
-        local startpos = 1
-
         -- search for an RLE header line (x followed by space or =)
-        if text:sub(1, 1) == "x" and (text:sub(2, 2) == " " or text:sub(2, 2) == "=") then
+	  local headerpos = text:find("x[= ]")
+	  if headerpos ~= nil then
             -- header found so find start of next line
-            startpos = text:find("\n") + 1
-        end
-    
-        -- prefix pattern body with the valid header
-        text = safeheader..text:sub(startpos)
+		local startpos = text:find("\n", headerpos) + 1
+
+		-- replace the RLE header line
+		text = text:sub(1, headerpos - 1)..safeheader..text:sub(startpos)
+        else
+		-- prefix pattern body with the valid header
+		text = safeheader..text
+	  end
     end
     
     -- write the contents out to a temporary file
