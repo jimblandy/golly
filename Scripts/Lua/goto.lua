@@ -3,7 +3,7 @@
 -- relative to the current generation like +9 or -6.  If the target
 -- generation is less than the current generation then we go back
 -- to the starting generation (normally 0) and advance to the target.
--- Authors: Andrew Trevorrow and Dave Greene, Apr 2016.
+-- Authors: Andrew Trevorrow and Dave Greene, Mar 2024.
 
 local g = golly()
 local gp = require "gplus"
@@ -24,20 +24,33 @@ end
 
 --------------------------------------------------------------------------------
 
+-- math.maxinteger is a 19-digit number on a 64-bit system, but we have to
+-- limit gen counts to 16-digit numbers to avoid overflow problems
+local maxdigits = #tostring(math.maxinteger) - 3
+
+local function check_number(numstr)
+    if #numstr > maxdigits then
+        g.exit("Number is too large for Lua -- use goto.py instead.")
+    end
+    return tonumber(numstr)
+end
+
+--------------------------------------------------------------------------------
+
 local function go_to(gen)
-    local currgen = tonumber(g.getgen())
+    local currgen = check_number(g.getgen())
     local newgen
     if gen:sub(1,1) == '+' then
-        newgen = currgen + tonumber(gen:sub(2,-1))
+        newgen = currgen + check_number(gen:sub(2,-1))
     elseif gen:sub(1,1) == '-' then
-        local n = tonumber(gen:sub(2,-1))
+        local n = check_number(gen:sub(2,-1))
         if currgen > n then
             newgen = currgen - n
         else
             newgen = 0
         end
     else
-        newgen = tonumber(gen)
+        newgen = check_number(gen)
     end
     
     if newgen < currgen then
@@ -54,7 +67,7 @@ local function go_to(gen)
         g.setmag(mag)
         -- current gen might be > 0 if user loaded a pattern file
         -- that set the gen count
-        currgen = tonumber(g.getgen())
+        currgen = check_number(g.getgen())
         if newgen < currgen then
             g.error("Can't go back any further; pattern was saved "..
                     "at generation "..currgen..".")
