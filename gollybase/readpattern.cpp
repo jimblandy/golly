@@ -889,6 +889,7 @@ const char *readcomments(const char *filename, char **commptr)
    buffpos = BUFFSIZE;                       // for 1st getchar call
    prevchar = 0;                             // for 1st getline call
    int commlen = 0;
+   size_t nwsindex = 0;                      // index of first non-whitespace character in line
 
    // loading comments is likely to be quite fast so no real need to
    // display the progress dialog, but getchar calls lifeabortprogress
@@ -898,6 +899,9 @@ const char *readcomments(const char *filename, char **commptr)
    // skip any blank lines at start to avoid problem when copying pattern
    // from Internet Explorer
    while (getline(line, LINESIZE) && line[0] == 0) ;
+
+   // get the index of the first non-whitespace character
+   nwsindex = strspn(line, " \t");
 
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
@@ -934,16 +938,17 @@ const char *readcomments(const char *filename, char **commptr)
          }
       }
 
-   } else if (line[0] == '#' || line[0] == 'x') {
+   } else if (line[nwsindex] == '#' || line[nwsindex] == 'x') {
       // extract comment lines from RLE file
-      while (line[0] == '#') {
+      while (line[nwsindex] == '#') {
          int linelen = (int)strlen(line);
          if (commlen + linelen + 1 > maxcommlen) break;
-         strcpy(cptr + commlen, line);
+         strcpy(cptr + commlen, line + nwsindex);
          commlen += linelen;
          cptr[commlen] = '\n';         // getline strips off eol char(s)
          commlen++;
          if (getline(line, LINESIZE) == NULL) break;
+         nwsindex = strspn(line, " \t");
       }
       // also look for any lines after "!" but only if file is < 1MB
       // (ZLIB doesn't seem to provide a fast way to go to eof)
