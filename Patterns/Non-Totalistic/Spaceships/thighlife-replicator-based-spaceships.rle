@@ -4,7 +4,7 @@
 #C tHighLife is a variant of the rule tlife, created by the addition
 #C of a B6 transition. Much like HighLife, tHighLife features an
 #C elementary replicator not present in the original tlife rule.
-#C This replicator moves at a speed of c/4 orthogonal.
+#C This replicator moves at a speed of 4c/11 orthogonal.
 #C
 #C It is possible to combine these replicators together to create
 #C modestly-sized engineered spaceships of many speeds, eight of

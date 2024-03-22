@@ -3,7 +3,7 @@
 #C
 #C 420 is the lowest possible period for a reflectorless rotating
 #C oscillator such that it can fit one, two, three, four, five,
-#C six or seven copies of itself in aloop in such a way that the
+#C six or seven copies of itself in a loop in such a way that the
 #C overall period is reduced in such a case.
 #C
 #C Reference:

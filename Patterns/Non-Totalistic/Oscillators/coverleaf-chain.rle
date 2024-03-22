@@ -14,7 +14,7 @@
 #C Dividing each by 240 gets us periods of 1, 2, 6, 18 and 54.
 #C
 #C Source:
-#C  https://conwaylife.com/forums/viewtopic.php?p=152700#p152700
+#C https://conwaylife.com/forums/viewtopic.php?p=152700#p152700
 x = 285, y = 62, rule = B3-jknr4ity5ijk6i8/S23-a4city6c7c
 3bo$2b3o$b2obo$b2o$2o$o$o$2bo7bo$10bo3$2bo$b3obo$bo3b2o$3bo2bo$3bobo$
 3b3o3$72b3o$71bo3bo$73bobo$73b3o$73bo2$40bo$39b3o2b3o$39bobo4bo$38bob
