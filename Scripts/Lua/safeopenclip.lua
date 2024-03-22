@@ -7,9 +7,10 @@
 local g = golly()
 local gp = require "gplus"
 
-local tempname = "safeopenclip.rle"                    -- temporary pattern file name
-local saferule = "Display256"                    -- benign 256 state rule
+local tempname = "safeopenclip.rle"                           -- temporary pattern file name
+local saferule = "Display256"                                 -- benign 256 state rule
 local safeheader = "x = 1, y = 1, rule = "..saferule.."\n"    -- safe rule header
+local origcomment = "#C Golly converted unsupported rule: "   -- original rule comment
 
 -- list of legacy rule to new rule mappings with optional list of state conversion pairs
 --   [<legacy name>] = {rule = <new name>, map = {<from>, <to>, ...}}
@@ -150,10 +151,10 @@ local function safeopen()
             local startpos = text:find("\n", headerpos) + 1
 
             -- replace the RLE header line
-            text = text:sub(1, headerpos - 1)..safeheader..text:sub(startpos)
+            text = text:sub(1, headerpos - 1)..origcomment..rule.."\n"..safeheader..text:sub(startpos)
         else
             -- prefix pattern body with the valid header
-            text = safeheader..text
+            text = origcomment..rule.."\n"..safeheader..text
         end
     end
     
