@@ -3,6 +3,9 @@
 # C.G.Langton. "Self-reproduction in cellular automata."
 # Physica D, Vol. 10, pages 135-144, 1984. 
 #
+# transition rules from:
+# https://web.archive.org/web/20010521213854/necsi.org/postdocs/sayama/sdsr/java/loops.java
+# https://web.archive.org/web/20010521213854/necsi.org/postdocs/sayama/sdsr/java/
 # credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
 #
 # Loops history at a glance:
