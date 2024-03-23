@@ -7,10 +7,14 @@
 local g = golly()
 local gp = require "gplus"
 
-local tempname = "safeopenclip.rle"                           -- temporary pattern file name
-local saferule = "Display256"                                 -- benign 256 state rule
-local safeheader = "x = 1, y = 1, rule = "..saferule.."\n"    -- safe rule header
-local origcomment = "#C Golly converted unsupported rule: "   -- original rule comment
+local tempname = "safeopenclip.rle"                               -- temporary pattern file name
+local saferule = "Display256"                                     -- benign 256 state rule
+local safeheader = "x = 1, y = 1, rule = "..saferule.."\n"        -- safe rule header
+local origcomment = "#C\n#C Golly converted unsupported rule: "   -- original rule comment
+local supportadvice1 = "#C If you want Golly to support this rule, check for it at\n"
+local rulelink = "#C https://conwaylife.com/w/index.php?title=Rule:RULENAME&action=raw\n"
+local supportadvice2 = "#C If the rule can be found there, copy the full text to your clipboard.\n" ..
+                       "#C Then load the rule into Golly by choosing File > Open Clipboard.\n"
 
 -- list of legacy rule to new rule mappings with optional list of state conversion pairs
 --   [<legacy name>] = {rule = <new name>, map = {<from>, <to>, ...}}
@@ -144,6 +148,8 @@ local function safeopen()
         -- remove leading blank lines
         text = text:gsub("^%s+", "")
 
+        local ruleadvice = supportadvice1..rulelink:gsub("RULENAME",rule)..supportadvice2
+        
         -- search for an RLE header line (x followed by space or =)
         local headerpos = text:find("x[= ]")
         if headerpos ~= nil then
@@ -151,10 +157,10 @@ local function safeopen()
             local startpos = text:find("\n", headerpos) + 1
 
             -- replace the RLE header line
-            text = text:sub(1, headerpos - 1)..origcomment..rule.."\n"..safeheader..text:sub(startpos)
+            text = text:sub(1, headerpos - 1)..origcomment..rule.."\n"..ruleadvice..safeheader..text:sub(startpos)
         else
             -- prefix pattern body with the valid header
-            text = origcomment..rule.."\n"..safeheader..text
+            text = origcomment..rule.."\n"..ruleadvice..safeheader..text
         end
     end
     
