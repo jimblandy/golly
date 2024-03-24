@@ -147,9 +147,19 @@ local function safeopen()
 
         -- remove leading blank lines
         text = text:gsub("^%s+", "")
-
-        local ruleadvice = supportadvice1..rulelink:gsub("RULENAME",rule)..supportadvice2
         
+        local ruleforurl = rule
+        local index = ruleforurl:find(":")
+	if index ~= nil then
+	    ruleforurl = ruleforurl:sub(1, index -1)
+	end
+
+        local ruleadvice = supportadvice1..rulelink:gsub("RULENAME",ruleforurl)..supportadvice2
+
+        -- remove LifeWiki URL advice if the rule doesn't look like a compatible rule name
+        if string.find(ruleforurl, "[/\\<>,.\"'{}%[%]!@#$%%^&*()%+=.]") ~= nil then
+            ruleadvice = ""
+        end
         -- search for an RLE header line (x followed by space or =)
         local headerpos = text:find("x[= ]")
         if headerpos ~= nil then
@@ -157,7 +167,7 @@ local function safeopen()
             local startpos = text:find("\n", headerpos) + 1
 
             -- replace the RLE header line
-            text = text:sub(1, headerpos - 1)..origcomment..rule.."\n"..ruleadvice..safeheader..text:sub(startpos)
+            text = text:sub(1, headerpos - 1)..origcomment..ruleforurl.."\n"..ruleadvice..safeheader..text:sub(startpos)
         else
             -- prefix pattern body with the valid header
             text = origcomment..rule.."\n"..ruleadvice..safeheader..text
