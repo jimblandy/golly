@@ -3,6 +3,7 @@
 --
 -- Author: Chris Rowett, March 2024
 --   some code adapted from toChangeState.lua by Dave Greene
+--   v.1.1:  include in added comments a link to likely LifeWiki location for missing rule, when appropriate
 
 local g = golly()
 local gp = require "gplus"
@@ -10,9 +11,9 @@ local gp = require "gplus"
 local tempname = "safeopenclip.rle"                               -- temporary pattern file name
 local saferule = "Display256"                                     -- benign 256 state rule
 local safeheader = "x = 1, y = 1, rule = "..saferule.."\n"        -- safe rule header
-local origcomment = "#C\n#C Golly converted unsupported rule: "   -- original rule comment
+local origcomment = "#C\n#C COMMENT ADDED BY GOLLY: converted unsupported rule "   -- original rule comment
 local supportadvice1 = "#C If you want Golly to support this rule, check for it at\n"
-local rulelink = "#C https://conwaylife.com/w/index.php?title=Rule:RULENAME&action=raw\n"
+local rulelink = "#C https://conwaylife.com/w/index.php?title=Rule:{RULENAME}&action=raw\n"
 local supportadvice2 = "#C If the rule can be found there, copy the full text to your clipboard.\n" ..
                        "#C Then load the rule into Golly by choosing File > Open Clipboard.\n"
 
@@ -148,18 +149,20 @@ local function safeopen()
         -- remove leading blank lines
         text = text:gsub("^%s+", "")
         
-        local ruleforurl = rule
-        local index = ruleforurl:find(":")
+        local rulenobounds = rule
+        local index = rulenobounds:find(":")
 	if index ~= nil then
-	    ruleforurl = ruleforurl:sub(1, index -1)
+	    rulenobounds = rulenobounds:sub(1, index -1)
 	end
-
-        local ruleadvice = supportadvice1..rulelink:gsub("RULENAME",ruleforurl)..supportadvice2
-
-        -- remove LifeWiki URL advice if the rule doesn't look like a compatible rule name
-        if string.find(ruleforurl, "[/\\<>,.\"'{}%[%]!@#$%%^&*()%+=.]") ~= nil then
-            ruleadvice = ""
+        
+        -- add LifeWiki URL advice if the rule looks like a named rule rather than a rulestring
+        local ruleadvice = ""      
+        if string.find(rulenobounds, "[^%w%-%^%+_]") == nil then
+            -- make the allowable characters URL-safe
+            ruleurlsafe = rulenobounds:gsub("%+","%%%%2B"):gsub("%^","%%%%5E")
+            ruleadvice = supportadvice1..rulelink:gsub("{RULENAME}",ruleurlsafe)..supportadvice2
         end
+
         -- search for an RLE header line (x followed by space or =)
         local headerpos = text:find("x[= ]")
         if headerpos ~= nil then
@@ -167,10 +170,10 @@ local function safeopen()
             local startpos = text:find("\n", headerpos) + 1
 
             -- replace the RLE header line
-            text = text:sub(1, headerpos - 1)..origcomment..ruleforurl.."\n"..ruleadvice..safeheader..text:sub(startpos)
+            text = text:sub(1, headerpos - 1)..origcomment.."'"..rulenobounds.."'.\n"..ruleadvice..safeheader..text:sub(startpos)
         else
             -- prefix pattern body with the valid header
-            text = origcomment..rule.."\n"..ruleadvice..safeheader..text
+            text = origcomment.."'"..rule.."'.\n"..ruleadvice..safeheader..text
         end
     end
     
