@@ -966,7 +966,7 @@ void Selection::Shrink(bool fit, bool remove_if_empty)
 
     // copy live cells in selection to temporary universe
     if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
-                           currlayer->algo, tempalgo, false, _("Copying selection")) ) {
+                           currlayer->algo, tempalgo, false, _("Shrinking selection")) ) {
         if (tempalgo->isEmpty()) {
             if (remove_if_empty) {
                 viewptr->RemoveSelection();
