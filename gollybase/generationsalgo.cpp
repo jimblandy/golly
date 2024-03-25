@@ -689,8 +689,18 @@ void generationsalgo::removeChar(char *string, char skip) {
 // check whether non-totalistic letters are valid for defined neighbor counts
 bool generationsalgo::lettersValid(const char *part) {
    char c ;
+   char *cptr = NULL ;
    int nindex = 0 ;
    int currentCount = -1 ;
+   bool negative = false ;
+   bool usedNormal[9] ;
+   bool usedNegative[9] ;
+
+   // clear used flags
+   for (int i = 0; i < 9; i += 1) {
+      usedNormal[i] = false ;
+      usedNegative[i] = false ;
+   }
 
    // get next character
    while ( *part ) {
@@ -701,18 +711,33 @@ bool generationsalgo::lettersValid(const char *part) {
          if (nindex > 3) {
             nindex = 6 - nindex ;
          }
-      }
-      else {
-         // ignore minus
-         if (c != '-') {
+         negative = false ;
+      } else {
+         // check for minus
+         if (c == '-') {
+            negative = true ;
+         } else {
             // not valid if 0 or 8
             if (currentCount == 0 || currentCount == 8) {
                return false ;
             }
 
             // check against valid rule letters for this neighbor count
-            if (strchr((char*) rule_letters[nindex], c) == 0) {
+            cptr = strchr((char*) rule_letters[nindex], c) ;
+            if (cptr == NULL) {
                return false ;
+            } else {
+               // mark letter used at this neighbor count
+               if (negative) {
+                  usedNegative[currentCount] = true ;
+               } else {
+                  usedNormal[currentCount] = true ;
+               }
+
+               // check for both negative and positive used
+               if (usedNormal[currentCount] && usedNegative[currentCount]) {
+                  return false ;
+               }
             }
          }
       }
@@ -860,10 +885,10 @@ const char *generationsalgo::setrule(const char *rulestring) {
          switch (c) {
          // birth
          case 'b':
-	      if (slashpos2) {
-			// b in state part
-			return "B not valid after second slash." ;
-		}
+            if (slashpos2) {
+               // b in state part
+               return "B not valid after second slash." ;
+            }
             if (bpos) {
                // multiple b found
                return "Only one B allowed." ;
@@ -875,10 +900,10 @@ const char *generationsalgo::setrule(const char *rulestring) {
    
          // survival
          case 's':
-		if (slashpos2) {
-			// s in state part
-			return "S not valid after second slash." ;
-		}
+            if (slashpos2) {
+               // s in state part
+               return "S not valid after second slash." ;
+            }
             if (spos) {
                // multiple s found
                return "Only one S allowed." ;
@@ -1125,6 +1150,11 @@ const char *generationsalgo::setrule(const char *rulestring) {
          c = *spos ;
          if (c && (c < '0' || c > '8')) {
             return "Non-totalistic survival must start with a digit." ;
+         }
+         // one of birth or survival must be at the start of the rule
+         t = tidystring + (slashpos ? 0 : 1) ;
+         if (!(bpos == t || spos == t)) {
+            return "Invalid characters at start of rule." ;
          }
       }
    

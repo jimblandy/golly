@@ -723,8 +723,18 @@ void liferules::removeChar(char *string, char skip) {
 // check whether non-totalistic letters are valid for defined neighbor counts
 bool liferules::lettersValid(const char *part) {
    char c ;
+   char *cptr = NULL ;
    int nindex = 0 ;
    int currentCount = -1 ;
+   bool negative = false ;
+   bool usedNormal[9] ;
+   bool usedNegative[9] ;
+
+   // clear used flags
+   for (int i = 0; i < 9; i += 1) {
+      usedNormal[i] = false ;
+      usedNegative[i] = false ;
+   }
 
    // get next character
    while ( *part ) {
@@ -735,18 +745,33 @@ bool liferules::lettersValid(const char *part) {
          if (nindex > 3) {
             nindex = 6 - nindex ;
          }
-      }
-      else {
-         // ignore minus
-         if (c != '-') {
+         negative = false ;
+      } else {
+         // check for minus
+         if (c == '-') {
+            negative = true ;
+         } else {
             // not valid if 0 or 8
             if (currentCount == 0 || currentCount == 8) {
                return false ;
             }
 
             // check against valid rule letters for this neighbor count
-            if (strchr((char*) rule_letters[nindex], c) == 0) {
+            cptr = strchr((char*) rule_letters[nindex], c) ;
+            if (cptr == NULL) {
                return false ;
+            } else {
+               // mark letter used at this neighbor count
+               if (negative) {
+                  usedNegative[currentCount] = true ;
+               } else {
+                  usedNormal[currentCount] = true ;
+               }
+
+               // check for both negative and positive used
+               if (usedNormal[currentCount] && usedNegative[currentCount]) {
+                  return false ;
+               }
             }
          }
       }

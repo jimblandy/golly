@@ -1534,7 +1534,7 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
 
    // check rule type
    switch (rule_type) {
-	case HISTORY:
+      case HISTORY:
          // [R]History
          // handle state 6
          process = true ;
@@ -1594,9 +1594,9 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
                }
             }
          }
-	   break ;
+         break ;
 
-	case SUPER:
+      case SUPER:
          // [R]Super
          // handle state 6
          process = true ;
@@ -1738,7 +1738,7 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
                }
             }
          }
-	   break ;
+         break ;
 
       case INVESTIGATOR:
          if (c >= 2) {
@@ -1766,7 +1766,7 @@ state superalgo::slowcalc(state nw, state n, state ne, state w, state c,
                         ((calc >> se) & 1)] ;
                   }
                }
-		}
+            }
          }
          break ;
    }
@@ -2465,8 +2465,18 @@ void superalgo::removeChar(char *string, char skip) {
 // check whether non-totalistic letters are valid for defined neighbor counts
 bool superalgo::lettersValid(const char *part) {
    char c ;
+   char *cptr = NULL ;
    int nindex = 0 ;
    int currentCount = -1 ;
+   bool negative = false ;
+   bool usedNormal[9] ;
+   bool usedNegative[9] ;
+
+   // clear used flags
+   for (int i = 0; i < 9; i += 1) {
+      usedNormal[i] = false ;
+      usedNegative[i] = false ;
+   }
 
    // get next character
    while ( *part ) {
@@ -2477,17 +2487,33 @@ bool superalgo::lettersValid(const char *part) {
          if (nindex > 3) {
             nindex = 6 - nindex ;
          }
+         negative = false ;
       } else {
-         // ignore minus
-         if (c != '-') {
+         // check for minus
+         if (c == '-') {
+            negative = true ;
+         } else {
             // not valid if 0 or 8
             if (currentCount == 0 || currentCount == 8) {
                return false ;
             }
 
             // check against valid rule letters for this neighbor count
-            if (strchr((char*) rule_letters[nindex], c) == 0) {
+            cptr = strchr((char*) rule_letters[nindex], c) ;
+            if (cptr == NULL) {
                return false ;
+            } else {
+               // mark letter used at this neighbor count
+               if (negative) {
+                  usedNegative[currentCount] = true ;
+               } else {
+                  usedNormal[currentCount] = true ;
+               }
+
+               // check for both negative and positive used
+               if (usedNormal[currentCount] && usedNegative[currentCount]) {
+                  return false ;
+               }
             }
          }
       }
@@ -2569,17 +2595,17 @@ const char *superalgo::setrule(const char *rulestring) {
       if (postfixpos) {
          // [R]History rule
          end = postfixpos ;
-	   rule = HISTORY ;
+         rule = HISTORY ;
       } else {
-		postfix = INVESTIGATORPOSTFIX ;
-		postfixpos = findPostfix(r, postfix) ;
-		if (postfixpos) {
-			// [R]Investigator rule
-			end = postfixpos ;
-			rule = INVESTIGATOR ;
-		} else {
-			return "Missing Super, History or Investigator postfix." ;
-		}
+         postfix = INVESTIGATORPOSTFIX ;
+         postfixpos = findPostfix(r, postfix) ;
+         if (postfixpos) {
+            // [R]Investigator rule
+            end = postfixpos ;
+            rule = INVESTIGATOR ;
+         } else {
+            return "Missing Super, History or Investigator postfix." ;
+         }
       }
    }
 
@@ -2944,18 +2970,18 @@ const char *superalgo::setrule(const char *rulestring) {
       if (rule3x3[ALL3X3 - 1]) {
          setupB0Smax() ;
       } else {
-	   switch (rule) {
-		case HISTORY:
-		   return "History only supports B0 with Smax" ;
-		   break ;
+         switch (rule) {
+            case HISTORY:
+               return "History only supports B0 with Smax" ;
+               break ;
 
-	      case SUPER:
+            case SUPER:
                return "Super only supports B0 with Smax" ;
-		   break ;
+               break ;
 
-		case INVESTIGATOR:
-		   return "Investigator only supports B0 with Smax" ;
-		   break ;
+            case INVESTIGATOR:
+               return "Investigator only supports B0 with Smax" ;
+               break ;
          }
       }
    }
@@ -2971,15 +2997,15 @@ const char *superalgo::setrule(const char *rulestring) {
    switch (rule) {
       case HISTORY:
          maxCellStates = historyStates ;
-	   break ;
+         break ;
 
-	case SUPER:
+      case SUPER:
          maxCellStates = superStates ;
-	   break ;
+         break ;
 
-	case INVESTIGATOR:
-	   maxCellStates = investigatorStates ;
-	   break ;
+      case INVESTIGATOR:
+         maxCellStates = investigatorStates ;
+         break ;
    }
    rule_type = rule ;
 
