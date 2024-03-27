@@ -1647,7 +1647,7 @@ XS(pl_getclip)
     // read clipboard pattern into temporary universe and set edges
     // (not a minimal bounding box if pattern is empty or has empty borders)
     bigint top, left, bottom, right;
-    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
+    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right, false) ) {
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
             delete templayer;
             PERL_ERROR("g_getclip error: pattern is too big.");

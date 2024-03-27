@@ -724,7 +724,7 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
 
 // -----------------------------------------------------------------------------
 
-bool PatternView::GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigint* r)
+bool PatternView::GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigint* r, bool nowarning)
 {
     wxTextDataObject data;
     if ( !mainptr->GetTextFromClipboard(&data) ) return false;
@@ -776,7 +776,9 @@ bool PatternView::GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bi
     
     if (err) {
         // error probably due to bad rule string in clipboard data
-        Warning(_("Could not load clipboard pattern\n(probably due to unknown rule)."));
+	  if (!nowarning) {
+		Warning(_("Could not load clipboard pattern\n(probably due to unknown rule)."));
+	  }
         return false;
     }
     
@@ -815,7 +817,7 @@ void PatternView::PasteClipboard(bool toselection)
     if (pastelayer) {
         // read clipboard pattern into pastelayer
         bigint top, left, bottom, right;
-        if ( GetClipboardPattern(pastelayer, &top, &left, &bottom, &right) ) {
+        if ( GetClipboardPattern(pastelayer, &top, &left, &bottom, &right, false) ) {
             // temporarily set currlayer to pastelayer so we can update the paste pattern's colors and icons
             Layer* savelayer = currlayer;
             currlayer = pastelayer;

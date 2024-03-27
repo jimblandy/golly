@@ -1328,10 +1328,18 @@ static int g_getclip(lua_State* L)
         GollyError(L, "getclip error: failed to create temporary layer.");
     }
     
+    bool ignorewarning = false;
+    if (lua_gettop(L) > 0) {
+	int arg = luaL_checkinteger(L, 1);
+	if (arg != 0) {
+		ignorewarning = true;
+	}
+    }
+
     // read clipboard pattern into temporary universe and set edges
     // (not a minimal bounding box if pattern is empty or has empty borders)
     bigint top, left, bottom, right;
-    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
+    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right, ignorewarning) ) {
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
             delete templayer;
             GollyError(L, "getclip error: pattern is too big.");

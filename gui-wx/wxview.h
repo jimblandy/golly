@@ -29,7 +29,7 @@ public:
     void CopySelection();
     void ClearSelection();
     void ClearOutsideSelection();
-    bool GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigint* r);
+    bool GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigint* r, bool nowarning);
     void PasteClipboard(bool toselection);
     void AbortPaste();
     void CyclePasteLocation();
