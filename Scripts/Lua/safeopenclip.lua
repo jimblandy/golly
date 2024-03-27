@@ -191,7 +191,12 @@ local function openpattern(text, rule, bounded, message)
                 g.setrule(mapping.rule..bounded)
 
                 -- display the canonical name of the new rule
-                message = "Converted pattern from rule "..rule.." to "..g.getrule()..".  "..message
+		    local newrule = g.getrule()
+		    local boundedpos = newrule:find(":")
+		    if newrule:find(":") ~= nil then
+                    newrule = newrule:sub(1, boundedpos - 1)
+		    end
+                message = "Converted pattern from rule "..rule.." to "..newrule..".  "..message
             end
         end
     end
@@ -270,7 +275,7 @@ local function safeopen()
     -- find the header line
     headerstartpos = text:find("x[= ]")
     if headerstartpos ~= nil then
-        headerendpos = text:find("\n", headerstartpos)
+        headerendpos = text:find("[\r\n]", headerstartpos)
         if headerendpos == nil then
             headerendpos = #text + 1
         end
