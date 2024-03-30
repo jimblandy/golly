@@ -516,26 +516,26 @@ with at least two members. A state for the whole cellular automaton
 is obtained by assigning an element of <i>S</i> to each point of the
 <i>n</i>-dimensional lattice <span class="b">Z</span><sup><i>n</i></sup> (where <span class="b">Z</span> is the set of all integers). The
 points of <span class="b">Z</span><sup><i>n</i></sup> are usually called cells. The cellular automaton also
-has the concept of a neighbourhood. The neighbourhood <i>N</i> of the
-origin is some finite (nonempty) subset of <span class="b">Z</span><sup><i>n</i></sup>. The neighbourhood of
+has the concept of a neighborhood. The neighborhood <i>N</i> of the
+origin is some finite (nonempty) subset of <span class="b">Z</span><sup><i>n</i></sup>. The neighborhood of
 any other cell is obtained in the obvious way by translating that of
 the origin. Finally there is a transition rule, which is a function
 from <i>S</i><sup><i>N</i></sup> to <i>S</i> (that is to say, for each possible state of the
-neighbourhood the transition rule specifies some cell state). The
+neighborhood the transition rule specifies some cell state). The
 state of the cellular automaton evolves in discrete time, with the
 state of each cell at time <i>t</i>+1 being determined by the state of its
-neighbourhood at time <i>t</i>, in accordance with the transition rule.
+neighborhood at time <i>t</i>, in accordance with the transition rule.
 <p>There are some variations on the above definition. It is common to
 require that there be a quiescent state, that is, a state such that
 if the whole universe is in that state at generation 0 then it will
 remain so in generation 1. (In Life the OFF state is quiescent, but
 the ON state is not.) Other variations allow spaces other than <span class="b">Z</span><sup><i>n</i></sup>,
-neighbourhoods that vary over space and/or time, probabilistic or
+neighborhoods that vary over space and/or time, probabilistic or
 other non-deterministic transition rules, etc.
-<p>It is common for the neighbourhood of a cell to be the 3x...x3
+<p>It is common for the neighborhood of a cell to be the 3x...x3
 (hyper)cube centred on that cell. (This includes those cases where
-the neighbourhood might more naturally be thought of as a proper
-subset of this cube.) This is known as the Moore neighbourhood.
+the neighborhood might more naturally be thought of as a proper
+subset of this cube.) This is known as the Moore neighborhood.
 <p><a name=census>:</a><b>census</b> A count of the number of different individual Life objects
 within one larger object, most often the final <a href="lex_a.htm#ash">ash</a> of a random
 <a href="lex_s.htm#soup">soup</a> experiment. This includes the number of <a href="lex_b.htm#block">blocks</a>, <a href="lex_b.htm#blinker">blinkers</a>,
