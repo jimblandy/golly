@@ -4,7 +4,7 @@
 #BOARD 200x200
 #WRAP 1
 #D The rule quickly self-organizes into linear structures, with separate
-#D orthogonally hatched areas. To see most interesting behaviour seed
+#D orthogonally hatched areas. To see most interesting behavior seed
 #D the universe with a circle with r >= 40 and a density of 20%.
 #D 
 #D Anders Starmark, September 2000

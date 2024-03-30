@@ -21,7 +21,7 @@
 #D - background (0) always remains background.
 #D - electron head (1) always changes to electron tail.
 #D - electron tail (2) always changes to wire.
-#D - wire (3) changes to electron head if one or two of its neighbours are electron heads.
+#D - wire (3) changes to electron head if one or two of its neighbors are electron heads.
 #D 
 #D These simple rules allow fairly complicated logic circuits to be
 #D constructed.
