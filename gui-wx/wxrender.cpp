@@ -1669,7 +1669,7 @@ void DrawView(int tileindex)
     int colorindex;
     int currmag = currlayer->view->getmag();
 
-    // draw a tiny pixmap before calling DrawGridLines to avoid crash in NVIDIA driver
+    // draw a tiny pixmap before calling DrawGridLines or FillRect to avoid crash in NVIDIA driver
     unsigned char data[] = "RGBARGBARGBARGBA";
     DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
 
