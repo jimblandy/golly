@@ -1669,11 +1669,9 @@ void DrawView(int tileindex)
     int colorindex;
     int currmag = currlayer->view->getmag();
 
-    if (viewptr->GridVisible()) {
-        // draw a tiny pixmap before calling DrawGridLines to avoid crash in NVIDIA driver
-        unsigned char data[] = "RGBARGBARGBARGBA";
-        DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
-    }
+    // draw a tiny pixmap before calling DrawGridLines to avoid crash in NVIDIA driver
+    unsigned char data[] = "RGBARGBARGBARGBA";
+    DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
 
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
