@@ -442,10 +442,10 @@ OO.O...O.OO
 ....O.OO...
 </a></pre></td></tr></table></center>
 <p><a name=cavity>:</a><b>cavity</b> = <a href="lex_e.htm#eaterplug">eater plug</a>
-<p><a name=ccsemicenark>:</a><b>CC semi-cenark</b> The <a href="#colourchanging">colour-changing</a> version of Tanner Jacobi's
+<p><a name=ccsemicenark>:</a><b>CC semi-cenark</b> The <a href="#colorchanging">color-changing</a> version of Tanner Jacobi's
 century-based semi-Snark mechanism, using a <a href="#ctog">C-to-G</a> consisting of a
 <a href="lex_b.htm#bts">BTS</a> <a href="#catalyst">catalyst</a> and a <a href="lex_b.htm#block">block</a>. See <a href="#cpsemicenark">CP semi-cenark</a> for the
-<a href="#colourpreserving">colour-preserving</a> version, or <a href="lex_s.htm#semicenark">semi-cenark</a> for repeat time details
+<a href="#colorpreserving">color-preserving</a> version, or <a href="lex_s.htm#semicenark">semi-cenark</a> for repeat time details
 and an alternate initial catalyst.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .O............OO..........
@@ -475,7 +475,7 @@ OOO.....OO..O.............
 ....................O.....
 ...................OO.....
 </a></pre></td></tr></table></center>
-<p><a name=ccsemisnark>:</a><b>CC semi-Snark</b> A small 90-degree <a href="#colourchanging">colour-changing</a> <a href="lex_g.htm#gliderreflector">glider reflector</a>
+<p><a name=ccsemisnark>:</a><b>CC semi-Snark</b> A small 90-degree <a href="#colorchanging">color-changing</a> <a href="lex_g.htm#gliderreflector">glider reflector</a>
 requiring two input gliders on the same lane for each output glider.
 It was discovered by Sergei Petrov on 1 July 2013, using a
 custom-written search utility. It functions as a very compact
@@ -997,49 +997,49 @@ the sequence ever forms a cycle.
 <p>Because of this the fate of the simulator is also currently
 unknown. It may become stable, or become an oscillator with a high
 period, or have a bounding box which grows irregularly.
-<p><a name=colour>:</a><b>colour</b> = <a href="#colourofaglider">colour of a glider</a>
-<p><a name=colourchanging>:</a><b>colour-changing</b> See <a href="#colourofaglider">colour of a glider</a>. The <a href="lex_r.htm#reflector">reflector</a> shown in
-<a href="lex_p.htm#p8bouncer">p8 bouncer</a> is colour-changing, as are its 5/6/7/8 and higher-period
+<p><a name=color>:</a><b>color</b> = <a href="#colorofaglider">color of a glider</a>
+<p><a name=colorchanging>:</a><b>color-changing</b> See <a href="#colorofaglider">color of a glider</a>. The <a href="lex_r.htm#reflector">reflector</a> shown in
+<a href="lex_p.htm#p8bouncer">p8 bouncer</a> is color-changing, as are its 5/6/7/8 and higher-period
 versions.
-<p><a name=colourchangingsemisnark>:</a><b>colour-changing semi-Snark</b> = <a href="#ccsemisnark">CC semi-Snark</a>.
-<p><a name=colourisedlife>:</a><b>colourised Life</b> A <a href="#cellularautomaton">cellular automaton</a> that is the same as Life
-except for the use of a number of different ON states ("colours").
+<p><a name=colorchangingsemisnark>:</a><b>color-changing semi-Snark</b> = <a href="#ccsemisnark">CC semi-Snark</a>.
+<p><a name=colorisedlife>:</a><b>colorised Life</b> A <a href="#cellularautomaton">cellular automaton</a> that is the same as Life
+except for the use of a number of different ON states ("colors").
 All ON states behave the same for the purpose of applying the Life
-rule, but additional rules are used to specify the colour of the
+rule, but additional rules are used to specify the color of the
 resulting ON cells. Examples are <a href="lex_i.htm#immigration">Immigration</a> and <a href="lex_q.htm#quadlife">QuadLife</a>.
-<p><a name=colourofaglider>:</a><b>colour of a glider</b> The colour of a <a href="lex_g.htm#glider">glider</a> is a property of the
+<p><a name=colorofaglider>:</a><b>color of a glider</b> The color of a <a href="lex_g.htm#glider">glider</a> is a property of the
 glider that remains constant while the glider is moving along a
 straight path, but that can be changed when the glider bounces off a
 <a href="lex_r.htm#reflector">reflector</a>. It is an important consideration when building
 something using reflectors.
-<p>The colour of a glider can be defined as follows. First choose
+<p>The color of a glider can be defined as follows. First choose
 some cell to be the origin. This cell is then considered to be
 white, and all other cells to be black or white in a checkerboard
 pattern. (So the cell with coordinates (<i>m</i>,<i>n</i>) is white if <i>m</i>+<i>n</i> is
-even, and black otherwise.) Then the colour of a glider is the
-colour of its leading cell when it is in a phase that can be rotated
+even, and black otherwise.) Then the color of a glider is the
+color of its leading cell when it is in a phase that can be rotated
 to look like this:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OOO
 ..O
 .O.
 </a></pre></td></tr></table></center>
-<p>A reflector that does not change the colour of gliders obviously
-cannot be used to move a glider onto a path of different colour than
-it started on. But a 90-degree reflector that does change the colour
-of gliders is similarly limited, as the colour of the resulting
+<p>A reflector that does not change the color of gliders obviously
+cannot be used to move a glider onto a path of different color than
+it started on. But a 90-degree reflector that does change the color
+of gliders is similarly limited, as the color of the resulting
 glider will depend only on the direction of the glider, no matter how
 many reflectors are used. For maximum flexibility, therefore, both
 types of reflector are required.
-<p>Small periodic colour-changing glider reflectors (<a href="lex_b.htm#bouncer">bouncers</a>) are
-known, and also small periodic colour-preserving glider reflectors
-(<a href="lex_b.htm#bumper">bumpers</a>). Among stable patterns, only a small colour-preserving
+<p>Small periodic color-changing glider reflectors (<a href="lex_b.htm#bouncer">bouncers</a>) are
+known, and also small periodic color-preserving glider reflectors
+(<a href="lex_b.htm#bumper">bumpers</a>). Among stable patterns, only a small color-preserving
 reflector (<a href="lex_s.htm#snark">Snark</a>) is known. The smallest known 90-degree
-colour-changing reflector is given at the end of the <a href="lex_r.htm#reflector">reflector</a>
+color-changing reflector is given at the end of the <a href="lex_r.htm#reflector">reflector</a>
 entry.
-<p><a name=colourpreserving>:</a><b>colour-preserving</b> See <a href="#colourofaglider">colour of a glider</a>. <a href="lex_s.htm#snark">Snarks</a> and <a href="lex_b.htm#bumper">bumpers</a>
-are colour-preserving reflectors.
-<p><a name=colourpreservingsemisnark>:</a><b>colour-preserving semi-Snark</b> = <a href="#cpsemisnark">CP semi-Snark</a>
+<p><a name=colorpreserving>:</a><b>color-preserving</b> See <a href="#colorofaglider">color of a glider</a>. <a href="lex_s.htm#snark">Snarks</a> and <a href="lex_b.htm#bumper">bumpers</a>
+are color-preserving reflectors.
+<p><a name=colorpreservingsemisnark>:</a><b>color-preserving semi-Snark</b> = <a href="#cpsemisnark">CP semi-Snark</a>
 <p><a name=complementaryblinker>:</a><b>complementary blinker</b> = <a href="lex_f.htm#foreandback">fore and back</a>
 <p><a name=component>:</a><b>component</b> A partial <a href="lex_g.htm#glidersynthesis">glider synthesis</a> that can be used in the same
 way in multiple <a href="lex_g.htm#gliderrecipe">glider recipes</a>. A component transforms part of an
@@ -1157,7 +1157,7 @@ multi-elbow recipe library. A <a href="lex_s.htm#slowelbow">slow elbow</a> toolk
 an even larger number of glider output recipes, because the <a href="lex_t.htm#target">target</a>
 elbow object in that case is not restricted to a single diagonal
 line.
-<p>If only one colour, parity, or phase of glider can be emitted, then
+<p>If only one color, parity, or phase of glider can be emitted, then
 the mechanism will be limited to producing <a href="lex_m.htm#monochromaticsalvo">monochromatic salvos</a> or
 <a href="lex_m.htm#monoparitysalvo">monoparity salvos</a>. These are less efficient at most construction
 tasks, but are still generally accepted to enable
@@ -1356,9 +1356,9 @@ OO....O.OOO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.
 OO.......OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.....
 </a></pre></td></tr></table></center>
 <p><a name=cppulsar>:</a><b>CP pulsar</b> = <a href="lex_p.htm#pulsar">pulsar</a>
-<p><a name=cpsemicenark>:</a><b>CP semi-cenark</b> A <a href="#colourpreserving">colour-preserving</a> variant of Tanner Jacobi's
+<p><a name=cpsemicenark>:</a><b>CP semi-cenark</b> A <a href="#colorpreserving">color-preserving</a> variant of Tanner Jacobi's
 century-based semi-Snark mechanism, the <a href="lex_s.htm#semicenark">semi-cenark</a>. See
-<a href="#ccsemicenark">CC semi-cenark</a> for the <a href="#colourchanging">colour-changing</a> version, or <a href="lex_s.htm#semicenark">semi-cenark</a>
+<a href="#ccsemicenark">CC semi-cenark</a> for the <a href="#colorchanging">color-changing</a> version, or <a href="lex_s.htm#semicenark">semi-cenark</a>
 for repeat time details and an alternate initial catalyst.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .O............OO........
@@ -1385,7 +1385,7 @@ OOO.....OO..O...........
 ................O.O.....
 ................OO......
 </a></pre></td></tr></table></center>
-<p><a name=cpsemisnark>:</a><b>CP semi-Snark</b> A period-multiplying <a href="#colourpreserving">colour-preserving</a> <a href="lex_s.htm#signal">signal</a>
+<p><a name=cpsemisnark>:</a><b>CP semi-Snark</b> A period-multiplying <a href="#colorpreserving">color-preserving</a> <a href="lex_s.htm#signal">signal</a>
 <a href="#conduit">conduit</a> found by Tanner Jacobi in October 2017, producing one
 output <a href="lex_g.htm#glider">glider</a> for every two input gliders. It is made by replacing
 one of the eaters in a <a href="lex_s.htm#snark">Snark</a> with a <a href="#catalyst">catalyst</a> found using
