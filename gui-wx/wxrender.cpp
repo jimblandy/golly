@@ -183,6 +183,7 @@ static void EnableTextures()
         // restore texture color and enable textures
         SetColor(255, 255, 255, 255);
         glEnable(GL_TEXTURE_2D);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     }
 }
 
@@ -192,6 +193,7 @@ static void DisableTextures()
 {
     if (glIsEnabled(GL_TEXTURE_2D)) {
         glDisable(GL_TEXTURE_2D);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     };
 }
 
@@ -1668,10 +1670,6 @@ void DrawView(int tileindex)
     viewport* saveview0 = NULL;
     int colorindex;
     int currmag = currlayer->view->getmag();
-
-    // draw a tiny pixmap before calling DrawGridLines or FillRect to avoid crash in NVIDIA driver
-    unsigned char data[] = "RGBARGBARGBARGBA";
-    DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
 
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
