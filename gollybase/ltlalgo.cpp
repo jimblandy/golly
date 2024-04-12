@@ -3281,7 +3281,6 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
         // neighborhood valid so build list of included cells in custom neighborhood
         const int width = r * 2 + 1;
         const int w2 = width * width;
-        const int w2m1 = w2 - 1;
         char* neighborhood = (char*) calloc(w2, sizeof(char));
         int* rowcount = (int *) calloc(width, sizeof(int));
         int midk = neededlength >> 1;
@@ -3293,12 +3292,12 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
 
         // first build simple 2d neighborhood grid from the hex digits
         i = 0;
-        item = width - 1;
+        item = 0;
         while (j < width) {
             // get next 4 bits
             w = (int) (strchr(HEXCHARACTERS, n[k]) - HEXCHARACTERS);
             if (k == midk) {
-                neighborhood[w2m1 - i] = 1;
+                neighborhood[i] = 1;
                 i++;
                 numinrow++;
             }
@@ -3307,12 +3306,13 @@ const char* ltlalgo::read_custom(const char *n, int r, int &c, TGridType &gt, co
             // set neighborhood
             for (int l = 3; l >=0 ; l--) {
                 if ((w & (1 << l)) != 0) {
-                    neighborhood[w2m1 - i] = 1;
+                    neighborhood[i] = 1;
                     numinrow++;
                 }
                 i++;
                 if ((i % width) == 0) {
-                    rowcount[item--] = numinrow;
+                    rowcount[item] = numinrow;
+                    item += 1;
                     numinrow = 0;
                     j++;
                 }
