@@ -209,7 +209,7 @@ static int g_opendialog(lua_State* L)
                              wxFD_OPEN | (mustexist ? wxFD_FILE_MUST_EXIST : 0) );
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     
     lua_pushstring(L, (const char*)wxs_result.mb_str(LUA_ENC));
     
@@ -246,7 +246,7 @@ static int g_savedialog(lua_State* L)
                          wxFD_SAVE | (suppressprompt ? 0 : wxFD_OVERWRITE_PROMPT));
     wxString wxs_savefname = wxEmptyString;
     if (savedlg.ShowModal() == wxID_OK) wxs_savefname = savedlg.GetPath();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     
     lua_pushstring(L, (const char*)wxs_savefname.mb_str(LUA_ENC));
     

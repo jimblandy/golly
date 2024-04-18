@@ -577,7 +577,7 @@ void LoadRule(const wxString& rulestring, bool fromfile)
             }
             RestoreRule(oldrule);
             wxString msg = _("The rule file is not valid:\n") + rulestring;
-            msg += _("\n\nThe error message:\n") + wxString(err,wxConvLocal);
+            msg += _(".rule");
             Warning(msg);
             return;
         }
@@ -1341,5 +1341,5 @@ void ShowAboutBox()
     topsizer->Fit(&dlg);
     dlg.Centre();
     dlg.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
 }

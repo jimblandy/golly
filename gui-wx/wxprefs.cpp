@@ -4911,7 +4911,7 @@ bool ChangePrefs(const wxString& page)
     bool result;
     PrefsDialog dialog(mainptr, page);
     int button = dialog.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         // TransferDataFromWindow has validated and updated all global prefs;
         // if a keyboard shortcut changed then update menu item accelerators

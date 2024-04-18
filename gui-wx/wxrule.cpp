@@ -1064,7 +1064,7 @@ bool ChangeRule()
     
     RuleDialog dialog( wxGetApp().GetTopWindow() );
     int button = dialog.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         // TransferDataFromWindow has changed the current rule,
         // and possibly the current algorithm as well

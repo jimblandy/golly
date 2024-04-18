@@ -17,18 +17,20 @@
 <li> Fixed a bug that affected all multi-state hashlife algorithms
      (changing a cell in a very large pattern could result in a corrupted universe).
 <li> Fixed some bugs handling filenames with underscores or ampersands in the Open/Run Recent submenus.
-<li> Fixed orientation of <a href="Algorithms/Larger_than_Life.html#custom">Custom</a> neighborhood in the <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> algorithm.</li>
+<li> Fixed orientation of <a href="Algorithms/Larger_than_Life.html#custom">Custom</a> neighborhood
+     in the <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> algorithm.
+<li> Support .rule files with very long lines (up to 4,000 characters).
 <li> The Pattern Info window displays Unicode characters correctly (assuming the comments are UTF-8 encoded).
 <li> <a href="open:Scripts/Lua/3D.lua">3D.lua</a> has a Pattern Info command (in its View menu) which will
      display the current pattern's comments in the help window.  You can also click on the new "i" button.
 <li> The <a href="Algorithms/Larger_than_Life.html">Larger than Life</a> algorithm now supports
-     <a href="Algorithms/Larger_than_Life.html#nbrhds">Aligned Checkerboard</a> neighborhood (ND).</li>
+     <a href="Algorithms/Larger_than_Life.html#nbrhds">Aligned Checkerboard</a> neighborhood (ND).
 <li> New script <a href="open:Scripts/Lua/safeopenclip.lua">safeopenclip.lua</a> will attempt to open
      the clipboard as a pattern. If the pattern contains a legacy rule it will first be converted
      into a supported rule. If the pattern contains an unsupported rule it will be opened in a
      benign 256 state rule so it can be manually manipulated and an HTML page with a download link to
      the <a href="https://www.conwaylife.com/w/index.php?title=Special:AllPages&namespace=3794&from=">LifeWiki rule repository</a>
-     will appear. The default key binding for this script is Alt-O (Option-O on Mac).</li>
+     will appear. The default key binding for this script is Alt-O (Option-O on Mac).
 <li> Modified goto.lua to check for a number too large for Lua (if so then the script exits and
      recommends using goto.py instead).
 <li> Updated Lua to version 5.4.6.
@@ -453,7 +455,7 @@ a Python 3.x (64-bit) installation to run .py scripts.
 <li> The <a href="overlay.html#oplus">oplus</a> package also has new functions for creating a menu bar, pop-up menus and radio buttons.
      Menu buttons now support custom colors and shadows.
 <li> Added a round function to Lua's <a href="lua.html#gplus">gplus</a> package.
-<li> Added timing functions to the <a href="lua.html#gplus">gplus</a> package which can be used to profile Lua scripts.</li>
+<li> Added timing functions to the <a href="lua.html#gplus">gplus</a> package which can be used to profile Lua scripts.
 <li> Added <a href="lua.html#savechanges">savechanges</a>, <a href="lua.html#settitle">settitle</a>
      and <a href="lua.html#sleep">sleep</a> commands for use in Lua scripts.
 <li> The <a href="lua.html#getevent">getevent</a> command now returns a "file" event when a user

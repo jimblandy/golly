@@ -52,9 +52,9 @@ int ruletable_algo::NumCellStates()
    return this->n_states;
 }
 
-bool starts_with(const string& line,const string& keyword)
+bool starts_with(const string& line, const string& keyword)
 {
-   return strnicmp(line.c_str(),keyword.c_str(),keyword.length())==0;
+   return strnicmp(line.c_str(), keyword.c_str(), keyword.length()) == 0;
 }
 
 const char* ruletable_algo::setrule(const char* s)
@@ -65,7 +65,7 @@ const char* ruletable_algo::setrule(const char* s)
       rule_name.assign(s,colonptr);
 
    static string ret;  // NOTE: don't initialize this statically!
-   ret = LoadRuleTable(rule_name.c_str());
+   ret = LoadRuleTable(rule_name);
    if(!ret.empty())
    {
       // if the file exists and we've got an error then it must be a file format issue
@@ -213,7 +213,7 @@ string ruletable_algo::LoadRuleTable(string rule)
    }
    
    string line;
-   const int MAX_LINE_LEN=1000;
+   const int MAX_LINE_LEN=4000;
    char line_buffer[MAX_LINE_LEN];
    FILE *in = 0;
    linereader line_reader(0);

@@ -981,7 +981,7 @@ void MainFrame::OpenPattern()
                          opensavedir, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     int button = opendlg.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         wxFileName fullpath( opendlg.GetPath() );
         opensavedir = fullpath.GetPath();
@@ -1011,7 +1011,7 @@ void MainFrame::OpenScript()
                          rundir, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     int button = opendlg.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         wxFileName fullpath( opendlg.GetPath() );
         rundir = fullpath.GetPath();
@@ -1604,7 +1604,7 @@ bool MainFrame::SavePattern()
                          opensavedir, currlayer->currname, filetypes,
                          wxFD_SAVE | wxFD_OVERWRITE_PROMPT );
     int button = savedlg.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         wxFileName fullpath( savedlg.GetPath() );
         opensavedir = fullpath.GetPath();
@@ -1732,7 +1732,7 @@ void MainFrame::SaveOverlay()
                              overlaydir, _("overlay.png"), _("PNG (*.png)|*.png"),
                              wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
         int button = savedlg.ShowModal();
-        viewptr->ResetMouseDown();
+        if (viewptr) viewptr->ResetMouseDown();
         if (button == wxID_OK) {
             wxString pngpath = savedlg.GetPath();
             wxFileName fullpath(pngpath);
@@ -1770,7 +1770,7 @@ void MainFrame::ChangeFileDir()
 {
     wxDirDialog dirdlg(this, _("Choose a new file folder"), filedir, wxDD_NEW_DIR_BUTTON);
     int button = dirdlg.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         SetFileDir(dirdlg.GetPath());
     }

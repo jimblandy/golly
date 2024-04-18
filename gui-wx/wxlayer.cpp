@@ -3501,7 +3501,7 @@ void SetLayerColors()
     
     ColorDialog dialog( wxGetApp().GetTopWindow() );
     int button = dialog.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button != wxID_OK) {
         // user hit Cancel so restore color info saved above
         save_info->RestoreData();

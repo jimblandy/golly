@@ -208,7 +208,7 @@ static bool LoadPythonLib()
             wxOK | wxCANCEL
         );
         int button = dialog.ShowModal();
-        viewptr->ResetMouseDown();
+        if (viewptr) viewptr->ResetMouseDown();
         if (button == wxID_OK) {
             pythonlib = dialog.GetValue();
         } else {
@@ -525,7 +525,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
                              wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     
     return G_Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(PY_ENC));
 }
@@ -558,7 +558,7 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
     
     wxString wxs_savefname = wxEmptyString;
     if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     
     return G_Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(PY_ENC));
 }

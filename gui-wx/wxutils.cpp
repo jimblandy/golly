@@ -37,13 +37,13 @@ void Note(const wxString& msg, bool showCancel)
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_INFORMATION,
                                   wxGetActiveWindow());
-        viewptr->ResetMouseDown();
+        if (viewptr) viewptr->ResetMouseDown();
         if (button == wxCANCEL) {
             PassKeyToScript(WXK_ESCAPE);     // abort script
         }
     } else {
         wxMessageBox(msg, title, wxOK | wxICON_INFORMATION, wxGetActiveWindow());
-        viewptr->ResetMouseDown();
+        if (viewptr) viewptr->ResetMouseDown();
     }
 }
 
@@ -57,13 +57,13 @@ void Warning(const wxString& msg, bool showCancel)
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_EXCLAMATION,
                                   wxGetActiveWindow());
-        viewptr->ResetMouseDown();
+        if (viewptr) viewptr->ResetMouseDown();
         if (button == wxCANCEL) {
             PassKeyToScript(WXK_ESCAPE);     // abort script
         }
     } else {
         wxMessageBox(msg, title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
-        viewptr->ResetMouseDown();
+        if (viewptr) viewptr->ResetMouseDown();
     }
 }
 
@@ -74,7 +74,7 @@ void Fatal(const wxString& msg)
     Beep();
     wxString title = wxGetApp().GetAppName() + _(" error:");
     wxMessageBox(msg, title, wxOK | wxICON_ERROR, wxGetActiveWindow());
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     
     exit(1);    // safer than calling wxExit()
 }
@@ -162,7 +162,7 @@ bool GetString(const wxString& title, const wxString& prompt,
 {
     StringDialog dialog(wxGetApp().GetTopWindow(), title, prompt, instring);
     int button = dialog.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         outstring = dialog.GetValue();
         return true;
@@ -332,7 +332,7 @@ bool GetInteger(const wxString& title, const wxString& prompt,
     IntegerDialog dialog(wxGetApp().GetTopWindow(), title, prompt,
                          inval, minval, maxval);
     int button = dialog.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     if (button == wxID_OK) {
         *outval = dialog.GetValue();
         return true;
@@ -354,7 +354,7 @@ int SaveChanges(const wxString& query, const wxString& msg)
                            wxICON_INFORMATION);
     dialog.SetYesNoCancelLabels("Cancel", "Save", "Don't Save");
     int button = dialog.ShowModal();
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     switch (button) {
         case wxID_YES:    return 0;    // Cancel
         case wxID_NO:     return 2;    // Save
@@ -366,7 +366,7 @@ int SaveChanges(const wxString& query, const wxString& msg)
     int answer = wxMessageBox(msg, query,
                               wxICON_QUESTION | wxYES_NO | wxCANCEL,
                               wxGetActiveWindow());
-    viewptr->ResetMouseDown();
+    if (viewptr) viewptr->ResetMouseDown();
     switch (answer) {
         case wxYES: return 2;
         case wxNO:  return 1;
