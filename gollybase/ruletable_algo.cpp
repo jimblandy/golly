@@ -259,6 +259,12 @@ string ruletable_algo::LoadRuleTable(string rule)
       } else {
          if (!line_reader.fgets(line_buffer,MAX_LINE_LEN))
             break;
+         if (line_reader.truncated) {
+            ostringstream oss;
+            oss << "Error reading " << full_filename << " on line " << lineno+1 
+                << ": line too long (maximum length = " << MAX_LINE_LEN << ")";
+            return oss.str();
+         }
          if (static_rulefile && line_buffer[0] == static_endchar)
             break;
          line = line_buffer;

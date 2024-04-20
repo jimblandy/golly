@@ -25,6 +25,7 @@ class linereader {
 public:
    linereader(FILE *f) ;
    char *fgets(char *buf, int maxlen) ;
+   bool truncated ; // true if fgets had to truncate buf
    void setfile(FILE *f) ;
    void setcloseonfree() ;
    int close() ;

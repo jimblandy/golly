@@ -127,9 +127,11 @@ linereader::~linereader() {
 const int LF = 10 ;
 const int CR = 13 ;
 char *linereader::fgets(char *buf, int maxlen) {
+   truncated = false ;
    int i = 0 ;
    for (;;) {
       if (i+1 >= maxlen) {
+         truncated = true ;
          buf[i] = 0 ;
          return buf ;
       }
