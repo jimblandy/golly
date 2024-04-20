@@ -6,19 +6,19 @@
 #C not exceeding x.) Note, however, that no-one has ever proved
 #C that all these "possible" types really are possible, so the
 #C above formula may only be an upper bound.
-#C
+#C 
 #C The following table shows the mininum number of cells for
 #C spaceships of all types with period < 10.  Those marked [*] are
 #C known to be best possible.
 #C
-#C  (1,0)c/2  64 cells                Dean Hickerson       28 Jul 1989
+#C  (1,0)c/2  64 cells [*]            Dean Hickerson       28 Jul 1989
 #C  (1,0)c/3  25 cells [*]            Dean Hickerson          Aug 1989
-#C  (1,0)c/4  37 cells                Josh Ball            15 Apr 2012
+#C  (1,0)c/4  37 cells [*]            Josh Ball            15 Apr 2012
 #C  (1,1)c/4  5 cells [*]             Richard Guy                 1969
 #C  (2,0)c/4  9 cells [*]             John Conway                 1970
 #C  (1,0)c/5  58 cells                David Bell           14 Apr 1997
 #C  (1,1)c/5  58 cells                Matthias Merzenich    5 Sep 2010
-#C  (2,0)c/5  30 cells                Paul Tooke            7 Dec 2000
+#C  (2,0)c/5  30 cells [*]            Paul Tooke            7 Dec 2000
 #C  (1,0)c/6  56 cells                Hartmut Holzwart     19 May 2009
 #C  (1,1)c/6  77 cells                Josh Ball            25 Mar 2011
 #C  (2,0)c/6  72 cells                Jason Summers        22 Oct 2000
@@ -30,7 +30,7 @@
 #C  (2,1)c/7  (no known example)
 #C  (3,0)c/7  232 cells               Keith Amling         23 Feb 2022
 #C  (1,0)c/8  (no known example)
-#C  (1,1)c/8  (no known example)
+#C  (1,1)c/8  68 cells                Adam P. Goucher      12 Jan 2023
 #C  (2,0)c/8  74 cells                Josh Ball               Mar 2010
 #C  (2,1)c/8  (no known example)
 #C  (2,2)c/8  89 cells                Chris Rowett          3 Jan 2021
@@ -47,8 +47,7 @@
 #C  (4,0)c/9  (no known example)
 #C
 #C types.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
-#C Updated on 16 May 2022 -- source:
-#C https://conwaylife.com/forums/viewtopic.php?p=148802#p148802
+#C Updated on 15 Apr 2024.
 x = 279, y = 368, rule = B3/S23
 225b5o$225bo4bo$225bo$226bo4bo$228bo$229b2o2bo$227bo2bo3bo$225bo7bo$
 224bo5bo2bo$224bo3b2o$224b4o2b2o17$202b2o$201bob2o$200b2ob2ob2obo$199b
@@ -85,27 +84,29 @@ bo46b2o$2b4obo22bobo25b2o31bo38bo4b2o3bo$bo28bobo22bo2b2o30b3o37bo$o2b
 o27bo21b2o3bo34bob2o33bo$o2bo51bo34b4obo35b3o$o4bo84bo$b4o86bo2b2o35bo
 $2bo88bo2b2o35bo$3b2o86b2o38bo$4bo2bo$5bobo26$120b2o$119bo$120bo$84b4o
 33bo2bo$82b2o4b2o31bo2bo63bo5bo$82b2o5bo33bo63bo5b2o$84b2obobo97bo3bo$
-89bo34b2o62bo4bo$85bo3bo34b4o2b2o56bo8b2o$85bo4bo37b2o54b2o3bo5bobo$
-87b3o3bo33b2o54bo2bo4b2o$87b2o4bo39bo48bo5bo3bo3bo$93b2o34bo3bob3o37b
-2o4bobo4b2o$95bo34bobo42b2o6bo6bo2bo$59bo35b3o33bo3bo43bo3bo6b2o2b2o2b
-o$57b2o75bo38bo4bo2b2o13b2o$58b2o73b2o38bobob2o13bo$98bo33bo9bo30b2o2b
-obo13bo$97bob5o29b2o7bo50bo$96b2o5bo30b2o4bobo45b3obo$96b2o3bo2bo30b2o
-b2o47bo3bo$104bo31bobo3b2o43bo2bo$98b2obo2bo32bo3bo$101bo2bo35bo5bo38b
-o2bo$102b2o37bo4bo39b2o$102b2o38bo2bo39b2o$144b2o43b2o$144bobo39bo2b2o
-$146bo38bo$146b2o37b3o$146b2o2b2o$149bo2$150b2o2bo$152bobo$153bo19$
-238b2o$240bo$237bobo5bo$224bo2bo9bo4bo3bo$224bo8bo2bobob2o4bo$225bo7b
-2o3bo2bo4bo$221bobo3b2obo3bo4bobo$221b2o5bo2bo6bo2bo4bo$222bo6b2o7b2o
-5bo$240bobob2o$231b2o$231b2o8b2o2$228bobo10bobo$228b2o5bo2bo2b2o$229bo
-5bo$236bo$232bobo3b2obo$232b2o5bo2bo$233bo6b2o2$242b2o$242b2o2$239bobo
-$239b2o$240bo25$146bo$144b2o2$145bo$145b2o$144b2ob2o$143b2o3b3o$142b3o
-4bo$142b3o4bo$146b2o$144bobo2b2o$142b2obo2bo$141bo2b3obobo$144b2o2bobo
-$141b3o5bo$142b2o$145b3o$144bo2b2o$148bo$144bobo$137b3o4bo$140b4ob2o$
-136bo4b4o$140bo$138bo$138bob5o$138b3ob3o$139bo4bo$139b5o$140bo$141b2ob
-o$141bo$142b2o3bo$140b4o2bo2bo$139b2o3bo3b2o$138bo6bob3o$139bo3b2o$
-139bo3bo3bo$140bobo3bobo$139b3o6bo$145b2o$141b5o$140b2o$140bo2b2o$139b
-o$133bob4o4b2o$133b4obo4b2o$131bo4b2ob3o$130bo3bo2bo$131bob3obo$133b3o
-2bo$136b2o$132b3o$132bo5b5o$131bo3bo6bo$131bo9bo2$131bo6b3o$134b2obobo
-$131bobobo3bo$130b3o6bo$130bo2bobobo$130bobo2b2o$130b2o3bo2bo$131b2ob
-3obo$130b2o6bo$133bob2o$122b2o7bo4bo$126b3o2b2o2bo$121bo3bo$120bo9b2o$
-122b4o4b2o3bo$121bo4bo6b3o$122bob2o4b4o$122b2o6b4o$126b3o$124bo3bo$
-124bo2bo$124b2o!
+89bo34b2o62bo4bo$85bo3bo34b4o2b2o56bo8b2o35b3o$85bo4bo37b2o54b2o3bo5bo
+bo36b3o$87b3o3bo33b2o54bo2bo4b2o$87b2o4bo39bo48bo5bo3bo3bo37bo$93b2o
+34bo3bob3o37b2o4bobo4b2o44b2o$95bo34bobo42b2o6bo6bo2bo35bo5bo$59bo35b
+3o33bo3bo43bo3bo6b2o2b2o2bo30bo$57b2o75bo38bo4bo2b2o13b2o29b2o10bo$58b
+2o73b2o38bobob2o13bo33b2ob2ob3o2bo2bo$98bo33bo9bo30b2o2bobo13bo32b2o3b
+2o8bo2b2o$97bob5o29b2o7bo50bo47b3o$96b2o5bo30b2o4bobo45b3obo35bobo2bo
+7b2o$96b2o3bo2bo30b2ob2o47bo3bo34bo3bo3b3obo$104bo31bobo3b2o43bo2bo35b
+o4bob4o$98b2obo2bo32bo3bo84bo4b4obo$101bo2bo35bo5bo38bo2bo40bo5b2o$
+102b2o37bo4bo39b2o42bo5bo$102b2o38bo2bo39b2o44bo2bo$144b2o43b2o40b4o$
+144bobo39bo2b2o$146bo38bo$146b2o37b3o$146b2o2b2o$149bo2$150b2o2bo$152b
+obo$153bo19$238b2o$240bo$237bobo5bo$224bo2bo9bo4bo3bo$224bo8bo2bobob2o
+4bo$225bo7b2o3bo2bo4bo$221bobo3b2obo3bo4bobo$221b2o5bo2bo6bo2bo4bo$
+222bo6b2o7b2o5bo$240bobob2o$231b2o$231b2o8b2o2$228bobo10bobo$228b2o5bo
+2bo2b2o$229bo5bo$236bo$232bobo3b2obo$232b2o5bo2bo$233bo6b2o2$242b2o$
+242b2o2$239bobo$239b2o$240bo25$146bo$144b2o2$145bo$145b2o$144b2ob2o$
+143b2o3b3o$142b3o4bo$142b3o4bo$146b2o$144bobo2b2o$142b2obo2bo$141bo2b
+3obobo$144b2o2bobo$141b3o5bo$142b2o$145b3o$144bo2b2o$148bo$144bobo$
+137b3o4bo$140b4ob2o$136bo4b4o$140bo$138bo$138bob5o$138b3ob3o$139bo4bo$
+139b5o$140bo$141b2obo$141bo$142b2o3bo$140b4o2bo2bo$139b2o3bo3b2o$138bo
+6bob3o$139bo3b2o$139bo3bo3bo$140bobo3bobo$139b3o6bo$145b2o$141b5o$140b
+2o$140bo2b2o$139bo$133bob4o4b2o$133b4obo4b2o$131bo4b2ob3o$130bo3bo2bo$
+131bob3obo$133b3o2bo$136b2o$132b3o$132bo5b5o$131bo3bo6bo$131bo9bo2$
+131bo6b3o$134b2obobo$131bobobo3bo$130b3o6bo$130bo2bobobo$130bobo2b2o$
+130b2o3bo2bo$131b2ob3obo$130b2o6bo$133bob2o$122b2o7bo4bo$126b3o2b2o2bo
+$121bo3bo$120bo9b2o$122b4o4b2o3bo$121bo4bo6b3o$122bob2o4b4o$122b2o6b4o
+$126b3o$124bo3bo$124bo2bo$124b2o!
