@@ -457,6 +457,12 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
             // show indeterminate progress gauge
             cancel = !progdlg->Pulse(newmsg);
         } else {
+            // ensure fraction done is less than or equal to 1
+            if (fraction_done > 1.0) {
+                 fraction_done = 1.0;
+            }
+
+            // update progress bar
             cancel = !progdlg->Update(int((double)maxprogrange * fraction_done), newmsg);
         }
         if (cancel) {
