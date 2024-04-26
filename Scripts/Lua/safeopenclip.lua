@@ -152,7 +152,7 @@ local function openrulehelp(rule)
     local filename = g.getdir("temp")..helpname
     local file, msg = io.open(filename, "w")
     if file == nil then
-        g.note("Could not create temporary help file!n\n"..msg)
+        g.note("Could not create temporary help file!\n"..msg)
     else
         -- put the rule name into the help text and write to the HTML file
         helptext = helptext:gsub("RULENAME", rule)
@@ -171,7 +171,7 @@ local function openpattern(text, rule, bounded, message)
     local filename = g.getdir("temp")..tempname
     local file, msg = io.open(filename, "w")
     if file == nil then
-        g.note("Could not create temporary pattern file!n\n"..msg)
+        g.note("Could not create temporary pattern file!\n"..msg)
     else
         file:write(text)
         file:close()
@@ -343,10 +343,10 @@ local function safeopen()
 
                         -- if the user didn't cancel then open the pattern without the bounded grid
                         text = text:sub(1, headerstartpos + rulepos - 2).."rule="..saferule..text:sub(headerendpos)
-                        openpattern(text, saferule, "", "Opened pattern in safe rule. Invalid bounded grid definition removed ("..bounded..").")
+                        openpattern(text, saferule, "", "Opened pattern in a safe rule. Invalid bounded grid definition removed ("..bounded..").")
                     else
                         -- the clipboard can't be opened so ask for permission to convert to the safe rule
-                        g.note("The pattern in the clipboard contains an unupported rule.\n\nRule: "..rule..bounded.."\n\nPress OK to open in a safe rule or Cancel to abort.")
+                        g.note("The pattern in the clipboard contains an unsupported rule.\n\nRule: "..rule..bounded.."\n\nPress OK to open in a safe rule or Cancel to abort.")
 
                         -- if the user didn't cancel then open the pattern in the safe rule
                         text = text:sub(1, headerstartpos + rulepos - 2).."rule="..saferule..bounded..text:sub(headerendpos)
