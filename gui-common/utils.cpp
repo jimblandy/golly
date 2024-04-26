@@ -444,7 +444,6 @@ bool IsScriptFile(const std::string& filename)
 
     std::string ext = filename.substr(dotpos+1);
     return ( strcasecmp(ext.c_str(),"lua") == 0 ||
-             strcasecmp(ext.c_str(),"pl") == 0 ||
              strcasecmp(ext.c_str(),"py") == 0 );
 }
 

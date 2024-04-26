@@ -84,8 +84,8 @@ bool IsRuleFile(const std::string& filename);
 // (ignoring case).
 
 bool IsScriptFile(const std::string& filename);
-// Return true if the given file is a Lua or Perl or Python script.
-// It simply checks if the file's extension is .lua or .pl or .py
+// Return true if the given file is a Lua or Python script.
+// It simply checks if the file's extension is .lua or .py
 // (ignoring case).
 
 bool EndsWith(const std::string& str, const std::string& suffix);
