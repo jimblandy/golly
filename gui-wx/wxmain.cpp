@@ -1957,7 +1957,6 @@ void MainFrame::OnClose(wxCloseEvent& event)
     
     // delete any temporary files
     if (wxFileExists(luafile)) wxRemoveFile(luafile);
-    if (wxFileExists(perlfile)) wxRemoveFile(perlfile);
     if (wxFileExists(pythonfile)) wxRemoveFile(pythonfile);
     for (int i = 0; i < numlayers; i++) {
         Layer* layer = GetLayer(i);
@@ -2594,7 +2593,6 @@ MainFrame::MainFrame()
     // current directory has been changed to the location of the script file
     clipfile = datadir + wxT("golly_clipboard");
     luafile = datadir + wxT("golly_clip.lua");
-    perlfile = datadir + wxT("golly_clip.pl");
     pythonfile = datadir + wxT("golly_clip.py");
     
     // create timer for generating patterns (see OnGenTimer in wxcontrol.cpp)

@@ -181,7 +181,6 @@ build $objdir/wxlua.o: cxxc_wx wxlua.cpp
    extra_cxxflags = $lua_cxxflags
 build $objdir/wxpython.o: cxxc_wx wxpython.cpp
    extra_cxxflags = $python_cxxflags
-build $objdir/wxperl.o: cxxc_wx wxperl.cpp
 
 # standard link flags
 ldflags = -Wl,--as-needed
@@ -214,7 +213,7 @@ build $exedir/golly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.
       $objdir/generationsalgo.o $objdir/superalgo.o $
       $objdir/wxutils.o $objdir/wxprefs.o $objdir/wxalgos.o $objdir/wxrule.o $
       $objdir/wxinfo.o $objdir/wxhelp.o $objdir/wxstatus.o $objdir/wxview.o $objdir/wxoverlay.o $
-      $objdir/wxrender.o $objdir/wxscript.o $objdir/wxlua.o $objdir/wxpython.o $objdir/wxperl.o $
+      $objdir/wxrender.o $objdir/wxscript.o $objdir/wxlua.o $objdir/wxpython.o $
       $objdir/wxfile.o $objdir/wxedit.o $objdir/wxcontrol.o $objdir/wxtimeline.o $
       $objdir/wxundo.o $objdir/wxselect.o $objdir/wxlayer.o $objdir/wxmain.o $objdir/wxgolly.o $
       $lua_lib

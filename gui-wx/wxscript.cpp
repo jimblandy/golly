@@ -24,7 +24,6 @@
 #include "wxlayer.h"       // for currlayer, SyncClones
 #include "wxtimeline.h"    // for TimelineExists, ToggleTimelineBar
 #include "wxlua.h"         // for RunLuaScript, AbortLuaScript
-#include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
 #include "wxoverlay.h"     // for curroverlay
 #include "wxscript.h"
@@ -41,14 +40,13 @@ bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
 bool allowcheck;           // allow event checking?
 bool showprogress;         // script can display the progress dialog?
-wxString scripterr;        // Lua/Perl/Python error message
+wxString scripterr;        // Lua/Python error message
 wxString mousepos;         // current mouse position
 wxString scripttitle;      // window title set by settitle command
 wxString rle3path;         // path of .rle3 file to be sent to 3D.lua via GSF_getevent
 
 // local globals:
 static bool luascript = false;      // a Lua script is running?
-static bool plscript = false;       // a Perl script is running?
 static bool pyscript = false;       // a Python script is running?
 static bool showtitle;              // need to update window title?
 static bool updateedit;             // need to update edit bar?
@@ -1839,15 +1837,12 @@ void CheckScriptError(const wxString& ext)
     if (scripterr.IsEmpty()) return;    // no error
 
     if (scripterr.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
-        // error was caused by AbortLuaScript/AbortPerlScript/AbortPythonScript
+        // error was caused by AbortLuaScript/AbortPythonScript
         // so don't display scripterr
     } else {
         wxString errtype;
         if (ext.IsSameAs(wxT("lua"), false)) {
             errtype = _("Lua error:");
-        } else if (ext.IsSameAs(wxT("pl"), false)) {
-            errtype = _("Perl error:");
-            scripterr.Replace(wxT(". at "), wxT("\nat "));
         } else {
             errtype = _("Python error:");
             scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
@@ -1913,7 +1908,6 @@ void RunScript(const wxString& filename)
     // use these flags to allow re-entrancy
     bool already_inscript = inscript;
     bool in_luascript = luascript;
-    bool in_plscript = plscript;
     bool in_pyscript = pyscript;
     wxString savecwd;
 
@@ -2000,16 +1994,12 @@ void RunScript(const wxString& filename)
     if (ext.IsSameAs(wxT("lua"), false)) {
         luascript = true;
         RunLuaScript(fpath);
-    } else if (ext.IsSameAs(wxT("pl"), false)) {
-        plscript = true;
-        RunPerlScript(fpath);
     } else if (ext.IsSameAs(wxT("py"), false)) {
         pyscript = true;
         RunPythonScript(fpath);
     } else {
         // should never happen
         luascript = false;
-        plscript = false;
         pyscript = false;
         Warning(_("Unexpected extension in script file:\n") + filename);
     }
@@ -2019,7 +2009,7 @@ void RunScript(const wxString& filename)
         scriptloc = savecwd;
         wxSetWorkingDirectory(scriptloc);
 
-        // display any Lua/Perl/Python error message
+        // display any Lua/Python error message
         CheckScriptError(ext);
         if (!scripterr.IsEmpty()) {
             if (in_luascript) {
@@ -2028,14 +2018,10 @@ void RunScript(const wxString& filename)
             } else if (in_pyscript) {
                 // abort the calling Python script
                 AbortPythonScript();
-            } else if (in_plscript) {
-                // abort the calling Perl script
-                AbortPerlScript();
             }
         }
 
         luascript = in_luascript;
-        plscript = in_plscript;
         pyscript = in_pyscript;
 
     } else {
@@ -2083,7 +2069,6 @@ void RunScript(const wxString& filename)
         wxSetWorkingDirectory(gollydir);
 
         luascript = false;
-        plscript = false;
         pyscript = false;
 
         // update Undo/Redo items based on current layer's history
@@ -2256,7 +2241,6 @@ void PassKeyToScript(int key, int modifiers)
         }
         view_painted = true;    // ensure Yield loop terminates
         if (luascript) AbortLuaScript();
-        if (plscript) AbortPerlScript();
         if (pyscript) AbortPythonScript();
     } else {
         // build a string like "key x altshift" and add to event queue
@@ -2356,14 +2340,12 @@ void FinishScripting()
         }
         view_painted = true;    // ensure Yield loop terminates
         if (luascript) AbortLuaScript();
-        if (plscript) AbortPerlScript();
         if (pyscript) AbortPythonScript();
         wxSetWorkingDirectory(gollydir);
         inscript = false;
     }
 
     FinishLuaScripting();
-    FinishPerlScripting();
     FinishPythonScripting();
 }
 

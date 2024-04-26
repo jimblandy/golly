@@ -120,7 +120,6 @@ extern wxString rundir;          // directory for Run Script dialog
 extern wxString choosedir;       // directory used by Choose File button
 extern wxString filedir;         // directory used by Show Files
 extern wxString texteditor;      // path of user's preferred text editor
-extern wxString perllib;         // name of Perl library (loaded at runtime)
 extern wxString pythonlib;       // name of Python library (loaded at runtime)
 extern int dirwinwd;             // width of file directory window
 extern bool showfiles;           // show file directory?

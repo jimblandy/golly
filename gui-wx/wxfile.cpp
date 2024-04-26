@@ -1003,9 +1003,6 @@ void MainFrame::OpenScript()
     wxString filetypes = _("Lua or Python (*.lua;*.py)|*.lua;*.py");
     filetypes +=         _("|Lua (*.lua)|*.lua");
     filetypes +=         _("|Python (*.py)|*.py");
-#ifdef ENABLE_PERL
-    filetypes +=         _("|Perl (*.pl)|*.pl");
-#endif
 
     wxFileDialog opendlg(this, _("Choose a script"),
                          rundir, wxEmptyString, filetypes,
@@ -1232,16 +1229,14 @@ void MainFrame::OpenClipboard()
 
 // -----------------------------------------------------------------------------
 
+static wxString nonscript = _("nonscript");
+
 wxString MainFrame::GetScriptFileName(const wxString& text)
 {
-    // examine given text to see if it contains Lua, Perl or Python code:
-    // if "--" or "local" or "require" is at start of line then we assume Lua,
-    // if "use" or "my" is at start of line then we assume Perl,
-    // if "import" or "from" is at start of line then we assume Python,
-    // otherwise we compare counts for dollars + semicolons vs colons
-    int dollars = 0;
-    int semicolons = 0;
-    int colons = 0;
+    // examine given text to see if it contains Lua or Python code:
+    // if "--" or "local" or "require" is at start of line then return luafile,
+    // if "import" or "from" is at start of line then return pythonfile,
+    // otherwise return nonscript so caller can display a suitable message
     int linelen = 0;
     
     // need to be careful converting Unicode wxString to char*
@@ -1251,44 +1246,22 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
         switch (*p) {
             case '#':
                 // probably a comment, so ignore rest of line
+                // (note that MCell files have all lines starting with #)
                 while (*p && *p != 13 && *p != 10) p++;
                 linelen = 0;
                 if (*p) p++;
                 break;
-            case 34: // double quote -- ignore until quote closes, even multiple lines
-                p++;
-                while (*p && *p != 34) p++;
-                linelen = 0;
-                if (*p) p++;
-                break;
-            case 39: // single quote -- ignore until quote closes
-                p++;
-                while (*p && *p != 39 && *p != 13 && *p != 10) p++;
-                linelen = 0;
-                if (*p) p++;
-                break;
-            case '$': dollars++; linelen++; p++;
-                break;
-            case ':': colons++; linelen++; p++;
-                break;
-            case ';': semicolons++; linelen++; p++;
-                break;
             case 13: case 10:
-                // if colon/semicolon is at eol then count it twice
-                if (linelen > 0 && p[-1] == ':') colons++;
-                if (linelen > 0 && p[-1] == ';') semicolons++;
                 linelen = 0;
                 p++;
                 break;
             case '-':
                 if (linelen == 1 && p[-1] == '-') return luafile;   // Lua comment at start of line
-                linelen++; p++;
+                linelen++;
+                p++;
                 break;
             case ' ':
                 // look for language-specific keyword at start of line
-                if (linelen == 2 && strncmp(p-2,"my",2) == 0) return perlfile;
-                if (linelen == 3 && strncmp(p-3,"use",3) == 0) return perlfile;
-                
                 if (linelen == 5 && strncmp(p-5,"local",5) == 0) return luafile;
                 if (linelen == 7 && strncmp(p-7,"require",7) == 0) return luafile;
                 
@@ -1305,16 +1278,8 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
         }
     }
     
-    /* check totals:
-    char msg[128];
-    sprintf(msg, "dollars=%d semicolons=%d colons=%d", dollars, semicolons, colons);
-    Note(wxString(msg,wxConvLocal));
-    */
-    
-    if (dollars + semicolons > colons)
-        return perlfile;
-    else
-        return pythonfile;
+    // clipboard does not contain a valid Lua/Python script
+    return nonscript;
 }
 
 // -----------------------------------------------------------------------------
@@ -1331,17 +1296,21 @@ void MainFrame::RunClipboard()
     // run script stored in clipboard
     wxTextDataObject data;
     if (GetTextFromClipboard(&data)) {
-        // scriptfile extension depends on whether the clipboard data
-        // contains Perl or Python code
+        // scriptfile depends on whether the clipboard data contains Lua or Python code
         wxString scriptfile = GetScriptFileName( data.GetText() );
-        // copy clipboard data to scriptfile
-        wxFile outfile(scriptfile, wxFile::write);
-        if (outfile.IsOpened()) {
-            outfile.Write( data.GetText() );
-            outfile.Close();
-            RunScript(scriptfile);
+        if (scriptfile == nonscript) {
+            Warning(_("The clipboard does not contain a Lua or Python script.") +
+                    _("  If it contains a pattern, try using Open Clipboard instead."));
         } else {
-            statusptr->ErrorMessage(_("Could not create script file!"));
+            // copy clipboard data to scriptfile
+            wxFile outfile(scriptfile, wxFile::write);
+            if (outfile.IsOpened()) {
+                outfile.Write( data.GetText() );
+                outfile.Close();
+                RunScript(scriptfile);
+            } else {
+                Warning(_("Could not create script file!"));
+            }
         }
     }
 }

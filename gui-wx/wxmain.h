@@ -154,7 +154,6 @@ public:
     // temporary files
     wxString clipfile;          // name of temporary file for storing clipboard data
     wxString luafile;           // name of temporary Lua script
-    wxString perlfile;          // name of temporary Perl script
     wxString pythonfile;        // name of temporary Python script
     
     // store files passed via command line (processed in first OnIdle)

@@ -60,19 +60,6 @@ ifdef ENABLE_SOUND
     SOUND_LINK = -lSDL2
 endif
 
-# For Perl script support
-ifdef ENABLE_PERL
-    CXXFLAGS += -DENABLE_PERL
-    PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
-    # note that we must link in the Perl library if the Perl version is older
-    # than 5.10 (this is necessary because boot_DynaLoader is in DynaLoader.a);
-    # if using 5.10 or later we can dynamically load the Perl library because
-    # it contains the boot_DynaLoader code
-    PERL_LINK = `perl -MExtUtils::Embed -e '$$]<5.010 && ldopts'`
-    PERL_SHLIB = libperl.so.5.10  # TODO: figure out how to do this dynamically
-    PERL_PREFS = -DPERL_SHLIB="$(PERL_SHLIB)"
-endif
-
 # For Python script support
 PYTHON_INCLUDE = -I`$(PYTHON) -c "import distutils.sysconfig as s; print(s.get_python_inc())"`
 # we don't want to link against a specific library: PYTHON_LINK = -lpython2.3
@@ -109,11 +96,11 @@ BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
     $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
     $(OBJDIR)/generationsalgo.o $(OBJDIR)/superalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
-    wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
+    wxlua.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
     wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
     $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o $(OBJDIR)/wxoverlay.o \
-    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
+    $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxpython.o \
     $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
     $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
@@ -133,7 +120,7 @@ clean:
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB)
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
-	$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(SOUND_LINK)
+	$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(SOUND_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
@@ -223,7 +210,7 @@ $(OBJDIR)/wxutils.o: wxutils.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxutils.cpp
 
 $(OBJDIR)/wxprefs.o: wxprefs.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PERL_PREFS) $(PYTHON_PREFS) -c -o $@ wxprefs.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PYTHON_PREFS) -c -o $@ wxprefs.cpp
 
 $(OBJDIR)/wxalgos.o: wxalgos.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxalgos.cpp
@@ -251,9 +238,6 @@ $(OBJDIR)/wxrender.o: wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxlua.cpp
-
-$(OBJDIR)/wxperl.o: wxperl.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
 
 $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp

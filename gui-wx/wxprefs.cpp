@@ -162,7 +162,6 @@ wxString rundir;                 // directory for Run Script dialog
 wxString choosedir;              // directory used by Choose File button
 wxString filedir;                // directory used by Show Files
 wxString texteditor;             // path of user's preferred text editor
-wxString perllib;                // name of Perl library (loaded at runtime)
 wxString pythonlib;              // name of Python library (loaded at runtime)
 int dirwinwd = 180;              // width of directory window
 bool showfiles = true;           // show file directory?
@@ -1600,7 +1599,6 @@ void SavePrefs()
     fputs("\n", f);
 
     fprintf(f, "text_editor=%s\n", (const char*)texteditor.mb_str(wxConvLocal));
-    fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
     fprintf(f, "python3_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
     fprintf(f, "dir_width=%d\n", dirwinwd);
     fprintf(f, "show_files=%d\n", showfiles ? 1 : 0);
@@ -1824,15 +1822,12 @@ void GetPrefs()
     texteditor = wxEmptyString;
 #endif
 
-    // init names of Perl and Python libraries
+    // init names of Python libraries
 #ifdef __WXMSW__
-    perllib = wxT("perl510.dll");
     pythonlib = wxT("python39.dll");
 #elif defined(__WXMAC__)
-    perllib = wxEmptyString;
     pythonlib = wxT("/Library/Frameworks/Python.framework/Versions/3.9/Python");
 #else // assume Linux
-    perllib = wxT(STRINGIFY(PERL_SHLIB));
     pythonlib = wxT(STRINGIFY(PYTHON_SHLIB));
 #endif
 
@@ -2273,9 +2268,6 @@ void GetPrefs()
 
         } else if (strcmp(keyword, "text_editor") == 0) {
             texteditor = wxString(value,wxConvLocal);
-
-        } else if (strcmp(keyword, "perl_lib") == 0) {
-            perllib = wxString(value,wxConvLocal);
 
         } else if (strcmp(keyword, "python3_lib") == 0) {
             pythonlib = wxString(value,wxConvLocal);
@@ -4348,11 +4340,7 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
         // ask user to choose an appropriate file
         wxString filetypes = _("All files (*)|*");
         filetypes +=         _("|Pattern (*.rle;*.mc;*.lif)|*.rle;*.mc;*.lif");
-#ifdef ENABLE_PERL
-        filetypes +=         _("|Script (*.lua;*.pl;*.py)|*.lua;*.pl;*.py");
-#else
         filetypes +=         _("|Script (*.lua;*.py)|*.lua;*.py");
-#endif
         filetypes +=         _("|Rule (*.rule)|*.rule");
         filetypes +=         _("|HTML (*.html;*.htm)|*.html;*.htm");
 

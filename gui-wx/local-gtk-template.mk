@@ -8,9 +8,6 @@ WX_CONFIG = wx-config
 # Change the next command depending on your Python installation:
 PYTHON = python3
 
-# Uncomment the next line to enable Golly to run perl scripts.
-# ENABLE_PERL = 1
-
 # Comment out the next line to disable sound play:
 ENABLE_SOUND = 1
 

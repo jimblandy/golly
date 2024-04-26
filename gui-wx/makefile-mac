@@ -40,19 +40,6 @@ GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gt
    golly.rc Info.plist.in wx*.h wx*.cpp bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
-# uncomment the next line to allow Golly to run Perl scripts:
-# ENABLE_PERL = 1
-
-ifdef ENABLE_PERL
-    PERL_INCLUDE = $(shell /usr/bin/perl -MExtUtils::Embed -e ccopts)
-    PERL_LINK = $(shell /usr/bin/perl -MExtUtils::Embed -e ldopts)
-    # remove unwanted stuff (-arch i386 and -arch ppc):
-    PERL_INCLUDE := $(subst -arch i386,,$(PERL_INCLUDE))
-    PERL_INCLUDE := $(subst -arch ppc,,$(PERL_INCLUDE))
-    PERL_LINK := $(subst -arch i386,,$(PERL_LINK))
-    PERL_LINK := $(subst -arch ppc,,$(PERL_LINK))
-endif
-
 # for Python 3 script support:
 PYTHON_INCLUDE = -I`/usr/local/bin/python3 -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`
 # PYTHON_LINK is no longer needed
@@ -79,10 +66,6 @@ CXXFLAGS = -arch arm64 -arch x86_64 \
 
 # some script functions need to call @autoreleasepool to avoid memory leaks
 AUTO_RELEASE = -x objective-c++ -DAUTORELEASE
-
-ifdef ENABLE_PERL
-    CXXFLAGS += -DENABLE_PERL
-endif
 
 # comment out next 2 lines to disable sound play:
 CXXFLAGS += -DENABLE_SOUND
@@ -115,11 +98,11 @@ BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
    $(OBJDIR)/generationsalgo.o $(OBJDIR)/superalgo.o
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
-   wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
+   wxlua.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
    wxtimeline.h wxundo.h wxutils.h wxview.h wxoverlay.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o $(OBJDIR)/wxoverlay.o \
-   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
+   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxpython.o \
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
@@ -169,7 +152,7 @@ app.bin: $(BASEOBJ) $(WXOBJ) $(LUALIB)
 $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) \
 $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__WXLIB_GL_p) \
 $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) $(__LIB_ZLIB_p) \
-$(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
+$(EXTRALIBS) $(EXTRALIBS_GUI) $(PYTHON_LINK)
 
 $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \
 icons/app.icns icons/file-mc.icns icons/file-rle.icns
@@ -296,9 +279,6 @@ $(OBJDIR)/wxrender.o: wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
 	$(CXXC) $(CXXFLAGS) $(AUTO_RELEASE) -c -o $@ wxlua.cpp
-
-$(OBJDIR)/wxperl.o: wxperl.cpp
-	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
 
 $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) $(AUTO_RELEASE) -c -o $@ wxpython.cpp
