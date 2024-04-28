@@ -2745,6 +2745,61 @@ static int g_getcolor(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_query(lua_State* L)
+{
+    AUTORELEASE_POOL
+    CheckEvents(L);
+    
+    wxString query = wxString(luaL_checkstring(L, 1), LUA_ENC);
+    wxString msg = wxString(luaL_checkstring(L, 2), LUA_ENC);
+    
+    wxString labelYes =    _("Yes");
+    wxString labelNo =     _("No");
+    wxString labelCancel = _("Cancel");
+    if (lua_gettop(L) > 2) labelYes     = wxString(luaL_checkstring(L, 3), LUA_ENC);
+    if (lua_gettop(L) > 3) labelNo      = wxString(luaL_checkstring(L, 4), LUA_ENC);
+    if (lua_gettop(L) > 4) labelCancel  = wxString(luaL_checkstring(L, 5), LUA_ENC);
+    
+    long style = wxICON_INFORMATION | wxCENTER | wxYES_NO;
+    if (labelCancel.length() > 0) style = style | wxCANCEL; // add Cancel button
+    
+    wxMessageDialog dialog(wxGetActiveWindow(), msg, query, style);
+    
+    if (labelCancel.length() > 0) {
+        dialog.SetYesNoCancelLabels(labelYes, labelNo, labelCancel);
+    } else {
+        dialog.SetYesNoLabels(labelYes, labelNo);
+    }
+    
+    int button = dialog.ShowModal();
+    if (viewptr) viewptr->ResetMouseDown();
+    switch (button) {
+        case wxID_YES: {
+            wxString label = dialog.GetYesLabel();
+            lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
+            break;
+        }
+        case wxID_NO: {
+            wxString label = dialog.GetNoLabel();
+            lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
+            break;
+        }
+        case wxID_CANCEL: {
+            wxString label = dialog.GetCancelLabel();
+            lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
+            break;
+        }
+        default: {
+            // should never happen
+            GollyError(L, "query bug: unexpected button.");
+        }
+    }    
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_savechanges(lua_State* L)
 {
     AUTORELEASE_POOL
@@ -3132,6 +3187,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
     { "sleep",        g_sleep },        // sleep for the given number of millisecs
     { "sound",        g_sound },        // control playing of audio
+    { "query",        g_query },        // show a query dialog and return answer
     { "savechanges",  g_savechanges },  // show standard save changes dialog and return answer
     { "settitle",     g_settitle },     // set window title to given string
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
