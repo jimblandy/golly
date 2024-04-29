@@ -2564,7 +2564,7 @@ static PyObject* py_query(PyObject* self, PyObject* args)
             }
             case wxID_CANCEL: {
                 label = dialog.GetCancelLabel();
-                if (label == wxString("gtk-cancel")) {
+                if (labelCancel.length() == 0 && label == wxString("gtk-cancel")) {
                     // this happens on Linux if the dialog has no Cancel button
                     // but the user closed it by hitting escape, so we show the
                     // dialog again to force them to select one of the 2 buttons
