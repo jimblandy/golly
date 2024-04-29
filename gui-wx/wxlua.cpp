@@ -2753,12 +2753,12 @@ static int g_query(lua_State* L)
     wxString query = wxString(luaL_checkstring(L, 1), LUA_ENC);
     wxString msg = wxString(luaL_checkstring(L, 2), LUA_ENC);
     
-    wxString labelYes =    _("Yes");
-    wxString labelNo =     _("No");
+    wxString labelYes    = _("Yes");
+    wxString labelNo     = _("No");
     wxString labelCancel = _("Cancel");
-    if (lua_gettop(L) > 2) labelYes     = wxString(luaL_checkstring(L, 3), LUA_ENC);
-    if (lua_gettop(L) > 3) labelNo      = wxString(luaL_checkstring(L, 4), LUA_ENC);
-    if (lua_gettop(L) > 4) labelCancel  = wxString(luaL_checkstring(L, 5), LUA_ENC);
+    if (lua_gettop(L) > 2) labelYes    = wxString(luaL_checkstring(L, 3), LUA_ENC);
+    if (lua_gettop(L) > 3) labelNo     = wxString(luaL_checkstring(L, 4), LUA_ENC);
+    if (lua_gettop(L) > 4) labelCancel = wxString(luaL_checkstring(L, 5), LUA_ENC);
     
     long style = wxICON_INFORMATION | wxCENTER | wxYES_NO;
     if (labelCancel.length() > 0) style = style | wxCANCEL; // add Cancel button
@@ -2771,29 +2771,38 @@ static int g_query(lua_State* L)
         dialog.SetYesNoLabels(labelYes, labelNo);
     }
     
-    int button = dialog.ShowModal();
-    if (viewptr) viewptr->ResetMouseDown();
-    switch (button) {
-        case wxID_YES: {
-            wxString label = dialog.GetYesLabel();
-            lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
-            break;
+    wxString label;
+    bool finished = false;
+    while (!finished) {
+        finished = true;
+        int button = dialog.ShowModal();
+        if (viewptr) viewptr->ResetMouseDown();
+        switch (button) {
+            case wxID_YES: {
+                label = dialog.GetYesLabel();
+                break;
+            }
+            case wxID_NO: {
+                label = dialog.GetNoLabel();
+                break;
+            }
+            case wxID_CANCEL: {
+                label = dialog.GetCancelLabel();
+                if (label == wxString("gtk-cancel")) {
+                    // this happens on Linux if the dialog has no Cancel button
+                    // but the user closed it by hitting escape, so we show the
+                    // dialog again to force them to select one of the 2 buttons
+                    finished = false;
+                }
+                break;
+            }
+            default: {
+                // should never happen
+                GollyError(L, "query bug: unexpected button.");
+            }
         }
-        case wxID_NO: {
-            wxString label = dialog.GetNoLabel();
-            lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
-            break;
-        }
-        case wxID_CANCEL: {
-            wxString label = dialog.GetCancelLabel();
-            lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
-            break;
-        }
-        default: {
-            // should never happen
-            GollyError(L, "query bug: unexpected button.");
-        }
-    }    
+    }
+    lua_pushstring(L, (const char*)label.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }

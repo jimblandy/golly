@@ -2516,6 +2516,74 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_query(PyObject* self, PyObject* args)
+{
+    AUTORELEASE_POOL
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+
+    const char* qstr;
+    const char* mstr;
+    const char* ly = "Yes";
+    const char* ln = "No";
+    const char* lc = "Cancel";
+    
+    if (!G_PyArg_ParseTuple(args, (char*)"ss|sss", &qstr, &mstr, &ly, &ln, &lc)) return NULL;
+    
+    wxString query(qstr, PY_ENC);
+    wxString msg(mstr, PY_ENC);
+    wxString labelYes(ly, PY_ENC);
+    wxString labelNo(ln, PY_ENC);
+    wxString labelCancel(lc, PY_ENC);
+    
+    long style = wxICON_INFORMATION | wxCENTER | wxYES_NO;
+    if (labelCancel.length() > 0) style = style | wxCANCEL; // add Cancel button
+    
+    wxMessageDialog dialog(wxGetActiveWindow(), msg, query, style);
+    
+    if (labelCancel.length() > 0) {
+        dialog.SetYesNoCancelLabels(labelYes, labelNo, labelCancel);
+    } else {
+        dialog.SetYesNoLabels(labelYes, labelNo);
+    }
+    
+    wxString label;
+    bool finished = false;
+    while (!finished) {
+        finished = true;
+        int button = dialog.ShowModal();
+        if (viewptr) viewptr->ResetMouseDown();
+        switch (button) {
+            case wxID_YES: {
+                label = dialog.GetYesLabel();
+                break;
+            }
+            case wxID_NO: {
+                label = dialog.GetNoLabel();
+                break;
+            }
+            case wxID_CANCEL: {
+                label = dialog.GetCancelLabel();
+                if (label == wxString("gtk-cancel")) {
+                    // this happens on Linux if the dialog has no Cancel button
+                    // but the user closed it by hitting escape, so we show the
+                    // dialog again to force them to select one of the 2 buttons
+                    finished = false;
+                }
+                break;
+            }
+            default: {
+                // should never happen
+                PYTHON_ERROR("query bug: unexpected button.");
+            }
+        }
+    }
+
+    return G_Py_BuildValue((char*)"s", (const char*)label.mb_str(PY_ENC));
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setcolors(PyObject* self, PyObject* args)
 {
     AUTORELEASE_POOL
@@ -3182,6 +3250,7 @@ static PyMethodDef py_methods[] = {
     // miscellaneous
     { "os",           py_os,         METH_VARARGS, "get the current OS (Windows/Mac/Linux)" },
     { "sound",        py_sound,      METH_VARARGS, "control playing of audio" },
+    { "query",        py_query,      METH_VARARGS, "show a query dialog and return answer" },
     { "setoption",    py_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
     { "getoption",    py_getoption,  METH_VARARGS, "return current value of given option" },
     { "setcolor",     py_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },
