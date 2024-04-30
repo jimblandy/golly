@@ -2536,7 +2536,7 @@ static PyObject* py_query(PyObject* self, PyObject* args)
     wxString labelNo(ln, PY_ENC);
     wxString labelCancel(lc, PY_ENC);
     
-    long style = wxICON_INFORMATION | wxCENTER | wxYES_NO;
+    long style = wxICON_QUESTION | wxCENTER | wxYES_NO;
     if (labelCancel.length() > 0) style = style | wxCANCEL; // add Cancel button
     
     wxMessageDialog dialog(wxGetActiveWindow(), msg, query, style);

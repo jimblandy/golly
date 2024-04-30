@@ -201,11 +201,11 @@ or you can search for individual commands alphabetically:
 <a href="#getcell"><b>getcell</b></a><br>
 <a href="#getcells"><b>getcells</b></a><br>
 <a href="#getclip"><b>getclip</b></a><br>
-<a href="#getclipstr"><b>getclipstr</b></a>
+<a href="#getclipstr"><b>getclipstr</b></a><br>
+<a href="#getcolor"><b>getcolor</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getcolor"><b>getcolor</b></a><br>
 <a href="#getcolors"><b>getcolors</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
 <a href="#getdir"><b>getdir</b></a><br>
@@ -228,12 +228,12 @@ or you can search for individual commands alphabetically:
 <a href="#getview"><b>getview</b></a><br>
 <a href="#getwidth"><b>getwidth</b></a><br>
 <a href="#getxy"><b>getxy</b></a><br>
-<a href="#hash"><b>hash</b></a>
+<a href="#hash"><b>hash</b></a><br>
+<a href="#join"><b>join</b></a><br>
+<a href="#load"><b>load</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#join"><b>join</b></a><br>
-<a href="#load"><b>load</b></a><br>
 <a href="#maxlayers"><b>maxlayers</b></a><br>
 <a href="#movelayer"><b>movelayer</b></a><br>
 <a href="#new"><b>new</b></a><br>
@@ -247,6 +247,7 @@ or you can search for individual commands alphabetically:
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#putcells"><b>putcells</b></a><br>
+<a href="#query"><b>query</b></a><br>
 <a href="#randfill"><b>randfill</b></a><br>
 <a href="#reset"><b>reset</b></a><br>
 <a href="#rotate"><b>rotate</b></a><br>
@@ -255,12 +256,12 @@ or you can search for individual commands alphabetically:
 <a href="#savedialog"><b>savedialog</b></a><br>
 <a href="#select"><b>select</b></a><br>
 <a href="#setalgo"><b>setalgo</b></a><br>
-<a href="#setbase"><b>setbase</b></a>
+<a href="#setbase"><b>setbase</b></a><br>
+<a href="#setcell"><b>setcell</b></a><br>
+<a href="#setclipstr"><b>setclipstr</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#setcell"><b>setcell</b></a><br>
-<a href="#setclipstr"><b>setclipstr</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
 <a href="#setcolors"><b>setcolors</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
@@ -1454,6 +1455,22 @@ as well as the usual OK button.  Clicking OK will close the dialog and
 continue; clicking Cancel will close the dialog and abort the script.
 </dd>
 <dd> Example: <b>g.note("Line 1\nLine 2\nLine 3", False)</b></dd>
+</p>
+
+<a name="query"></a><p><dt><b>query(<i>query, message, labelYes="Yes", labelNo="No", labelCancel="Cancel"</i>)</b></dt>
+<dd>
+Show a modal dialog with the given query and message strings,
+and 2 or 3 buttons with customizable labels (the defaults are Yes, No and Cancel).
+If labelCancel is "" then there is no Cancel button.
+If there is a Cancel button then it can be selected by hitting the escape key.
+The button with labelYes is always the default button and can be selected by
+hitting the enter/return key.  The label on the selected button is returned.
+</dd>
+<dd> Examples:</dd>
+<dd> <b>option = g.query("Choose an option?", "Select Cancel for neither option.", "1", "2")</b></dd>
+<dd> <i># option is "1", "2" or "Cancel"</i></dd>
+<dd> <b>answer = g.query("Try again?", "The default answer is No.", "No", "Yes", "")</b></dd>
+<dd> <i># answer is "Yes" or "No"</i></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>

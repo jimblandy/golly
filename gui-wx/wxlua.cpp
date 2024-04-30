@@ -2760,7 +2760,7 @@ static int g_query(lua_State* L)
     if (lua_gettop(L) > 3) labelNo     = wxString(luaL_checkstring(L, 4), LUA_ENC);
     if (lua_gettop(L) > 4) labelCancel = wxString(luaL_checkstring(L, 5), LUA_ENC);
     
-    long style = wxICON_INFORMATION | wxCENTER | wxYES_NO;
+    long style = wxICON_QUESTION | wxCENTER | wxYES_NO;
     if (labelCancel.length() > 0) style = style | wxCANCEL; // add Cancel button
     
     wxMessageDialog dialog(wxGetActiveWindow(), msg, query, style);
