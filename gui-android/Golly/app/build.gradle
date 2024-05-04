@@ -19,7 +19,7 @@ android {
                 // define ANDROID_GUI used in the shared C++ code in gui-common;
                 // define ZLIB so Golly can read/write .gz files;
                 // set -fexceptions so we can use stdexcept
-                cppFlags "-DANDROID_GUI", "-DZLIB", "-fexceptions"
+                cppFlags "-DANDROID_GUI", "-DZLIB", "-fexceptions", "-Wno-c++11-narrowing"
             }
         }
     }
