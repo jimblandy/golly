@@ -14,8 +14,8 @@ android {
             cmake {
 
                 // needed for std::string etc
-                // also need System.loadLibrary("stlport_shared") in MainActivity.java
-                arguments "-DANDROID_STL=stlport_shared"
+                // also need System.loadLibrary("stlport_shared") in BaseApp.java
+                arguments "-DANDROID_STL=c++_shared"
 
                 // define ANDROID_GUI used in the shared C++ code in gui-common;
                 // define ZLIB so Golly can read/write .gz files;

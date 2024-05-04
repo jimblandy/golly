@@ -44,9 +44,9 @@ public class BaseApp extends Application {
     // -----------------------------------------------------------------------------
     
     static {
-    	System.loadLibrary("stlport_shared");   // must agree with build.gradle
-        System.loadLibrary("golly");            // loads libgolly.so
-        nativeClassInit();                      // caches Java method IDs
+    	System.loadLibrary("c++_shared");   // must agree with build.gradle
+        System.loadLibrary("golly");        // loads libgolly.so
+        nativeClassInit();                  // caches Java method IDs
     }
     
     // -----------------------------------------------------------------------------
