@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "net.sf.golly"
-        minSdkVersion 14
+        minSdkVersion 21
         targetSdkVersion 26
         versionCode 3
         versionName "1.2"
