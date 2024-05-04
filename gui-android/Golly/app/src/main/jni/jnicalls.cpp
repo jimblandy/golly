@@ -446,7 +446,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDestroy(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDestroy(JNIEnv* env, jobject obj)
 {
     // the current instance of MainActivity is being destroyed
     if (mainobj != NULL) {
@@ -471,7 +471,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusColor(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusColor(JNIEnv* env, jobject obj)
 {
     unsigned char r = algoinfo[currlayer->algtype]->statusrgb.r;
     unsigned char g = algoinfo[currlayer->algtype]->statusrgb.g;
@@ -483,7 +483,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusColor(JNIEnv
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetPasteMode(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetPasteMode(JNIEnv* env, jobject obj)
 {
     return env->NewStringUTF(GetPasteMode());
 }
@@ -491,7 +491,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetPasteMode(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNIEnv* env, jobject obj)
 {
     char s[4];    // room for 0..100
     sprintf(s, "%d", randomfill);
@@ -501,7 +501,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv* env, jobject obj)
 {
     return allowundo;
 }
@@ -509,7 +509,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo(JNIEnv* env, jobject obj)
 {
     return currlayer->undoredo->CanUndo();
 }
@@ -517,7 +517,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo(JNIEnv* 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* env, jobject obj)
 {
     return currlayer->undoredo->CanRedo();
 }
@@ -525,7 +525,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeInfoAvailable(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeInfoAvailable(JNIEnv* env, jobject obj)
 {
     return currlayer->currname != "untitled";
 }
@@ -533,7 +533,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeInfoAvailable(JN
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeUndo(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeUndo(JNIEnv* env, jobject obj)
 {
     if (generating) Warning("Bug: generating is true in nativeUndo!");
     CheckIfRendering();
@@ -544,7 +544,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeUndo(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRedo(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRedo(JNIEnv* env, jobject obj)
 {
     if (generating) Warning("Bug: generating is true in nativeRedo!");
     CheckIfRendering();
@@ -555,7 +555,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRedo(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env, jobject obj)
 {
     return currlayer->algo->getGeneration() > currlayer->startgen;
 }
@@ -563,7 +563,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv*
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     ResetPattern();
@@ -573,7 +573,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv*
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePauseGenerating(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePauseGenerating(JNIEnv* env, jobject obj)
 {
     PauseGenerating();
 }
@@ -581,7 +581,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePauseGenerating(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResumeGenerating(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResumeGenerating(JNIEnv* env, jobject obj)
 {
     ResumeGenerating();
 }
@@ -589,7 +589,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResumeGenerating(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartGenerating(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartGenerating(JNIEnv* env, jobject obj)
 {
     if (!generating) {
         StartGenerating();
@@ -604,7 +604,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartGenerating(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopGenerating(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopGenerating(JNIEnv* env, jobject obj)
 {
     if (generating) {
         StopGenerating();
@@ -615,7 +615,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopGenerating(JNIEn
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env, jobject obj)
 {
     return generating;
 }
@@ -623,7 +623,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env, jobject obj)
 {
     if (paused) return;     // PauseGenerating has been called
 
@@ -643,7 +643,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env, jobject obj)
 {
     NextGeneration(true);
     UpdatePattern();
@@ -653,7 +653,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed(JNIEnv* env, jobject obj)
 {
     // calculate the interval (in millisecs) between nativeGenerate calls
 
@@ -670,7 +670,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed(JNIEnv
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1(JNIEnv* env, jobject obj)
 {
     // reset step exponent to 0
     currlayer->currexpo = 0;
@@ -681,7 +681,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster(JNIEnv* env, jobject obj)
 {
     // go faster by incrementing step exponent
     currlayer->currexpo++;
@@ -692,7 +692,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower(JNIEnv* env, jobject obj)
 {
     // go slower by decrementing step exponent
     if (currlayer->currexpo > minexpo) {
@@ -707,7 +707,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopBeforeNew(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopBeforeNew(JNIEnv* env, jobject obj)
 {
     // NewPattern is about to clear all undo/redo history so there's no point
     // saving the current pattern (which might be very large)
@@ -720,7 +720,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopBeforeNew(JNIEnv
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     NewPattern();
@@ -731,7 +731,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* e
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     FitInView(1);
@@ -742,7 +742,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* e
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     // set scale to 1:1
@@ -756,7 +756,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     // zoom in
@@ -772,7 +772,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     // zoom out
@@ -784,7 +784,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env, jobject obj)
 {
     if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
         currlayer->view->center();
@@ -799,7 +799,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetMode(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetMode(JNIEnv* env, jobject obj)
 {
     // avoid mode button changing to Move during a multi-finger pan/zoom
     if (temporary_mode) return oldmode;
@@ -836,7 +836,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetMode(JNIEnv* env,
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeNumLayers(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeNumLayers(JNIEnv* env, jobject obj)
 {
     return numlayers;
 }
@@ -844,7 +844,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeNumLayers(JNIEnv* env
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativePasteExists(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativePasteExists(JNIEnv* env, jobject obj)
 {
     return waitingforpaste;
 }
@@ -852,7 +852,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativePasteExists(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeSelectionExists(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeSelectionExists(JNIEnv* env, jobject obj)
 {
     return currlayer->currsel.Exists();
 }
@@ -860,7 +860,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeSelectionExists(
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePaste(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePaste(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     PasteClipboard();
@@ -870,7 +870,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePaste(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSelectAll(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSelectAll(JNIEnv* env, jobject obj)
 {
     SelectAll();
 }
@@ -878,7 +878,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSelectAll(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRemoveSelection(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRemoveSelection(JNIEnv* env, jobject obj)
 {
     RemoveSelection();
 }
@@ -886,7 +886,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRemoveSelection(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCutSelection(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCutSelection(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     CutSelection();
@@ -895,7 +895,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCutSelection(JNIEnv*
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCopySelection(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCopySelection(JNIEnv* env, jobject obj)
 {
     CopySelection();
 }
@@ -916,7 +916,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearSelection(JNIEn
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIEnv* env, jobject obj)
 {
     ShrinkSelection(false);
 }
@@ -924,7 +924,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitSelection(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitSelection(JNIEnv* env, jobject obj)
 {
     FitSelection();
 }
@@ -932,7 +932,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitSelection(JNIEnv*
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRandomFill(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRandomFill(JNIEnv* env, jobject obj)
 {
     CheckIfRendering();
     RandomFill();
@@ -972,7 +972,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAdvanceSelection(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAbortPaste(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAbortPaste(JNIEnv* env, jobject obj)
 {
     AbortPaste();
     UpdateEverything();
@@ -1010,7 +1010,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotatePaste(JNIEnv* 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearMessage(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearMessage(JNIEnv* env, jobject obj)
 {
     ClearMessage();
 }
@@ -1018,7 +1018,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearMessage(JNIEnv*
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetValidExtensions(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetValidExtensions(JNIEnv* env, jobject obj)
 {
     if (currlayer->algo->hyperCapable()) {
         // .rle format is allowed but .mc format is better
@@ -1143,7 +1143,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeLexiconPattern(JNIEn
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeDrawingState(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeDrawingState(JNIEnv* env, jobject obj)
 {
     return currlayer->drawingstate;
 }
@@ -1153,7 +1153,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeDrawingState(JNIEnv* 
 // these native routines are used in PatternGLSurfaceView.java:
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativePause(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativePause(JNIEnv* env, jobject obj)
 {
     PauseGenerating();
 }
@@ -1161,7 +1161,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativePause(JNIEnv
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeResume(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeResume(JNIEnv* env, jobject obj)
 {
     ResumeGenerating();
     UpdatePattern();
@@ -1193,7 +1193,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchMoved(J
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(JNIEnv* env, jobject obj)
 {
     // LOGI("touch ended");
     TouchEnded();
@@ -1204,7 +1204,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(J
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeMoveMode(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeMoveMode(JNIEnv* env, jobject obj)
 {
     // temporarily switch touch mode to movemode
     oldmode = currlayer->touchmode;
@@ -1215,7 +1215,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeMoveMode(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeRestoreMode(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeRestoreMode(JNIEnv* env, jobject obj)
 {
     // restore touch mode saved in nativeMoveMode
     currlayer->touchmode = oldmode;
@@ -1245,7 +1245,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeZoomOut(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env, jobject obj)
 {
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
@@ -1283,7 +1283,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeResize(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeRender(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeRender(JNIEnv* env, jobject obj)
 {
     // if NextGeneration is executing (on different thread) then don't call DrawPattern
     if (event_checker > 0) return;
@@ -1307,7 +1307,7 @@ const char* HTML_INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 static std::set<std::string> opendirs;      // set of open directories in Supplied patterns
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetRecentPatterns(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetRecentPatterns(JNIEnv* env, jobject obj)
 {
     std::string htmldata = HTML_HEADER;
     if (recentpatterns.empty()) {
@@ -1500,7 +1500,7 @@ static bool oldhashinfo;    // detect if user changed currlayer->showhashinfo
 static int oldhashmem;      // detect if user changed maxhashmem
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeOpenSettings(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeOpenSettings(JNIEnv* env, jobject obj)
 {
     // SettingsActivity is about to appear
     oldcolors = swapcolors;
@@ -1512,7 +1512,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeOpenSettings(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeCloseSettings(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeCloseSettings(JNIEnv* env, jobject obj)
 {
     // SettingsActivity is about to disappear
     if (swapcolors != oldcolors) ToggleCellColors();
@@ -1603,7 +1603,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeSetPref(JNIEnv* 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPasteMode(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPasteMode(JNIEnv* env, jobject obj)
 {
     return env->NewStringUTF(GetPasteMode());
 }
@@ -1632,7 +1632,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeCreate(JNIEnv* env, 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeDestroy(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeDestroy(JNIEnv* env, jobject obj)
 {
     // the current instance of HelpActivity is being destroyed
     if (helpobj != NULL) {
@@ -1715,7 +1715,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeProcessDownload(JNIE
 // these native routines are used in StateActivity.java:
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_StateActivity_nativeNumStates(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_StateActivity_nativeNumStates(JNIEnv* env, jobject obj)
 {
     return currlayer->algo->NumCellStates();
 }
@@ -1723,7 +1723,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_StateActivity_nativeNumStates(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateActivity_nativeShowIcons()
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateActivity_nativeShowIcons(JNIEnv *env, jobject obj)
 {
     return showicons;
 }
@@ -1731,7 +1731,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateActivity_nativeShowIcons()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_StateActivity_nativeToggleIcons()
+JNIEXPORT void JNICALL Java_net_sf_golly_StateActivity_nativeToggleIcons(JNIEnv *env, jobject obj)
 {
     showicons = !showicons;
     UpdatePattern();
@@ -1794,7 +1794,7 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded(JNIEnv* env, jobject obj)
 {
     if (touch_moved) return false;
     if (lastx >= 0 && lastx < statewd && lasty >= 0 && lasty < stateht) {
@@ -1835,7 +1835,7 @@ static void FillRect(int x, int y, int wd, int ht)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env, jobject obj)
 {
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
@@ -2104,7 +2104,7 @@ static void DrawStateNumber(int state, int x, int y)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env, jobject obj)
 {
     // fill the background with state 0 color
     glClearColor(currlayer->cellr[0]/255.0,
@@ -2149,7 +2149,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env)
 // these native routines are used in RuleActivity.java:
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSaveCurrentSelection(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSaveCurrentSelection(JNIEnv* env, jobject obj)
 {
     SaveCurrentSelection();
 }
@@ -2157,7 +2157,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSaveCurrentSelection
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_RuleActivity_nativeGetAlgoIndex(JNIEnv* env)
+JNIEXPORT int JNICALL Java_net_sf_golly_RuleActivity_nativeGetAlgoIndex(JNIEnv* env, jobject obj)
 {
     return currlayer->algtype;
 }
@@ -2178,7 +2178,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_RuleActivity_nativeGetAlgoName(JNIEn
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_RuleActivity_nativeGetRule(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_RuleActivity_nativeGetRule(JNIEnv* env, jobject obj)
 {
     return env->NewStringUTF(currlayer->algo->getrule());
 }
@@ -2312,7 +2312,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSetRule(JNIEnv* env,
 // these native routines are used in InfoApp.java:
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_InfoActivity_nativeGetInfo(JNIEnv* env)
+JNIEXPORT jstring JNICALL Java_net_sf_golly_InfoActivity_nativeGetInfo(JNIEnv* env, jobject obj)
 {
     std::string info;
     if (currlayer->currfile.empty()) {
