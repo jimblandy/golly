@@ -86,24 +86,24 @@ public class SettingsActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // action bar item has been tapped
         Intent intent;
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                // the Home or Up button will go back to MainActivity
-                NavUtils.navigateUpFromSameTask(this);
-                return true;
-            case R.id.open:
-            	finish();
-                intent = new Intent(this, OpenActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.settings:
-                // do nothing
-                break;
-            case R.id.help:
-            	finish();
-                intent = new Intent(this, HelpActivity.class);
-                startActivity(intent);
-                return true;
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            // the Home or Up button will go back to MainActivity
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        } else if (id == R.id.open) {
+            finish();
+            intent = new Intent(this, OpenActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.settings) {
+            // do nothing
+            ;
+        } else if (id == R.id.help) {
+            finish();
+            intent = new Intent(this, HelpActivity.class);
+            startActivity(intent);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -129,14 +129,21 @@ public class SettingsActivity extends Activity {
     
     public void onCheckboxClicked(View view) {
         boolean checked = ((CheckBox) view).isChecked();
-        switch(view.getId()) {
-            case R.id.checkbox_hash: nativeSetPref("hash", checked ? 1 : 0); break;
-            case R.id.checkbox_time: nativeSetPref("time", checked ? 1 : 0); break;
-            case R.id.checkbox_beep: nativeSetPref("beep", checked ? 1 : 0); break;
-            case R.id.checkbox_swap: nativeSetPref("swap", checked ? 1 : 0); break;
-            case R.id.checkbox_icon: nativeSetPref("icon", checked ? 1 : 0); break;
-            case R.id.checkbox_undo: nativeSetPref("undo", checked ? 1 : 0); break;
-            case R.id.checkbox_grid: nativeSetPref("grid", checked ? 1 : 0); break;
+        int id = view.getId();
+        if (id == R.id.checkbox_hash) {
+            nativeSetPref("hash", checked ? 1 : 0);
+        } else if (id == R.id.checkbox_time) {
+            nativeSetPref("time", checked ? 1 : 0);
+        } else if (id == R.id.checkbox_beep) {
+            nativeSetPref("beep", checked ? 1 : 0);
+        } else if (id == R.id.checkbox_swap) {
+            nativeSetPref("swap", checked ? 1 : 0);
+        } else if (id == R.id.checkbox_icon) {
+            nativeSetPref("icon", checked ? 1 : 0);
+        } else if (id == R.id.checkbox_undo) {
+            nativeSetPref("undo", checked ? 1 : 0);
+        } else if (id == R.id.checkbox_grid) {
+            nativeSetPref("grid", checked ? 1 : 0);
         }
     }
 
@@ -155,12 +162,18 @@ public class SettingsActivity extends Activity {
     
     // called when item from pastemode_menu is selected
     public void doPasteModeItem(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.AND:  nativeSetPref("pmode", 0); break;
-            case R.id.COPY: nativeSetPref("pmode", 1); break;
-            case R.id.OR:   nativeSetPref("pmode", 2); break;
-            case R.id.XOR:  nativeSetPref("pmode", 3); break;
-            default:        Log.e("Golly","Fix bug in doPasteModeItem!"); return;
+        int id = item.getItemId();
+        if (id == R.id.AND) {
+            nativeSetPref("pmode", 0);
+        } else if (id == R.id.COPY) {
+            nativeSetPref("pmode", 1);
+        } else if (id == R.id.OR) {
+            nativeSetPref("pmode", 2);
+        } else if (id == R.id.XOR) {
+            nativeSetPref("pmode", 3);
+        } else {
+            Log.e("Golly", "Fix bug in doPasteModeItem!");
+            return;
         }
         showPasteMode();
     }

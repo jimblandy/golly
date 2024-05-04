@@ -336,19 +336,19 @@ public class MainActivity extends Activity {
         // action bar item has been tapped
         nativeClearMessage();
         Intent intent;
-        switch (item.getItemId()) {
-            case R.id.open:
-                intent = new Intent(this, OpenActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.settings:
-                intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.help:
-                intent = new Intent(this, HelpActivity.class);
-                startActivity(intent);
-                return true;
+        int id = item.getItemId();
+        if (id == R.id.open) {
+            intent = new Intent(this, OpenActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.settings) {
+            intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.help) {
+            intent = new Intent(this, HelpActivity.class);
+            startActivity(intent);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -560,12 +560,17 @@ public class MainActivity extends Activity {
             if (callAgainAfterDelay("doReset", null, item)) return;
         }
         popup.dismiss();
-        switch (item.getItemId()) {
-            case R.id.step1:  nativeStep1(); break;
-            case R.id.faster: nativeFaster(); break;
-            case R.id.slower: nativeSlower(); break;
-            case R.id.reset:  nativeResetPattern(); break;
-            default:          Log.e("Golly","Fix bug in doControlItem!");
+        int id = item.getItemId();
+        if (id == R.id.step1) {
+            nativeStep1();
+        } else if (id == R.id.faster) {
+            nativeFaster();
+        } else if (id == R.id.slower) {
+            nativeSlower();
+        } else if (id == R.id.reset) {
+            nativeResetPattern();
+        } else {
+            Log.e("Golly","Fix bug in doControlItem!");
         }
         if (item.getItemId() == R.id.reset) {
             updateButtons();
@@ -631,12 +636,17 @@ public class MainActivity extends Activity {
     // called when item from view_menu is selected
     public void doViewItem(MenuItem item) {
         popup.dismiss();
-        switch (item.getItemId()) {
-            case R.id.scale1to1: nativeScale1to1(); break;
-            case R.id.bigger:    nativeBigger(); break;
-            case R.id.smaller:   nativeSmaller(); break;
-            case R.id.middle:    nativeMiddle(); break;
-            default:             Log.e("Golly","Fix bug in doViewItem!");
+        int id = item.getItemId();
+        if (id == R.id.scale1to1) {
+            nativeScale1to1();
+        } else if (id == R.id.bigger) {
+            nativeBigger();
+        } else if (id == R.id.smaller) {
+            nativeSmaller();
+        } else if (id == R.id.middle) {
+            nativeMiddle();
+        } else {
+            Log.e("Golly","Fix bug in doViewItem!");
         }
     }
 
@@ -767,10 +777,13 @@ public class MainActivity extends Activity {
             if (callAgainAfterDelay("doPaste", null, item)) return;
         }
         popup.dismiss();
-        switch (item.getItemId()) {
-            case R.id.paste: nativePaste(); break;
-            case R.id.all:   nativeSelectAll(); break;
-            default:         Log.e("Golly","Fix bug in doEditItem!");
+        int id = item.getItemId();
+        if (id == R.id.paste) {
+            nativePaste();
+        } else if (id == R.id.all) {
+            nativeSelectAll();
+        } else {
+            Log.e("Golly","Fix bug in doEditItem!");
         }
         UpdateEditBar();
     }
@@ -792,25 +805,43 @@ public class MainActivity extends Activity {
             if (callAgainAfterDelay("doSelItem", null, item)) return;
         }
         popup.dismiss();
-        switch (item.getItemId()) {
-            // doEditItem handles the top 2 items (if widescreen is false)
-            // case R.id.paste: nativePaste(); break;
-            // case R.id.all:   nativeSelectAll(); break;
-            case R.id.remove:   nativeRemoveSelection(); break;
-            case R.id.cut:      nativeCutSelection(); break;
-            case R.id.copy:     nativeCopySelection(); break;
-            case R.id.clear:    nativeClearSelection(1); break;
-            case R.id.clearo:   nativeClearSelection(0); break;
-            case R.id.shrink:   nativeShrinkSelection(); break;
-            case R.id.fitsel:   nativeFitSelection(); break;
-            case R.id.random:   nativeRandomFill(); break;
-            case R.id.flipy:    nativeFlipSelection(1); break;
-            case R.id.flipx:    nativeFlipSelection(0); break;
-            case R.id.rotatec:  nativeRotateSelection(1); break;
-            case R.id.rotatea:  nativeRotateSelection(0); break;
-            case R.id.advance:  nativeAdvanceSelection(1); break;
-            case R.id.advanceo: nativeAdvanceSelection(0); break;
-            default:            Log.e("Golly","Fix bug in doSelectionItem!");
+        int id = item.getItemId();
+        // doEditItem handles the top 2 items (if widescreen is false)
+//        if (id == R.id.paste) {
+//            nativePaste();
+//        } else if (id == R.id.all) {
+//            nativeSelectAll();
+//        } else
+        if (id == R.id.remove) {
+            nativeRemoveSelection();
+        } else if (id == R.id.cut) {
+            nativeCutSelection();
+        } else if (id == R.id.copy) {
+            nativeCopySelection();
+        } else if (id == R.id.clear) {
+            nativeClearSelection(1);
+        } else if (id == R.id.clearo) {
+            nativeClearSelection(0);
+        } else if (id == R.id.shrink) {
+            nativeShrinkSelection();
+        } else if (id == R.id.fitsel) {
+            nativeFitSelection();
+        } else if (id == R.id.random) {
+            nativeRandomFill();
+        } else if (id == R.id.flipy) {
+            nativeFlipSelection(1);
+        } else if (id == R.id.flipx) {
+            nativeFlipSelection(0);
+        } else if (id == R.id.rotatec) {
+            nativeRotateSelection(1);
+        } else if (id == R.id.rotatea) {
+            nativeRotateSelection(0);
+        } else if (id == R.id.advance) {
+            nativeAdvanceSelection(1);
+        } else if (id == R.id.advanceo) {
+            nativeAdvanceSelection(0);
+        } else {
+            Log.e("Golly","Fix bug in doSelectionItem!");
         }
         // resume generating (only if nativePauseGenerating was called)
         nativeResumeGenerating();
@@ -821,15 +852,23 @@ public class MainActivity extends Activity {
     // called when item from paste_menu is selected
     public void doPasteItem(MenuItem item) {
         popup.dismiss();
-        switch (item.getItemId()) {
-            case R.id.abort:     nativeAbortPaste(); break;
-            case R.id.pastemode: nativeDoPaste(0); break;
-            case R.id.pastesel:  nativeDoPaste(1); break;
-            case R.id.pflipy:    nativeFlipPaste(1); break;
-            case R.id.pflipx:    nativeFlipPaste(0); break;
-            case R.id.protatec:  nativeRotatePaste(1); break;
-            case R.id.protatea:  nativeRotatePaste(0); break;
-            default:             Log.e("Golly","Fix bug in doPasteItem!");
+        int id = item.getItemId();
+        if (id == R.id.abort) {
+            nativeAbortPaste();
+        } else if (id == R.id.pastemode) {
+            nativeDoPaste(0);
+        } else if (id == R.id.pastesel) {
+            nativeDoPaste(1);
+        } else if (id == R.id.pflipy) {
+            nativeFlipPaste(1);
+        } else if (id == R.id.pflipx) {
+            nativeFlipPaste(0);
+        } else if (id == R.id.protatec) {
+            nativeRotatePaste(1);
+        } else if (id == R.id.protatea) {
+            nativeRotatePaste(0);
+        } else {
+            Log.e("Golly","Fix bug in doPasteItem!");
         }
         UpdateEditBar();
     }
@@ -851,12 +890,17 @@ public class MainActivity extends Activity {
     // called when item from mode_menu is selected
     public void doModeItem(MenuItem item) {
         popup.dismiss();
-        switch (item.getItemId()) {
-            case R.id.draw:   nativeSetMode(0); break;
-            case R.id.pick:   nativeSetMode(1); break;
-            case R.id.select: nativeSetMode(2); break;
-            case R.id.move:   nativeSetMode(3); break;
-            default:          Log.e("Golly","Fix bug in doModeItem!");
+        int id = item.getItemId();
+        if (id == R.id.draw) {
+            nativeSetMode(0);
+        } else if (id == R.id.pick) {
+            nativeSetMode(1);
+        } else if (id == R.id.select) {
+            nativeSetMode(2);
+        } else if (id == R.id.move) {
+            nativeSetMode(3);
+        } else {
+            Log.e("Golly","Fix bug in doModeItem!");
         }
         UpdateEditBar();      // update modebutton text
     }

@@ -302,24 +302,24 @@ public class HelpActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // action bar item has been tapped
         Intent intent;
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                // the Home or Up button will go back to MainActivity
-                NavUtils.navigateUpFromSameTask(this);
-                return true;
-            case R.id.open:
-            	finish();
-                intent = new Intent(this, OpenActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.settings:
-            	finish();
-                intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.help:
-                // do nothing
-                break;
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            // the Home or Up button will go back to MainActivity
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        } else if (id == R.id.open) {
+            finish();
+            intent = new Intent(this, OpenActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.settings) {
+            finish();
+            intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.help) {
+            // do nothing
+            ;
         }
         return super.onOptionsItemSelected(item);
     }
