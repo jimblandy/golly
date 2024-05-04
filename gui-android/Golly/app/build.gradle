@@ -57,7 +57,7 @@ dependencies {
 }
 
 task zipHelp(type: Zip) {
-    archiveName "Help.zip"
+    archiveFileName = "Help.zip"
     from "../../../gui-common/Help"
     include "**/*"
     into "Help"
@@ -65,7 +65,7 @@ task zipHelp(type: Zip) {
 }
 
 task zipPatterns(type: Zip) {
-    archiveName "Patterns.zip"
+    archiveFileName = "Patterns.zip"
     from "../../../Patterns"
     include "**/*"
     into "Patterns"
@@ -73,7 +73,7 @@ task zipPatterns(type: Zip) {
 }
 
 task zipRules(type: Zip) {
-    archiveName "Rules.zip"
+    archiveFileName = "Rules.zip"
     from "../../../Rules"
     include "**/*"
     into "Rules"
