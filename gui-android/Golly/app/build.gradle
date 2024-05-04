@@ -61,7 +61,7 @@ task zipHelp(type: Zip) {
     from "../../../gui-common/Help"
     include "**/*"
     into "Help"
-    destinationDir file("src/main/assets/")
+    destinationDirectory = file("src/main/assets/")
 }
 
 task zipPatterns(type: Zip) {
@@ -69,7 +69,7 @@ task zipPatterns(type: Zip) {
     from "../../../Patterns"
     include "**/*"
     into "Patterns"
-    destinationDir file("src/main/assets/")
+    destinationDirectory = file("src/main/assets/")
 }
 
 task zipRules(type: Zip) {
@@ -77,7 +77,7 @@ task zipRules(type: Zip) {
     from "../../../Rules"
     include "**/*"
     into "Rules"
-    destinationDir file("src/main/assets/")
+    destinationDirectory = file("src/main/assets/")
 }
 
 preBuild.dependsOn(zipHelp)
