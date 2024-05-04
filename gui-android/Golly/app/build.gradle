@@ -50,6 +50,8 @@ android {
             path 'CMakeLists.txt'
         }
     }
+
+    namespace "net.sf.golly"
 }
 
 dependencies {
