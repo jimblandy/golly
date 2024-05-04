@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.4.1)
+project(Golly)
 
 file(GLOB golly_SRC
     "../../../gui-common/*.cpp"
