@@ -19,3 +19,4 @@ app/src/main/assets/Patterns.zip
 app/src/main/assets/Rules.zip
 
 .externalNativeBuild
+**/.cxx
