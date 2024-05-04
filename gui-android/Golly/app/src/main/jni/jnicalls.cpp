@@ -501,7 +501,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv* env)
 {
     return allowundo;
 }
@@ -509,7 +509,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo(JNIEnv* env)
 {
     return currlayer->undoredo->CanUndo();
 }
@@ -517,7 +517,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* env)
 {
     return currlayer->undoredo->CanRedo();
 }
@@ -525,7 +525,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeInfoAvailable(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeInfoAvailable(JNIEnv* env)
 {
     return currlayer->currname != "untitled";
 }
@@ -555,7 +555,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRedo(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env)
 {
     return currlayer->algo->getGeneration() > currlayer->startgen;
 }
@@ -615,7 +615,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopGenerating(JNIEn
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
 {
     return generating;
 }
@@ -844,7 +844,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeNumLayers(JNIEnv* env
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativePasteExists(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativePasteExists(JNIEnv* env)
 {
     return waitingforpaste;
 }
@@ -852,7 +852,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativePasteExists(JNIEnv* 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeSelectionExists(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeSelectionExists(JNIEnv* env)
 {
     return currlayer->currsel.Exists();
 }
@@ -1032,7 +1032,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetValidExtension
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeValidExtension(JNIEnv* env, jobject obj, jstring filename)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeValidExtension(JNIEnv* env, jobject obj, jstring filename)
 {
     std::string fname = ConvertJString(env, filename);
 
@@ -1052,7 +1052,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeValidExtension(JNIEn
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeFileExists(JNIEnv* env, jobject obj, jstring filename)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_MainActivity_nativeFileExists(JNIEnv* env, jobject obj, jstring filename)
 {
     std::string fname = ConvertJString(env, filename);
 
@@ -1674,7 +1674,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeUnzipFile(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_HelpActivity_nativeDownloadedFile(JNIEnv* env, jobject obj, jstring jurl)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_HelpActivity_nativeDownloadedFile(JNIEnv* env, jobject obj, jstring jurl)
 {
     std::string path = ConvertJString(env, jurl);
     path = path.substr(path.rfind('/')+1);
