@@ -13,7 +13,7 @@ android {
             cmake {
 
                 // needed for std::string etc
-                // also need System.loadLibrary("stlport_shared") in BaseApp.java
+                // also need System.loadLibrary("c++_shared") in BaseApp.java
                 arguments "-DANDROID_STL=c++_shared"
 
                 // define ANDROID_GUI used in the shared C++ code in gui-common;
@@ -46,6 +46,8 @@ android {
     }
 
     namespace "net.sf.golly"
+
+    ndkVersion "26.3.11579264"
 }
 
 dependencies {
