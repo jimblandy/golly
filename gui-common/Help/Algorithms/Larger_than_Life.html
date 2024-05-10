@@ -39,7 +39,9 @@ R<i>r</i>,C<i>c</i>,M<i>m</i>,S<i>smin</i>..<i>smax</i>,B<i>bmin</i>..<i>bmax</i
 </dd>
 
 <p>
-R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500,
+except for <a href="#triangular">Triangular</a> where <i>r</i> is from 1 to 250 and
+<a href="#gaussian">Gaussian</a> where <i>r</i> is from 1 to 50).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
@@ -53,23 +55,34 @@ These diagrams show the supported neighborhoods, N<i>n</i>, for <i>r</i> = 3:
 Square grid:
 <table cellspacing=6 cellpadding=0>
    <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
-   <tr><td>Moore<br/>(NM)</td><td><img src="images/NM.png"></td><td>&nbsp;&nbsp;von Neumann<br/>&nbsp;&nbsp;(NN)</td><td><img src="images/NN.png"></td><td>&nbsp;&nbsp;Circular<br/>&nbsp;&nbsp;(NC)</td><td><img src="images/NC.png"></td></tr>
-   <tr></tr><td>L2/Euclidean<br/>(N2)</td><td><img src="images/N2.png"></td><td>&nbsp;&nbsp;Checkerboard<br/>&nbsp;&nbsp;(NB)</td><td><img src="images/NB.png"></td><td>&nbsp;&nbsp;Hash<br/>&nbsp;&nbsp;(N#)</td><td><img src="images/NZ.png"></td></tr>
-   <tr><td>Cross<br/>(N+)</td><td><img src="images/N+.png"></td><td>&nbsp;&nbsp;Saltire<br/>&nbsp;&nbsp;(NX)</td><td><img src="images/NX.png"></td><td>&nbsp;&nbsp;Star<br/>&nbsp;&nbsp;(N*)</td><td><img src="images/NS.png"></td></tr>
+   <tr><td>Moore<br>(NM)</td><td><img width="73" height="73" src="images/NM.png"></td>
+   <td>&nbsp;&nbsp;von Neumann<br>&nbsp;&nbsp;(NN)</td><td><img width="73" height="73" src="images/NN.png"></td>
+   <td>&nbsp;&nbsp;Circular<br>&nbsp;&nbsp;(NC)</td><td><img width="73" height="73" src="images/NC.png"></td></tr>
+   <tr></tr><td>L2/Euclidean<br>(N2)</td><td><img width="73" height="73" src="images/N2.png"></td>
+   <td>&nbsp;&nbsp;Checkerboard<br>&nbsp;&nbsp;(NB)</td><td><img width="73" height="73" src="images/NB.png"></td>
+   <td>&nbsp;&nbsp;Aligned Checkerboard<br>&nbsp;&nbsp;(ND)</td><td><img width="73" height="73" src="images/ND.png"></td></tr>
+   <tr><td>Cross<br>(N+)</td><td><img width="73" height="73" src="images/N+.png"></td>
+   <td>&nbsp;&nbsp;Saltire<br>&nbsp;&nbsp;(NX)</td><td><img width="73" height="73" src="images/NX.png"></td>
+   <td>&nbsp;&nbsp;Star<br>&nbsp;&nbsp;(N*)</td><td><img width="73" height="73" src="images/NS.png"></td></tr>
+   <tr><td>Hash<br>(N#)</td><td><img width="73" height="73" src="images/NZ.png"></td><td></tr>
 </table>
 <p>
 Hexagonal grid:
 <table cellspacing=6 cellpadding=0>
    <tr><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th><th>Type</th><th>Diagram</th></tr>
-   <tr><td>Hexagonal<br/>(NH)</td><td><img src="images/NH.png"></td></tr><td>&nbsp;&nbsp;Asterisk<br/>&nbsp;&nbsp;(NA)</td><td><img src="images/NA.png"></td><td>&nbsp;&nbsp;Tripod<br/>&nbsp;&nbsp;(N3)</td><td><img src="images/N3.png"></td></tr>
+   <tr><td>Hexagonal<br>(NH)</td><td><img width="85" height="85" src="images/NH.png"></td></tr>
+   <td>&nbsp;&nbsp;Asterisk<br>&nbsp;&nbsp;(NA)</td><td><img width="85" height="85" src="images/NA.png"></td>
+   <td>&nbsp;&nbsp;Tripod<br>&nbsp;&nbsp;(N3)</td><td><img width="85" height="85" src="images/N3.png"></td></tr>
 </table>
 <p>
-Use <a href="open:Scripts/Lua/hexgrid.lua">hexgrid.lua</a> or <a href="open:Scripts/Lua/showinviewer.lua">showinviewer.lua</a> to view Hexagonal, Asterisk or Tripod neighborhoods on a hexagonal grid.
+Use <a href="open:Scripts/Lua/hexgrid.lua">hexgrid.lua</a> or <a href="open:Scripts/Lua/showinviewer.lua">showinviewer.lua</a>
+to view Hexagonal, Asterisk or Tripod neighborhoods on a hexagonal grid.
 <p>
 Triangular grid:
+<a name="triangular"></a>
 <table cellspacing=6 cellpadding=0>
    <tr><th>Type</th><th>Diagram</th></tr>
-   <tr><td>Triangular<br/>(NL)</td><td><img src="images/NL.png"></td></tr>
+   <tr><td>Triangular<br>(NL)</td><td><img width="64" height="64" src="images/NL.png"></td></tr>
 </table>
 <p>
 The Triangular neighborhood flips the neighborhood vertically on alternating cells.
@@ -128,7 +141,7 @@ If you have a 4-state pattern and want state weights 0, 1, 2, 10 then you'd spec
 <dd>R<i>r</i>,C4,S<i>list</i>,B<i>list</i>,NW<i>neighborhood weights</i>,012A</dd>
 <p>
 Finally, if you want a non-square grid you can add a suffix to the rule string of H for hexagonal grid or L for triangular grid.
-Triangular grid will cause weightings to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+Triangular grid will cause weightings to be treated as a triangular neighborhood and flip vertically on alternating cells.
 
 <p>&nbsp;<br>
 <a name="gaussian"></a>
@@ -136,12 +149,9 @@ Triangular grid will cause weightings to be treated as a triangular neighbourhoo
 <p>
 Gaussian defines a weighted neighborhood based on the defined range. Only square grids are allowed.
 <p>
-Example: <a href="rule:R2,C2,M0,S31..48,B24..38,NG">R2,C2,M0,S31..48,B24..38,NG</a> (<i>r = 2</i>) 
-<dd>1, 2, 3, 2, 1</dd>
-<dd>2, 4, 6, 4, 2</dd>
-<dd>3, 6, 9, 6, 3</dd>
-<dd>2, 4, 6, 4, 2</dd>
-<dd>1, 2, 3, 2, 1</dd>
+Example: <a href="rule:R3,C2,M0,S24..31,B24..28,NG">R3,C2,M0,S24..31,B24..28,NG</a> (<i>r = 3</i>)
+<p>
+<img width="73" height="73" src="images/NG.png">
 
 <p>&nbsp;<br>
 <a name="custom"></a>
@@ -180,7 +190,8 @@ Rule becomes:
 <dd>R2,C0,S<i>list</i>,B<i>list</i>,N@891891</dd>
 <p>
 If you want a non-square grid you can add a suffix to the rule string of H for hexagonal grid or L for triangular grid.
-Triangular grid will cause the custom neighborhood to be treated as a triangular neighbourhood and flip vertically on alternating cells.
+Triangular grid will cause the custom neighborhood to be treated as a triangular neighborhood and flip vertically
+on alternating cells.
 
 <p>&nbsp;<br>
 <a name="sandb"></a>
@@ -298,7 +309,8 @@ R<i>r</i>,C<i>c</i>,S<i>list</i>,B<i>list</i>,N<i>n</i>
 </dd>
 
 <p>
-R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500, except for Triangular where <i>r</i> is from 1 to 250).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500,
+except for Triangular where <i>r</i> is from 1 to 250 and Gaussian where <i>r</i> is from 1 to 50).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 256).<br>
 S<i>list</i> - specifies the counts for a state 1 cell to survive.<br>
 B<i>list</i> - specifies the counts for a dead cell to become a birth.<br>

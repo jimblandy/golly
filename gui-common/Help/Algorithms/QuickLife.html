@@ -203,6 +203,8 @@ These encode into 22 base64 characters.
 <p>
 Von Neumann neighborhoods have 5 cells (center plus 4 neighbors) which gives 32 (2^5) possible combinations of cells.
 These encode into 6 base64 characters.
+<p>
+For any of the neighborhoods the base64 encoding can optionally be postfixed with two base64 padding characters: "==".
 
 
 <p><a name="b0emulation"></a>&nbsp;<br>
@@ -257,8 +259,8 @@ has B(max-x)(letter). For 4-neighbor isotropic letters use the table above.
 For example, B0124-k/S1c25 becomes B34k5678/S01-c34678 (even) and B367c/S4-k678 (odd).
 
 <p>
-For a MAP rule B0 is equivalent to the first bit being 0. Smax is equivalent to the 511th
-bit being 1. For B0 with Smax the rule is converted to NOT(REVERSE(bits)). For B0 with Smax
+For a MAP rule B0 is equivalent to the first bit being 1. Smax is equivalent to the 511th
+bit being 1. For B0 with Smax the rule is converted to NOT(REVERSE(bits)). For B0 without Smax
 the even rule is NOT(bits) and the odd rule is REVERSE(bits).
 
 <p>
@@ -292,7 +294,7 @@ its left and right neighbors, where 1 is a live cell and 0 is a dead cell.
 Here are the state transitions for W30:
 <pre>
    111  110  101  100  011  010  001  000
-    |    |    |    |    |    |    |    | 
+    |    |    |    |    |    |    |    |
     0    0    0    1    1    1    1    0  = 30 (2^4 + 2^3 + 2^2 + 2^1)
 </pre>
 Note that odd-numbered rules have the same problem as B0 rules.  Golly
