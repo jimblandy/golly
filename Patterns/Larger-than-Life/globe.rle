@@ -1,0 +1,28 @@
+#N globe.rle
+#O Mirek Wojtowicz, March 2000
+#C Dense-enough to survive small starting patterns form circular
+#C shapes that resemble planets watched from spaceships.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Globe.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 50, y = 48, rule = R8,C2,S163-223,B74-252
+23b14o$17b14o6b2o$16b6ob6o2b2o6bo$15bob11ob5o6b2o$14b16o3b3o6bo$10b4ob
+2ob5o4bob8o6b2o$10b3ob6o3b2o3bo2b3obob2o5bo$9b2o2b5o3b10ob4o2bo5bo$8b
+2o2b22ob3obo4bo$8bo2b30o3bo$7bo2b18o3b16o$6bo2b6ob7o3b3o2b3o2b5obobo2b
+o$6b10ob2o2bo4bo2b5o2bo2b4obo2bo$5b4o2b7o2bo4bo4b7o2b4obo3bo$4b2obo2b
+2ob2obo3bo4bob2ob4o2bo2b4obo4bo$4b3o3b4obo3bo4bob9obo2bob2obo4bo$3b4o
+3b6o3bo4b3ob7obo2bob2obo4bo$2b4o3b5obo2bo4b2o3bob5obo2bob2obo4bo$2b4o
+3b6o2bo3b3o3b8obo2bob2obo4bo$2b3o3b7obo4b2o3b9obo2bob3o5bo$2b2o3b7obo
+4b3ob5ob4ob2o2bob3o5bo$2b2o2bob8o4b5ob8ob2o2bob3o5bo$b3o2b8o5bob3ob9ob
+2o2bob3o5bo$b2o2b2ob6o4bob3o2b2ob5o2b2o2bob3o5bo$3o2bob6o4b2obobob3obo
+b3o2b2o2bob3o5bo$3o4b6o4bobobo2b2o2b5o2b2o2bob3o5bo$3o4b6o4bobobobob5o
+b2o2b2o2b5o5bo$3o4b6o5bobobob5obobo2bo3b4o5bo$3o4b6o4b2ob2ob6obobob2o
+3b4o5bo$3o4b6o4b4ob8o2bob2o2b5o4bo$3o4b6o4b10ob2o2b2ob3ob4o4bo$6ob15ob
+5obob2ob2o3b2obo3bo$3o3b20o2bobob2obo3bo2bo3bo$3o4b2ob4ob2o5b4o2b4o3bo
+2b2ob2o2bo$3o4b2ob3obo2b14o4bob3obo3bo$3o4b2obob10o3b3o2bo4b3o2bo3bo$
+3o5b19o2bo2b4obob2o3bo$5o3bo2b3o7b11o2bobo2bo2b3o$2bob3o2bobob3o3b2o3b
+ob3o4bobo2b4o$3b2ob21o5bo2b4o$5bob12o3b2o2b10obo$6b6obo3b14o2bo2bo$10b
+27o$11bo7b10o6bo$12b3o18b3o$15b3o12b3o$18b3o6b3o$21b6o!

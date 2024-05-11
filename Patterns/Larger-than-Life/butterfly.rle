@@ -1,0 +1,17 @@
+#N butterfly.rle
+#O Dean Hickerson, 28 Feb 2000
+#C Range-5, orthogonal, speed 9/31 spaceship, whose population
+#C varies by a factor of 10 (min 37, max 370).
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Butterfly.rle
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 25, y = 37, rule = R5,C2,S33-51,B31-45
+18b4o$16b4ob3o$14b5o3b3o$14b3o5b3o$13b3o6b3o$11b3o9b2o$b7o2b3o10b2o$3o
+b7o12b2o$11o13bo$3o2b4o14b2o$3o4b2o2b3o8b2o$3o18b2o$o17bob2o$o16b4o$2o
+13bob3o$b2o13b2o$b3obo6bob3o$2b5o4b4o$3b4o5b2o$2b5o4b4o$b3obo6bob3o$b
+2o13b2o$2o13bob3o$o16b4o$o17bob2o$3o18b2o$3o4b2o2b3o8b2o$3o2b4o14b2o$
+11o13bo$3ob7o12b2o$b7o2b3o10b2o$11b3o9b2o$13b3o6b3o$14b3o5b3o$14b5o3b
+3o$16b4ob3o$18b4o!

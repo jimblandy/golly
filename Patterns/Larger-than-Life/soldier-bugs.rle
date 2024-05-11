@@ -1,0 +1,31 @@
+#N soldier-bugs.rle
+#O Dean Hickerson, 2001
+#C
+#C Dean Hickerson discovered the "soldier bug" in 2001.
+#C A single soldier bug moves around in a circle, with period 552.
+#C This pattern by Dave Greene shows how twelve soldier bugs
+#C can be arranged to create a period 46 oscillator.
+#C
+#C Original filename for MCell-format file:  SoldierBugs.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 113, y = 113, rule = R7,C2,S64-113,B65-95
+49b4o$47b7o$46b10o$45b12o$45b13o19b2o$44b3o5b6o17b6o$22b3o19b3o5b6o16b
+9o$20b7o17b3o5b6o15b11o$19b9o16b3o5b6o14b3ob9o$18b12o15b3o2b8o14b3o4b
+7o$18b13o14b12o14b3o6b6o$17b5o3b6o15b10o15b3o6b6o$17b2o7b5o16b7o17b3o
+6b6o$17b2o7b5o18b3o20b3obo2b7o$17b3o5b6o41b13o$17b3o2b9o42b11o$18b3ob
+8o44b8o$19b10o46b6o16b5o$20b7o50b2o17b8o$21b5o69b4o2b4o$94b3o4b5o$93b
+3o5b5o$93b5o4b5o$93b5o4b5o$93b5o4b5o$93b6o2b5o$94b12o$9b5o81b10o$8b7o
+80b9o$7b9o80b8o$6b10o81b6o$6b11o$5b13o$5b5o3b5o$4b5o5b5o$4b5o5b5o$5b4o
+4b5o$5b3o6b4o$6b4o3b4o$7b9o$8b7o$10b3o3$104b4o$102b8o$101b10o$100b4o4b
+4o$100b3o5b4o$99b4o5b5o$99b5o4b5o$99b5o4b5o$100b13o$100b12o$101b10o$4b
+6o91b10o$3b8o91b8o$2b10o91b6o$2b10o$b12o$13o$5o4b5o$5o4b5o$5o5b4o$b4o
+5b3o$b4o4b4o$2b10o$3b8o$5b4o3$100b3o$98b7o$97b9o$96b4o3b4o$95b4o6b3o$
+95b5o4b4o$94b5o5b5o$94b5o5b5o$95b5o3b5o$95b13o$96b11o$10b6o81b10o$9b8o
+80b9o$9b9o80b7o$8b10o81b5o$7b12o$7b5o2b6o$6b5o4b5o$6b5o4b5o$6b5o4b5o$
+7b5o5b3o$7b5o4b3o$8b4o2b4o69b5o$9b8o17b2o50b7o$11b5o16b6o46b10o$31b8o
+44b8ob3o$29b11o42b9o2b3o$28b13o41b6o5b3o$27b7o2bob3o20b3o18b5o7b2o$27b
+6o6b3o17b7o16b5o7b2o$27b6o6b3o15b10o15b6o3b5o$27b6o6b3o14b12o14b13o$
+27b7o4b3o14b8o2b3o15b12o$28b9ob3o14b6o5b3o16b9o$29b11o15b6o5b3o17b7o$
+30b9o16b6o5b3o19b3o$32b6o17b6o5b3o$34b2o19b13o$56b12o$57b10o$59b7o$60b
+4o!

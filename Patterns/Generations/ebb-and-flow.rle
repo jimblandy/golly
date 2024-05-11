@@ -1,0 +1,15 @@
+#N ebb-and-flow.rle
+#O Michael Sweney, October 1999
+#C A slow exploding rule with interesting internal dynamics
+#C within the growth boundaries.  Different types of symmetries will
+#C often determine whether a pattern grows indefinitely or dies out.
+#C Presents challenging engineering problems.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Ebb-and-flow.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 12, y = 15, rule = 012478/36/18
+12A$A2.6A2.A$A.8A.A$3A.4A.3A$3A.4A.3A$A.8A.A$A.3A2.3A.A$A.3A2.3A.A$A.
+3A2.3A.A$A.8A.A$3A.4A.3A$3A.4A.3A$A.8A.A$A2.6A2.A$12A!

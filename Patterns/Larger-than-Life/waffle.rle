@@ -1,0 +1,29 @@
+#N waffle.rle
+#O David Griffeath
+#D      Here is a a beautiful 'waffle' for the range 7 Box Larger than Life rule
+#D with birth interval [75,170] and survival interval [100,200], after 90
+#D updates, with all 0's boundary conditions. The initial configuration is
+#D a central lattice circle of occupied sites with radius 12.
+#D 
+#D Starting from a 50-50 random mix of live and dead cells, the dynamics
+#D produce a familiar nucleation scenario - most of the space relaxes to
+#D all 0's, but isolated pockets of activity form seeds for spreading
+#D colonies of 1's. Try it! Early on we observe an assortment of waffles,
+#D most imperfect, but some highly patterned and nearly symmetric. Later the
+#D imperfections take over and cover the space with another variety of
+#D pseduo-random 'seething gurp'.
+#D 
+#D Intrigued by the delicate transient droplet patterns, Kellie Evans segued
+#D into 'engineering' mode in search of the perfect waffle. She discovered
+#D that for the LtL given here, if we start from a radius 10 lattice circle,
+#D then the waffle appears to grow 'perfectly' for more than 70 updates before
+#D beginning to unravel.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Waffle.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 23, y = 23, rule = R7,C2,S99-199,B75-170
+7b9o$5b13o$4b15o$3b17o$2b19o$b21o$b21o$23o$23o$23o$23o$23o$23o$23o$23o
+$23o$b21o$b21o$2b19o$3b17o$4b15o$5b13o$7b9o!

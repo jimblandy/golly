@@ -1,0 +1,13 @@
+#N banner.rle
+#O Mirek Wojtowicz, June 1999
+#C The banner.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Banner.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 23, y = 18, rule = 2367/3457/5
+19.2A$19.AD2A$20.DBA$17.D.A2BA$16.C2.3A$15.B2D2A$14.A2CA$11.D.A2BA$6.
+D3.C2.3A$4.2C3.B2D2A$4.2D2.A2CA$3.C2D.A2BA$2.2AD2.3A$.A2B2D2A$.AB2CA$
+.2BCA$ADBA$3A!

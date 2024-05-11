@@ -1,0 +1,12 @@
+#N transers.rle
+#O John Elliott; Mirek Wojtowicz
+#C Rule and original pattern by John Elliott
+#C Slightly enhanced by Mirek Wojtowicz, May 1999
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Transers.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 4, y = 27, rule = 345/26/5
+4A$4A$.2A$.2A20$4A$4A$.2A$.2A!

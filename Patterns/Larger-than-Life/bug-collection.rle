@@ -1,0 +1,38 @@
+#N bug-collection.rle
+#C Collection of spaceships in Bosco's Rule.
+#C Found by Kellie Evans and Dean Hickerson, about 2000-2003.
+#C Outdated as of December 2021 - many more have since been found.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  BugCollection.rle
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 123, y = 131, rule = R5,C2,S33-57,B34-45
+11bo3bo78bo4bo$11bo9bo71b3o3bo$9b3o3bo3b3o3b3o53b3o3b3o4bo4b3o$9bobo3b
+o3bobo3bobo53bobo3bo6bo4bobo$9b3o3bo3b3o3b3o53b3o3bo6bo4bobo$27bo$25b
+3o6$42b3o70b3o$40b6o68b6o$40b7o66b9o$7b3o7bo3bo3b3o12b8o41bo7bo3bo10b
+2o3b6o$7bo8bo4bo3bobo11b4o2b5o39bo6bo4bo10bo5b5o$7b3o5bo5bo3bobo11b3o
+4b4o39bo5bo5bo9b2o6b4o$7bobo4bo6bo3bobo10b3o6b4o38bo4bo6bo10bo5b5o$7b
+3o3bo7bo3b3o11bo6b5o38bo3bo7bo10b2o3b6o$39b2o4b5o63b9o$40b2o2b6o64b6o$
+41b2ob5o66b3o$43b3o10$115b4o$43b4o67b7o$42b6o65b9o$41b8o36b3o7bo3b3o
+10b2o3b5o$b3o3b3o7bo3bobo3b3o11b9o37bo6bo6bo10bo5b5o$3bo5bo6bo4bobo5bo
+10b3o4b4o34b3o5bo5b3o10bo5b5o$b3o3b3o5bo5b3o3b3o10b2o5b4o34bo6bo6bo12b
+2o3b5o$bo7bo4bo8bo3bo12b2o5b4o34b3o3bo7b3o11b9o$b3o3b3o3bo9bo3b3o11bo
+4b5o63b7o$42bo2b5o65b4o$43b5o$44b2o9$116bo$115b4o$43b5o66b7o$42b6o37b
+3o7bo3b3o11b10o$42b7o36bo8bo4bo12b2o4b5o$9b3o7bo3bo3b3o11b10o34b3o5bo
+5b3o10bo6b4o$9bobo6bo4bo3bo13b3o3b4o36bo4bo6bobo10bo6b4o$9b3o5bo5bo3b
+3o10b3o4b4o34b3o3bo7b3o10b2o4b5o$9bobo4bo6bo3bobo11bo5b4o62b10o$9b3o3b
+o7bo3b3o11b2o3b5o63b7o$42b2ob5o65b4o$43b5o68bo$45bo10$116b2o$42b4o69b
+5o$41b6o67b8o$41b7o37bobo7bo3b3o11bob8o$15bo7bo3b3o11b8o36bobo6bo4bo
+12b2o4b5o$15bo6bo6bo10b4ob5o35b3o5bo5b3o10b2o4b5o$15bo5bo5b3o10b2o4b4o
+37bo4bo8bo10b2o4b5o$15bo4bo6bo12bo5b4o37bo3bo7b3o11bob8o$15bo3bo7b3o
+10b2o4b4o64b8o$41b2o2b5o65b5o$42b7o67b2o$43b3o10$116bo$115b3o$114b6o$
+113b8o$81b3o7bo3bo3b3o10b3o2b6o$81bobo6bo4bo5bo10bo5b5o$81b3o5bo5bo3b
+3o9b2o6b4o$81bobo4bo6bo3bo12bo5b5o$81b3o3bo7bo3b3o10b3o2b6o$113b8o$
+114b6o$115b3o$116bo11$116b2o$114b6o$43b4o66b9o$42b6o33b3o7bo3bo3b3o10b
+4o2b4o$bo2bo6b3o2bo7bo2bobo11b9o33bo6bo4bo5bo10b2o5b4o$o3bo8bo3bo5bo3b
+obo10b10o33bo5bo5bo3b3o10b2o5b4o$o3bo6b3o3bo4bo4b3o10b2o4b4o33bo4bo6bo
+5bo10b2o5b4o$o3bo2b2o2bo5bo3bo7bo10b2o4b4o33bo3bo7bo3b3o10b3o4b4o$bo2b
+o2b2o2b3o2bo3bo8bo10b2o3b5o62b4o2b4o$8bo32b2ob6o63b9o$7bo34b7o65b6o$
+44b2o70b2o!

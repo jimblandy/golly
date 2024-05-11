@@ -1,0 +1,11 @@
+#N perfect-spiral.rle
+#O Mirek Wojtowicz, June 1999
+#C Perfect spiral construction
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Perfect-spiral.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 4, y = 4, rule = 2/234/5
+.D$.2AD$.3A$D2AD!

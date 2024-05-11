@@ -1,0 +1,22 @@
+#N gnarl.rle
+#O David Griffeath
+#C A popular form of recreational mathematics is to grow fractals,
+#C snowflakes, and related patterns from simple CA rules. Here is a nice
+#C example provided by Kellie Evans. The rule is an LTL model in which cell
+#C x is occupied next time if and only if the range 1 Diamond neighborhood
+#C centered at x contains exactly 1 occupied cell this time. Started from a
+#C configuration of two diagonally adjacent occupied cells, a periodic
+#C tiling emerges in two quadrants of the plane while complex dynamics
+#C occupy the other two quadrants. We have named this experiment in homage
+#C to Rudy Rucker. His book "Artificial Life Lab" (Waite Group, 1993)
+#C suggests that the three fundamental characteristics of life are gnarl,
+#C sex and death. Check it out.
+#C
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Gnarl.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 2, y = 2, rule = R1,C2,S0,B1,NN
+bo$o!

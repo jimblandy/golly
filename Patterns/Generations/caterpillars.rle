@@ -1,0 +1,15 @@
+#N caterpillars.rle
+#O Mirek Wojtowicz, June 1999
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Caterpillars.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 67, y = 102, rule = 124567/378/4
+51.AB$51.3AC$51.3AC$51.AB5$51.AB.B$51.5AC$51.5AC$51.AB.B5$51.AB.B.AC$
+51.7AB$51.7AB$51.AB.B.AC10$52.2A$54.2A2$54.A.2A7$54.A$53.A$52.A$51.A.
+A$51.A.A$52.A$53.A$54.A8$52.3A$51.A9$54.A$53.A$52.A$51.A.A$51.A.A$52.
+A8$51.A$51.A$51.A$51.A8$66.A$2.BA46.AB14.A$C3A46.3AC12.A$C3A46.3AC12.
+A$2.BA46.AB14.A$66.A$66.A$66.A$66.A2$3.BA45.AB$.C3A45.3AC$.C3A45.3AC$
+3.BA45.AB!

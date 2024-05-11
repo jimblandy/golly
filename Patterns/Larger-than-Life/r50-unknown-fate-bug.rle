@@ -1,0 +1,37 @@
+#N r50-unknown-fate-bug.rle
+#O Dean Hickerson, July 23 2017
+#C     This is a bug in a range-50 rule that moves southeast with
+#C speed about 0.18 for more than 2 billion generations.
+#C     Attempts have been made to find out its final fate,
+#C but it is still unknown what it will converge to
+#C (per forum messages #p70331 and #p71041).
+#C
+#C Reference:
+#C   https://www.conwaylife.com/forums/viewtopic.php?p=47111#p47111
+#C
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+#C
+#C LifeViewer commands:
+#C [[ STEP 2 ZOOM 3 TRACK 0.182 0.182 ]]
+x = 96, y = 96, rule = R50,C2,S3333-5192,B3025-6154
+39b14o$35b9o7b7o$33b9o12b7o$31b10o15b6o$30b10o18bobobo$28b27o5bo$27b
+32o$25b36o$25b3o2b33o$24bobob36o$27b39o$23bo2b41o$22bob45o$19bob49o$
+17b2ob52o$16bo2b54o5bo$15bo2b57o4bo$14bo2b59o4bo$14bob61o$13bob63o$14b
+65o4bo$13b67o4bo$12b69o4bo$11bob68o5bo$9bo2b70o5bo$7b2o3b72o3b2o$7b3ob
+74o3bo$6b3ob76o2b2o$5b3ob78o2b2o$5b3ob79o2bo$4b34o17b33o2b2o$3b34o8b5o
+7b32ob3o$3b32o8b9o7b31ob2o$2b32o8b11o7b34o$2b31o7b14o7b33o$b31o7b17o6b
+32o$b31o6b18o7b32o$b30o6b20o6b32o$b29o6b5o8b9obo4b31o$30o5b5o10b11o3b
+32o$4ob25o4b5o12b10o3b32o$3o2b25o4b4o14b10o2b32o$2o3b25o3b5o15b9o3b31o
+$2o3b25o2b6o15b9o3b31o$o4b25o2b6o15b11ob31o$o4b25ob7o15b11ob31o$o4b25o
+b7o15b11ob31o$o4b25ob7o15b9obob31o$o4b25ob7o14b6ob3o3b27ob3o$o4b25ob8o
+13b6ob3obob27ob3o$o4b25o2b8o10b7o2b3o3b31o$2o3b25o2b9o9b6o3b3o3b31o$2o
+3b25o3b9o6b7o3b3o3b32o$bo3b25o4b20o4b2o4b32o$b2o2b25o5b18o4b2o5b27ob3o
+$b2o3b25o4b17o5b2o4b32o$b3o2b25o6b14o5b2o5b32o$b3o2b26o6b12o4b3o5b28ob
+4o$2b3ob26o7b9o4b4o6b28ob3o$2b2o3b26o5b16o7b28ob4o$2b4ob27o5b14o7b29ob
+obo$3bo4b27o6b11o7b29o3b2o$4bo3b28o8b3o10b30o2bobo$9b29o6b4obo5b31o4b
+2o$10b32o10b34o4bo$10b75o5bo$11b73o5bo$12b72o$12b71o$13b69o$14b67o$14b
+66o$15b65o$16b63o$16b62o$17b60o$18b58o$19b56o$15bo4b54o$16bo4b52o$17bo
+4b49o$24b46o$25b44o$20bo4b43o$21bo4b40o$22bo4b38o$23bo4b35o$24b2o3b33o
+$25b3o3b30o$27b2o3b27o3bo3bo$28b4ob24o2b2o2b3o$30b24ob5ob3o$31b17o2b
+12o$33b27o$36b22o$39b15o!

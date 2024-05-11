@@ -1,0 +1,29 @@
+#N r100-neumann-bug.rle
+#C An orthogonal bug (speed = 85c/10) in a range 100 rule
+#C using the extended von Neumann neighborhood.
+#C Very similar to the period-3 bug shown in figure 11.38, page 218,
+#C in Chapter 11, "Larger than Life's Extremes" by Kellie Michele Evans,
+#C in Game of Life Cellular Automata (Andrew Adamatzky, ed., Springer 2010).
+#C
+#C Previous name:  R100-NN-bug.rle
+#C Converted to Golly native HROT format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 138, y = 124, rule = R100,C2,S5611-9775,B5612-7585,NN
+34b16o38b16o$31b30o16b30o$28b82o$26b86o$25b88o$23b92o$22b94o$20b98o$
+19b100o$18b102o$17b104o$16b106o$15b108o$14b110o$13b112o$12b114o$11b
+116o$11b116o$10b118o$9b120o$8b122o$8b122o$7b124o$7b124o$6b126o$5b128o$
+5b128o$4b130o$4b130o$3b132o$3b132o$3b132o$2b134o$2b134o$2b134o$b136o$b
+136o$b136o$b136o$138o$138o$138o$66o6b66o$61o16b61o$58o22b58o$55o28b55o
+$53o32b53o$52o34b52o$50o38b50o$49o40b49o$49o40b49o$b48o40b48o$b47o42b
+47o$b47o42b47o$b46o44b46o$b46o44b46o$2b45o44b45o$2b45o44b45o$2b45o44b
+45o$3b43o46b43o$3b43o46b43o$3b43o46b43o$4b42o46b42o$4b42o46b42o$5b41o
+46b41o$5b41o46b41o$5b41o46b41o$6b40o46b40o$6b40o46b40o$6b40o46b40o$7b
+39o46b39o$7b39o46b39o$7b39o46b39o$8b38o46b38o$8b38o46b38o$9b37o46b37o$
+9b37o46b37o$9b37o46b37o$10b36o46b36o$10b36o46b36o$10b36o46b36o$11b35o
+46b35o$11b35o46b35o$11b35o46b35o$12b34o46b34o$12b34o46b34o$12b34o46b
+34o$12b34o46b34o$13b33o46b33o$13b33o46b33o$13b33o46b33o$13b33o46b33o$
+14b32o46b32o$14b32o46b32o$14b32o46b32o$14b32o46b32o$15b31o46b31o$15b
+31o46b31o$15b31o46b31o$16b30o46b30o$16b30o46b30o$16b30o46b30o$17b29o
+46b29o$17b29o46b29o$17b29o46b29o$18b29o44b29o$18b33o36b33o$19b37o26b
+37o$19b100o$20b98o$21b96o$21b96o$22b94o$23b92o$24b90o$26b86o$28b82o$
+30b78o$33b72o$37b64o$41b56o$46b46o$52b34o$58b22o!

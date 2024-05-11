@@ -1,0 +1,66 @@
+#N bosco-gun-collection.rle
+#C Smallest known period-166 guns for 7 spaceships in Bosco's Rule.
+#C All are based on collisions between the sparks of 2 Boscos.
+#C These were found by Dean Hickerson and Kellie Evans in April-May, 2000.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  GunCollection.rle
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 510, y = 527, rule = R5,C2,S33-57,B34-45
+13bo3bo306bo4bo$13bo9bo299b3o3bo$11b3o3bo3b3o3b3o281b3o3b3o4bo4b3o$11b
+obo3bo3bobo3bobo281bobo3bo6bo4bobo$11b3o3bo3b3o3b3o281b3o3bo6bo4bobo$
+29bo$27b3o14$43b3o300b4o$41b6o298b7o30b3o$41b7o296b2o2b6o27b5o$40b9o
+294b2o4b5o25b5ob2o$40b3o3b4o265b3o7bo3b3o10b2o6b4o24b5o3b2o$40b3o3b4o
+265bo8bo4bo12b3o6b4o22b5o5b2o$40bo5b4o265b3o5bo5b3o10b4o4b4o23b4o6b3o$
+40bo5b4o267bo4bo6bobo11b4o2b4o24b4o5b4o$40b2o2b6o265b3o3bo7b3o11b9o26b
+4o3b4o$41b7o296b7o28b10o$43b3o298b6o30b8o$345b4o32b7o$382b5o$383b2o4$
+64b5o$64b6o$63b8o$63b9o$62b3o4b4o$62b3o4b4o$62b2o5b4o$63bo3b5o$b3o3b3o
+7bo3bobo3b3o33b2o2b5o$3bo5bo6bo4bobo5bo34b6o$b3o3b3o5bo5b3o3b3o$bo7bo
+4bo8bo3bo$b3o3b3o3bo9bo3b3o280bobobobobobobobobobobobobobobobobobobobo
+bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobo
+bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobo
+bobobobobobobobobobo7$96b6o$96b6o$96b6o$96b6o$96b6o$96b6o3$381b3o$380b
+6o$379b8o$378b10o$376b5o3b4o$110b6o259b5o4b5o$110b6o259b4o6b4o$110b6o
+259b4o6b4o111b3o$110b6o259b5o5b3o110b6o$110b6o259b5o5b2o110b8o$110b6o
+259b6o3bo111b10o$377b8o111b11o$380b3o112b5o4b5o$495b5o4b6o$495b4o6b5o$
+495b4o6b5o$497b2o5b6o$499bo4b6o$500b2ob6o$501b5o$502b2o10$obobobobobob
+obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
+obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
+obobobobobobobobobobobobobobobobobo24$315bobo7bo3b3o$44b4o267bobo6bo4b
+o$43b6o266b3o5bo5b3o$42b8o267bo4bo8bo$42b9o266bo3bo7b3o$41b4o2b5o$41b
+3o4b4o$40b3o6b3o$41bo6b4o$41b2o4b5o$42b2o2b6o$43b2ob4o$45b3o$9b3o7bo3b
+o3b3o$9bobo6bo4bo3bo$9b3o5bo5bo3b3o$9bobo4bo6bo3bobo$9b3o3bo7bo3b3o$
+65b6o$65b7o$64b9o$64b4ob5o$63b4o3b5o23b6o305b2o$63b3o5b4o23b6o303b3ob
+2o$63bo7b4o23b6o301b5o2b2o$64bo5b5o23b6o301b4o4bo$64b2o3b5o24b6o301b4o
+5bo$65b2ob5o25b6o301b4o3b3o$66b5o334b9o$68bo337b8o$407b6o$408b5o11$
+391b6o$391b6o$391b6o$391b6o$391b6o$391b6o$346b3o90b3o$obobobobobobobob
+obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
+obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
+obobobobobobobobobobobobobobobo157b6o88b6o$342b5o3bo86bo3b5o$342b4o5bo
+84bo5b4o$342b4o5b2o82b2o5b4o$342b4o4b3o82b3o4b4o$342b4o3b3o84b3o3b4o$
+343b8o86b8o$344b7o86b7o$345b6o86b6o$346b4o88b4o24$310bobobobobobobobob
+obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
+obobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob
+obobobobobobobobobobobobobobobobobobobobobo25$347b3o$346b5o31b4o$345b
+2ob5o27b7o$344b2o3b5o24b6o2b2o$311b3o7bo3bo3b3o11b2o5b5o23b5o4b2o$311b
+obo6bo4bo5bo10b3o6b4o23b4o6b2o$311b3o5bo5bo3b3o10b4o5b4o22b4o6b3o$311b
+obo4bo6bo3bo13b4o3b4o24b4o4b4o$311b3o3bo7bo3b3o11b10o26b4o2b4o$344b8o
+28b9o$344b7o30b7o$345b5o32b6o$347b2o34b4o31$129b4o$128b6o$128b7o$127b
+9o$127b3o3b4o$126b3o4b4o$126b3o4b4o$127bo5b4o$128bo2b6o$128b7o$130b3o
+54$169b3o$167b6o$167b7o$166b8o$15bo7bo3b3o134b5o2b3o$15bo6bo6bo134b4o
+4b3o$15bo5bo5b3o134b3o5b3o$15bo4bo6bo136b4o5b2o$15bo3bo7b3o134b5o4bo$
+165b5o2bo$167b5o$169b2o2$56b3o$55b6o$54b7o$52b10o$52b4o4b2o$52b4o5bo$
+52b5o3b2o$53b3o3b2o$53b7o$55b4o9$137b5o$136bo2b4o$135bo3b5o$134b2o4b5o
+$134b3o4b4o$134b4o2b5o$135b9o$135b8o$136b6o$136b5o27$55b4o$53b7o$53b3o
+3b2o$52b5o3b2o$52b4o5bo$52b4o4b2o$52b10o$54b7o$55b6o$56b3o52$obobobobo
+bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobo
+bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobo
+bobobobobobobobobobobobobobobobobobobo25$43b3o62b3o$42b5o60b5o$40b4o2b
+2o58b2o2b4o$39b5o3b2o56b2o3b5o$39b4o5bo56bo5b4o$38b4o5b3o54b3o5b4o$39b
+4o3b3o56b3o3b4o$39b10o56b10o$40b8o26b6o26b8o$41b7o26b6o26b7o$42b5o27b
+6o27b5o$74b6o$74b6o$74b6o3$bo2bo6b3o2bo7bo2bobo$o3bo8bo3bo5bo3bobo$o3b
+o6b3o3bo4bo4b3o$o3bo2b2o2bo5bo3bo7bo$bo2bo2b2o2b3o2bo3bo8bo$8bo$7bo8$
+60b6o$60b7o$59b9o$59b4ob5o$58b4o3b5o$58b3o5b4o$58bo7b4o$59bo5b5o$59b2o
+3b5o$60b2ob5o$61b5o$63bo!

@@ -1,0 +1,17 @@
+#N meteor-guns.rle
+#O Charles A. Rockafellor, March 2000
+#C Almost any design above a certain level of complexity results in
+#C a slowly exploding ball of fire which then spits fairly large numbers
+#C of generational gliders "meteors".
+#C There are easily discovered stable oscillators and static patterns.
+#C A truly satisfying environment (if only finding a limited growth meteor
+#C gun were as easy...).
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Meteor-guns.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 23, y = 19, rule = 01245678/3/8
+8.A$8.A$9.A$10.A7.5A$10.A6.A$11.A3.2A$12.A.A$12.2A$11.A2.A$10.A4.A$9.
+A6.A$8.A7.A$6.2A9.A$5.A12.A$3.2A14.A$2.A16.A$.A17.A$.A$2A!

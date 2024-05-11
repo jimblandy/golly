@@ -1,0 +1,15 @@
+#N bug-gun.rle
+#O Dean Hickerson, 27 Feb 2000
+#C First gun found in Bosco's Rule.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  BugGun.rle
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 28, y = 90, rule = R5,C2,S33-57,B34-45
+4b2o15b3o$2b6o12b5o$b2o2b4o10b7o$2o3b5o9b8o$o5b4o8b4o2b4o$3o3b4o8b2o4b
+4o$10o7b2o6b3o$b8o9bo5b4o$b7o11bo3b5o$2b5o13b7o$4b2o15b3o32$19b6o$19b
+6o$19b6o$19b6o$19b6o$19b6o32$4b2o15b3o$2b5o13b7o$b7o11bo3b5o$b8o9bo5b
+4o$10o7b2o6b3o$3o3b4o8b2o4b4o$o5b4o8b4o2b4o$2o3b5o9b8o$b2o2b4o10b7o$2b
+6o12b5o$4b2o15b3o!

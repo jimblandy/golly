@@ -1,0 +1,12 @@
+#N blinkers.rle
+#C "Bugsmovie" rule oscillators
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Blinkers.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 45, y = 15, rule = R10,C0,S122-211,B123-170
+6b3o$4b7o$3b9o$2b11o20b11o$b13o18b13o$b13o18b13o$15o17b13o$15o17b13o$
+15o17b13o$b13o18b13o$b13o18b13o$2b11o19b13o$3b9o20b13o$4b7o22b11o$6b3o
+!

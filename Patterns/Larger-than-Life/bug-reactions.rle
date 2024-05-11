@@ -1,0 +1,34 @@
+#N bug-reactions.rle
+#O Dean Hickerson, May 2000
+#C Three reactions in which blocks modify a passing bug:
+#C
+#C First, a diagonal, speed 8/16 bug becomes an orthogonal,
+#C speed 5/6 bug.
+#C
+#C Second, an orthogonal, speed 4/5 bug becomes an orthogonal,
+#C speed 8/12 bug.  (Another 4/5 bug is shown below to make the
+#C change clearer.)
+#C
+#C Third, pairs of blocks can slow down a Bosco oscillator, giving
+#C oscillators with periods 166 + 188n.   Here are a normal
+#C Bosco (p166), one using one pair of blocks (p284), and one
+#C using two pairs of blocks (p402).
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  BugReactions.rle
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 266, y = 250, rule = R5,C2,S33-57,B34-45
+114bo$113b4o$111b2ob5o$111bo3b5o$110bo5b5o$109b3o5b4o$110b3o3b5o$110b
+4ob5o$111b8o$111b7o$112b5o$113b3o8$151b6o$151b6o$151b6o$151b6o$151b6o$
+151b6o48$134b6o$134b6o$134b6o$134b6o$134b6o$134b6o7$113b2o$112b5o$111b
+8o$110bob8o$109b2o4b5o$109b2o4b5o$109b2o4b5o$110bob8o$111b8o$112b5o$
+113b2o9$113b2o$112b5o$111b8o$110bob8o$109b2o4b5o$109b2o4b5o$109b2o4b5o
+$110bob8o$111b8o$112b5o$113b2o80$4b3o91b3o91b3o$3b7o87b7o87b7o$2bo3b5o
+85bo3b5o85bo3b5o$bo5b4o84bo5b4o84bo5b4o$2o5b4o83b2o5b4o83b2o5b4o$b2o4b
+4o84b2o4b4o31b6o47b2o4b4o31b6o$b4o2b4o84b4o2b4o31b6o47b4o2b4o31b6o$2b
+8o86b8o32b6o48b8o32b6o$2b7o87b7o33b6o48b7o33b6o$3b5o89b5o34b6o49b5o34b
+6o$4b3o91b3o35b6o50b3o35b6o12$94b6o88b6o$94b6o88b6o$94b6o88b6o$94b6o
+88b6o$94b6o88b6o$94b6o88b6o7$260b6o$260b6o$260b6o$260b6o$260b6o$260b6o
+12$218b6o$218b6o$218b6o$218b6o$218b6o$218b6o!

@@ -1,0 +1,12 @@
+#N bloomerang.rle
+#O John Elliott, July 2000
+#C A wave rule that rebounds into a kinder, gentler form 
+#C of kaleidoscopics - rounded, soft, full, and slow.
+#C
+#C From Mirek Wojtowicz's 'MCell 4.20' pattern collection:
+#C http://www.mirekw.com/ca/download.html
+#C Original filename for MCell-format file:  Bloomerang.mcl
+#C Converted to Golly native RLE format as per discussion in
+#C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226
+x = 5, y = 5, rule = 234/34678/24
+5A$5A$5A$5A$5A!
