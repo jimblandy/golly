@@ -1,0 +1,11 @@
+#N triangular-replicator-turmite.rle
+#O toroidalet, 20 March 2021
+#C
+#C This turmite embeds the behaviour of the unusual replicator
+#C that can be found in the Non-Totalistic folder under the name
+#C "triangular-replicator.rle". Some transitions remain undefined.
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=126386#p126386
+x = 1, y = 1, rule = TriRep
+B!

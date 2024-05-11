@@ -1,7 +1,8 @@
+#N p270 frothing puffer rake
+#O David Bell, 20 October 2002.
 #C Period 270 forward rake using period tripling of p90 input streams.
 #C In this rake, the base c/3 ship (found in Jan. 2002 by Paul Tooke)
 #C cycles between all three possible frothing periods: 21, 12, and 6.
-#C David Bell, 20 October 2002.
 x = 249, y = 371, rule = B3/S23
 72bo85bo$71b3o83b3o$52boboo14bo3bo14boobo45boboo14bo3bo14boobo$51boob
 ooboobo10b3o10boboobooboo43boobooboobo10b3o10boboobooboo$50bobboboboob

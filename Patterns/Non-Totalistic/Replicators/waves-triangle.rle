@@ -1,0 +1,10 @@
+#N waves-triangle.rle
+#O GUYTU6J, 20 November 2019
+#C
+#C This pattern appears to roughly trace out Sierpinski's triangle in
+#C an unconventional, novel way.
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=85518#p85518
+x = 3, y = 4, rule = B2k3ai4irw7e/S2aek3ijnqr4i
+2o$obo$2bo$3o!

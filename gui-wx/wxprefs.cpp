@@ -353,6 +353,8 @@ void AddDefaultKeyActions()
     keyaction[(int)'g'][mk_ALT].file =     wxT("Scripts\\Lua\\toSuper.lua");
     keyaction[(int)'h'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'h'][mk_ALT].file =     wxT("Scripts\\Lua\\toHistory.lua");
+    keyaction[(int)'i'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'i'][mk_ALT].file =     wxT("Scripts\\Lua\\toInvestigator.lua");
     keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts\\Lua\\toStandard.lua");
     keyaction[(int)'k'][mk_ALT].id =       DO_OPENFILE;
@@ -368,6 +370,8 @@ void AddDefaultKeyActions()
     keyaction[(int)'g'][mk_ALT].file =     wxT("Scripts/Lua/toSuper.lua");
     keyaction[(int)'h'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'h'][mk_ALT].file =     wxT("Scripts/Lua/toHistory.lua");
+    keyaction[(int)'i'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'i'][mk_ALT].file =     wxT("Scripts/Lua/toInvestigator.lua");
     keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts/Lua/toStandard.lua");
     keyaction[(int)'k'][mk_ALT].id =       DO_OPENFILE;

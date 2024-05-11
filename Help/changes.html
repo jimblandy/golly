@@ -8,7 +8,9 @@
 <p>
 <ul>
 <li> Added the new Investigator rule family to the <a href="Algorithms/Super.html">Super</a> algorithm.
-<li> Minor improvements to error-checking and recovery in toHistory.lua and toSuper.lua.
+<li> Adjusted Super conversion scripts to handle Investigator rules, including a new toInvestigator.lua conversion script
+     that will be mapped by default to Alt+I (Option+I on Mac) whenever Golly creates a new GollyPrefs file.
+<li> Minor improvements to error-checking and recovery in toHistory.lua and toSuper.lua conversion scripts.
 <li> Various changes to the RLE parsing code, mainly for consistency with LifeViewer
      (see details <a href="formats.html#lvconsistency">here</a>).
 <li> Fixed a crash on Windows that could occur after disconnecting an audio device.
@@ -118,6 +120,7 @@
 <a href="open:Patterns/Non-Totalistic/Replicators/lightspeed-rule-150-replicator.rle">lightspeed-rule-150-replicator.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/linear-replicator-with-replicating-strings.rle">linear-replicator-with-replicating-strings.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/looping-bee.rle">looping-bee.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/one-and-a-half-fractal.rle">one-and-a-half-fractal.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/partial-fractal-tracer.rle">partial-fractal-tracer.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/polyglot-replicator.rle">polyglot-replicator.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/quadratic-replicator-produces-gliders.rle">quadratic-replicator-produces-gliders.rle</a>,
@@ -131,6 +134,7 @@
 <a href="open:Patterns/Non-Totalistic/Replicators/space-filling-line-triangle-replicator.rle">space-filling-line-triangle-replicator.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/spaceship-producing-quadratic-replicator.rle">spaceship-producing-quadratic-replicator.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/three-way-replicator.rle">three-way-replicator.rle</a>,
+<a href="open:Patterns/Non-Totalistic/Replicators/waves-triangle.rle">waves-triangle.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Replicators/whitespace-quadratic-replicator.rle">whitespace-quadratic-replicator.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Spaceships/ironic-spaceship.rle">ironic-spaceship.rle</a>,
 <a href="open:Patterns/Non-Totalistic/Spaceships/rebellious-lwss.rle">rebellious-lwss.rle</a>,
@@ -145,10 +149,12 @@
 <a href="open:Patterns/Non-Totalistic/temporary-superbreeder.rle">temporary-superbreeder.rle</a>,
 <a href="open:Patterns/Non-Totalistic/whitespace-breeder.rle">whitespace-breeder.rle</a>,
 <a href="open:Patterns/Other-Rules/circle-generator.rle">circle-generator.rle</a>,
+<a href="open:Patterns/Other-Rules/triangular-replicator-turmite.rle">triangular-replicator-turmite.rle</a>,
 <a href="open:Patterns/Other-Rules/smosmosmosmos.rle">smosmosmosmos.rle</a>,
 <a href="open:Patterns/Other-Rules/so-many-ships-2.rle">so-many-ships-2.rle</a>,
 <a href="open:Patterns/Three-Dimensional/p126-christmas-tree.rle3">p126-christmas-tree.rle3</a>,
 <a href="open:Patterns/Three-Dimensional/rokicki-replicator-rule.rle3">rokicki-replicator-rule.rle3</a>.
+<li> Added rule: <a href="edit:Rules/TriRep.rule">Rules/TriRep.rule</a>
 <li> Deleted pattern: oscillator-stamp-collection-12August2022.rle<br>
 (replaced by <a href="open:Patterns/Life/Oscillators/oscillator-stamp-collection-31January2023.rle">oscillator-stamp-collection-31January2023.rle</a>).
 <li> The comments in a large number of existing patterns have been modified (broken links deleted or fixed,
