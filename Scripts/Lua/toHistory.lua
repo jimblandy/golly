@@ -1,4 +1,4 @@
--- Fast [Rule] or [Rule]Super to [Rule]History converter,
+-- Fast [Rule] or [Rule]Super or [Rule]Investigator to [Rule]History converter,
 --   intended to be mapped to a keyboard shortcut, e.g., Alt+H
 -- Sanity checks and Lua translation by Dave Greene, May 2017
 -- Creates special rule and runs it for one generation, then switches to Life 
@@ -6,6 +6,7 @@
 -- Preserves step and generation count
 -- v1.1: skip the SuperToHistory conversion unless the current name has a "Super" suffix
 -- v1.2: better error-checking and recovery by GUYTU6J, 30 April 2023
+-- v1.3: include check for [Rule]Investigator patterns, don't attempt to convert
 
 local g = golly()
 
@@ -65,18 +66,27 @@ end
 
 step = g.getstep()
 -- If rulestring contains "Super" suffix, remove it and continue
-if algo == "Super" and baserule:sub(-5) == "Super" then
-    baserule = baserule:sub(1,#baserule-5)
-    CreateRule()
-    g.setrule("SuperToHistory")
-    g.run(1)
-    g.setgen("-1")
+if algo == "Super" then
+    if baserule:sub(-5) == "Super" then
+        baserule = baserule:sub(1,#baserule-5)
+        CreateRule()
+        g.setrule("SuperToHistory")
+        g.run(1)
+        g.setgen("-1")
+    elseif baserule:sub(-12) == "Investigator" then
+        g.exit("Please use Alt/Option+J (toStandard.lua) to convert to a Standard rule "..
+               "before using this script to convert the pattern to a History rule.")
+    end
 end
 
 -- attempt to set the new History rule to see if it is valid
 local function tryrule()
     g.setrule(baserule.."History"..suffix)
 end
+
+-- DMG: just run "tryrule()" here on a StateInvestigator pattern
+--      after breaking the above Investigator check. Where is this failing?
+
 local status, err = pcall(tryrule)
 if err then
     g.note("Conversion failed. This '"..baserule.."' rule is not supported by the Super algo.\n"

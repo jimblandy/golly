@@ -22,8 +22,13 @@ end
 
 step = g.getstep()
 -- If rulestring contains "History" suffix, remove it and continue
-if algo == "Super" and baserule:sub(-7) == "History" then
-    baserule = baserule:sub(1, #baserule-7)
+if algo == "Super" then
+    if baserule:sub(-7) == "History" then
+        baserule = baserule:sub(1, #baserule-7)
+    elseif baserule:sub(-12) == "Investigator" then
+        g.exit("Please use Alt/Option+J (toStandard.lua) to convert to a Standard rule "..
+            "before using this script to convert the pattern to a Super rule.")
+    end
 end
 
 -- attempt to set the new Super rule to see if it is valid

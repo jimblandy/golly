@@ -10,44 +10,8 @@ local g = golly()
 local rule = g.getrule()
 local algo = g.getalgo()
 
--- deal with bounded-universe syntax appropriately
-ind = string.find(rule, ":")
-suffix = ""
-baserule = rule
-if ind then
-    suffix = rule:sub(ind)
-    baserule = rule:sub(1,ind-1)
-end
-
--- No effect if the current rule is not a Super algo rule
-if algo ~= "Super" then g.exit("The current rule is not a [Rule]History or [Rule]Super rule.") end
-
--- If rulestring contains "Super" suffix, remove it and continue
-if baserule:sub(-5) == "Super" then baserule = baserule:sub(1,#baserule-5) end
-
--- If rulestring contains "History" suffix, remove it and continue
-if baserule:sub(-7) == "History" then baserule = baserule:sub(1, #baserule-7) end
-
--- If rulestring is "LifeV" then convert it to B3/S23V
-if baserule:lower() == "lifev" then baserule = "B3/S23V" end
-
--- If rulestring is "LifeH" then convert it to B3/S23H
-if baserule:lower() == "lifeh" then baserule = "B3/S23H" end
-
-ruletext = [[@RULE SuperToStandard
-@TABLE
-n_states:26
-neighborhood:oneDimensional
-symmetries:none
-var a={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25}
-var b={a}
-var c={2,4,6,8,10,12,14,16,18,20,22,24}
-var d={3,5,7,9,11,13,15,17,19,21,23,25}
-c,a,b,0
-d,a,b,1]]
-   
-local function CreateRule()
-    local fname = g.getdir("rules").."SuperToStandard.rule"
+local function CreateRule(filename, ruletext)
+    local fname = g.getdir("rules")..filename..".rule"
     local f=io.open(fname,"r")
     if f~=nil then
         io.close(f)  -- rule already exists
@@ -61,9 +25,66 @@ local function CreateRule()
         end
     end
 end
-      
-CreateRule()
-g.setrule("SuperToStandard")
+
+-- deal with bounded-universe syntax appropriately
+ind = string.find(rule, ":")
+suffix = ""
+baserule = rule
+if ind then
+    suffix = rule:sub(ind)
+    baserule = rule:sub(1,ind-1)
+end
+
+-- No effect if the current rule is not a Super algo rule
+if algo ~= "Super" then g.exit("The current rule is not a [Rule]History, [Rule]Super, or [Rule]Investigator rule.") end
+
+ruletextSuper = [[@RULE SuperToStandard
+@TABLE
+n_states:26
+neighborhood:oneDimensional
+symmetries:none
+var a={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25}
+var b={a}
+var c={2,4,6,8,10,12,14,16,18,20,22,24}
+var d={3,5,7,9,11,13,15,17,19,21,23,25}
+c,a,b,0
+d,a,b,1]]
+
+CreateRule("SuperToStandard", ruletextSuper)
+
+ruletextInvestigator = [[@RULE InvestigatorToStandard
+@TABLE
+n_states:21
+neighborhood:oneDimensional
+symmetries:none
+var a={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}
+var b={a}
+var c={2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}
+c,a,b,0]]
+
+CreateRule("InvestigatorToStandard", ruletextInvestigator)
+
+-- If rulestring contains "Super", "History", or "Investigator" suffix, remove it and continue
+if baserule:sub(-5) == "Super" then
+    baserule = baserule:sub(1,#baserule-5)
+    g.setrule("SuperToStandard")
+elseif baserule:sub(-7) == "History" then
+    baserule = baserule:sub(1, #baserule-7)
+    g.setrule("SuperToStandard")
+elseif baserule:sub(-12) == "Investigator" then
+    baserule = baserule:sub(1,#baserule-12)
+    g.setrule("InvestigatorToStandard")
+else
+    g.show("Rule is not one of the known formats supported by the Super algorithm.")
+    g.exit()
+end
+
+-- If rulestring is "LifeV" then convert it to B3/S23V
+if baserule:lower() == "lifev" then baserule = "B3/S23V" end
+
+-- If rulestring is "LifeH" then convert it to B3/S23H
+if baserule:lower() == "lifeh" then baserule = "B3/S23H" end
+
 g.run(1)
 step = g.getstep()
 
