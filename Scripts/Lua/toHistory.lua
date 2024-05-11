@@ -6,7 +6,7 @@
 -- Preserves step and generation count
 -- v1.1: skip the SuperToHistory conversion unless the current name has a "Super" suffix
 -- v1.2: better error-checking and recovery by GUYTU6J, 30 April 2023
--- v1.3: include check for [Rule]Investigator patterns, don't attempt to convert
+-- v1.3, 11 May 2024: include check for [Rule]Investigator patterns, don't attempt to convert
 
 local g = golly()
 

@@ -1,6 +1,8 @@
 -- [Rule] or [Rule]History to [Rule]Super converter,
 --   intended to be mapped to a keyboard shortcut, e.g., Alt+G
 -- v1.1: better error-checking by GUYTU6J, 30 April 2023
+-- v1.2, 11 May 2024: support [Rule]Investigator patterns
+
 local g = golly()
 
 local rule = g.getrule()

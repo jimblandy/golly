@@ -1,5 +1,6 @@
 -- Fast [Rule] to [Rule]Investigator converter,
 -- intended to be mapped to a keyboard shortcut, e.g., Alt+I
+-- v1.0, 11 May 2024: initial version
 
 local g = golly()
 

@@ -4,6 +4,7 @@
 -- Creates special rule and runs it for one generation, then switches to Life 
 -- Replace 2k + 1-> 1 and 2k -> 0
 -- Preserves step and generation count
+-- v1.1, 11 May 2024: support [Rule]Investigator patterns
 
 local g = golly()
 
