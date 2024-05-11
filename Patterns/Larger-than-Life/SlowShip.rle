@@ -1,6 +1,0 @@
-#C Range-10, diagonal, speed 2/1846 spaceship.
-#C Dean Hickerson, Sep 1, 2002.
-x = 26, y = 26, rule = R10,C0,M1,S154..262,B133..265,NM
-13bo$15bo$12b5o$11b5obo$10b7obo$9b9o$8b10o$4bo2b12o$3bob15o$4b17o$b10o
-4b7o$ob8o6b7o$ob8o6b7o$ob8o6b8obo$3b7o6b8obo$3b8o4b10o$4b18obo$6b14o2b
-o$7b12o2bo$8b10o$8b9o$7bob7o$8bob5o$10b4o$10bo$12bo!

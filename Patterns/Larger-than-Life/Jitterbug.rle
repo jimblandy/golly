@@ -1,6 +1,0 @@
-#C Jitterbug
-#C A range-4 bug that alternately moves north and south, but
-#C also a little bit east each time.  Its speed is 4/40.
-#C Dean Hickerson, Dec 22, 2001.
-x = 7, y = 8, rule = R4,C0,M1,S24..38,B22..31,NM
-b4o$o4bo$o4b2o$2o2b3o$7o$b4o$b4o$b4o!
