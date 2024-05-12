@@ -1,0 +1,34 @@
+#N five-margolus-media.rle
+#O Connor Steppie, 10 January 2018
+#C
+#C period-4094 block automaton XOR oscillators
+#C Source:
+#C https://conwaylife.com/forums/viewtopic.php?p=54909#p54909
+#C
+#C This pattern shows a simulation of high-period XOR oscillators in a
+#C Margolus rule, using 2x2 regions in an isotropic non-totalistic
+#C (INT) rule. A summary of the Margolus rulespace can be found here:
+#C https://conwaylife.com/wiki/Margolus_neighbourhood
+#C
+#C In this case, all five possible "Margolus media" actually coexist
+#C in a single rule: blocks can be filled, 3/4 filled, 1/2 filled
+#C (in two different ways), or 1/4 filled.  Many INT rules can emulate
+#C Margolus rules with one or the other of these methods, but rules
+#C that allow all of the methods simultaneously are much rarer.
+#C
+#C As lines are made longer, the oscillator periods change radically,
+#C occasionally becoming very large.  See also horiship-guns.rle.
+#C
+#C Reference for oscillator period lengths:
+#C https://conwaylife.com/forums/viewtopic.php?p=54269#p54269
+#C
+#C A summary by Arie Paap of of some of the many places where
+#C XOR-type oscillators can be found:
+#C https://conwaylife.com/forums/viewtopic.php?p=84994#p84994
+#C
+#C For various Margolus media, see
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=5204
+x = 94, y = 54, rule = B2c3i4i5i/S2c3i4i5iHistory
+44A6.44A$44A6.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A26$25.44A25$
+A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A$.A.A.A.A.A.A.A.A.A.A.A.A.
+A.A.A.A.A.A.A.A.A.A6.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A!

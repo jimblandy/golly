@@ -1,0 +1,18 @@
+#N delta.rle
+#C Generations 345/3/6 was noted and named "LivingOnTheEdge"
+#C by Mirek Wojtowicz in 2000. There is no evidence of this rule being
+#C explored in depth before Golly 2.0.
+#C
+#C This puffer head was found by Tony Smith in 2008 at iteration 191601
+#C from a simple seed. "Delta" demonstrates how 345/3/6 bridges the
+#C border of order--edge of chaos.
+#C
+#C Stabilisation lengthens behind the puffer head at roughly half its
+#C c/2 forward speed. Mechanisms in the head show period doubling
+#C 2 to 8 then multiply by 7 before doubling more.
+#C
+#C Look for the illusion of space ships entering muck then re-emerging
+#C on time and on course.
+x = 13, y = 10, rule = 345/3/6
+8.DB$7.EC3A$.ED2A.A2.DB2A$DC.AB7A$AB.A.A.A.A$2A.B.A.A.A$2A.AC7A$2.EBA
+.A2.DB2A$7.EC3A$8.DB!

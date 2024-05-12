@@ -1,13 +1,14 @@
 #N r50-unknown-fate-bug.rle
 #O Dean Hickerson, July 23 2017
-#C     This is a bug in a range-50 rule that moves southeast with
+#C This is a bug in a range-50 rule that moves southeast with
 #C speed about 0.18 for more than 2 billion generations.
-#C     Attempts have been made to find out its final fate,
+#C
+#C Attempts have been made to find out its final fate,
 #C but it is still unknown what it will converge to
 #C (per forum messages #p70331 and #p71041).
 #C
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=47111#p47111
+#C https://www.conwaylife.com/forums/viewtopic.php?p=47111#p47111
 #C
 #C Converted to Golly native RLE format as per discussion in
 #C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226

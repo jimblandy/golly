@@ -1,0 +1,19 @@
+#N oblique-frontend-rro.rle
+#O LaundryPizza03, 7 July 2020
+#C
+#C High-period reflectorless rotating oscillators are of interest
+#C in the isotropic non-totalistic (INT) rulespace. Most RROs have a
+#C chaotic c/2 orthogonal movement between 90-degree turns. For an
+#C extreme example see loopability-104-rro.rle.
+#C
+#C This RRO is an exception: its frontend moves at (2,1)c/5. A single
+#C copy has a period of 112, so it is 1,2,4-loopable.
+#C 
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=100170#p100170
+#C
+#C For more reflectorless rotating oscillators, see the forum thread
+#C https://conwaylife.com/forums/viewtopic.php?f=11&t=3447
+x = 54, y = 17, rule = B2ce3aiy4a6i/S2aei3-ac4-ntyz5nr6e7c
+48b3o$47b5o$38b2o7bo2b2o$37b3o7b2o$37b2o$37b2obo$38b3o4$3o47b3o$ob2o
+46bob2o$2b2o48b2o$b3o38b2o7b3o$b2o36b2o2bo7b2o$39b5o$40b3o!

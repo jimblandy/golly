@@ -1,0 +1,23 @@
+#N pascal-mod-3-generator.rle
+#O wwei23, 8 November 2019
+#C 
+#C In this rule, a beehive is an unusual replicator such that when
+#C two of it collides, a child copy with 1-tick phase difference is born
+#C in the middle. (This does not happen for HighLife's replicator, for 
+#C comparison.) A generator for these replicators, therefore, produces
+#C a pattern that corresponds to Pascal triangle modulo 3 (as opposed
+#C to a Sierpinski triangle, which is Pascal triangle modulo 2).
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=85065#p85065
+x = 75, y = 55, rule = B2e35y7e/S1c2ace3an
+64b4o$58bobob3o2b3obobo$57bo16bo$58bo8b3obobo$67bo$38b3o$37bo3bo22bo$
+37bo$37bo4bo10bo2bo12bo2bo$38bo3bo9bo4bo10bo4bo$9b2o19b2o8b3o10bo2bo
+12bo2bo$11bo$9b2o9bo2b2o2bo$20b3o2b3o$20bo2b2o2bo2$37bo16bo2b2o2bo$38b
+o12b2ob3o2b3ob2o$25b2o7bo4bo10bo2bo8bo2bo$25b2o6b2o2bob2o2bo7b2ob3o2b
+3ob2o$40bo2bo10bo2b2o2bo$41bobo$41b2o9b2o$35bo$34bobo7b2o14b2o$34bobo
+7b2o14b2o$35bo8b2o14b2o$35bo$34bobo15b2o$34bobo$35bo3$17b2o14b2o14b2o
+14b2o$16bo15bo15bo2bo12bo2bo$17b2o14b2o14b2o14b2o$26bobo26bo$26bobo25b
+o$27bo$10bo2bo$10b4o48bo2bo$10bo2bo47bo4bo$49bo12bo2bo$48b2o$18bobo28b
+o$18bobo$19bo2$b3o$b3o$9b3o$11b2o$2bo5bobo13b2o2b2o$o3bo3b2o14b2o2b2o$
+2bo5b2o14b2o2b2o!

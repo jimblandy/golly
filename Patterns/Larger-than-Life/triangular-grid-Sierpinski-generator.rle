@@ -1,0 +1,7 @@
+#N triangular-grid-Sierpinski-generator.rle
+#O Brian Prentice, 2020
+#C Easily converted into a spaceship:
+#C https://conwaylife.com/forums/viewtopic.php?p=88596#p88596
+x = 58, y = 10, rule = R1,C2,S1,B1,10,11,12,NL
+$2b5o$bo2bo2bo33b5o7b5o$2o3b3o33bobobo7bobobo$o5bo$bob2obob5o30bo11bo
+$5b2obobo2bo28b3o9b3o$6b2o5bo$6b3o$7b2ob2o!

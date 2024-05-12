@@ -1,17 +1,17 @@
 #N liquid-methuseblob-soup.rle
 #O Dave Greene, December 14 2017
 #C
-#C     On October 23, Saka found a Larger than Life rule with freaky
+#C On October 23, Saka found a Larger than Life rule with freaky
 #C liquid dynamics. Soon dvgrn and dani wrote scripts to search for
 #C long-lasting soups under this rule, and the following asymmetric
 #C 100x96 pattern by dvgrn holds a record survival time of 1443 ticks.
 #C 
 #C Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=53652#p53652
+#C https://www.conwaylife.com/forums/viewtopic.php?p=53652#p53652
 #C
-#C     Symmetrical soups turn out to have a much longer maximum
+#C Symmetrical soups turn out to have a much longer maximum
 #C survival time, sometimes 18,000 generations or more.  Reference:
-#C   https://www.conwaylife.com/forums/viewtopic.php?p=53825#p53825
+#C https://www.conwaylife.com/forums/viewtopic.php?p=53825#p53825
 #C
 #C Converted to Golly native HROT format as per discussion in
 #C https://conwaylife.com/forums/viewtopic.php?p=139226#p139226

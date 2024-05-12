@@ -1,0 +1,26 @@
+#N whitespace-puffer.rle
+#O Moosey, 12 May 2019
+#C 
+#C Here in another corner of the whitespace rules is a puffer 
+#C puffing spacefillers at a period of 26. The resulting pattern
+#C grows in population in an unusual way.
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=76107#p76107
+#C
+#C Compare with a period-14 example by jimmyChen2013, 28 March 2021:
+#C https://conwaylife.com/forums/viewtopic.php?p=127178#p127178
+#C 
+#C In the original post, Moosey also offered a stationary
+#C period-184, mod-92 factory of whitespaces:
+#C
+#C x = 25, y = 6, rule = B3ai4ce5c6c7c/S3acein4et5i6cei78
+#C 23bo$12bo2bo8bo$11b4o6b4o$12bo2bo8bo$2o21bo$2o!
+#C
+#C Compare with another pattern where outputs are linear wick-
+#C stretchers instead of quadratic spacefillers, where the population
+#C versus generation curve will converge to a Takagi function
+#C as pointed out in this post:
+#C https://conwaylife.com/forums/viewtopic.php?p=90367#p90367
+x = 11, y = 3, rule = B2i3-cejk4ceky5ci6c7c/S3acein4etyz5i6cei78
+bo7b2o$3o5b3o$bo7b2o!

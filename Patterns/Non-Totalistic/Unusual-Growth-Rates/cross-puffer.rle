@@ -1,0 +1,12 @@
+#N cross-puffer.rle
+#O fluffykitty, 18 April 2019
+#C
+#C A c/2 puffer drops a cross seed (X-pentomino) every 24 ticks.
+#C The cross grows, and if its heads hit other crosses, the remaining
+#C head becomes a dying wickstretcher, eventually starting up another
+#C cross. Compare whitespace-puffer.rle.
+#C
+#C Reference: 
+#C https://conwaylife.com/forums/viewtopic.php?p=75194#p75194
+x = 7, y = 12, rule = B2ci3ae4e/S1c2i3y4et5e
+2bo$b3o$2bo2bo$5bo$4b3o$5bo4$bo$3o$bo!

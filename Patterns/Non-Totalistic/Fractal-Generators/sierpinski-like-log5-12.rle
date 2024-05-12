@@ -1,0 +1,31 @@
+#N sierpinski-like-log5-12.rle
+#O wwei23, 20 October 2019
+#C 
+#C In this rule, there is a replicator with a fractal dimension
+#C of log5(12). Run for a few thousand generations to see how
+#C the resulting triangle is different from others.
+#C 
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=84333#p84333
+#C (Note: many other fractal dimensions are possible. The same post
+#C has another replicator with fractal dimension log3(5), and an
+#C an earlier post showed an example of fractal dimension log5(13).)
+x = 76, y = 96, rule = B2e3-acry4acei5cijy6ak8/S1c2ac3acqr4aejz5nqr6n8
+9b3o4bobobo11b2o$7bo3bo3bob2ob3o7bo4bo$5bob3obo2bo2bo2bo2bo6b2o2b2o$5b
+3o6b3o4b2o7bo4bo$5bob2ob4o18b2o$7b2ob2o8b2o$10b3o$5b3o10bo4bo$b2o8b2o
+2b2o8b2o22b3ob4ob3o2b3o6b3o$b4o4b4o2b4o4b4o21bo2bo6bo2b2o12bo$b2o8b2o
+2b2o8b2o22b2o3b2o3b2o2b3o6b3o$4bo4bo8bo4bo2$6b2o12b2o$20b6o$18bo8bo20b
+4o10b4o$18b2o6b2o19bo4bo8bo4bo$18bo8bo20b4o10b4o$20b6o3$12b2o11bo6bo6b
+o6bo4b2o4b2o$11bo13bo6bo6bo6bo4b2o4b2o6bo$12b2o10b2o5b2o5b2o5b2o3bobo
+13bo$13b3o49bo2$12bo4bo$9b2o8b2o$9b4o4b4o$9bo5bo3b2o$10bo2bo3bo$15bo$
+13b3o$8bo8bo$6bo12bo$6b2obo6bob2o$6bo12bo$b2o5bo8bo$o3bo$o$10bo$3b2o2b
+2o4b2o6b2o4b2o$7b8o6b8o$7b2o4b2o6b2o4b2o9$7b2o4b2o6b2o4b2o$7b8o6b8o$3b
+2o2b2o4b2o6b2o4b2o$10bo$o$o3bo$b2o5bo8bo$6bo12bo$6b2obo6bob2o$6bo12bo$
+8bo8bo$13b3o$15bo$10bo2bo3bo$9bo5bo3b2o$9b4o4b4o$9b2o8b2o$12bo4bo2$13b
+3o49bo$12b2o10b2o5b2o5b2o5b2o3bobo13bo$11bo13bo6bo6bo6bo4b2o4b2o6bo$
+12b2o11bo6bo6bo6bo4b2o4b2o3$20b6o$18bo8bo20b4o10b4o$18b2o6b2o19bo4bo8b
+o4bo$18bo8bo20b4o10b4o$20b6o$6b2o12b2o2$4bo4bo8bo4bo$b2o8b2o2b2o8b2o
+22b2o3b2o3b2o2b3o6b3o$b4o4b4o2b4o4b4o21bo2bo6bo2b2o12bo$b2o8b2o2b2o8b
+2o22b3ob4ob3o2b3o6b3o$5b3o10bo4bo$10b3o$7b2ob2o8b2o$5bob2ob4o18b2o$5b
+3o6b3o4b2o7bo4bo$5bob3obo2bo2bo2bo2bo6b2o2b2o$7bo3bo3bob2ob3o7bo4bo$9b
+3o4bobobo11b2o!

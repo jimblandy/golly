@@ -1,0 +1,17 @@
+#N five-margolus-media2.rle
+#O LaundryPizza03, 15 July 2021
+#C
+#C Seven period-4 photons demonstrating all possible Margolus 
+#C media simulated in a B0 non-totalistic rule. For details see
+#C five-margolus-media.rle.
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=133605#p133605
+x = 88, y = 32, rule = B01e2cei3ei4eit5i6c/S01e2cei3ei4eit5i6c
+20bo5bo33bo5bo$20bo5bo33b2o4b2o$20bo5bo33bo5bo$20bo5bo33b2o4b2o$20bo
+39bo$20bo39b2o$20bo39bo$20bo39b2o$24bobo37bobo$24bobo37b4o$24bobo37bob
+o$24bobo37b4o9$o5bo13b2o4b2o12bo5bo13b2o4b2o12b2o4b2o$41bo5bo13bo5bo
+12b2o4b2o$o5bo13b2o4b2o12bo5bo13b2o4b2o12b2o4b2o$41bo5bo13bo5bo12b2o4b
+2o$o19b2o18bo19b2o18b2o$41bo19bo18b2o$o19b2o18bo19b2o18b2o$41bo19bo18b
+2o$4bobo17b4o16bobo17b4o16b4o$45bobo17bobo16b4o$4bobo17b4o16bobo17b4o
+16b4o$45bobo17bobo16b4o!

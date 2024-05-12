@@ -1,0 +1,12 @@
+#N p17490.rle
+#O FWKnightship, 4 August 2020
+#C A high-period oscillator made from very subtle interactions between
+#C six copies of what would ordinarily be a rotating period-8 oscillator,
+#C which alternates between the shape of an R-pentomino and of one of the
+#C phases of a Life glider.
+#C
+#C Reference:
+#C https://conwaylife.com/forums/viewtopic.php?p=101660#p101660
+x = 22, y = 12, rule = B3-kqry4-nqt5-aceq6-ae7c/S2cek3acijr4cnqtwz5aj6an78
+bo$2o$o3b2o$3bobo3bo$5bo2b2o$8bo3bo$12b2o$13bo3bo$16b2o$16bo3bo$20b2o$
+21bo!
