@@ -147,7 +147,9 @@ than regular 2-state rules would allow.</p>
 <p>[Rule]Investigator rules are a superset of the "Extended Life" rule, devised in 2011 by Martin "Extrementhusiast" Grant, which implemented six new states on top of regular 2-state
 Life which permitted nonstandard behavior.  One of these cells functions identically to the state-6 cell present in [Rule]History and later [Rule]Super.
 <p>An initial version of this rule family specific to the Conway's Life rule, titled StateInvestigator, was devised by conwaylife.com forum user "Entity Valkyrie" in April 2018. Patterns in Extended Life do not use
-the same state numbers as are present in [Rule]Investigator and therefore patterns from Extended Life will need manual conversion to function identically in [Rule]Investigator.</p>
+the same state numbers as are present in [Rule]Investigator. Therefore patterns from Extended Life will need manual conversion to function identically in [Rule]Investigator. Alternatively, <b>safeopenclip.lua</b>
+may be used to attempt an automatic conversion of the Extended Life rule and its variants, to the native "LifeInvestigator" state mapping.</p>
+
 <p>The Investigator algo has the following states:</p>
 
 <table border=1 cellspacing=0 width=700><tr><tr><td><b>State</b></td><td><b>Name</b></td><td><b>Color</b></td><td><b>&nbsp;&nbsp;&nbsp;</b></td><td><b>Description</b></td></tr>
@@ -184,9 +186,12 @@ the default colors for Super rules will be states 0 to 25, the default colors fo
 Investigator rules will be states 33 to 53.
 
 <h2>Conversion scripts</h2>
-<p>Four conversion scripts are included in Golly's Scripts/Lua folder:  <b>toSuper.lua</b>, <b>toHistory.lua</b>, <b>toStandard.lua</b>,
-and <b>toChangeState.lua</b>. Each of these scripts makes sure that the correct suffix is applied to the current rule
--- either "...Super", "...History", or no suffix -- and switches to the Super algorithm if needed.</p>
+<p>Five conversion scripts are included in Golly's Scripts/Lua folder. The first four of these scripts --
+<b>toInvestigator.lua</b>, <b>toSuper.lua</b>, <b>toHistory.lua</b>, and <b>toStandard.lua</b> -- allow
+for switching between the various rule families that the Super algo supports, making sure that the correct
+suffix is applied to the current rule -- "...Investigator", "...Super", "...History", or no suffix --
+switching to the Super algorithm if needed.  The last script, <b>toChangeState.lua</b>, never changes the algo or the rule;
+it simply allows for an easy method of changing one specific state (either in the entire pattern or in a selection) to a different value.</p>
 
 <p>"Upward" conversions, increasing the number of states, are done simply by adding the "History" or "Super" suffix,
 with no changes made to any cell states.  "Downward" conversions are more complicated.  If the suffix were to be changed
@@ -201,15 +206,19 @@ are reduced to state 3 and state 4, respectively.
 <p>Similarly, <b>toStandard.lua</b> converts any odd-numbered Super or History ON state to state 1, and any even-numbered
 state to state 0.  This provides an easy way to remove unwanted history or label cells in a History or Super pattern.</p>
 
+<p> The "Investigator" suffix is a special case, and is not currently considered to be either an "upward" or "downward" conversion --
+simply because there is no obvious standard mapping between Investigator states and History or Super states. The scripts will suggest
+that a downward conversion to a Standard rule should be done from a History or Super rule before conversion to Investigator, and vice versa.
+
 <h3>Key mappings</h3>
 <p>The default key mapping for the conversion scripts is <u>Alt+G</u> for <b>toSuper.lua</b>, <u>Alt+H</u> for <b>toHistory.lua</b>,
-and <u>Alt+J</u> for <b>toStandard.lua</b>.  As usual, the Alt modifier corresponds to the Option key on a Mac.</p>
+<u>Alt+I</u> for <b>toInvestigator.lua</b>, and <u>Alt+J</u> for <b>toStandard.lua</b>. As usual, the Alt modifier corresponds to the Option key on a Mac.</p>
 
 <p>If you have migrated to the current version of Golly from an earlier version, you may have to go to Preferences > Keyboard
 and manually map one or more of these keyboard shortcuts, since they are only mapped when a new GollyPrefs is created.</p>
 
-<p><u>Alt+K</u> is mapped by default to the helper script <b>toChangeState.lua</b>, which allows state adjustments to be made more easily
-in History and Super rules; it is a search-and-replace function for cells of one specific state chosen by a mouse click,
+<p><u>Alt+K</u> is mapped by default to the helper script <b>toChangeState.lua</b>, which allows state adjustments to be made in bulk much more easily
+in History, Super, and Investigator rules. It is a search-and-replace function for cells of one specific state chosen by a mouse click,
 either in the entire pattern or inside a selection. This provides a way to remove or modify unwanted states while retaining others.
 The script remembers the last chosen target state, which is independent Golly's current drawing state. The current target state is
 reported by the script. Change it by clicking the state you want in the edit bar <i>after</i> running the script.</p>
