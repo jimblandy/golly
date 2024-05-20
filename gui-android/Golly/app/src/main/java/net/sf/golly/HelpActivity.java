@@ -22,6 +22,7 @@ import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -195,13 +196,15 @@ public class HelpActivity extends Activity {
         
         gwebview = (WebView) findViewById(R.id.webview);
         gwebview.setWebViewClient(new MyWebViewClient());
-        
+
+        WebSettings settings = gwebview.getSettings();
+
         // JavaScript is used to detect device type
-        gwebview.getSettings().setJavaScriptEnabled(true);
+        settings.setJavaScriptEnabled(true);
 
         // no need???
-        // gwebview.getSettings().setDomStorageEnabled(true);
-        
+        // settings.setDomStorageEnabled(true);
+
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
         if (metrics.densityDpi > 300) {
