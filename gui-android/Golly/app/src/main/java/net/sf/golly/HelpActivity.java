@@ -205,6 +205,8 @@ public class HelpActivity extends Activity {
         // no need???
         // settings.setDomStorageEnabled(true);
 
+        settings.setAllowFileAccess(true);
+
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
         if (metrics.densityDpi > 300) {
