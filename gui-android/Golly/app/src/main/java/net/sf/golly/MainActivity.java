@@ -1231,10 +1231,14 @@ public class MainActivity extends Activity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void PlayBeepSound() {
-        ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
-        if (tg != null) {
+        try {
+            ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
             tg.startTone(ToneGenerator.TONE_PROP_BEEP);
             tg.release();
+        } catch (RuntimeException e) {
+            //
+            // new ToneGenerator() may throw java.lang.RuntimeException: Init failed
+            //
         }
     }
     
