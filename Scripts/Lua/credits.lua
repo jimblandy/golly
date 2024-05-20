@@ -130,7 +130,7 @@ local function animate_credits()
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext1 = [[
-Golly 4.3b1
+Golly 4.3b2
 
 © The Golly Gang:
 
@@ -306,8 +306,8 @@ their fantastic patterns, especially:
 
 
 
-Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene, Chris Rowett,
-Jason Summers, Maks Verver, Robert Munafo, Dongook Lee.
+Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene, Brenton Bostick,
+Chris Rowett, Jason Summers, Maks Verver, Robert Munafo, Dongook Lee.
 
 
 
