@@ -1594,8 +1594,6 @@ static int TranslateKey(int keycode)
         case 188 : return '<';          // Firefox, Chrome and Safari (Mac)
         case 190 : return '>';          // Firefox, Chrome and Safari (Mac)
         
-        case 0x09: return 295 ; //DOM_VK_TAB -> GLFW_KEY_TAB
-        // GLFW_KEY_ESC is not 255???!!! case 0x1B: return 255 ; //DOM_VK_ESCAPE -> GLFW_KEY_ESC
         case 0x6A: return 313 ; //DOM_VK_MULTIPLY -> GLFW_KEY_KP_MULTIPLY
         case 0x6B: return 315 ; //DOM_VK_ADD -> GLFW_KEY_KP_ADD
         case 0x6D: return 314 ; //DOM_VK_SUBTRACT -> GLFW_KEY_KP_SUBTRACT
@@ -1761,6 +1759,8 @@ int OnKeyChanged(int keycode, int action)
     switch (ch) {
         case 13  : StartStop(); break;
         case ' ' : Next(); break;
+        case 9   : Step(); break;
+        case 8   : if (shift_down) ClearOutsideSelection(); else ClearSelection(); break;
         case '_' : GoSlower(); break;
         case '-' : GoSlower(); break;
         case '+' : GoFaster(); break;

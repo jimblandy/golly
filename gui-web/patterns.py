@@ -11,8 +11,8 @@ def walkdir(dir):
             if item.startswith("."):
                 # ignore hidden files (like .DS_Store on Mac)
                 pass
-            elif item.endswith(".lua") or item.endswith(".zip"):
-                # ignore Lua scripts and zip files
+            elif item.endswith(".lua") or item.endswith(".zip") or item.endswith(".rle3"):
+                # ignore Lua scripts, zip files, and RLE3 files (for 3D.lua)
                 pass
             else:
                 result += "addfile(\"" + fullpath[2:] + "\");\n"
