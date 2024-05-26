@@ -1,5 +1,5 @@
 #N exponential-block-pusher.rle
-#O Daniel R. Collazo, 3 June 2017
+#O dani, 3 June 2017
 #C
 #C Earlier that day, wwei47 (formerly wwei23) found a rule where
 #C a T-tetromino is a novel blinker puffer. It "sends pulses through 
@@ -9,12 +9,12 @@
 #C to push the blinkers back again. Therefore the back end progresses 
 #C at a logarithmetic rate".
 #C
-#C Later, Daniel R. Collazo (drc) modified the rule and discovered
-#C a block-pushing reaction at the tail of the puffer. Adam P. Goucher
-#C remarked that, the number of generations between consecutive block 
-#C pushes is given by the formula 114632 * (8192 ** n) - 6 for n in
-#C {0, 1, 2, 3, ...}. In other words, you have to wait 8192 times longer
-#C for the block to be pushed another cell downwards.
+#C Later, dani modified the rule and discovered a block-pushing reaction
+#C at the tail of the puffer. Adam P. Goucher remarked that, the number
+#C of generations between consecutive block pushes is given by the
+#C formula 114632 * (8192 ** n) - 6 for n in #C {0, 1, 2, 3, ...}.
+#C In other words, you have to wait 8192 times longer for the block to
+#C be pushed another cell downwards.
 #C
 #C Reference:
 #C https://conwaylife.com/forums/viewtopic.php?p=44012#p44012

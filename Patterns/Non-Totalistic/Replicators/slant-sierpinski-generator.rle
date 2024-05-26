@@ -1,5 +1,5 @@
 #N slant-sierpinski-generator.rle
-#O Daniel R. Collazo, 29 July 2017
+#O dani, 29 July 2017
 #C
 #C T-tetromino in this rule is a one-dimensional replicator that
 #C travels at 6c/12 at its front (where the tip points) but 6c/16 at
