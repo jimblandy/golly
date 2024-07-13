@@ -19,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -185,14 +186,18 @@ public class RuleActivity extends Activity {
         gwebview = (WebView) findViewById(R.id.webview);
         gwebview.setWebViewClient(new MyWebViewClient());
 
+        WebSettings settings = gwebview.getSettings();
+
         // no need for JavaScript???
-        // gwebview.getSettings().setJavaScriptEnabled(true);
+        // settings.setJavaScriptEnabled(true);
+
+        settings.setAllowFileAccess(true); // for file URLs
         
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
         if (metrics.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
-            gwebview.getSettings().setDefaultFontSize(24);
+            settings.setDefaultFontSize(24);
         }
 
         getActionBar().hide();

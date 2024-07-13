@@ -205,13 +205,13 @@ public class HelpActivity extends Activity {
         // no need???
         // settings.setDomStorageEnabled(true);
 
-        settings.setAllowFileAccess(true);
+        settings.setAllowFileAccess(true); // for file URLs
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
         if (metrics.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
-            gwebview.getSettings().setDefaultFontSize(24);
+            settings.setDefaultFontSize(24);
         }
 
         if (firstcall) {
