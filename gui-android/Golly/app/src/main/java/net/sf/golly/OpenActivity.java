@@ -362,9 +362,13 @@ public class OpenActivity extends Activity {
             Arrays.sort(files);         // sort into alphabetical order
             for (File file : files) {
                 if (file.isDirectory()) {
-                    String dirname = prefix + file.getName() + "/";
-                    result += dirname + "\n";
-                    result += enumerateDirectory(file, dirname);
+                    if (file.getName().equals("Three-Dimensional")) {
+                        // ignore this directory (should be empty)
+                    } else {
+                        String dirname = prefix + file.getName() + "/";
+                        result += dirname + "\n";
+                        result += enumerateDirectory(file, dirname);
+                    }
                 } else {
                     result += prefix + file.getName() + "\n";
                 }

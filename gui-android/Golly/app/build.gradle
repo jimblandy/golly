@@ -65,7 +65,9 @@ task zipHelp(type: Zip) {
 task zipPatterns(type: Zip) {
     archiveFileName = "Patterns.zip"
     from "../../../Patterns"
-    include "**/*"
+    // include "**/*"
+    // avoid including *.rle3 and *.zip files:
+    include "**/*.rle", "**/*.rle.gz", "**/*.mc", "**/*.mc.gz", "**/*.mcl"
     into "Patterns"
     destinationDirectory = file("src/main/assets/")
 }
