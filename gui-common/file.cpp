@@ -1010,10 +1010,11 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
 
 // -----------------------------------------------------------------------------
 
+const char* HTML_PREFIX = "GET-";   // prepended to html filename
+bool httpslink = false;
+
 void GetURL(const std::string& url, const std::string& pageurl)
 {
-    const char* HTML_PREFIX = "GET-";   // prepended to html filename
-
 #ifdef ANDROID_GUI
     // LOGI("GetURL url=%s\n", url.c_str());
     // LOGI("GetURL pageurl=%s\n", pageurl.c_str());
@@ -1024,30 +1025,38 @@ void GetURL(const std::string& url, const std::string& pageurl)
 #endif
 
     std::string fullurl;
-    if (url.find("http:") == 0) {
+    if (url.find("http") == 0) {
         fullurl = url;
+        httpslink = url.find("https") == 0;
     } else {
         // relative get, so prepend full prefix extracted from pageurl
         std::string urlprefix = GetBaseName(pageurl.c_str());
-        // replace HTML_PREFIX with "http://" and convert spaces to '/'
+        // replace HTML_PREFIX with "http[s]://" and convert spaces to '/'
         // (ie. reverse what we do below when building filepath)
         urlprefix.erase(0, strlen(HTML_PREFIX));
-        urlprefix = "http://" + urlprefix;
+        if (httpslink) {
+            urlprefix = "https://" + urlprefix;
+        } else {
+            urlprefix = "http://" + urlprefix;
+        }
         std::replace(urlprefix.begin(), urlprefix.end(), ' ', '/');
         urlprefix = urlprefix.substr(0, urlprefix.rfind('/')+1);
         fullurl = urlprefix + url;
     }
 
     std::string filename = GetBaseName(fullurl.c_str());
+    
     // remove ugly stuff at start of file names downloaded from ConwayLife.com
+    /* no longer necessary
     if (filename.find("download.php?f=") == 0 ||
         filename.find("pattern.asp?p=") == 0 ||
         filename.find("script.asp?s=") == 0) {
         filename = filename.substr( filename.find('=')+1 );
     }
+    */
 
     // create full path for downloaded file based on given url;
-    // first remove initial "http://"
+    // first remove initial "http[s]://"
     std::string filepath = fullurl.substr( fullurl.find('/')+1 );
     while (filepath[0] == '/') filepath.erase(0,1);
     if (IsHTMLFile(filename)) {

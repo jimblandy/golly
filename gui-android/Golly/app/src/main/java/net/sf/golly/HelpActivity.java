@@ -405,7 +405,7 @@ public class HelpActivity extends Activity {
             connection.connect();
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 outstream.close();
-                return "No HTTP_OK response.";
+                return "Bad HTTP response: "+connection.getResponseCode();
             }
             
             // init info for progress bar
