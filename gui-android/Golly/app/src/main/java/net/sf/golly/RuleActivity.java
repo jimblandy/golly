@@ -199,6 +199,9 @@ public class RuleActivity extends Activity {
             // use bigger font size for high density screens (default size is 16)
             settings.setDefaultFontSize(24);
         }
+        
+        // allow zooming
+        settings.setBuiltInZoomControls(true);
 
         getActionBar().hide();
 

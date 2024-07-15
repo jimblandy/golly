@@ -213,6 +213,9 @@ public class HelpActivity extends Activity {
             // use bigger font size for high density screens (default size is 16)
             settings.setDefaultFontSize(24);
         }
+        
+        // allow zooming
+        settings.setBuiltInZoomControls(true);
 
         if (firstcall) {
             firstcall = false;

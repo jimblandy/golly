@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebSettings.LayoutAlgorithm;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -215,23 +216,29 @@ public class OpenActivity extends Activity {
         
         gwebview = (WebView) findViewById(R.id.webview);
         gwebview.setWebViewClient(new MyWebViewClient());
+
+        WebSettings settings = gwebview.getSettings();
         
         // avoid wrapping long lines -- this doesn't work:
-        // gwebview.getSettings().setUseWideViewPort(true);
+        // settings.setUseWideViewPort(true);
         // this is better:
-        gwebview.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
+        settings.setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
         
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        if (metrics.densityDpi > 300) {
-            // use bigger font size for high density screens (default size is 16)
-            gwebview.getSettings().setDefaultFontSize(32);
+        float dpWidth = metrics.widthPixels / metrics.density;
+        if (dpWidth >= 600) {
+            // use bigger font size for large screens (ie. tablet rather than phone)
+            settings.setDefaultFontSize(32);
+        } else if (metrics.densityDpi > 300) {
+            // use big font size for high density screens (default size is 16)
+            settings.setDefaultFontSize(24);
         }
         
         // no need for JavaScript???
-        // gwebview.getSettings().setJavaScriptEnabled(true);
+        // settings.setJavaScriptEnabled(true);
         
-        // allow zooming???
-        // gwebview.getSettings().setBuiltInZoomControls(true);
+        // allow zooming
+        settings.setBuiltInZoomControls(true);
 
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
