@@ -1322,6 +1322,27 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
 
 // -----------------------------------------------------------------------------
 
+bool PasteRectOutsideGrid()
+{
+    if (currlayer->algo->gridwd == 0 && currlayer->algo->gridht == 0) {
+        // unbounded grid
+        return false;
+    }
+    
+    pair<bigint, bigint> lt = currlayer->view->at(pasterect.x, pasterect.y);
+    pair<bigint, bigint> rb = currlayer->view->at(pasterect.x+pasterect.width-1,
+                                                  pasterect.y+pasterect.height-1);
+    
+    return (currlayer->algo->gridwd > 0 &&
+                (lt.first > currlayer->algo->gridright ||
+                 rb.first < currlayer->algo->gridleft)) ||
+           (currlayer->algo->gridht > 0 &&
+                (lt.second > currlayer->algo->gridbottom ||
+                 rb.second < currlayer->algo->gridtop));
+}
+
+// -----------------------------------------------------------------------------
+
 void DoPaste(bool toselection)
 {
     bigint top, left;
@@ -1335,7 +1356,7 @@ void DoPaste(bool toselection)
             return;
         }
         if (!currlayer->currsel.CanPaste(wd, ht, top, left)) {
-            ErrorMessage("Clipboard pattern is bigger than selection.");
+            ErrorMessage("Clipboard pattern is bigger than the selection.");
             return;
         }
         // top and left have been set to the selection's top left corner
@@ -1343,12 +1364,8 @@ void DoPaste(bool toselection)
 
     } else {
         // paste pattern into pasterect, if possible
-        if ( // allow paste if any corner of pasterect is within grid
-             !( PointInGrid(pastex, pastey) ||
-                PointInGrid(pastex+pasterect.width-1, pastey) ||
-                PointInGrid(pastex, pastey+pasterect.height-1) ||
-                PointInGrid(pastex+pasterect.width-1, pastey+pasterect.height-1) ) ) {
-            ErrorMessage("Paste must be at least partially within grid.");
+        if (PasteRectOutsideGrid()) {
+            ErrorMessage("Paste must be at least partially within the grid.");
             return;
         }
         // get paste rectangle's top left cell coord
