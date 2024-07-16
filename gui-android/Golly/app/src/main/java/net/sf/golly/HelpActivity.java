@@ -108,7 +108,7 @@ public class HelpActivity extends Activity {
         
         @Override
         public void onReceivedError(WebView webview, int errorCode, String description, String failingUrl) {
-            Toast.makeText(HelpActivity.this, "Web error! " + description, Toast.LENGTH_SHORT).show();
+            Toast.makeText(HelpActivity.this, "Web error! " + description, Toast.LENGTH_LONG).show();
         }
         
         @Override
@@ -474,9 +474,9 @@ public class HelpActivity extends Activity {
             if (cancelled) return "Cancelled.";
             
         } catch (MalformedURLException e) {
-            return "Bad URL string: " + urlstring;
+            return "Bad URL string:\n" + urlstring;
         } catch (IOException e) {
-            return "Error connecting to URL: " + e.toString();
+            return "Error connecting to URL:\n" + e.toString();
         }
         return "";  // success
     }
@@ -508,7 +508,7 @@ public class HelpActivity extends Activity {
                             // download succeeded
                             nativeProcessDownload(dfile);
                         } else if (!cancelled) {
-                            Toast.makeText(HelpActivity.this, "Download failed! " + dresult, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(HelpActivity.this, "Download failed! " + dresult, Toast.LENGTH_LONG).show();
                         }
                     }
                 });
