@@ -29,6 +29,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.SslErrorHandler;
 import android.net.http.SslError;
+import android.net.Uri;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -103,6 +104,13 @@ public class HelpActivity extends Activity {
             if (nativeDownloadedFile(url)) {
                 return true;
             }
+            /* better to open http[s] links in external browser???!!!
+            if (url.startsWith("http")) {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(i);
+                return true;
+            }
+            */
             return false;
         }
         
