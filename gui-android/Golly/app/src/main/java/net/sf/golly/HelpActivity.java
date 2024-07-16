@@ -13,7 +13,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
@@ -25,6 +27,8 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.SslErrorHandler;
+import android.net.http.SslError;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -123,6 +127,32 @@ public class HelpActivity extends Activity {
             pageurl = gwebview.getUrl();
             // Log.i("onPageFinished URL", pageurl);
         }  
+        
+        // this allows links in Help > References to open
+        @Override
+        public void onReceivedSslError(WebView webview, SslErrorHandler handler, SslError err) {
+            // this will ignore all SSL certificate errors but probably prevent app from being accepted by Google
+            // handler.proceed();
+            
+            // ask user if ok to continue
+            final AlertDialog.Builder builder = new AlertDialog.Builder(HelpActivity.this);
+            builder.setTitle("SSL Certificate Error");
+            builder.setMessage(err.toString());
+            builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    handler.proceed();
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    handler.cancel();
+                }
+            });
+            final AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
 
     // -----------------------------------------------------------------------------
@@ -405,7 +435,7 @@ public class HelpActivity extends Activity {
             connection.connect();
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 outstream.close();
-                return "Bad HTTP response: "+connection.getResponseCode();
+                return "Bad HTTP response: " + connection.getResponseCode();
             }
             
             // init info for progress bar
@@ -446,7 +476,7 @@ public class HelpActivity extends Activity {
         } catch (MalformedURLException e) {
             return "Bad URL string: " + urlstring;
         } catch (IOException e) {
-            return "Could not connect to URL: " + urlstring;
+            return "Error connecting to URL: " + e.toString();
         }
         return "";  // success
     }
