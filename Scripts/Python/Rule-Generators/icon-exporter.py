@@ -8,6 +8,7 @@ from glife.BuiltinIcons import circles, diamonds, hexagons, triangles
 import os
 from tempfile import mkstemp
 from shutil import move
+from pathlib import Path
 
 iconcolors = []     # list of (r,g,b) colors used in all icons
 
@@ -241,11 +242,11 @@ def export_icons(iconsection, rulename):
 
     # we will only create/update a .rule file in the user's rules folder
     # (ie. we don't modify the supplied Rules folder)
-    rulepath = g.getdir("rules") + filename + ".rule"
+    rulepath = Path(g.getdir("rules") + filename + ".rule")
     fileexists = os.path.isfile(rulepath)
     if fileexists:
         # .rule file already exists so replace or add @ICONS section
-        rulefile = open(rulepath,"rU")
+        rulefile = open(rulepath,"r")
     
         # create a temporary file for writing new rule info
         temphdl, temppath = mkstemp()
@@ -314,9 +315,9 @@ def export_icons(iconsection, rulename):
         g.update()
     
     if fileexists:
-        g.note("Updated the icon data in " + rulepath)
+        g.note("Updated the icon data in " + str(rulepath))
     else:
-        g.note("Created " + rulepath)
+        g.note("Created " + str(rulepath))
 
 # --------------------------------------------------------------------
 

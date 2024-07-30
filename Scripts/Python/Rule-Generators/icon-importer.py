@@ -8,6 +8,7 @@ from glife.text import make_text
 from glife.BuiltinIcons import circles, diamonds, hexagons, triangles
 from colorsys import hsv_to_rgb
 import os
+from pathlib import Path
 
 iconinfo31 = []     # info for 31x31 icons
 iconinfo15 = []     # info for 15x15 icons
@@ -102,18 +103,18 @@ def import_icons(rulename):
     # replace any illegal filename chars with underscores
     rulename = rulename.replace("/","_").replace("\\","_")
     
-    rulepath = g.getdir("rules") + rulename + ".rule"
+    rulepath = Path(g.getdir("rules") + rulename + ".rule")
     if not os.path.isfile(rulepath):
-        rulepath = g.getdir("app") + "Rules/" + rulename + ".rule"
+        rulepath = Path(g.getdir("app") + "Rules/" + rulename + ".rule")
         if not os.path.isfile(rulepath):
             # there is no .rule file
             return
     
     try:
         # open in universal newline mode to handle LF, CR, or CR+LF
-        rulefile = open(rulepath,"rU")
+        rulefile = open(rulepath,"r")
     except:
-        g.exit("Failed to open .rule file: " + rulepath)
+        g.exit("Failed to open .rule file: " + rulename + ".rule")
     
     foundicons = False
     xpmcount = 0
