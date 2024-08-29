@@ -4485,21 +4485,22 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
         }
         while (i < th && 2*i <= x0+x1) {
             // set pixel within line
-            int x = x0+x1-i;
+            int j = (int)i; // avoids crash on a Silicon Mac
+            int x = x0+x1-j;
             // extra tests avoid some pixels being drawn twice
-            if (x == i && y0 == y1) {
-                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
-            } else if (x == i) {
-                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
-                if (PixelInTarget(i, y1)) DrawPixel(i, y1);
+            if (x == j && y0 == y1) {
+                if (PixelInTarget(j, y0)) DrawPixel(j, y0);
+            } else if (x == j) {
+                if (PixelInTarget(j, y0)) DrawPixel(j, y0);
+                if (PixelInTarget(j, y1)) DrawPixel(j, y1);
             } else if (y0 == y1) {
-                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
+                if (PixelInTarget(j, y0)) DrawPixel(j, y0);
                 if (PixelInTarget(x, y0)) DrawPixel(x, y0);
             } else {
-                // x != i and y0 != y1
-                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
+                // x != j and y0 != y1
+                if (PixelInTarget(j, y0)) DrawPixel(j, y0);
                 if (PixelInTarget(x, y0)) DrawPixel(x, y0);
-                if (PixelInTarget(i, y1)) DrawPixel(i, y1);
+                if (PixelInTarget(j, y1)) DrawPixel(j, y1);
                 if (PixelInTarget(x, y1)) DrawPixel(x, y1);
             }
             i++;

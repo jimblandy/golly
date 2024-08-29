@@ -12,7 +12,7 @@
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
 WX_RELEASE = 3.2
-WX_DIR = /Users/akt/HD/wxWidgets/wxWidgets-3.2.2
+WX_DIR = /Users/akt/HD/wxWidgets/wxWidgets-3.2.5
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -41,7 +41,9 @@ GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk local-gt
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
 # for Python 3 script support:
-PYTHON_INCLUDE = -I`/usr/local/bin/python3 -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`
+### PYTHON_INCLUDE = -I`/usr/local/bin/python3 -c "import distutils.sysconfig; print(distutils.sysconfig.get_python_inc())"`
+### following works with Python 3.12 (using installer from python.org) on macOS Sonoma 14.5:
+PYTHON_INCLUDE = `python3-config --includes`
 # PYTHON_LINK is no longer needed
 
 # Variables:
@@ -62,7 +64,7 @@ CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
 CXXFLAGS = -arch arm64 -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
    -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wno-c++11-extensions \
-   -Wno-potentially-evaluated-expression -fno-strict-aliasing -fno-common
+   -Wno-deprecated-declarations -Wno-potentially-evaluated-expression -fno-strict-aliasing -fno-common
 
 # some script functions need to call @autoreleasepool to avoid memory leaks
 AUTO_RELEASE = -x objective-c++ -DAUTORELEASE
@@ -78,7 +80,7 @@ LDFLAGS = -arch arm64 -arch x86_64 \
 # for bgolly:
 CXXBASE = -arch arm64 -arch x86_64 \
    -DVERSION=$(APP_VERSION) -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wno-c++11-extensions \
-   -fno-strict-aliasing -fno-common -I$(BASEDIR)
+   -Wno-deprecated-declarations -fno-strict-aliasing -fno-common -I$(BASEDIR)
 LDBASE = -arch arm64 -arch x86_64 -lz
 
 EXTRALIBS = -lz -lpthread -liconv -lcurl
