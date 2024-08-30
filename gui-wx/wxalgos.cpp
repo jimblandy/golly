@@ -586,6 +586,8 @@ wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
     if (numicons > 255) numicons = 255;          // play safe
     
     wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
+    wxBitmap* lastIcon = NULL;
+
     if (iconptr) {
         // initialize all pointers (not just those < maxstates)
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
@@ -593,14 +595,14 @@ wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
         for (int i = 0; i < numicons; i++) {
             wxRect rect(0, i*wd, wd, wd);
             // add 1 to skip iconptr[0] (ie. dead state)
-            iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+            lastIcon = new wxBitmap(allicons.GetSubBitmap(rect));
+            iconptr[i+1] = lastIcon;
         }
         
         if (numicons < maxstates-1 && iconptr[numicons]) {
-            // duplicate last icon
-            wxRect rect(0, (numicons-1)*wd, wd, wd);
+            // duplicate last icon using the last created bitmap
             for (int i = numicons; i < maxstates-1; i++) {
-                iconptr[i+1] = new wxBitmap(allicons.GetSubBitmap(rect));
+                iconptr[i+1] = lastIcon;
             }
         }
     }
@@ -612,7 +614,18 @@ wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
 void FreeIconBitmaps(wxBitmap** icons)
 {
     if (icons) {
-        for (int i = 0; i < 256; i++) delete icons[i];
+        wxBitmap* lastIcon = NULL;
+        wxBitmap* icon = NULL;
+
+        // if there are less icons than states then the last run of icons
+        // all use the same bitmap so account for this when deleting
+        for (int i = 0; i < 256; i++) {
+            icon = icons[i];
+            if (icon != lastIcon) {
+                delete icon;
+                lastIcon = icon;
+            }
+        }
         free(icons);
     }
 }

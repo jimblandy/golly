@@ -2281,37 +2281,31 @@ void ltlalgo::fast_Triangular(int mincol, int minrow, int maxcol, int maxrow)
         while (x <= maxcol) {
             int k = (x + y) & 1;
             if (k == 0) {
-                int width = halfr + 1;
                 int l = halfr;
                 unsigned char* cp1 = cellptr;
                 for (int j = -halfr; j < 0; j++, cp1 += outerwd) {
                     if (cp1[x + l] == 1) ncount++;
                     if (cp1[x + l + 1] == 1) ncount++;
                     l++;
-                    width++;
                 }
 
                 // middle row
-                width--;
                 if (cp1[x - l - 1] == 1) ncount--;
                 if (cp1[x + l] == 1) ncount++;
                 l++;
                 cp1 += outerwd;
 
                 for (int j = 1; j <= halfr; j++, cp1 += outerwd) {
-                    width--;
                     l--;
                     if (cp1[x - l - 1] == 1) ncount--;
                     if (cp1[x - l] == 1) ncount--;
                 }
             } else {
-                int width = halfr;
                 int l = halfr + 1;
                 unsigned char* cp1 = cellptr;
                 for (int j = -halfr; j < 0; j++, cp1 += outerwd) {
                     if (cp1[x - l - 1] == 1) ncount--;
                     if (cp1[x - l] == 1) ncount--;
-                    width++;
                     l++;
                 }
 
@@ -2319,11 +2313,9 @@ void ltlalgo::fast_Triangular(int mincol, int minrow, int maxcol, int maxrow)
                 l--;
                 if (cp1[x - l - 1] == 1) ncount--;
                 if (cp1[x + l] == 1) ncount++;
-                width++;
                 cp1 += outerwd;
 
                 for (int j = 1; j <= halfr; j++, cp1 += outerwd) {
-                    width--;
                     l--;
                     if (cp1[x + l] == 1) ncount++;
                     if (cp1[x + l + 1] == 1) ncount++;
