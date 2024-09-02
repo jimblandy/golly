@@ -73,13 +73,19 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
     NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:pattdir];
     NSString *path;
     
+    NSMutableArray *array = [[NSMutableArray alloc]init];
+    while (path = [dirEnum nextObject]) {
+        [array addObject:path];
+    }
+    NSArray *sortedArray = [array sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    
     int closedlevel = 0;
     
     htmldata = HTML_HEADER;
     htmldata += title;
     htmldata += "<br><br>";
     
-    while (path = [dirEnum nextObject]) {
+    for (path in sortedArray) {
         // path is relative to given dir (eg. "Life/Bounded-Grids/agar-p3.rle" if patternsdir)
         std::string pstr = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
