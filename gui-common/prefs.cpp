@@ -84,7 +84,7 @@ bool newremovesel = true;           // new pattern removes selection?
 bool openremovesel = true;          // opening pattern removes selection?
 int mindelay = 250;                 // minimum millisec delay
 int maxdelay = 2000;                // maximum millisec delay
-int maxhashmem = 100;               // maximum memory (in MB) for hashlife-based algos
+int maxhashmem = 300;               // maximum memory (in MB) for hashlife-based algos
 int wheelsens = 2;                  // mouse wheel sensitivity
 
 int numpatterns = 0;                // current number of recent pattern files
