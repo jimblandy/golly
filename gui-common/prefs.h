@@ -24,7 +24,7 @@ const int MAX_BASESTEP = 2000000000;    // maximum base step
 const int MAX_DELAY = 5000;             // maximum mindelay or maxdelay
 const int MAX_RECENT = 100;             // maximum value of maxpatterns
 const int MIN_MEM_MB = 10;              // minimum value of maxhashmem
-const int MAX_MEM_MB = 300;             // maximum value of maxhashmem
+const int MAX_MEM_MB = 500;             // maximum value of maxhashmem
 const int MAX_SENSITIVITY = 20;         // maximum value of wheelsens
 
 // These global paths must be set in platform-specific code before GetPrefs is called:
