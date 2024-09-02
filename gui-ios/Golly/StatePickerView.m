@@ -63,7 +63,7 @@
     UIFont *numfont = [UIFont systemFontOfSize:10];
     
     // draw boxes showing colors or icons of all states
-    int x = 0, y = 0;
+    int x = 0, y = 10;
     int dx, dy;
     for (int i = 0; i < currlayer->algo->NumCellStates(); i++) {
         CGRect box = CGRectMake(x+1, y+1, 31, 31);
