@@ -889,6 +889,11 @@ void OpenFile(const char* path, bool remember)
         Warning("This version of Golly cannot run scripts.");
         return;
     }
+    
+    if (EndsWith(path, ".rle3")) {
+        Warning("This version of Golly cannot open 3D patterns.");
+        return;
+    }
 
     if (IsZipFile(path)) {
         // process zip file
