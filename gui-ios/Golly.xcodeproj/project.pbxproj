@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -86,7 +86,7 @@
 		0DD0EF99178017020061E9A1 /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF85178017020061E9A1 /* file.cpp */; };
 		0DD0EF9A178017020061E9A1 /* layer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF87178017020061E9A1 /* layer.cpp */; };
 		0DD0EF9B178017020061E9A1 /* prefs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF89178017020061E9A1 /* prefs.cpp */; };
-		0DD0EF9C178017020061E9A1 /* render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF8B178017020061E9A1 /* render.cpp */; };
+		0DD0EF9C178017020061E9A1 /* render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF8B178017020061E9A1 /* render.cpp */; settings = {COMPILER_FLAGS = "-DGLES_SILENCE_DEPRECATION"; }; };
 		0DD0EF9D178017020061E9A1 /* select.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF8D178017020061E9A1 /* select.cpp */; };
 		0DD0EF9E178017020061E9A1 /* status.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF8F178017020061E9A1 /* status.cpp */; };
 		0DD0EF9F178017020061E9A1 /* undo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF91178017020061E9A1 /* undo.cpp */; };
@@ -487,7 +487,8 @@
 		0D07871A156881080051973C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1230;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1540;
 				TargetAttributes = {
 					0D078722156881080051973C = {
 						DevelopmentTeam = UQZQF2G54F;
@@ -556,6 +557,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		0DC9D3EE15984E05008937DC /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -669,6 +671,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -719,6 +722,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -755,6 +759,7 @@
 					IOS_GUI,
 					"DEBUG=1",
 				);
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -780,6 +785,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Golly/Golly-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = IOS_GUI;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -819,6 +825,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -852,6 +859,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Golly/Golly-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = IOS_GUI;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
