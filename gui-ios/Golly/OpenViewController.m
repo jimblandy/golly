@@ -65,28 +65,54 @@ static std::set<std::string> opendirs;      // set of open directories in Suppli
 
 // -----------------------------------------------------------------------------
 
+static void EnumerateDirectory(const std::string& dir, const std::string& prefix, NSMutableArray *result)
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *dirpath = [NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding];
+	NSArray* contents = [fm contentsOfDirectoryAtPath:dirpath error:nil];
+	NSArray *sorted = [contents sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+	
+    for (NSString* item in sorted) {
+        NSString *fullpath = [dirpath stringByAppendingPathComponent:item];
+        BOOL isDir;
+        if ([fm fileExistsAtPath:fullpath isDirectory:&isDir] && isDir) {
+            // item is a subdirectory
+            std::string dirname = [item cStringUsingEncoding:NSUTF8StringEncoding];
+            dirname = prefix + dirname;
+            [result addObject:[NSString stringWithCString:dirname.c_str() encoding:NSUTF8StringEncoding]];
+            std::string subdir = [fullpath cStringUsingEncoding:NSUTF8StringEncoding];
+            subdir += "/";
+            dirname += "/";
+            EnumerateDirectory(subdir, dirname, result);
+        } else {
+            // item is a file
+            std::string filename = [item cStringUsingEncoding:NSUTF8StringEncoding];
+            filename = prefix + filename;
+            [result addObject:[NSString stringWithCString:filename.c_str() encoding:NSUTF8StringEncoding]];
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static void AppendHtmlData(std::string& htmldata, const std::string& dir,
                            const std::string& prefix, const std::string& title, bool candelete)
 {
-    NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *pattdir = [NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding];
-    NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:pattdir];
-    NSString *path;
-    
-    NSMutableArray *array = [[NSMutableArray alloc]init];
-    while (path = [dirEnum nextObject]) {
-        [array addObject:path];
-    }
-    NSArray *sortedArray = [array sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    NSMutableArray *sortedArray = [[NSMutableArray alloc]init];
+    EnumerateDirectory(dir, "", sortedArray);
     
     int closedlevel = 0;
     
     htmldata = HTML_HEADER;
     htmldata += title;
     htmldata += "<br><br>";
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *pattdir = [NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding];
     
-    for (path in sortedArray) {
-        // path is relative to given dir (eg. "Life/Bounded-Grids/agar-p3.rle" if patternsdir)
+    for (NSString *path in sortedArray) {
+        // path is relative to given dir (eg. "Life/Bounded-Grids/agar-p3.rle"
+        // if dir = patternsdir and prefix = "Patterns/")
         std::string pstr = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
         // indent level is number of separators in path
