@@ -907,8 +907,8 @@ void InitAlgorithms()
             case 3: SetColor(ad->statusrgb, 255, 227, 178); break;  // pale orange
             case 4: SetColor(ad->statusrgb, 225, 255, 225); break;  // pale green
             case 5: SetColor(ad->statusrgb, 243, 225, 255); break;  // pale purple
-            case 6: SetColor(ad->statusrgb, 200, 255, 255); break;  // pale aqua
-            case 7: SetColor(ad->statusrgb, 200, 200, 200); break;  // pale gray
+            case 6: SetColor(ad->statusrgb, 220, 220, 220); break;  // pale gray (RuleLoader)
+            case 7: SetColor(ad->statusrgb, 255, 255, 255); break;  // white
             case 8: SetColor(ad->statusrgb, 255, 255, 255); break;  // white
         }
 
