@@ -162,6 +162,11 @@ static void InitPaths()
         InitAlgorithms();           // must initialize algoinfo first
         InitPaths();                // init userdir, etc (must be before GetPrefs)
         GetPrefs();                 // load user's preferences
+        
+        // force status bar of last algo (RuleLoader) to use a pale gray background
+        AlgoData* ad = algoinfo[NumAlgos()-1];
+        SetColor(ad->statusrgb, 220, 220, 220);
+        
         SetMinimumStepExponent();   // for slowest speed
         AddLayer();                 // create initial layer (sets currlayer)
         NewPattern();               // create new, empty universe
