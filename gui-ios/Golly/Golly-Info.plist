@@ -67,7 +67,7 @@
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
-	<string>PatternViewController.xib</string>
+	<string>PatternViewController</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
