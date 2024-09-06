@@ -44,17 +44,6 @@
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    
-    // release all outlets
-    spView = nil;
-    iconsSwitch = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];

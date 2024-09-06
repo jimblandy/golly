@@ -123,19 +123,6 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-
-    // release all outlets
-    nameText = nil;
-    typeTable = nil;
-    topLabel = nil;
-    botLabel = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];

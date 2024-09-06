@@ -270,18 +270,6 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    
-    // release all outlets
-    optionTable = nil;
-    htmlView.delegate = nil;
-    htmlView = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];

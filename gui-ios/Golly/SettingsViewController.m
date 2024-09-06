@@ -43,27 +43,6 @@
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-
-    // release outlets
-    modeButton = nil;
-    percentageText = nil;
-    memoryText = nil;
-    percentageSlider = nil;
-    memorySlider = nil;
-    gridSwitch = nil;
-    timingSwitch = nil;
-    beepSwitch = nil;
-    colorsSwitch = nil;
-    iconsSwitch = nil;
-    undoSwitch = nil;
-    hashingSwitch = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 static bool oldcolors;      // detect if user changed swapcolors
 static bool oldundo;        // detect if user changed allowundo
 static bool oldhashinfo;    // detect if user changed currlayer->showhashinfo

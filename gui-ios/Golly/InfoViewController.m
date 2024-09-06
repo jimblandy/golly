@@ -74,17 +74,6 @@ static bool textchanged = false;    // true if user changed text
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    
-    // release all outlets
-    fileView = nil;
-    saveButton = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];

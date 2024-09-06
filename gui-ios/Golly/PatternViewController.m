@@ -206,39 +206,6 @@ static void InitPaths()
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    
-    SavePrefs();
-    
-    // release all outlets
-    pattView = nil;
-    statView = nil;
-    startStopButton = nil;
-    restoreButton = nil;
-    resetButton = nil;
-    undoButton = nil;
-    redoButton = nil;
-    actionButton = nil;
-    infoButton = nil;
-    stepControl = nil;
-    scaleControl = nil;
-    modeControl = nil;
-    stateLabel = nil;
-    stateView = nil;
-    topBar = nil;
-    editBar = nil;
-    bottomBar = nil;
-    progressView = nil;
-    progressTitle = nil;
-    progressMessage = nil;
-    progressBar = nil;
-    cancelButton = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];

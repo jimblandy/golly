@@ -73,20 +73,6 @@ static UIWebView *globalHtmlView = nil;     // for ShowHelp
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    
-    // release delegate and outlets
-    htmlView.delegate = nil;
-    htmlView = nil;
-    backButton = nil;
-    nextButton = nil;
-    contentsButton = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];

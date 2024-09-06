@@ -113,21 +113,6 @@ const int UNNAMED_ROW = NUM_ROWS - 1;
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    
-    // release all outlets
-    algoButton = nil;
-    ruleText = nil;
-    unknownLabel = nil;
-    rulePicker = nil;
-    htmlView.delegate = nil;
-    htmlView = nil;
-}
-
-// -----------------------------------------------------------------------------
-
 - (int)findNamedRule:(NSString *)rule
 {
     for (int row = 0; row < UNNAMED_ROW; row++) {
