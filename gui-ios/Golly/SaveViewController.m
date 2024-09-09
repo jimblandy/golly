@@ -29,6 +29,7 @@ static int currtype = 0;                // current index in typeTable
 static bool inSaveTextFile = false;     // SaveTextFile was called?
 static const char* initpath;            // path of file being edited
 static const char* filedata;            // text to be saved
+static std::string fullpath;            // path of file being saved
 static InfoViewController* callingVC;   // the view controller that called SaveTextFile
 
 // -----------------------------------------------------------------------------
@@ -190,68 +191,53 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 
 // -----------------------------------------------------------------------------
 
-- (IBAction)doSave:(id)sender
+// using Warning or YesNo freezes the app (probably because the Save view is modal)
+// so we use Alert and ReplaceQuery instead
+
+- (void)Alert:(NSString *)msg
 {
-    // clear first responder if necessary (ie. remove keyboard)
-    [self.view endEditing:YES];
-    
-    std::string filename = [[nameText text] cStringUsingEncoding:NSUTF8StringEncoding];
-    if (filename.empty()) {
-        // Warning("Please enter a file name.");
-        // better to beep and show keyboard
-        Beep();
-        [nameText becomeFirstResponder];
-        return;
-    }
-    
-    const char* replace_query = "A file with that name already exists.\nDo you want to replace that file?";
-    
+    UIAlertController *alert = [UIAlertController
+        alertControllerWithTitle:@"Warning"
+        message:msg
+        preferredStyle:(UIAlertControllerStyleAlert)];
+
+    UIAlertAction *okAction = [UIAlertAction
+        actionWithTitle:@"OK"
+        style:UIAlertActionStyleDefault
+        handler:^(UIAlertAction * _Nonnull action) {
+            // doing nothing will dismiss the view
+        }];
+    [alert addAction:okAction];
+
+    Beep();
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)CompleteSave
+{
+    // finish the save
     if (inSaveTextFile) {
-        // user is saving a text file (pattern or .rule file)
-        
-        std::string initname = GetBaseName(initpath);
-        std::string dir = initpath;
-        dir = dir.substr(0,dir.rfind('/')+1);
-        
-        // prevent Documents/Rules/* being saved as something other than a .rule file
-        if (EndsWith(dir,"Documents/Rules/") && !EndsWith(filename,".rule")) {
-            Warning("Files in Documents/Rules/ must have a .rule extension.");
-            [nameText becomeFirstResponder];
-            return;
-        }
-        
-        std::string fullpath = dir + filename;
-        if (initname != filename && FileExists(fullpath)) {
-            // ask user if it's ok to replace an existing file that's not the same as the given file
-            if (!YesNo(replace_query)) return;
-        }
-        
         FILE* f = fopen(fullpath.c_str(), "w");
         if (f) {
             if (fputs(filedata, f) == EOF) {
                 fclose(f);
-                Warning("Could not write to file!");
+                [self Alert:@"Could not write to file!"];
                 return;
             }
         } else {
-            Warning("Could not create file!");
+            [self Alert:@"Could not create file!"];
             return;
         }
         fclose(f);
-        
+    
         [self dismissViewControllerAnimated:YES completion:nil];
-        
+    
         // tell caller that the save was a success
         [callingVC saveSucceded:fullpath.c_str()];
-    
+
     } else {
-        // user is saving current pattern in Documents/Saved/ via Pattern tab's Save button
-        std::string fullpath = savedir + filename;
-        if (FileExists(fullpath)) {
-            // ask user if it's ok to replace an existing file
-            if (!YesNo(replace_query)) return;
-        }
-        
         // dismiss modal view first in case SavePattern calls BeginProgress
         [self dismissViewControllerAnimated:YES completion:nil];
 
@@ -259,6 +245,85 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
         output_compression compression = currtype % 2 == 0 ? no_compression : gzip_compression;
         SavePattern(fullpath, format, compression);
     }
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)ReplaceQuery
+{
+    UIAlertController *alert = [UIAlertController
+        alertControllerWithTitle:@"Warning"
+        message:@"A file with that name already exists.\nDo you want to replace that file?"
+        preferredStyle:(UIAlertControllerStyleAlert)];
+    
+    UIAlertAction *cancelAction = [UIAlertAction
+        actionWithTitle:@"No"
+        style:UIAlertActionStyleCancel
+        handler:^(UIAlertAction * _Nonnull action) {
+            // doing nothing will dismiss the view
+        }];
+    [alert addAction:cancelAction];
+
+    UIAlertAction *okAction = [UIAlertAction
+        actionWithTitle:@"Yes"
+        style:UIAlertActionStyleDefault
+        handler:^(UIAlertAction * _Nonnull action) {
+            // handle Yes response here
+            [self CompleteSave];
+        }];
+    [alert addAction:okAction];
+
+    Beep();
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+// -----------------------------------------------------------------------------
+
+- (IBAction)doSave:(id)sender
+{
+    // clear first responder if necessary (ie. remove keyboard)
+    [self.view endEditing:YES];
+    
+    std::string filename = [[nameText text] cStringUsingEncoding:NSUTF8StringEncoding];
+    if (filename.empty()) {
+        // [self Alert:@"Please enter a file name."];
+        // better to beep and show keyboard
+        Beep();
+        [nameText becomeFirstResponder];
+        return;
+    }
+    
+    if (inSaveTextFile) {
+        // user is saving a text file (pattern or .rule file)
+        std::string initname = GetBaseName(initpath);
+        std::string dir = initpath;
+        dir = dir.substr(0,dir.rfind('/')+1);
+        
+        // prevent Documents/Rules/* being saved as something other than a .rule file
+        if (EndsWith(dir,"Documents/Rules/") && !EndsWith(filename,".rule")) {
+            [nameText becomeFirstResponder];
+            [self Alert:@"Files in Documents/Rules/ must have a .rule extension."];
+            return;
+        }
+        
+        fullpath = dir + filename;
+        if (initname != filename && FileExists(fullpath)) {
+            // ask user if it's ok to replace an existing file that's not the same as the given file
+            [self ReplaceQuery];
+            return;
+        }
+    
+    } else {
+        // user is saving current pattern in Documents/Saved/ via Pattern tab's Save button
+        fullpath = savedir + filename;
+        if (FileExists(fullpath)) {
+            // ask user if it's ok to replace an existing file
+            [self ReplaceQuery];
+            return;
+        }
+    }
+    
+    [self CompleteSave];
 }
 
 // -----------------------------------------------------------------------------
@@ -322,7 +387,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
     // change selected file type
     int newtype = (int)[indexPath row];
     if (newtype < 0 || newtype >= NUM_TYPES) {
-        Warning("Bug: unexpected row!");
+        [self Alert:@"Bug: unexpected row!"];
     } else {
         currtype = newtype;
         [self checkFileName];
@@ -348,5 +413,5 @@ void SaveTextFile(const char* filepath, const char* contents, InfoViewController
     modalSaveController = nil;
     
     // cannot reset inSaveTextFile here (it must be done in viewWillDisappear)
-    // because doSave: is called AFTER SaveTextFile finishes
+    // because doSave is called AFTER SaveTextFile finishes
 }
