@@ -980,12 +980,19 @@ bool ClipboardContainsRule()
     std::string rulepath = userrules + rulename;
     rulepath += ".rule";
     if (FileExists(rulepath)) {
-        std::string question = "Do you want to replace the existing " + rulename;
-        question += ".rule with the version in the clipboard?";
-        if (!YesNo(question.c_str())) {
-            // don't overwrite existing .rule file
+        #ifdef IOS_GUI
+            // YesNo will hang the app so we have to do this
+            std::string msg = rulename + ".rule already exists so delete it and paste again.";
+            Warning(msg.c_str());
             return true;
-        }
+        #else
+            std::string question = "Do you want to replace the existing " + rulename;
+            question += ".rule with the version in the clipboard?";
+            if (!YesNo(question.c_str())) {
+                // don't overwrite existing .rule file
+                return true;
+            }
+        #endif
     }
 
     // create rulename.rule in userrules

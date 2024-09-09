@@ -191,30 +191,6 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 
 // -----------------------------------------------------------------------------
 
-// using Warning or YesNo freezes the app (probably because the Save view is modal)
-// so we use Alert and ReplaceQuery instead
-
-- (void)Alert:(NSString *)msg
-{
-    UIAlertController *alert = [UIAlertController
-        alertControllerWithTitle:@"Warning"
-        message:msg
-        preferredStyle:(UIAlertControllerStyleAlert)];
-
-    UIAlertAction *okAction = [UIAlertAction
-        actionWithTitle:@"OK"
-        style:UIAlertActionStyleDefault
-        handler:^(UIAlertAction * _Nonnull action) {
-            // doing nothing will dismiss the view
-        }];
-    [alert addAction:okAction];
-
-    Beep();
-    [self presentViewController:alert animated:YES completion:nil];
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)CompleteSave
 {
     // finish the save
@@ -223,11 +199,11 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
         if (f) {
             if (fputs(filedata, f) == EOF) {
                 fclose(f);
-                [self Alert:@"Could not write to file!"];
+                Warning("Could not write to file!");
                 return;
             }
         } else {
-            [self Alert:@"Could not create file!"];
+            Warning("Could not create file!");
             return;
         }
         fclose(f);
@@ -248,6 +224,8 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 }
 
 // -----------------------------------------------------------------------------
+
+// using YesNo freezes the app (probably because the Save view is modal) so use this instead
 
 - (void)ReplaceQuery
 {
@@ -286,8 +264,6 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
     
     std::string filename = [[nameText text] cStringUsingEncoding:NSUTF8StringEncoding];
     if (filename.empty()) {
-        // [self Alert:@"Please enter a file name."];
-        // better to beep and show keyboard
         Beep();
         [nameText becomeFirstResponder];
         return;
@@ -301,8 +277,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
         
         // prevent Documents/Rules/* being saved as something other than a .rule file
         if (EndsWith(dir,"Documents/Rules/") && !EndsWith(filename,".rule")) {
-            [nameText becomeFirstResponder];
-            [self Alert:@"Files in Documents/Rules/ must have a .rule extension."];
+            Warning("Files in Documents/Rules/ must have a .rule extension.");
             return;
         }
         
@@ -387,7 +362,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
     // change selected file type
     int newtype = (int)[indexPath row];
     if (newtype < 0 || newtype >= NUM_TYPES) {
-        [self Alert:@"Bug: unexpected row!"];
+        Warning("Bug: unexpected row!");
     } else {
         currtype = newtype;
         [self checkFileName];

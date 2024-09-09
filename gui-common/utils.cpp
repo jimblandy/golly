@@ -51,7 +51,7 @@ void SetRect(gRect& rect, int x, int y, int width, int height)
 
 #ifdef IOS_GUI
 
-// need the following to make YesNo/Warning/Fatal dialogs modal:
+// need the following to make YesNo/Warning dialogs modal:
 
 @interface ModalAlertDelegate : NSObject <UIAlertViewDelegate>
 {
@@ -103,6 +103,7 @@ bool YesNo(const char* msg)
     [a show];
 
     // wait for user to hit button
+    // (this actually works in the few places it is called)
     while (md.returnButt == -1) {
         event_checker++;
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
@@ -138,12 +139,14 @@ void Warning(const char* msg)
                                       otherButtonTitles:nil];
     [a show];
 
+    /* this will usually cause the app to freeze so we don't do it!
     // wait for user to hit button
     while (md.returnButt == -1) {
         event_checker++;
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
         event_checker--;
     }
+    */
 #endif // IOS_GUI
 }
 
@@ -162,23 +165,8 @@ void Fatal(const char* msg)
 #endif
 
 #ifdef IOS_GUI
-    ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
-    md.returnButt = -1;
-
-    UIAlertView *a = [[UIAlertView alloc] initWithTitle:@"Fatal Error"
-                                                message:[NSString stringWithCString:msg encoding:NSUTF8StringEncoding]
-                                               delegate:md
-                                      cancelButtonTitle:@"Quit"
-                                      otherButtonTitles:nil];
-    [a show];
-
-    // wait for user to hit button
-    while (md.returnButt == -1) {
-        event_checker++;
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-        event_checker--;
-    }
-
+    NSLog(@"Fatal error: %s", msg);
+    // no point displaying an alert dialog (it won't appear)
     exit(1);
 #endif // IOS_GUI
 }
