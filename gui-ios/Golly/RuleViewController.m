@@ -164,10 +164,10 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
 
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *rdir = [NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding];
-    NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:rdir];
-    NSString *path;
+	NSArray* contents = [fm contentsOfDirectoryAtPath:rdir error:nil];
+	NSArray *sorted = [contents sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
     
-    while (path = [dirEnum nextObject]) {
+    for (NSString* path in sorted) {
         std::string pstr = [path cStringUsingEncoding:NSUTF8StringEncoding];
         size_t extn = pstr.rfind(".rule");
         if (extn != std::string::npos) {
