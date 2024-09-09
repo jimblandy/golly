@@ -57,14 +57,6 @@ static std::set<std::string> opendirs;      // set of open directories in Suppli
 
 // -----------------------------------------------------------------------------
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // return YES for supported orientations
-	return YES;
-}
-
-// -----------------------------------------------------------------------------
-
 static void EnumerateDirectory(const std::string& dir, const std::string& prefix, NSMutableArray *result)
 {
     NSFileManager *fm = [NSFileManager defaultManager];

@@ -103,14 +103,6 @@ static UIWebView *globalHtmlView = nil;     // for ShowHelp
 
 // -----------------------------------------------------------------------------
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // return YES for supported orientations
-    return YES;
-}
-
-// -----------------------------------------------------------------------------
-
 - (IBAction)doBack:(id)sender
 {
     [htmlView goBack];

@@ -108,14 +108,6 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 
 // -----------------------------------------------------------------------------
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // return YES for supported orientations
-	return YES;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)viewDidLoad
 {
     [super viewDidLoad];

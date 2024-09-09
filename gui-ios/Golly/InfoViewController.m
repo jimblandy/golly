@@ -37,14 +37,6 @@ static bool textchanged = false;    // true if user changed text
 
 // -----------------------------------------------------------------------------
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // Return YES for supported orientations
-	return YES;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)scaleText:(UIPinchGestureRecognizer *)pinchGesture
 {
     // very slow for large files; better to use A- and A+ buttons to dec/inc font size???

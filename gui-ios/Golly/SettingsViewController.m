@@ -123,14 +123,6 @@ static int oldhashmem;      // detect if user changed maxhashmem
 
 // -----------------------------------------------------------------------------
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // return YES for supported orientations
-	return YES;
-}
-
-// -----------------------------------------------------------------------------
-
 - (IBAction)changePasteMode:(id)sender
 {
     UIActionSheet *sheet = [[UIActionSheet alloc]

@@ -230,14 +230,6 @@ static void InitPaths()
 
 // -----------------------------------------------------------------------------
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // return YES for supported orientations
-    return YES;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)updateDrawingState;
 {
     // reset drawing state if it's no longer valid (due to algo/rule change)
