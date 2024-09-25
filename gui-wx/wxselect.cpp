@@ -1496,6 +1496,7 @@ void Selection::CopyToClipboard(bool cut)
             }
             if (chptr + 60 >= etextptr) {
                 // nearly out of space; try to increase allocation
+                ptrdiff_t delta = chptr - textptr;
                 char* ntxtptr = (char*) realloc(textptr, 2*cursize);
                 if (ntxtptr == 0) {
                     statusptr->ErrorMessage(_("No more memory for clipboard data!"));
@@ -1504,7 +1505,7 @@ void Selection::CopyToClipboard(bool cut)
                     abort = true;
                     break;
                 }
-                chptr = ntxtptr + (chptr - textptr);
+                chptr = ntxtptr + delta;
                 cursize *= 2;
                 etextptr = ntxtptr + cursize;
                 textptr = ntxtptr;
