@@ -2273,18 +2273,15 @@ static void DeleteIcons(Layer* layer)
 {
     // delete given layer's existing icons
     if (layer->icons7x7) {
-        for (int i = 0; i < 256; i++) delete layer->icons7x7[i];
-        free(layer->icons7x7);
+        FreeIconBitmaps(layer->icons7x7);
         layer->icons7x7 = NULL;
     }
     if (layer->icons15x15) {
-        for (int i = 0; i < 256; i++) delete layer->icons15x15[i];
-        free(layer->icons15x15);
+        FreeIconBitmaps(layer->icons15x15);
         layer->icons15x15 = NULL;
     }
     if (layer->icons31x31) {
-        for (int i = 0; i < 256; i++) delete layer->icons31x31[i];
-        free(layer->icons31x31);
+        FreeIconBitmaps(layer->icons31x31);
         layer->icons31x31 = NULL;
     }
 

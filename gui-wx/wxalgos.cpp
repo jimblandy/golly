@@ -621,10 +621,10 @@ void FreeIconBitmaps(wxBitmap** icons)
         // all use the same bitmap so account for this when deleting
         for (int i = 0; i < 256; i++) {
             icon = icons[i];
-            if (icon != lastIcon) {
+            if (icon && (icon != lastIcon)) {
                 delete icon;
-                lastIcon = icon;
             }
+            lastIcon = icon;
         }
         free(icons);
     }

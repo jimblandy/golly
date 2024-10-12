@@ -91,7 +91,7 @@ build $lua_lib: link_lua $luadir/lapi.o $luadir/lauxlib.o $luadir/lbaselib.o $
 # standard cxx flags
 cxxflags = -DVERSION=$app_version -DGOLLYDIR="$gollydir" $
    -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$basedir $
-   -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
+   -g -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
 extra_cxxflags =
 
 # additional cxx flags for wx
