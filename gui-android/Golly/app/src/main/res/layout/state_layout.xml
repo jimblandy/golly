@@ -8,7 +8,8 @@
     android:paddingLeft="10sp"
     android:paddingRight="10sp"
     android:background="#808080"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:fitsSystemWindows="true" >
 
     <net.sf.golly.StateGLSurfaceView
         android:id="@+id/stateview"
