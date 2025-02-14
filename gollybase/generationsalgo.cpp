@@ -1152,8 +1152,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
             return "Non-totalistic survival must start with a digit." ;
          }
          // one of birth or survival must be at the start of the rule
-         t = tidystring + (slashpos ? 0 : 1) ;
-         if (!(bpos == t || spos == t)) {
+         if (!(bpos == tidystring || spos == tidystring)) {
             return "Invalid characters at start of rule." ;
          }
       }
