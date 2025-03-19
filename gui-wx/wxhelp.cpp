@@ -1310,9 +1310,7 @@ void ShowAboutBox()
     wxDialog dlg(mainptr, wxID_ANY, wxString(_("About Golly")));
     
     HtmlView* html = new HtmlView(&dlg, wxID_ANY, wxDefaultPosition,
-#if defined(__WXMAC__)
-                                  wxSize(400, 330),
-#elif defined(__WXGTK__)
+#ifdef __WXGTK__
                                   wxSize(450, 370),
 #else
                                   wxSize(400, 350),
@@ -1320,7 +1318,7 @@ void ShowAboutBox()
                                   wxHW_SCROLLBAR_NEVER | wxSUNKEN_BORDER);
     html->SetBorders(0);
 #ifdef __WXMAC__
-    html->SetFontSizes(helpfontsize);
+    html->SetFontSizes(13); // must be a fixed size (not helpfontsize)
 #endif
     html->CheckAndLoad(_("Help/about.html"));
     
