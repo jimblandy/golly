@@ -525,34 +525,7 @@ void EndProgress()
 
 void DrawRect(wxDC& dc, wxRect& rect)
 {
-    #ifdef __WXMAC__
-        #if wxCHECK_VERSION(3,1,5)
-            // EnableOffset fix no longer works in 3.1.5!
-            if (scalefactor > 1.0) {
-                rect.x++;
-                rect.y++;
-                rect.width--;
-                rect.height--;
-            }
-        #else
-            // fix DrawRectangle problem on Retina screens
-            if (scalefactor > 1.0) dc.GetGraphicsContext()->EnableOffset(true);
-        #endif
-    #endif
-
     dc.DrawRectangle(rect);
-
-    #ifdef __WXMAC__
-        #if wxCHECK_VERSION(3,1,5)
-            if (scalefactor > 1.0) {
-                // restore rect
-                rect.x--;
-                rect.y--;
-                rect.width++;
-                rect.height++;
-            }
-        #endif
-    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -562,9 +535,7 @@ void FillRect(wxDC& dc, wxRect& rect, wxBrush& brush)
     // set pen transparent so brush fills rect
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.SetBrush(brush);
-    
-    dc.DrawRectangle(rect);     // don't call DrawRect(dc,rect) here!
-    
+    dc.DrawRectangle(rect);
     dc.SetBrush(wxNullBrush);   // restore brush
     dc.SetPen(wxNullPen);       // restore pen
 }
