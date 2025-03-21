@@ -131,6 +131,7 @@ bool MainFrame::SaveStartingPattern()
 void MainFrame::ResetPattern(bool resetundo)
 {
     if (currlayer->algo->getGeneration() == currlayer->startgen) return;
+    if (viewptr->drawingcells || viewptr->selectingcells) return;
     
     if (generating) {
         command_pending = true;
