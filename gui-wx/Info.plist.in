@@ -23,7 +23,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>VERSION</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Golly version VERSION, Copyright 2005-2024 The Golly Gang</string>
+	<string>Golly version VERSION, Copyright 2005-2025 The Golly Gang</string>
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSRequiresAquaSystemAppearance</key>
