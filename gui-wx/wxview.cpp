@@ -1730,6 +1730,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_HYPER:       if (!timeline) mainptr->ToggleHyperspeed(); break;
         case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
         case DO_SHOWPOP:     mainptr->ToggleShowPopulation(); break;
+        case DO_AUTOSTOP:    autostop = !autostop; break;
         case DO_RECORD:      StartStopRecording(); break;
         case DO_DELTIME:     DeleteTimeline(); break;
         case DO_PLAYBACK:    if (!inscript && timeline) PlayTimeline(-1); break;

@@ -301,6 +301,7 @@ enum {
     ID_HYPER,
     ID_HINFO,
     ID_SHOW_POP,
+    ID_AUTOSTOP,
     ID_RECORD,
     ID_DELTIME,
     ID_SETALGO,

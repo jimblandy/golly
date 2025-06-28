@@ -63,6 +63,7 @@ extern bool initautofit;         // initial autofit setting
 extern bool inithyperspeed;      // initial hyperspeed setting
 extern bool initshowhashinfo;    // initial showhashinfo setting
 extern bool showpopulation;      // show population counts while generating?
+extern bool autostop;            // automatically stop generating if pattern dies?
 extern bool savexrle;            // save RLE file using XRLE format?
 extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
@@ -248,6 +249,7 @@ typedef enum {
     DO_STACK,                     // stack layers
     DO_STARTSTOP,                 // start/stop generating
     DO_RECORD,                    // start/stop recording
+    DO_AUTOSTOP,                  // stop if dead
     DO_SYNCCURS,                  // synchronize cursors
     DO_SYNCVIEWS,                 // synchronize views
     DO_TILE,                      // tile layers

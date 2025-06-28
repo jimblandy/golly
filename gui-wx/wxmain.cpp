@@ -683,6 +683,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_HYPER,        active && !timeline);
         mbar->Enable(ID_HINFO,        active);
         mbar->Enable(ID_SHOW_POP,     active);
+        mbar->Enable(ID_AUTOSTOP,     active);
         mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
         mbar->Enable(ID_DELTIME,      active && !inscript && timeline && !currlayer->algo->isrecording());
         mbar->Enable(ID_CONVERT,      active && !timeline && !inscript);
@@ -739,6 +740,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_HYPER,         currlayer->hyperspeed);
         mbar->Check(ID_HINFO,         currlayer->showhashinfo);
         mbar->Check(ID_SHOW_POP,      showpopulation);
+        mbar->Check(ID_AUTOSTOP,      autostop);
         mbar->Check(ID_TOOL_BAR,      showtool);
         mbar->Check(ID_LAYER_BAR,     showlayer);
         mbar->Check(ID_EDIT_BAR,      showedit);
@@ -1395,6 +1397,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_HYPER:          ToggleHyperspeed(); break;
         case ID_HINFO:          ToggleHashInfo(); break;
         case ID_SHOW_POP:       ToggleShowPopulation(); break;
+        case ID_AUTOSTOP:       autostop = !autostop; break;
         case ID_RECORD:         StartStopRecording(); break;
         case ID_DELTIME:        DeleteTimeline(); break;
         case ID_CONVERT:        ConvertOldRules(); break;
@@ -2266,6 +2269,7 @@ void MainFrame::CreateMenus()
     controlMenu->AppendCheckItem(ID_HYPER,       _("Hyperspeed") + GetAccelerator(DO_HYPER));
     controlMenu->AppendCheckItem(ID_HINFO,       _("Show Hash Info") + GetAccelerator(DO_HASHINFO));
     controlMenu->AppendCheckItem(ID_SHOW_POP,    _("Show Population") + GetAccelerator(DO_SHOWPOP));
+    controlMenu->AppendCheckItem(ID_AUTOSTOP,    _("Stop If Dead") + GetAccelerator(DO_AUTOSTOP));
     controlMenu->AppendSeparator();
     controlMenu->Append(ID_RECORD,               _("Start Recording") + GetAccelerator(DO_RECORD));
     controlMenu->Append(ID_DELTIME,              _("Delete Timeline") + GetAccelerator(DO_DELTIME));
@@ -2469,6 +2473,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
         SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);
         SetAccelerator(mbar, ID_SHOW_POP,        DO_SHOWPOP);
+        SetAccelerator(mbar, ID_AUTOSTOP,        DO_AUTOSTOP);
         SetAccelerator(mbar, ID_RECORD,          DO_RECORD);
         SetAccelerator(mbar, ID_DELTIME,         DO_DELTIME);
         SetAccelerator(mbar, ID_SETRULE,         DO_SETRULE);

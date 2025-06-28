@@ -614,25 +614,14 @@ bool MainFrame::StepPattern()
     
     if (!IsIconized()) DisplayPattern();
     
-    /* enable this code if we ever implement isPeriodic()
-    if (autostop) {
-        int period = curralgo->isPeriodic();
-        if (period > 0) {
-            if (period == 1) {
-                if (curralgo->isEmpty()) {
-                    statusptr->DisplayMessage(_("Pattern is empty."));
-                } else {
-                    statusptr->DisplayMessage(_("Pattern is stable."));
-                }
-            } else {
-                wxString s;
-                s.Printf(_("Pattern is oscillating (period = %d)."), period);
-                statusptr->DisplayMessage(s);
-            }
-            return false;
+    if (autostop && curralgo->isEmpty()) {
+        if (curralgo->getIncrement() > bigint::one) {
+            statusptr->DisplayMessage(_("Pattern died at or before this generation."));
+        } else {
+            statusptr->DisplayMessage(_("Pattern died at this generation."));
         }
+        return false;
     }
-    */
     
     return true;
 }
