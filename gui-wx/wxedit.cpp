@@ -493,7 +493,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
         // digitwd is not accurate on macOS
         if (state > 10) x += 1;
         if (state > 100) x += 1;
-        yoffset -= 1;
+        yoffset += 1;
     #endif
     #ifdef __WXMSW__
         yoffset += 2;
@@ -505,7 +505,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     if (currlayer->statenames.GetCount() > 0 && currlayer->statenames[state].Length() > 0) {
         yoffset = (BOXSIZE - digitht)/2;
         #ifdef __WXMAC__
-            yoffset -= 2;
+            yoffset += 2;
         #endif
         #ifdef __WXMSW__
             yoffset += 2;
