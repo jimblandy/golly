@@ -485,6 +485,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     int state = currlayer->drawingstate;
     int x = xpos + 2;
     int y = SMALLHT - 8;
+    int yoffset = (BOXSIZE - digitht)/2;
     wxString strbuf;
     if (state < 10) x += digitwd;
     if (state < 100) x += digitwd;
@@ -492,13 +493,18 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
         // digitwd is not accurate on macOS
         if (state > 10) x += 1;
         if (state > 100) x += 1;
+        yoffset -= 1;
     #endif
     strbuf.Printf(_("%d"), state);
-    DisplayText(dc, strbuf, x, y - (BOXSIZE - digitht)/2 - 1);
+    DisplayText(dc, strbuf, x, y - yoffset);
     
     // draw non-empty state name
     if (currlayer->statenames.GetCount() > 0 && currlayer->statenames[state].Length() > 0) {
-        DisplayText(dc, currlayer->statenames[state], namepos, y - (BOXSIZE - digitht)/2 - 2);
+        yoffset = (BOXSIZE - digitht)/2;
+        #ifdef __WXMAC__
+            yoffset -= 2;
+        #endif
+        DisplayText(dc, currlayer->statenames[state], namepos, y - yoffset);
     }
     
     wxColor cellcolor(currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
