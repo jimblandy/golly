@@ -1862,8 +1862,7 @@ static void CheckRuleHeader(char* linebuf, const wxString& rulename)
 
 // -----------------------------------------------------------------------------
 
-static void ParseColors(linereader& reader, char* linebuf, int MAXLINELEN,
-                        int* linenum, bool* eof)
+static void ParseColors(linereader& reader, char* linebuf, int MAXLINELEN, int* linenum, bool* eof)
 {
     // parse @COLORS section in currently open .rule file
     int state, r, g, b, r1, g1, b1, r2, g2, b2;
@@ -1886,6 +1885,35 @@ static void ParseColors(linereader& reader, char* linebuf, int MAXLINELEN,
                 currlayer->cellr[state] = r;
                 currlayer->cellg[state] = g;
                 currlayer->cellb[state] = b;
+            }
+        } else if (linebuf[0] == '@') {
+            // found next section, so stop parsing
+            *eof = false;
+            return;
+        }
+        // ignore unexpected syntax (better for upward compatibility)
+    }
+    *eof = true;
+}
+
+// -----------------------------------------------------------------------------
+
+static void ParseNames(linereader& reader, char* linebuf, int MAXLINELEN, int* linenum, bool* eof)
+{
+    // parse @NAMES section in currently open .rule file
+    int state;
+    int namepos;
+    char dummy;
+    int maxstate = currlayer->algo->NumCellStates() - 1;
+    
+    while (reader.fgets(linebuf, MAXLINELEN) != 0) {
+        *linenum = *linenum + 1;
+        if (linebuf[0] == '#' || linebuf[0] == 0) {
+            // skip comment or empty line
+        } else if (sscanf(linebuf, "%d %n%c", &state, &namepos, &dummy) == 2) {
+            // ignore bad state
+            if (state >= 0 && state <= maxstate) {
+                currlayer->statenames[state] = wxString(linebuf+namepos,wxConvLocal);
             }
         } else if (linebuf[0] == '@') {
             // found next section, so stop parsing
@@ -2149,9 +2177,9 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
 // -----------------------------------------------------------------------------
 
 static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
-                         bool* loadedcolors, bool* loadedicons)
+                         bool* loadedcolors, bool* loadedicons, bool* loadednames)
 {
-    // load any color and/or icon info from the currently open .rule file
+    // load any color/icon/name info from the currently open .rule file
     const int MAXLINELEN = 4095;
     char linebuf[MAXLINELEN + 1];
     int linenum = 0;
@@ -2163,7 +2191,7 @@ static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
     
     while (true) {
         if (skipget) {
-            // ParseColors/ParseIcons has stopped at next section
+            // ParseColors/ParseIcons/ParseNames has stopped at next section
             // (ie. linebuf contains @...) so skip fgets call
             skipget = false;
         } else {
@@ -2171,7 +2199,7 @@ static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
             linenum++;
             if (linenum == 1) CheckRuleHeader(linebuf, rulename);
         }
-        // look for @COLORS or @ICONS section
+        // look for @COLORS or @ICONS or @NAMES section
         if (strcmp(linebuf, "@COLORS") == 0 && !*loadedcolors) {
             *loadedcolors = true;
             ParseColors(reader, linebuf, MAXLINELEN, &linenum, &eof);
@@ -2181,6 +2209,12 @@ static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
         } else if (strcmp(linebuf, "@ICONS") == 0 && !*loadedicons) {
             *loadedicons = true;
             ParseIcons(rulename, reader, linebuf, MAXLINELEN, &linenum, &eof);
+            if (eof) break;
+            // otherwise linebuf contains @... so skip next fgets call
+            skipget = true;
+        } else if (strcmp(linebuf, "@NAMES") == 0 && !*loadednames) {
+            *loadednames = true;
+            ParseNames(reader, linebuf, MAXLINELEN, &linenum, &eof);
             if (eof) break;
             // otherwise linebuf contains @... so skip next fgets call
             skipget = true;
@@ -2446,7 +2480,7 @@ static void SetAverageColor(int state, wxBitmap* icon)
 
 void UpdateCurrentColors()
 {
-    // set current layer's colors and icons according to current algo and rule
+    // set current layer's colors, icons and state names according to current algo and rule
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -2471,7 +2505,7 @@ void UpdateCurrentColors()
     } else {
         // the Super algo supports three rule families: Super, History and Investigator
         // the History default colors start at index 26 in the list
-	  // the Investigator default colors start at index 33 in the list
+        // the Investigator default colors start at index 33 in the list
         int o = 0;
         if (strcmp(ad->algoName, "Super") == 0 && rulename.rfind("History") != std::string::npos) o = 26;
         if (strcmp(ad->algoName, "Super") == 0 && rulename.rfind("Investigator") != std::string::npos) o = 33;
@@ -2488,23 +2522,28 @@ void UpdateCurrentColors()
 
     // this flag will change if any icon uses a non-grayscale color
     currlayer->multicoloricons = false;
+    
+    // init state names
+    currlayer->statenames.Clear();
+    for (int n = 0; n <= maxstate; n++) currlayer->statenames.Add(wxEmptyString);
 
     bool loadedcolors = false;
     bool loadedicons = false;
+    bool loadednames = false;
     
     // look for rulename.rule first
     FILE* rulefile = FindRuleFile(rulename);
     if (rulefile) {
-        LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
+        LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons, &loadednames);
         
-        if (!loadedcolors || !loadedicons) {
+        if (!loadedcolors || !loadedicons || !loadednames) {
             // if rulename has the form foo-* then look for foo-shared.rule
-            // and load its colors and/or icons
+            // and load its colors and/or icons and/or names
             wxString prefix = rulename.BeforeLast('-');
             if (!prefix.IsEmpty() && !rulename.EndsWith(wxT("-shared"))) {
                 rulename = prefix + wxT("-shared");
                 rulefile = FindRuleFile(rulename);
-                if (rulefile) LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
+                if (rulefile) LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons, &loadednames);
             }
         }
         
@@ -2736,6 +2775,8 @@ Layer::Layer()
     atlas15x15 = NULL;            // no texture atlas for 15x15 icons
     atlas31x31 = NULL;            // no texture atlas for 31x31 icons
     
+    statenames.Clear();           // no names for cell states
+    
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
     tlspeed = 0;                  // default speed for autoplay
@@ -2864,6 +2905,7 @@ Layer::Layer()
             showhashinfo = currlayer->showhashinfo;
             originx = currlayer->originx;
             originy = currlayer->originy;
+            statenames = currlayer->statenames;
             
             // duplicate selection info
             currsel = currlayer->currsel;
@@ -2965,8 +3007,9 @@ Layer::~Layer()
         // delete tempstart file if it exists
         if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
         
-        // delete any icons
+        // delete any icons or state names
         DeleteIcons(this);
+        statenames.Clear();
     }
 }
 

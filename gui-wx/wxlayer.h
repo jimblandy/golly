@@ -98,6 +98,8 @@ public:
     int numicons;                 // number of icons (= number of live states)
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
     
+    wxArrayString statenames;     // names of cell states (if .rule file has @NAMES)
+    
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline
     int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop

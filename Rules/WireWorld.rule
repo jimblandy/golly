@@ -43,7 +43,6 @@ var n={0,2,3}
 
 @NAMES
 
-# these state names are not yet used by Golly
 0 empty
 1 electron head
 2 electron tail

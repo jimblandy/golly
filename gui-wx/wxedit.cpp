@@ -146,6 +146,7 @@ private:
     
     wxScrollBar* drawbar;         // scroll bar for changing drawing state
     int firststate;               // first visible state (if showing all states)
+    int namepos;                  // horizontal position for state name
     
     int h_col1;                   // horizontal position of labels
     int h_col2;                   // horizontal position of info for state 0
@@ -318,6 +319,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
                               wxSB_HORIZONTAL);
     if (drawbar == NULL) Fatal(_("Failed to create scroll bar!"));
     firststate = 0;
+    namepos = x + scrollbarwd + BOXGAP;
 }
 
 // -----------------------------------------------------------------------------
@@ -392,6 +394,7 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
         strbuf.Printf(_("%d"), i);
         x = (int)(h_col2 + (i - firststate) * COLWD + (COLWD - strbuf.length() * digitwd) / 2);
         #ifdef __WXMAC__
+            // digitwd is not accurate on macOS
             x += i < 100 ? 1 : 2;
         #endif
         DisplayText(dc, strbuf, x, BASELINE1);
@@ -467,7 +470,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     dc.DrawLine(0, r.GetBottom(), r.width, r.GetBottom());
     dc.SetPen(wxNullPen);
     
-    // reset drawing state in case it's no longer valid (due to algo/rule change)
+    // reset drawing state if it's no longer valid (due to algo/rule change)
     if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
         currlayer->drawingstate = 1;
     }
@@ -480,13 +483,23 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     
     // draw current drawing state
     int state = currlayer->drawingstate;
-    int x = xpos;
+    int x = xpos + 2;
     int y = SMALLHT - 8;
     wxString strbuf;
     if (state < 10) x += digitwd;
     if (state < 100) x += digitwd;
+    #ifdef __WXMAC__
+        // digitwd is not accurate on macOS
+        if (state > 10) x += 1;
+        if (state > 100) x += 1;
+    #endif
     strbuf.Printf(_("%d"), state);
-    DisplayText(dc, strbuf, x, y - (BOXSIZE - digitht)/2);
+    DisplayText(dc, strbuf, x, y - (BOXSIZE - digitht)/2 - 1);
+    
+    // draw non-empty state name
+    if (currlayer->statenames.GetCount() > 0 && currlayer->statenames[state].Length() > 0) {
+        DisplayText(dc, currlayer->statenames[state], namepos, y - (BOXSIZE - digitht)/2 - 2);
+    }
     
     wxColor cellcolor(currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
     
