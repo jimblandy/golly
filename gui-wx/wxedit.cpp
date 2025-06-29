@@ -495,6 +495,9 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
         if (state > 100) x += 1;
         yoffset -= 1;
     #endif
+    #ifdef __WXMSW__
+        yoffset += 2;
+    #endif
     strbuf.Printf(_("%d"), state);
     DisplayText(dc, strbuf, x, y - yoffset);
     
@@ -503,6 +506,9 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
         yoffset = (BOXSIZE - digitht)/2;
         #ifdef __WXMAC__
             yoffset -= 2;
+        #endif
+        #ifdef __WXMSW__
+            yoffset += 2;
         #endif
         DisplayText(dc, currlayer->statenames[state], namepos, y - yoffset);
     }
