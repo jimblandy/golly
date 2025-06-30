@@ -327,6 +327,7 @@ enum {
     ID_ALL_STATES,
     ID_STATUS_BAR,
     ID_EXACT,
+    ID_XYSTATE,
     ID_GRID,
     ID_ICONS,
     ID_INVERT,

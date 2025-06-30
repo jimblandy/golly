@@ -72,6 +72,7 @@ extern bool showedit;            // show edit bar?
 extern bool showallstates;       // show all cell states in edit bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
+extern bool showxystate;         // show state of cell at XY location?
 extern bool showscrollbars;      // show scroll bars?
 extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
@@ -242,6 +243,7 @@ typedef enum {
     DO_SHOWTIME,                  // show timeline
     DO_TIMING,                    // show timing
     DO_SHOWTOOL,                  // show tool bar
+    DO_SHOWXYSTATE,               // show XY state
     DO_SHRINKFIT,                 // shrink and fit
     DO_SHRINK,                    // shrink selection
     DO_SLOWER,                    // slower

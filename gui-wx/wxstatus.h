@@ -72,6 +72,7 @@ private:
     int textascent;             // vertical adjustment used in DrawText calls
     wxString statusmsg;         // for messages on bottom line
     bigint currx, curry;        // cursor location in cell coords
+    int currstate;              // state of cell at cursor location
     bool showxy;                // show cursor's XY location?
     wxFont statusfont;          // status bar font
 };

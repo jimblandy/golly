@@ -114,6 +114,7 @@ bool showedit = true;            // show edit bar?
 bool showallstates = false;      // show all cell states in edit bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
+bool showxystate = false;        // show state of cell at XY location?
 bool showscrollbars = true;      // show scroll bars?
 bool showtimeline = false;       // show timeline bar?
 bool showgridlines = true;       // display grid lines?
@@ -626,6 +627,7 @@ const char* GetActionName(action_id action)
         case DO_SHOWSCROLL:     return "Show Scroll Bars";
         case DO_SHOWSTATUS:     return "Show Status Bar";
         case DO_SHOWEXACT:      return "Show Exact Numbers";
+        case DO_SHOWXYSTATE:    return "Show XY State";
         case DO_SETCOLORS:      return "Set Layer Colors...";
         case DO_SHOWICONS:      return "Show Cell Icons";
         case DO_INVERT:         return "Invert Colors";
@@ -1548,6 +1550,7 @@ void SavePrefs()
     fprintf(f, "show_states=%d\n", showallstates ? 1 : 0);
     fprintf(f, "show_status=%d\n", showstatus ? 1 : 0);
     fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
+    fprintf(f, "show_xystate=%d\n", showxystate ? 1 : 0);
     fprintf(f, "show_scrollbars=%d\n", showscrollbars ? 1 : 0);
     fprintf(f, "show_timeline=%d\n", showtimeline ? 1 : 0);
     fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
@@ -2142,6 +2145,9 @@ void GetPrefs()
 
         } else if (strcmp(keyword, "show_exact") == 0) {
             showexact = value[0] == '1';
+
+        } else if (strcmp(keyword, "show_xystate") == 0) {
+            showxystate = value[0] == '1';
 
         } else if (strcmp(keyword, "show_scrollbars") == 0) {
             showscrollbars = value[0] == '1';

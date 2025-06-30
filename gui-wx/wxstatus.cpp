@@ -29,7 +29,7 @@
 const int LINEHT = 14;                    // distance between each baseline
 const int DESCHT = 4;                     // descender height
 const int STATUS_HT = 2*LINEHT+DESCHT;    // normal status bar height
-const int STATUS_EXHT = 7*LINEHT+DESCHT;  // height when showing exact numbers
+const int STATUS_EXHT = 8*LINEHT+DESCHT;  // height when showing exact numbers
 
 const int BASELINE1 = LINEHT-2;           // baseline of 1st line
 const int BOTGAP = 6;                     // to get baseline of message line
@@ -41,9 +41,10 @@ const int SCALELINE = 3*LINEHT-2;
 const int STEPLINE = 4*LINEHT-2;
 const int XLINE = 5*LINEHT-2;
 const int YLINE = 6*LINEHT-2;
+const int STATELINE = 7*LINEHT-2;
 
 // these horizontal offets are used when showexact is true
-int h_x_ex, h_y_ex;
+int h_x_ex, h_y_ex, h_state_ex;
 
 #ifdef __WXMAC__
     // gray line at bottom of status bar (matches line at bottom of OS X title bar)
@@ -122,7 +123,7 @@ void StatusBar::UpdateXYLocation()
     if (ht > 0 && (wd > h_xy || showexact)) {
         wxRect r;
         if (showexact)
-            r = wxRect( wxPoint(0, XLINE+DESCHT-LINEHT), wxPoint(wd-1, YLINE+DESCHT) );
+            r = wxRect( wxPoint(0, XLINE+DESCHT-LINEHT), wxPoint(wd-1, STATELINE+DESCHT) );
         else
             r = wxRect( wxPoint(h_xy, 0), wxPoint(wd-1, BASELINE1+DESCHT) );
         Refresh(false, &r);
@@ -148,10 +149,25 @@ void StatusBar::CheckMouseLocation(bool active)
     // may need to update XY location in status bar
     bigint xpos, ypos;
     if ( viewptr->GetCellPos(xpos, ypos) ) {
-        if ( xpos != currx || ypos != curry ) {
-            // show new XY location
+        int newstate;
+        if (showxystate) {
+            if (currlayer->algo->isEmpty()) {
+                newstate = 0;
+            } else if ( xpos < bigint::min_coord || ypos < bigint::min_coord ||
+                        xpos > bigint::max_coord || ypos > bigint::max_coord ) {
+                // outside editable boundary so we'll display "?" for the state
+                newstate = -1;
+            } else {
+                newstate = currlayer->algo->getcell(xpos.toint(), ypos.toint());
+            }
+        } else {
+            newstate = currstate;
+        }
+        if ( xpos != currx || ypos != curry || newstate != currstate ) {
+            // show new XY location or state
             currx = xpos;
             curry = ypos;
+            currstate = newstate;
             showxy = true;
             UpdateXYLocation();
         } else if (!showxy) {
@@ -164,7 +180,7 @@ void StatusBar::CheckMouseLocation(bool active)
             mousepos += wxString(ypos.tostring('\0'), wxConvLocal);
         }
     } else {
-        // outside viewport so clear XY location
+        // outside viewport or outside bounded grid, so clear XY location
         showxy = false;
         UpdateXYLocation();
         if (inscript) mousepos = wxEmptyString;
@@ -292,7 +308,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
     // some call resets the font
     SetStatusFont(dc);
     
-    wxString strbuf;
+    wxString strbuf, statebuf;
     
     if (updaterect.y >= statusht-BOTGAP+DESCHT-LINEHT) {
         // only show possible message in bottom line -- see below
@@ -344,6 +360,7 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
         
         DisplayText(dc, _("X ="), h_gen, XLINE);
         DisplayText(dc, _("Y ="), h_gen, YLINE);
+        if (showxystate) DisplayText(dc, _("State ="), h_gen, STATELINE);
         if (showxy) {
             bigint xo, yo;
             bigint xpos = currx;   xpos -= currlayer->originx;
@@ -354,10 +371,21 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
                 temp -= ypos;
                 ypos = temp;
             }
-            DisplayText(dc, wxString(xpos.tostring(), wxConvLocal),
-                        h_x_ex, XLINE);
-            DisplayText(dc, wxString(ypos.tostring(), wxConvLocal),
-                        h_y_ex, YLINE);
+            DisplayText(dc, wxString(xpos.tostring(), wxConvLocal), h_x_ex, XLINE);
+            DisplayText(dc, wxString(ypos.tostring(), wxConvLocal), h_y_ex, YLINE);
+            if (showxystate) {
+                if (currstate < 0) {
+                    // currx,curry is outside editable boundary
+                    statebuf = _("?");
+                } else {
+                    statebuf.Printf(_("%d"), currstate);
+                    if (currlayer->statenames.GetCount() > 0 && currlayer->statenames[currstate].Length() > 0) {
+                        statebuf += _(" ");
+                        statebuf += currlayer->statenames[currstate];
+                    }
+                }
+                DisplayText(dc, statebuf, h_state_ex, STATELINE);
+            }
         }
         
     } else {
@@ -404,7 +432,11 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             DisplayText(dc, strbuf, h_step, BASELINE1);
         }
         
-        strbuf = _("XY=");
+        if (showxystate) {
+            strbuf = _("XYS=");
+        } else {
+            strbuf = _("XY=");
+        }
         if (showxy) {
             bigint xo, yo;
             bigint xpos = currx;   xpos -= currlayer->originx;
@@ -416,8 +448,21 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
                 ypos = temp;
             }
             strbuf += Stringify(xpos);
-            strbuf += wxT(" ");
+            strbuf += _(" ");
             strbuf += Stringify(ypos);
+            if (showxystate) {
+                if (currstate < 0) {
+                    // currx,curry is outside editable boundary
+                    strbuf += _(" ?");
+                } else {
+                    statebuf.Printf(_(" %d"), currstate);
+                    strbuf += statebuf;
+                    if (currlayer->statenames.GetCount() > 0 && currlayer->statenames[currstate].Length() > 0) {
+                        strbuf += _(" ");
+                        strbuf += currlayer->statenames[currstate];
+                    }
+                }
+            }
         }
         DisplayText(dc, strbuf, h_xy, BASELINE1);
     }
@@ -616,9 +661,12 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
     h_x_ex = h_gen + textwd;
     dc.GetTextExtent(_("Y = "), &textwd, &textht);
     h_y_ex = h_gen + textwd;
+    dc.GetTextExtent(_("State = "), &textwd, &textht);
+    h_state_ex = h_gen + textwd;
     
     statusht = ht;
     showxy = false;
+    currstate = -1;
     
     statbitmap = NULL;
     statbitmapwd = -1;

@@ -706,6 +706,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_ALL_STATES,   active);
         mbar->Enable(ID_STATUS_BAR,   active);
         mbar->Enable(ID_EXACT,        active);
+        mbar->Enable(ID_XYSTATE,      active);
         mbar->Enable(ID_GRID,         active);
         mbar->Enable(ID_ICONS,        active);
         mbar->Enable(ID_INVERT,       active);
@@ -747,6 +748,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_ALL_STATES,    showallstates);
         mbar->Check(ID_STATUS_BAR,    showstatus);
         mbar->Check(ID_EXACT,         showexact);
+        mbar->Check(ID_XYSTATE,       showxystate);
         mbar->Check(ID_GRID,          showgridlines);
         mbar->Check(ID_ICONS,         showicons);
         mbar->Check(ID_INVERT,        swapcolors);
@@ -1423,6 +1425,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_ALL_STATES:     ToggleAllStates(); break;
         case ID_STATUS_BAR:     ToggleStatusBar(); break;
         case ID_EXACT:          ToggleExactNumbers(); break;
+        case ID_XYSTATE:        showxystate = !showxystate; statusptr->UpdateXYLocation(); break;
         case ID_GRID:           viewptr->ToggleGridLines(); break;
         case ID_ICONS:          viewptr->ToggleCellIcons(); break;
         case ID_INVERT:         viewptr->ToggleCellColors(); break;
@@ -2296,6 +2299,7 @@ void MainFrame::CreateMenus()
     viewMenu->AppendCheckItem(ID_ALL_STATES,     _("Show All States") + GetAccelerator(DO_SHOWSTATES));
     viewMenu->AppendCheckItem(ID_STATUS_BAR,     _("Show Status Bar") + GetAccelerator(DO_SHOWSTATUS));
     viewMenu->AppendCheckItem(ID_EXACT,          _("Show Exact Numbers") + GetAccelerator(DO_SHOWEXACT));
+    viewMenu->AppendCheckItem(ID_XYSTATE,        _("Show XY State") + GetAccelerator(DO_SHOWXYSTATE));
     viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
     viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
     viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
@@ -2491,6 +2495,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_ALL_STATES,      DO_SHOWSTATES);
         SetAccelerator(mbar, ID_STATUS_BAR,      DO_SHOWSTATUS);
         SetAccelerator(mbar, ID_EXACT,           DO_SHOWEXACT);
+        SetAccelerator(mbar, ID_XYSTATE,         DO_SHOWXYSTATE);
         SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
         SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
         SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
