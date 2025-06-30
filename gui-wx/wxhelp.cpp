@@ -49,7 +49,9 @@ private:
     enum {
         ID_BACK_BUTT = wxID_HIGHEST + 1,
         ID_FORWARD_BUTT,
-        ID_CONTENTS_BUTT
+        ID_CONTENTS_BUTT,
+        ID_SMALLER_BUTT,
+        ID_BIGGER_BUTT
     };
     
     // event handlers
@@ -57,6 +59,8 @@ private:
     void OnBackButton(wxCommandEvent& event);
     void OnForwardButton(wxCommandEvent& event);
     void OnContentsButton(wxCommandEvent& event);
+    void OnBiggerButton(wxCommandEvent& event);
+    void OnSmallerButton(wxCommandEvent& event);
     void OnCloseButton(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
     
@@ -76,6 +80,8 @@ EVT_ACTIVATE   (                    HelpFrame::OnActivate)
 EVT_BUTTON     (ID_BACK_BUTT,       HelpFrame::OnBackButton)
 EVT_BUTTON     (ID_FORWARD_BUTT,    HelpFrame::OnForwardButton)
 EVT_BUTTON     (ID_CONTENTS_BUTT,   HelpFrame::OnContentsButton)
+EVT_BUTTON     (ID_SMALLER_BUTT,    HelpFrame::OnSmallerButton)
+EVT_BUTTON     (ID_BIGGER_BUTT,     HelpFrame::OnBiggerButton)
 EVT_BUTTON     (wxID_CLOSE,         HelpFrame::OnCloseButton)
 EVT_CLOSE      (                    HelpFrame::OnClose)
 END_EVENT_TABLE()
@@ -165,6 +171,9 @@ HtmlView* htmlwin = NULL;     // html child window
 wxButton* backbutt;           // back button
 wxButton* forwbutt;           // forwards button
 wxButton* contbutt;           // Contents button
+wxButton* smallerbutt;        // smaller text
+wxButton* biggerbutt;         // bigger text
+wxButton* closebutt;          // Close button
 
 long whenactive;              // when help window became active (elapsed millisecs)
 
@@ -211,21 +220,22 @@ HelpFrame::HelpFrame()
     wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
     
-    backbutt = new wxButton(this, ID_BACK_BUTT, _("<"),
-                            wxDefaultPosition, wxSize(40,wxDefaultCoord));
-    hbox->Add(backbutt, 0, wxALL | wxALIGN_LEFT, 10);
-    
-    forwbutt = new wxButton(this, ID_FORWARD_BUTT, _(">"),
-                            wxDefaultPosition, wxSize(40,wxDefaultCoord));
-    hbox->Add(forwbutt, 0, wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
-    
-    contbutt = new wxButton(this, ID_CONTENTS_BUTT, _("Contents"));
-    hbox->Add(contbutt, 0, wxALL | wxALIGN_LEFT, 10);
-    
-    hbox->AddStretchSpacer(1);
-    
-    wxButton* closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
+    backbutt = new wxButton(this, ID_BACK_BUTT,       _("<"), wxDefaultPosition, wxSize(30,wxDefaultCoord));
+    forwbutt = new wxButton(this, ID_FORWARD_BUTT,    _(">"), wxDefaultPosition, wxSize(30,wxDefaultCoord));
+    contbutt = new wxButton(this, ID_CONTENTS_BUTT,   _("Contents"));
+    smallerbutt = new wxButton(this, ID_SMALLER_BUTT, _("-"), wxDefaultPosition, wxSize(30,wxDefaultCoord));
+    biggerbutt = new wxButton(this, ID_BIGGER_BUTT,   _("+"), wxDefaultPosition, wxSize(30,wxDefaultCoord));
+    closebutt = new wxButton(this, wxID_CLOSE,        _("Close"));
     closebutt->SetDefault();
+    
+    hbox->Add(backbutt, 0, wxLEFT | wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
+    hbox->AddSpacer(5);
+    hbox->Add(forwbutt, 0, wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
+    hbox->Add(contbutt, 0, wxLEFT | wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
+    hbox->Add(smallerbutt, 0, wxLEFT | wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
+    hbox->AddSpacer(5);
+    hbox->Add(biggerbutt, 0, wxRIGHT | wxTOP | wxBOTTOM | wxALIGN_LEFT, 10);
+    hbox->AddStretchSpacer(1);
     hbox->Add(closebutt, 0, wxALL, 10);
     
     vbox->Add(hbox, 0, wxALL | wxEXPAND | wxALIGN_TOP, 0);
@@ -384,6 +394,26 @@ void HelpFrame::OnForwardButton(wxCommandEvent& WXUNUSED(event))
 void HelpFrame::OnContentsButton(wxCommandEvent& WXUNUSED(event))
 {
     ShowHelp(helphome);
+}
+
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnSmallerButton(wxCommandEvent& WXUNUSED(event))
+{
+    if ( helpfontsize > minfontsize ) {
+        helpfontsize--;
+        htmlwin->ChangeFontSizes(helpfontsize);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void HelpFrame::OnBiggerButton(wxCommandEvent& WXUNUSED(event))
+{
+    if ( helpfontsize < maxfontsize ) {
+        helpfontsize++;
+        htmlwin->ChangeFontSizes(helpfontsize);
+    }
 }
 
 // -----------------------------------------------------------------------------
