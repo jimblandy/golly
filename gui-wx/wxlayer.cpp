@@ -2478,7 +2478,7 @@ static void SetAverageColor(int state, wxBitmap* icon)
 
 // -----------------------------------------------------------------------------
 
-void UpdateCurrentColors()
+static void UpdateCurrentColors()
 {
     // set current layer's colors, icons and state names according to current algo and rule
     AlgoData* ad = algoinfo[currlayer->algtype];

@@ -1,6 +1,6 @@
 @RULE Worm-shared
 
-This file contains the icons shared by all Worm-* rules.
+This file contains the state names, colors and icons shared by all Worm-* rules.
 
 @TABLE
 
@@ -8,6 +8,48 @@ n_states:17
 neighborhood:Moore
 symmetries:none
 # do nothing
+
+@NAMES
+
+0 empty
+1 move E
+2 move SE
+3 move SW
+4 move W
+5 move NW
+6 move NE
+7 visited
+8 edge --
+9 E arrow
+10 W arrow
+11 edge /
+12 NE arrow
+13 SW arrow
+14 edge \
+15 SE arrow
+16 NW arrow
+
+@COLORS
+
+# all arrows are the same color (white in this case)
+
+0   48  48  48   dark gray
+1  255 255 255   white
+2  255 255 255   white
+3  255 255 255   white
+4  255 255 255   white
+5  255 255 255   white
+6  255 255 255   white
+7  255 128   0   orange
+8  255 255   0   yellow
+9  255 255 255   white
+10 255 255 255   white
+11 255 255   0   yellow
+12 255 255 255   white
+13 255 255 255   white
+14 255 255   0   yellow
+15 255 255 255   white
+16 255 255 255   white
 
 @ICONS
 
