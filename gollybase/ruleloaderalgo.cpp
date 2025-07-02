@@ -108,15 +108,17 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
     return noTABLEorTREE;
 }
 
+static std::string badrule;
+
 const char* ruleloaderalgo::setrule(const char* s)
 {
-    const char *err;
+    const char *err = NULL;
     const char *colonptr = strchr(s,':');
     std::string rulename(s);
     if (colonptr) rulename.assign(s,colonptr);
     
     // first check if rulename is the default rule for RuleTable or RuleTree
-    // in which case there is no need to look for a .rule/table/tree file
+    // in which case there is no need to look for a .rule file
     if (LocalRuleTable->IsDefaultRule(rulename.c_str())) {
         err = LocalRuleTable->setrule(s);
         if (err) return err;
@@ -142,30 +144,15 @@ const char* ruleloaderalgo::setrule(const char* s)
         if (inuser && err && (strcmp(err, noTABLEorTREE) == 0)) {
             // if .rule file was found in user's rules dir but had no
             // @TABLE or @TREE section then we look in Golly's rules dir
-            // (this lets user override the colors/icons in a supplied .rule
+            // (this lets user override the colors/icons/names in a supplied .rule
             // file without having to copy the entire file)
             rulefile = OpenRuleFile(rulename, lifegetrulesdir());
             if (rulefile) err = LoadTableOrTree(rulefile, s);
         }
         return err;
     }
-
-    // no .rule file so try to load .table file
-    err = LocalRuleTable->setrule(s);
-    if (err == NULL) {
-        SetAlgoVariables(TABLE);
-        return NULL;
-    }
-    
-    // no .table file so try to load .tree file
-    err = LocalRuleTree->setrule(s);
-    if (err == NULL) {
-        SetAlgoVariables(TREE);
-        return NULL;
-    }
     
     // make sure we show given rule string in final error msg (probably "File not found")
-    static std::string badrule;
     badrule = err;
     badrule += "\nGiven rule: ";
     badrule += s;

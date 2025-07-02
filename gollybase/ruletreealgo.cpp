@@ -2,7 +2,6 @@
 // See docs/License.html for the copyright notice.
 
 #include "ruletreealgo.h"
-#include "util.h"          // for lifegetuserrules, lifegetrulesdir, lifewarning
 #include <stdlib.h>
 // for case-insensitive string comparison
 #include <string.h>
@@ -32,14 +31,10 @@ const char* ruletreealgo::LoadTree(FILE* rulefile, int lineno, char endchar, con
     static_rulefile = rulefile;
     static_lineno = lineno;
     static_endchar = endchar;
-    
     const char* err = setrule(s);
-    
-    // reset static vars
     static_rulefile = NULL;
     static_lineno = 0;
     static_endchar = 0;
-    
     return err;
 }
 
@@ -58,20 +53,6 @@ static const char *defaultRuleData[] = {
   "7 16 20", "4 17 17", "5 18 22", "6 19 23", "7 20 24", "8 21 25",
   "5 22 22", "6 23 27", "7 24 28", "8 25 29", "9 26 30", 0 } ;
 
-static FILE *OpenTreeFile(const char *rule, const char *dir, char *path)
-{
-   // look for rule.tree in given dir and set path
-   if (strlen(dir) + strlen(rule) + 15 > (unsigned int)MAXFILELEN) {
-      lifewarning("Path too long") ;
-      return NULL ;
-   }
-   sprintf(path, "%s%s.tree", dir, rule) ;
-   // change "dangerous" characters to underscores
-   for (char *p=path + strlen(dir); *p; p++)
-      if (*p == '/' || *p == '\\') *p = '_' ;
-   return fopen(path, "r") ;
-}
-
 const char* ruletreealgo::setrule(const char* s) {
 
    const char *colonptr = strchr(s, ':');
@@ -80,7 +61,6 @@ const char* ruletreealgo::setrule(const char* s) {
       rule_name.assign(s,colonptr);
 
    char strbuf[MAXFILELEN+1] ;
-   FILE *f = 0 ;
    linereader lr(0) ;
    int lineno = 0 ;
    
@@ -93,18 +73,7 @@ const char* ruletreealgo::setrule(const char* s) {
       lr.setcloseonfree();
       lineno = static_lineno;
    } else {
-      if (strlen(rule_name.c_str()) >= (unsigned int)MAXRULESIZE) {
-         return "Rule length too long" ;
-      }
-      // look for rule.tree in user's rules dir then in Golly's rules dir
-      f = OpenTreeFile(rule_name.c_str(), lifegetuserrules(), strbuf);
-      if (f == 0)
-         f = OpenTreeFile(rule_name.c_str(), lifegetrulesdir(), strbuf);
-      if (f == 0) {
-         return "File not found" ;
-      }
-      lr.setfile(f) ;
-      lr.setcloseonfree() ;
+      return "Rule file not found";
    }
    
    // check for rule suffix like ":T200,100" to specify a bounded universe
@@ -131,7 +100,7 @@ const char* ruletreealgo::setrule(const char* s) {
       } else {
          if (lr.fgets(strbuf, MAXFILELEN) == 0)
             break ;
-         if (static_rulefile && strbuf[0] == static_endchar)
+         if (strbuf[0] == static_endchar)
             break;
       }
       lineno++ ;

@@ -3,8 +3,6 @@
 
 #include "ruletable_algo.h"
 
-#include "util.h"      // for lifegetuserrules, lifegetrulesdir, lifewarning
-
 // for case-insensitive string comparison
 #include <string.h>
 #ifndef WIN32
@@ -29,6 +27,7 @@ bool ruletable_algo::IsDefaultRule(const char* rulename)
 static FILE* static_rulefile = NULL;
 static int static_lineno = 0;
 static char static_endchar = 0;
+static string result;
 
 const char* ruletable_algo::LoadTable(FILE* rulefile, int lineno, char endchar, const char* s)
 {
@@ -36,14 +35,10 @@ const char* ruletable_algo::LoadTable(FILE* rulefile, int lineno, char endchar, 
     static_rulefile = rulefile;
     static_lineno = lineno;
     static_endchar = endchar;
-    
     const char* err = setrule(s);   // calls LoadRuleTable
-    
-    // reset static vars
     static_rulefile = NULL;
     static_lineno = 0;
     static_endchar = 0;
-    
     return err;
 }
 
@@ -64,15 +59,9 @@ const char* ruletable_algo::setrule(const char* s)
    if (colonptr) 
       rule_name.assign(s,colonptr);
 
-   static string ret;  // NOTE: don't initialize this statically!
-   ret = LoadRuleTable(rule_name);
-   if(!ret.empty())
-   {
-      // if the file exists and we've got an error then it must be a file format issue
-      if(!starts_with(ret,"Failed to open file: "))
-         lifewarning(ret.c_str());
-
-      return ret.c_str();
+   result = LoadRuleTable(rule_name);
+   if (!result.empty()) {
+      return result.c_str();
    }
    
    // check for rule suffix like ":T200,100" to specify a bounded universe
@@ -179,18 +168,6 @@ const char *defaultRuleData[] = {
    "600011", "600021", "602120", "612125", "612131", "612225", "700077",
    "701120", "701220", "701250", "702120", "702221", "702251", "702321",
    "702525", "702720", 0 };
-   
-static FILE *OpenTableFile(string &rule, const char *dir, string &path)
-{
-   // look for rule.table in given dir and set path
-   path = dir;
-   int istart = (int)path.size();
-   path += rule + ".table";
-   // change "dangerous" characters to underscores
-   for (unsigned int i=istart; i<path.size(); i++)
-      if (path[i] == '/' || path[i] == '\\') path[i] = '_';
-   return fopen(path.c_str(), "rt");
-}
 
 string ruletable_algo::LoadRuleTable(string rule)
 {
@@ -215,7 +192,6 @@ string ruletable_algo::LoadRuleTable(string rule)
    string line;
    const int MAX_LINE_LEN=4000;
    char line_buffer[MAX_LINE_LEN];
-   FILE *in = 0;
    linereader line_reader(0);
    int lineno = 0;
    string full_filename;
@@ -230,14 +206,7 @@ string ruletable_algo::LoadRuleTable(string rule)
       lineno = static_lineno;
       full_filename = rule + ".rule";
    } else {
-      // look for rule.table in user's rules dir then in Golly's rules dir
-      in = OpenTableFile(rule, lifegetuserrules(), full_filename);
-      if (!in)
-         in = OpenTableFile(rule, lifegetrulesdir(), full_filename);
-      if (!in) 
-         return "Failed to open file: "+full_filename;
-      line_reader.setfile(in);
-      line_reader.setcloseonfree(); // make sure it goes away if we return with an error
+      return string("Rule file not found");
    }
 
    string symmetries = "rotate4"; // default
@@ -265,7 +234,7 @@ string ruletable_algo::LoadRuleTable(string rule)
                 << ": line too long (maximum length = " << MAX_LINE_LEN << ")";
             return oss.str();
          }
-         if (static_rulefile && line_buffer[0] == static_endchar)
+         if (line_buffer[0] == static_endchar)
             break;
          line = line_buffer;
       }
