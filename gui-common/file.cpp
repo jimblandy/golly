@@ -641,8 +641,6 @@ void OpenZipFile(const char* zippath)
     int scriptfiles = 0;
     int textfiles = 0;                  // includes html files
     int rulefiles = 0;
-    int deprecated = 0;                 // # of .table/tree files
-    std::list<std::string> deplist;     // list of installed deprecated files
     std::list<std::string> rulelist;    // list of installed .rule files
     int err;
 
@@ -718,31 +716,12 @@ void OpenZipFile(const char* zippath)
                     // entry is for some sort of file
                     std::string filename = GetBaseName(name.c_str());
                     if (dirseen) contents += indent;
-
-                    if ( IsRuleFile(filename) && !EndsWith(filename,".rule") ) {
-                        // this is a deprecated .table/tree/colors/icons file
-                        if (EndsWith(filename,".colors") || EndsWith(filename,".icons")) {
-                            // these files are no longer supported and are simply ignored
-                            contents += filename;
-                            contents += indent;
-                            contents += "[ignored]";
-                            // don't add to deprecated list
-                        } else {
-                            // .table/.tree file
-                            contents += filename;
-                            contents += indent;
-                            contents += "[deprecated]";
-                            deprecated++;
-                            // install it into userrules so it can be used below to create a .rule file
-                            std::string outfile = userrules + filename;
-                            if (RuleInstalled(zfile, file_info, outfile)) {
-                                deplist.push_back(filename);
-                            } else {
-                                contents += indent;
-                                contents += "INSTALL FAILED!";
-                            }
-                        }
-
+                    if (EndsWith(filename,".table") || EndsWith(filename,".tree") ||
+                        EndsWith(filename,".colors") || EndsWith(filename,".icons")) {
+                        // these files are no longer supported and are simply ignored
+                        contents += filename;
+                        contents += indent;
+                        contents += "[ignored]";
                     } else {
                         // user can extract file via special "unzip:" link
                         contents += "<a href=\"unzip:";
@@ -819,13 +798,6 @@ void OpenZipFile(const char* zippath)
         contents += "<p>Files marked as \"[installed]\" have been stored in ";
         contents += relpath;
         contents += ".";
-    }
-    if (deprecated > 0) {
-        std::string newrules = CreateRuleFiles(deplist, rulelist);
-        if (newrules.length() > 0) {
-            contents += "<p>Files marked as \"[deprecated]\" have been used to create new .rule files:<br>\n";
-            contents += newrules;
-        }
     }
     contents += "\n</b></font></body></html>";
 

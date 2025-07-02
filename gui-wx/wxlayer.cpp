@@ -2226,83 +2226,6 @@ static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
 
 // -----------------------------------------------------------------------------
 
-static FILE* FindColorFile(const wxString& rule, const wxString& dir)
-{
-    const wxString extn = wxT(".colors");
-    wxString path;
-    
-    // first look for rule.colors in given directory
-    path = dir + rule;
-    path += extn;
-    FILE* f = OPENFILE(path);
-    if (f) return f;
-    
-    // if rule has the form foo-* then look for foo.colors in dir;
-    // this allows related rules to share a single .colors file
-    wxString prefix = rule.BeforeLast('-');
-    if (!prefix.IsEmpty()) {
-        path = dir + prefix;
-        path += extn;
-        f = OPENFILE(path);
-        if (f) return f;
-    }
-    
-    return NULL;
-}
-
-// -----------------------------------------------------------------------------
-
-static bool LoadRuleColors(const wxString& rule, int maxstate)
-{
-    // if rule.colors file exists in userrules or rulesdir then
-    // change colors according to info in file
-    FILE* f = FindColorFile(rule, userrules);
-    if (!f) f = FindColorFile(rule, rulesdir);
-    if (f) {
-        // the linereader class handles all line endings (CR, CR+LF, LF)
-        linereader reader(f);
-        // not needed here, but useful if we ever return early due to error
-        // reader.setcloseonfree();
-        const int MAXLINELEN = 512;
-        char buf[MAXLINELEN + 1];
-        while (reader.fgets(buf, MAXLINELEN) != 0) {
-            if (buf[0] == '#' || buf[0] == 0) {
-                // skip comment or empty line
-            } else {
-                // look for "color" or "gradient" keyword at start of line
-                char* keyword = buf;
-                char* value;
-                while (*keyword == ' ') keyword++;
-                value = keyword;
-                while (*value >= 'a' && *value <= 'z') value++;
-                while (*value == ' ' || *value == '=') value++;
-                if (strncmp(keyword, "color", 5) == 0) {
-                    int state, r, g, b;
-                    if (sscanf(value, "%d%d%d%d", &state, &r, &g, &b) == 4) {
-                        if (state >= 0 && state <= maxstate) {
-                            currlayer->cellr[state] = r;
-                            currlayer->cellg[state] = g;
-                            currlayer->cellb[state] = b;
-                        }
-                    };
-                } else if (strncmp(keyword, "gradient", 8) == 0) {
-                    int r1, g1, b1, r2, g2, b2;
-                    if (sscanf(value, "%d%d%d%d%d%d", &r1, &g1, &b1, &r2, &g2, &b2) == 6) {
-                        currlayer->fromrgb.Set(r1, g1, b1);
-                        currlayer->torgb.Set(r2, g2, b2);
-                        CreateColorGradient();
-                    };
-                }
-            }
-        }
-        reader.close();
-        return true;
-    }
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-
 static void DeleteIcons(Layer* layer)
 {
     // delete given layer's existing icons
@@ -2332,43 +2255,6 @@ static void DeleteIcons(Layer* layer)
         free(layer->atlas31x31);
         layer->atlas31x31 = NULL;
     }
-}
-
-// -----------------------------------------------------------------------------
-
-static bool FindIconFile(const wxString& rule, const wxString& dir, wxString& path)
-{
-    const wxString extn = wxT(".icons");
-    
-    // first look for rule.icons in given directory
-    path = dir + rule;
-    path += extn;
-    if (wxFileName::FileExists(path)) return true;
-    
-    // if rule has the form foo-* then look for foo.icons in dir;
-    // this allows related rules to share a single .icons file
-    wxString prefix = rule.BeforeLast('-');
-    if (!prefix.IsEmpty()) {
-        path = dir + prefix;
-        path += extn;
-        if (wxFileName::FileExists(path)) return true;
-    }
-    
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-
-static bool LoadRuleIcons(const wxString& rule, int maxstate)
-{
-    // if rule.icons file exists in userrules or rulesdir then
-    // load icons for current layer
-    wxString path;
-    return (FindIconFile(rule, userrules, path) ||
-            FindIconFile(rule, rulesdir, path)) &&
-            LoadIconFile(path, maxstate, &currlayer->icons7x7,
-                                         &currlayer->icons15x15,
-                                         &currlayer->icons31x31);
 }
 
 // -----------------------------------------------------------------------------
@@ -2429,55 +2315,6 @@ static bool MultiColorBitmaps(wxBitmap** iconmaps, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-static void SetAverageColor(int state, wxBitmap* icon)
-{
-    // set non-icon color to average color of non-black pixels in given icon
-    if (icon) {
-        int wd = icon->GetWidth();
-        int ht = icon->GetHeight();
-        
-        wxAlphaPixelData icondata(*icon);
-        if (icondata) {
-            wxAlphaPixelData::Iterator iconpxl(icondata);
-            
-            int nbcount = 0;  // # of non-black pixels
-            int totalr = 0;
-            int totalg = 0;
-            int totalb = 0;
-            
-            for (int i = 0; i < ht; i++) {
-                wxAlphaPixelData::Iterator iconrow = iconpxl;
-                for (int j = 0; j < wd; j++) {
-                    if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                        // non-black pixel
-                        totalr += iconpxl.Red();
-                        totalg += iconpxl.Green();
-                        totalb += iconpxl.Blue();
-                        nbcount++;
-                    }
-                    iconpxl++;
-                }
-                // move to next row of icon bitmap
-                iconpxl = iconrow;
-                iconpxl.OffsetY(icondata, 1);
-            }
-            
-            if (nbcount>0) {
-                currlayer->cellr[state] = int(totalr / nbcount);
-                currlayer->cellg[state] = int(totalg / nbcount);
-                currlayer->cellb[state] = int(totalb / nbcount);
-            }
-            else { // avoid div0
-                currlayer->cellr[state] = 0;
-                currlayer->cellg[state] = 0;
-                currlayer->cellb[state] = 0;
-            }
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 static void UpdateCurrentColors()
 {
     // set current layer's colors, icons and state names according to current algo and rule
@@ -2531,14 +2368,14 @@ static void UpdateCurrentColors()
     bool loadedicons = false;
     bool loadednames = false;
     
-    // look for rulename.rule first
+    // look for rulename.rule
     FILE* rulefile = FindRuleFile(rulename);
     if (rulefile) {
         LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons, &loadednames);
         
         if (!loadedcolors || !loadedicons || !loadednames) {
             // if rulename has the form foo-* then look for foo-shared.rule
-            // and load its colors and/or icons and/or names
+            // and load its colors or icons or names
             wxString prefix = rulename.BeforeLast('-');
             if (!prefix.IsEmpty() && !rulename.EndsWith(wxT("-shared"))) {
                 rulename = prefix + wxT("-shared");
@@ -2550,39 +2387,13 @@ static void UpdateCurrentColors()
         if (!loadedicons) UseDefaultIcons(maxstate);
         
         // use the smallest icons to check if they are multi-color
-        if (currlayer->icons7x7 && MultiColorBitmaps(currlayer->icons7x7, maxstate))
+        if (currlayer->icons7x7 && MultiColorBitmaps(currlayer->icons7x7, maxstate)) {
             currlayer->multicoloricons = true;
-        
-        // if the icons are multi-color then we don't call SetAverageColor as we do below
-        // (better if the .rule file sets the appropriate non-icon colors)
+        }
         
     } else {
-        // no rulename.rule so look for deprecated rulename.colors and/or rulename.icons
-        loadedcolors = LoadRuleColors(rulename, maxstate);
-        loadedicons = LoadRuleIcons(rulename, maxstate);
-        if (!loadedicons) UseDefaultIcons(maxstate);
-        
-        // if rulename.colors wasn't supplied and icons are multi-color then we set
-        // non-icon colors to the average of the non-black pixels in each icon
-        // (note that we use the 7x7 icons because they are faster to scan)
-        wxBitmap** iconmaps = currlayer->icons7x7;
-        if (!loadedcolors && iconmaps && currlayer->multicoloricons) {
-            for (int n = 1; n <= maxstate; n++) {
-                SetAverageColor(n, iconmaps[n]);
-            }
-            // if extra 15x15 icon was supplied then use it to set state 0 color
-            iconmaps = currlayer->icons15x15;
-            if (iconmaps && iconmaps[0]) {
-                wxAlphaPixelData icondata(*iconmaps[0]);
-                if (icondata) {
-                    wxAlphaPixelData::Iterator iconpxl(icondata);
-                    // iconpxl is the top left pixel
-                    currlayer->cellr[0] = iconpxl.Red();
-                    currlayer->cellg[0] = iconpxl.Green();
-                    currlayer->cellb[0] = iconpxl.Blue();
-                }
-            }
-        }
+        // rulename.rule wasn't found so use default icons
+        UseDefaultIcons(maxstate);
     }    
 
     // create icon texture atlases (used for rendering)

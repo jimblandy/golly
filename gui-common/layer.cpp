@@ -1566,7 +1566,7 @@ void UpdateCurrentColors()
 
         if (!loadedcolors || !loadedicons) {
             // if rulename has the form foo-* then look for foo-shared.rule
-            // and load its colors and/or icons
+            // and load its colors or icons
             size_t hyphenpos = rulename.rfind('-');
             if (hyphenpos != std::string::npos && rulename.rfind("-shared") == std::string::npos) {
                 rulename = rulename.substr(0, hyphenpos) + "-shared";

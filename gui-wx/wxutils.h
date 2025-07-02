@@ -81,9 +81,7 @@ bool IsZipFile(const wxString& filename);
 // (ignoring case).
 
 bool IsRuleFile(const wxString& filename);
-// Return true if the given file is a rule-related file with
-// an extension of .rule or .table or .tree or .colors or .icons
-// (ignoring case).
+// Return true if the given file's extension is .rule (ignoring case).
 
 // Following macro is used to create a wxBitmap from included XPM data:
 

@@ -22,7 +22,6 @@ Here are the important file formats used by Golly:
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#share"><b>Related rules can share colors and/or icons</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#override"><b>How to override a supplied or built-in rule</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#install"><b>The easy way to install a new .rule file</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#deprecated"><b>Deprecated files (.table, .tree)</b></a></dd>
 <dd><a href="#zip"><b>Zip files (.zip)</b></a></dd>
 </p>
 
@@ -283,7 +282,6 @@ the Python transition function that was used to create the tree data.
 <p>
 This section is optional.  If present, it contains a transition table
 that can be loaded by the RuleLoader algorithm.
-The contents of this section is identical to the contents of a .table file.
 A detailed specification of the table format is available
 <a href="http://github.com/GollyGang/ruletablerepository/wiki/TheFormat">here</a>.
 This is a simple example:
@@ -373,7 +371,6 @@ This section is optional.  If present, it contains a rule tree
 that can be loaded by the RuleLoader algorithm.
 (If the .rule file also contains a @TABLE section, RuleLoader will
 use the first one it finds.)
-The contents of this section is identical to the contents of a .tree file.
 
 <p>
 Essentially, the tree format allows you
@@ -619,8 +616,7 @@ There are two situations where Golly needs to look for a .rule file:
 1. If the RuleLoader algorithm is asked to switch to a rule called "Foo" then it first
 looks for Foo.rule in Documents/Rules/.
 If not found, or if Foo.rule has no @TABLE or @TREE section, it will then look
-for Foo.rule in the supplied Rules folder.  If Foo.rule doesn't exist then it will
-use the same search procedure to look for Foo.table, then Foo.tree.
+for Foo.rule in the supplied Rules folder.
 
 <p>
 2. After switching to a new rule (not necessarily using RuleLoader), Golly needs
@@ -838,21 +834,6 @@ Golly provides a quick and easy way to create a new .rule file in the right plac
 Simply copy the rule contents to the clipboard, then tap the Paste button.
 If the first line of the clipboard starts with "@RULE <i>rulename</i>" then Golly will
 save the text as Documents/Rules/<i>rulename</i>.rule and switch to that rule.
-
-
-<p><a name="deprecated"></a>
-<font size=+1><b>Deprecated files (.table, .tree)</b></font>
-
-<p>
-Golly still supports files with extensions of .table or .tree, but their use is discouraged.
-When Golly opens a .zip file containing .table/tree files it will automatically
-convert them into .rule files, but only if the zip file has no .rule files.
-Any existing .rule files are overwritten (in case the zip file contents have changed).
-
-<p>
-Note that files with extensions of .colors or .icons are no longer supported and are simply
-ignored.  The .rule format can be used to specify color and/or icon information
-via the @COLORS and @ICONS sections, as described above.
 
 
 <a name="zip"></a>

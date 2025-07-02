@@ -18,10 +18,6 @@
 #include "undo.h"           // for UndoRedo
 #include "control.h"
 
-#include <stdexcept>        // for std::runtime_error and std::exception
-#include <sstream>          // for std::ostringstream
-#include <algorithm>        // for std::find
-
 #ifdef ANDROID_GUI
     #include "jnicalls.h"		// for UpdateStatus, BeginProgress, etc
 #endif
@@ -42,12 +38,6 @@ double begintime, endtime;      // for timing info
 double begingen, endgen;        // ditto
 
 const char* empty_pattern = "All cells are dead.";
-
-// -----------------------------------------------------------------------------
-
-// macros for checking if a certain string exists in a list of strings
-#define FOUND(l,s) (std::find(l.begin(),l.end(),s) != l.end())
-#define NOT_FOUND(l,s) (std::find(l.begin(),l.end(),s) == l.end())
 
 // -----------------------------------------------------------------------------
 
@@ -1029,159 +1019,4 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
         // do this AFTER RememberAlgoChange so Undo button becomes enabled
         UpdateEverything();
     }
-}
-
-// -----------------------------------------------------------------------------
-
-static std::string CreateTABLE(const std::string& tablepath)
-{
-    std::string contents = "\n@TABLE\n\n";
-    // append contents of .table file
-    FILE* f = fopen(tablepath.c_str(), "r");
-    if (f) {
-        const int MAXLINELEN = 4095;
-        char linebuf[MAXLINELEN + 1];
-        linereader reader(f);
-        while (true) {
-            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
-            contents += linebuf;
-            contents += "\n";
-        }
-        reader.close();
-    } else {
-        std::ostringstream oss;
-        oss << "Could not read .table file:\n" << tablepath.c_str();
-        throw std::runtime_error(oss.str().c_str());
-    }
-    return contents;
-}
-
-// -----------------------------------------------------------------------------
-
-static std::string CreateTREE(const std::string& treepath)
-{
-    std::string contents = "\n@TREE\n\n";
-    // append contents of .tree file
-    FILE* f = fopen(treepath.c_str(), "r");
-    if (f) {
-        const int MAXLINELEN = 4095;
-        char linebuf[MAXLINELEN + 1];
-        linereader reader(f);
-        while (true) {
-            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
-            contents += linebuf;
-            contents += "\n";
-        }
-        reader.close();
-    } else {
-        std::ostringstream oss;
-        oss << "Could not read .tree file:\n" << treepath.c_str();
-        throw std::runtime_error(oss.str().c_str());
-    }
-    return contents;
-}
-
-// -----------------------------------------------------------------------------
-
-static void CreateOneRule(const std::string& rulefile, const std::string& folder,
-                          std::list<std::string>& allfiles, std::string& htmlinfo)
-{
-    std::string rulename = rulefile.substr(0,rulefile.rfind('.'));
-    std::string tablefile = rulename + ".table";
-    std::string treefile = rulename + ".tree";
-    std::string tabledata, treedata;
-
-    if (FOUND(allfiles,tablefile))
-        tabledata = CreateTABLE(folder + tablefile);
-
-    if (FOUND(allfiles,treefile))
-        treedata = CreateTREE(folder + treefile);
-
-    std::string contents = "@RULE " + rulename + "\n";
-    contents += tabledata;
-    contents += treedata;
-
-    // write contents to .rule file
-    std::string rulepath = folder + rulefile;
-    FILE* outfile = fopen(rulepath.c_str(), "w");
-    if (outfile) {
-        if (fputs(contents.c_str(), outfile) == EOF) {
-            fclose(outfile);
-            std::ostringstream oss;
-            oss << "Could not write data to rule file:\n" << rulepath.c_str();
-            throw std::runtime_error(oss.str().c_str());
-        }
-        fclose(outfile);
-    } else {
-        std::ostringstream oss;
-        oss << "Could not create rule file:\n" << rulepath.c_str();
-        throw std::runtime_error(oss.str().c_str());
-    }
-    
-    #ifdef WEB_GUI
-        // ensure the .rule file persists beyond the current session
-        CopyRuleToLocalStorage(rulepath.c_str());
-    #endif
-
-    // append created file to htmlinfo
-    htmlinfo += "<a href=\"open:";
-    htmlinfo += folder;
-    htmlinfo += rulefile;
-    htmlinfo += "\">";
-    htmlinfo += rulefile;
-    htmlinfo += "</a><br>\n";
-}
-
-// -----------------------------------------------------------------------------
-
-std::string CreateRuleFiles(std::list<std::string>& deprecated,
-                            std::list<std::string>& keeprules)
-{
-    // use the given list of deprecated .table/tree files to create new .rule files,
-    // except for those .rule files in keeprules
-    std::string htmlinfo;
-    bool aborted = false;
-    try {
-        // create a list of candidate .rule files to be created
-        std::string rulefile, filename, rulename;
-        std::list<std::string> candidates;
-        std::list<std::string>::iterator it;
-        for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
-            filename = *it;
-            rulename = filename.substr(0,filename.rfind('.'));
-            if (EndsWith(filename,".table") || EndsWith(filename,".tree")) {
-                // .table/tree file
-                rulefile = rulename + ".rule";
-                // add .rule file to candidates if it hasn't been added yet
-                // and if it isn't in the keeprules list
-                if (NOT_FOUND(candidates,rulefile) &&
-                    NOT_FOUND(keeprules,rulefile)) {
-                    candidates.push_back(rulefile);
-                }
-            }
-        }
-
-        // create the new .rule files (we overwrite any existing .rule files
-        // that aren't in keeprules)
-        for (it=candidates.begin(); it!=candidates.end(); ++it) {
-            CreateOneRule(*it, userrules, deprecated, htmlinfo);
-        }
-    }
-    catch(const std::exception& e) {
-        // display message set by throw std::runtime_error(...)
-        Warning(e.what());
-        aborted = true;
-        // nice to also show error message in help window
-        htmlinfo += "\n<p>*** CONVERSION ABORTED DUE TO ERROR ***\n<p>";
-        htmlinfo += std::string(e.what());
-    }
-
-    if (!aborted) {
-        // delete all the deprecated files
-        std::list<std::string>::iterator it;
-        for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
-            RemoveFile(userrules + *it);
-        }
-    }
-    return htmlinfo;
 }

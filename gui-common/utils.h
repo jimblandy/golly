@@ -79,9 +79,7 @@ bool IsZipFile(const std::string& filename);
 // (ignoring case).
 
 bool IsRuleFile(const std::string& filename);
-// Return true if the given file is a rule-related file with
-// an extension of .rule or .table or .tree or .colors or .icons
-// (ignoring case).
+// Return true if the given file's extension is .rule (ignoring case).
 
 bool IsScriptFile(const std::string& filename);
 // Return true if the given file is a Lua or Python script.

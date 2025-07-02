@@ -107,11 +107,7 @@ public:
     void ClearOutsideGrid();
     void ReduceCellStates(int newmaxstate);
     void ShowRuleDialog();
-    void ConvertOldRules();
-    wxString CreateRuleFiles(const wxSortedArrayString& deprecated,
-                             const wxSortedArrayString& ziprules);
-    void ChangeAlgorithm(algo_type newalgotype,
-                         const wxString& newrule = wxEmptyString,
+    void ChangeAlgorithm(algo_type newalgotype, const wxString& newrule = wxEmptyString,
                          bool inundoredo = false);
     
     // view functions
@@ -306,7 +302,6 @@ enum {
     ID_DELTIME,
     ID_SETALGO,
     ID_SETRULE,
-    ID_CONVERT,
     
     // Set Algorithm submenu
     ID_ALGO0,

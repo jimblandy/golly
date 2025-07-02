@@ -686,7 +686,6 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_AUTOSTOP,     active);
         mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
         mbar->Enable(ID_DELTIME,      active && !inscript && timeline && !currlayer->algo->isrecording());
-        mbar->Enable(ID_CONVERT,      active && !timeline && !inscript);
         mbar->Enable(ID_SETALGO,      active && !timeline && !inscript);
         mbar->Enable(ID_SETRULE,      active && !timeline && !inscript);
         
@@ -1402,7 +1401,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_AUTOSTOP:       autostop = !autostop; break;
         case ID_RECORD:         StartStopRecording(); break;
         case ID_DELTIME:        DeleteTimeline(); break;
-        case ID_CONVERT:        ConvertOldRules(); break;
         case ID_SETRULE:        ShowRuleDialog(); break;
             
         // View menu
@@ -2276,8 +2274,6 @@ void MainFrame::CreateMenus()
     controlMenu->AppendSeparator();
     controlMenu->Append(ID_RECORD,               _("Start Recording") + GetAccelerator(DO_RECORD));
     controlMenu->Append(ID_DELTIME,              _("Delete Timeline") + GetAccelerator(DO_DELTIME));
-    controlMenu->AppendSeparator();
-    controlMenu->Append(ID_CONVERT,              _("Convert Old Rules"));   // rarely used, so no accelerator
     controlMenu->AppendSeparator();
     controlMenu->Append(ID_SETALGO,              _("Set Algorithm"), algomenu);
     controlMenu->Append(ID_SETRULE,              _("Set Rule...") + GetAccelerator(DO_SETRULE));

@@ -731,13 +731,7 @@ void GetURL(const wxString& url)
     if ( !helpptr->DownloadURL(fullurl, filepath) ) return;
     
     if (htmlwin->editlink) {
-        if (IsRuleFile(filename) && filename.Lower().EndsWith(wxT(".icons"))) {
-            // let user see b&w image in .icons file
-            mainptr->Raise();
-            mainptr->OpenFile(filepath);
-        } else {
-            mainptr->EditFile(filepath);
-        }
+        mainptr->EditFile(filepath);
         return;
     }
     
@@ -779,24 +773,18 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
     wxString tempfile = tempdir + filename;
     
     if ( IsRuleFile(filename) ) {
-        // rule-related file should have already been extracted and installed
+        // .rule file should have already been extracted and installed
         // into userrules, so check that file exists and load rule
         wxString rulefile = userrules + filename;
         if (wxFileExists(rulefile)) {
             if (htmlwin->editlink) {
-                if (filename.Lower().EndsWith(wxT(".icons"))) {
-                    // let user see b&w image in .icons file
-                    mainptr->Raise();
-                    mainptr->OpenFile(rulefile);
-                } else {
-                    mainptr->EditFile(rulefile);
-                }
+                mainptr->EditFile(rulefile);
             } else {         
                 // load corresponding .rule file
                 LoadRule(filename.BeforeLast('.'));
             }
         } else {
-            Warning(_("Rule-related file was not installed:\n") + rulefile);
+            Warning(_("Rule file was not installed:\n") + rulefile);
         }
         
     } else if ( mainptr->ExtractZipEntry(zippath, entry, tempfile) ) {

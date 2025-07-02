@@ -23,7 +23,6 @@ Here are the important file formats used by Golly:
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#share"><b>Related rules can share names, colors or icons</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#override"><b>How to override a supplied or built-in rule</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#install"><b>The easy way to install a new .rule file</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#deprecated"><b>Deprecated files (.table, .tree, .colors, .icons)</b></a></dd>
 <dd><a href="#zip"><b>Zip files (.zip)</b></a></dd>
 </p>
 
@@ -298,8 +297,7 @@ the Python transition function that was used to create the tree data.
 <p>
 This section is optional.  If present, it contains a transition table
 that can be loaded by the RuleLoader algorithm.
-The contents of this section is identical to the contents of a .table file.
-A detailed specification of the .table format is available
+A detailed specification of the table format is available
 <a href="http://github.com/GollyGang/ruletablerepository/wiki/TheFormat">here</a>.
 This is a simple example:
 
@@ -392,7 +390,6 @@ This section is optional.  If present, it contains a rule tree
 that can be loaded by the RuleLoader algorithm.
 (If the .rule file also contains a @TABLE section, RuleLoader will
 use the first one it finds.)
-The contents of this section is identical to the contents of a .tree file.
 
 <p>
 A detailed description of a rule tree is provided below, but most people don't
@@ -743,8 +740,7 @@ There are two situations where Golly needs to look for a .rule file:
 1. If the RuleLoader algorithm is asked to switch to a rule called "Foo" then it first
 looks for Foo.rule in <a href="prefs:control">your rules folder</a>.
 If not found, or if Foo.rule has no @TABLE or @TREE section, it will then look
-for Foo.rule in the supplied Rules folder.  If Foo.rule doesn't exist then it will
-use the same search procedure to look for Foo.table, then Foo.tree.
+for Foo.rule in the supplied Rules folder.
 
 <p>
 2. After switching to a new rule (not necessarily using RuleLoader), Golly needs
@@ -973,34 +969,11 @@ save the text as <i>rulename</i>.rule in <a href="prefs:control">your rules fold
 and switch to that rule.
 
 
-<p><a name="deprecated"></a>&nbsp;<br>
-<font size=+1><b>Deprecated files (.table, .tree, .colors, .icons)</b></font>
-
-<p>
-Golly still supports the old rule-related files with extensions of .table, .tree, .colors and .icons,
-but their use is discouraged.  To help speed up the transition to .rule files, Golly has a
-couple of handy features:
-
-<p>
-1. At the bottom of the Control menu is a new command called <b>Convert Old Rules</b>.
-This will convert all .table/tree/colors/icons files into corresponding .rule files
-(but existing .rule files will not be changed).
-The results are displayed in the help window. If the conversion succeeds you'll be asked
-if you want to delete the .table/tree/colors/icons files.
-
-<p>
-2. When Golly opens a .zip file containing .table/tree/colors/icons files it will automatically
-convert them into .rule files, but only if the zip file has no .rule files.
-Unlike the <b>Convert Old Rules</b> command, this conversion <i>will</i> overwrite
-existing .rule files (in case the zip file contents have changed).
-
-
 <p><a name="zip"></a>&nbsp;<br>
 <font size=+1><b>Zip files</b></font>
 
 <p>
-Golly can open a standard zip file and process its contents in the
-following way:
+Golly can open a standard zip file and process its contents in the following way:
 
 <p>
 If the zip file is "complex" then Golly builds a temporary HTML file with
@@ -1013,9 +986,6 @@ and shows the result in the help window.  A complex zip file is one that contain
 <li> Any rule files (.rule extension).
      Such files are automatically extracted and installed into
      <a href="prefs:control">your rules folder</a>.
-     Note that files with a .colors or .icons or .table or .tree extension
-     are automatically converted into corresponding .rule files, but only
-     if those .rule files aren't present in the zip file.
 <li> Any HTML files (.htm or .html extension).
 <li> Any text files (.txt or .doc extension, or a name containing "readme").
 <li> Multiple scripts (.lua or .py extension).

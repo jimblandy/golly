@@ -540,8 +540,6 @@ void MainFrame::OpenZipFile(const wxString& zippath)
     int scriptfiles = 0;
     int textfiles = 0;                      // includes html files
     int rulefiles = 0;
-    int deprecated = 0;                     // # of .table/tree/colors/icons files
-    wxSortedArrayString deplist;            // list of installed deprecated files
     wxSortedArrayString rulelist;           // list of installed .rule files
     
     // note that we need to create the HTML file with UTF-8 encoding
@@ -603,22 +601,12 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                 // entry is for some sort of file
                 wxString filename = name.AfterLast(wxFILE_SEP_PATH);
                 if (dirseen) contents += indent;
-                
-                if ( IsRuleFile(filename) && !filename.EndsWith(wxT(".rule")) ) {
-                    // this is a deprecated .table/tree/colors/icons file
+                if (filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree")) ||
+                    filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons"))) {
+                    // these files are no longer supported and are simply ignored
                     contents += filename;
                     contents += indent;
-                    contents += wxT("[deprecated]");
-                    deprecated++;
-                    // install it into userrules so it can be used below to create a .rule file
-                    wxString outfile = userrules + filename;
-                    if (RuleInstalled(zip, outfile)) {
-                        deplist.Add(filename);
-                    } else {
-                        contents += indent;
-                        contents += wxT("INSTALL FAILED!");
-                    }
-                
+                    contents += "[ignored]";
                 } else {
                     // user can extract file via special "unzip:" link
                     contents += wxT("<a href=\"unzip:");
@@ -679,16 +667,9 @@ void MainFrame::OpenZipFile(const wxString& zippath)
         contents += userrules;
         contents += wxT("\n");
     }
-    if (deprecated > 0) {
-        wxString newrules = CreateRuleFiles(deplist, rulelist);
-        if (newrules.length() > 0) {
-            contents += wxT("<p>Files marked as \"[deprecated]\" have been used to create new .rule files:<br>\n");
-            contents += newrules;
-        }
-    }
     contents += wxT("\n</body></html>");
     
-    if (dirseen || rulefiles > 0 || deprecated > 0 || textfiles > 0 || patternfiles > 1 || scriptfiles > 1) {
+    if (dirseen || rulefiles > 0 || textfiles > 0 || patternfiles > 1 || scriptfiles > 1) {
         // complex zip, so write contents to a temporary html file and display it in help window;
         // use a unique file name so user can go back/forwards
         wxString htmlfile = wxFileName::CreateTempFileName(tempdir + wxT("zip_contents_"));

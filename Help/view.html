@@ -129,19 +129,11 @@ You can also set the minimum scale at which grid lines should be displayed
 
 <p>
 If ticked then icons will be displayed at scales 1:8, 1:16 or 1:32.
-Icons are small bitmaps that can have any shape but their color is
-automatically synchronized with the cell's state color.
-Each algorithm can have a different set of icons.  You can change these
-icons by loading suitably formatted files via the "Load Icons" button
-in <a href="prefs:color">Preferences > Color</a>.
-
-<p>
-It's also possible to have rule-specific icons.  Whenever Golly
-switches to a new rule it looks inside the Rules folder for a matching
-<i>rule</i>.icons file and, if it exists, loads the bitmaps stored in
-the file.  The format of a .icons file is identical to that used above.
-See <a href="formats.html#icons">Help > File Formats</a> for a
-description of the format.
+Icons are small bitmaps that can have any shape and any color
+(grayscale icons are automatically changed to match the cell's state color).
+Each algorithm has a different set of default icons but it's possible
+to override those with rule-specific icons.
+See <a href="formats.html#icons">Help > File Formats</a> for details.
 
 <p>
 <font size=+1><b>Invert Colors</b></font>

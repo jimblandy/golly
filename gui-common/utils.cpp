@@ -416,11 +416,7 @@ bool IsRuleFile(const std::string& filename)
     if (dotpos == std::string::npos) return false;
 
     std::string ext = filename.substr(dotpos+1);
-    return ( strcasecmp(ext.c_str(),"rule") == 0 ||
-             strcasecmp(ext.c_str(),"table") == 0 ||
-             strcasecmp(ext.c_str(),"tree") == 0 ||
-             strcasecmp(ext.c_str(),"colors") == 0 ||
-             strcasecmp(ext.c_str(),"icons") == 0 );
+    return ( strcasecmp(ext.c_str(),"rule") == 0 );
 }
 
 // -----------------------------------------------------------------------------

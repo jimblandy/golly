@@ -6,9 +6,7 @@
 
 #include "bigint.h"     // for bigint
 #include "algos.h"      // for algo_type
-
 #include <string>		// for std::string
-#include <list>		    // for std::list
 
 // Data and routines for generating patterns:
 
@@ -29,7 +27,5 @@ void ClearOutsideGrid();
 void ReduceCellStates(int newmaxstate);
 void ChangeRule(const std::string& rulestring);
 void ChangeAlgorithm(algo_type newalgotype, const char* newrule = "", bool inundoredo = false);
-std::string CreateRuleFiles(std::list<std::string>& deprecated,
-                            std::list<std::string>& keeprules);
 
 #endif
