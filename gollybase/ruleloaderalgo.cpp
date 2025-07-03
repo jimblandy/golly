@@ -108,8 +108,6 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
     return noTABLEorTREE;
 }
 
-static std::string badrule;
-
 const char* ruleloaderalgo::setrule(const char* s)
 {
     const char *err = NULL;
@@ -152,10 +150,9 @@ const char* ruleloaderalgo::setrule(const char* s)
         return err;
     }
     
-    // make sure we show given rule string in final error msg (probably "File not found")
-    badrule = err;
-    badrule += "\nGiven rule: ";
-    badrule += s;
+    // make sure we show given rule string in final error msg
+    static std::string badrule;
+    badrule = std::string("Unknown rule: ") + s;
     return badrule.c_str();
 }
 
